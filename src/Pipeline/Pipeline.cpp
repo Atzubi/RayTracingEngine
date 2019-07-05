@@ -29,14 +29,16 @@ bool Pipeline::addRayGeneratorShader(RayGeneratorShader *rayGeneratorShader) {
     else{
         this->rayGeneratorShader = rayGeneratorShader;
     }
+    return true;
 }
 
 bool Pipeline::addOcclusionShader(OcclusionShader *occlusionShader) {
     if(this->occlusionShader != nullptr)
-    return false;
+        return false;
     else{
         this->occlusionShader = occlusionShader;
     }
+    return true;
 }
 
 bool Pipeline::addPierceShader(PierceShader *pierceShader) {
@@ -45,6 +47,7 @@ bool Pipeline::addPierceShader(PierceShader *pierceShader) {
     else{
         this->pierceShader = pierceShader;
     }
+    return true;
 }
 
 bool Pipeline::addHitShader(HitShader *hitShader) {
@@ -53,6 +56,7 @@ bool Pipeline::addHitShader(HitShader *hitShader) {
     else{
         this->hitShader = hitShader;
     }
+    return true;
 }
 
 bool Pipeline::addMissShader(MissShader *missShader) {
@@ -60,9 +64,8 @@ bool Pipeline::addMissShader(MissShader *missShader) {
         return false;
     else{
         this->missShader = missShader;
-        RayTracerOutput rayTracerOutput{0};
-        missShader->shade(0, rayTracerOutput, nullptr);
     }
+    return true;
 }
 
 bool Pipeline::addControlShader(ControlShader *controlShader) {
@@ -71,6 +74,7 @@ bool Pipeline::addControlShader(ControlShader *controlShader) {
     else{
         this->controlShader = controlShader;
     }
+    return true;
 }
 
 

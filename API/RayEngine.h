@@ -7,12 +7,21 @@
 
 #include <cstdint>
 #include <vector>
+#include <unordered_map>
 
 class DataManagementUnit;
 
+class Scene;
+
+struct Vector3D{
+    double x;
+    double y;
+    double z;
+};
+
 struct RayGeneratorOutput{
-    double rayOrigin[3];
-    double rayDirection[3];
+    Vector3D rayOrigin;
+    Vector3D rayDirection;
 };
 
 struct ShaderOutput{
@@ -20,8 +29,8 @@ struct ShaderOutput{
 };
 
 struct RayTracerOutput{
-    double intersectionPoint[3];
-    double normal[3];
+    Vector3D intersectionPoint;
+    Vector3D normal;
     long objectId;
 };
 
@@ -55,8 +64,8 @@ public:
 
 class MissShader{
 public:
-    virtual void* getAssociatedData();
-    virtual ShaderOutput shade(int id, RayTracerOutput shaderInput, void* dataInput);
+    virtual void* getAssociatedData() = 0;
+    virtual ShaderOutput shade(int id, RayTracerOutput shaderInput, void* dataInput) = 0;
     virtual ~MissShader() = default;
 };
 
@@ -91,7 +100,7 @@ public:
     bool addControlShader(ControlShader *controlShader);
 };
 
-class Object {
+class Object{
 private:
     std::vector<double> vertices;
     std::vector<double> normals;
@@ -99,37 +108,44 @@ private:
     std::vector<uint64_t> ids;
 
 public:
-    Object(std::vector<double> &vertices, std::vector<double> &normals, std::vector<double> &map,
-           std::vector<uint64_t> &ids);
+    Object(std::vector<double> const &vertices, std::vector<double> const &normals, std::vector<double> const &map,
+           std::vector<uint64_t> const &ids);
     ~Object();
 };
 
 class Geometry{
 private:
+    Scene* scene;
 
 public:
     Geometry();
     ~Geometry();
 
-    int addObject(Object object);
+    int addStaticObject(Object object, Vector3D position, Vector3D orientation);
+    int addAnimatedObject(Object object, Vector3D position, Vector3D orientation);
+    bool removeObject(int id);
+    bool moveObject(int id, Vector3D newPosition);
+    bool turnObject(int id, Vector3D newOrientation);
+    bool moveAndTurnObject(int id, Vector3D newPosition, Vector3D newOrientation);
+    bool updateAnimatedObject(int id, Object object);
 };
 
 class RayEngine{
 private:
     DataManagementUnit* dataManagementUnit;
-    std::vector<Pipeline> pipelines;
+    std::unordered_map<int, Pipeline> pipelines;
 
 public:
     RayEngine();
     ~RayEngine();
 
-    bool addPipeline(Pipeline const &pipeline);
-    bool removePipeline(Pipeline const &pipeline);
+    int addPipeline(Pipeline const &pipeline);
+    bool removePipeline(int id);
 
-    int runPipeline(Pipeline const &pipeline);
+    int runPipeline(int id);
     int runAll();
 
-    void addGeometry();
+    void addGeometry(Geometry geometry);
 };
 
 #endif //RAYTRACECORE_RAYENGINE_H

@@ -1,0 +1,12 @@
+//
+// Created by sebastian on 05.07.19.
+//
+
+#ifndef RAYTRACECORE_DATAMANAGEMENTUNIT_H
+#define RAYTRACECORE_DATAMANAGEMENTUNIT_H
+
+class DataManagementUnit{
+
+};
+
+#endif //RAYTRACECORE_DATAMANAGEMENTUNIT_H

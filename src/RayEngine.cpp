@@ -4,7 +4,7 @@
 
 #include <iostream>
 #include "../API/RayEngine.h"
-#include "./Data Management Unit/DataManagementUnit.cpp"
+#include "./Data Management/DataManagementUnit.h"
 
 RayEngine::RayEngine() {
     dataManagementUnit = new DataManagementUnit();
@@ -14,27 +14,19 @@ RayEngine::~RayEngine() {
     delete dataManagementUnit;
 }
 
-bool RayEngine::addPipeline(Pipeline const &pipeline) {
-    for(auto p : pipelines){
-        if(&p == &pipeline)
-            return false;
+int RayEngine::addPipeline(Pipeline const &pipeline) {
+    while(true){
+        int id = random();
+        if(pipelines.emplace(std::make_pair(id, pipeline)).second)
+            return id;
     }
-    pipelines.push_back(pipeline);
-    return true;
 }
 
-bool RayEngine::removePipeline(Pipeline const &pipeline) {
-    std::vector<Pipeline> newPipelines;
-    for(auto p : pipelines) {
-        if (&p != &pipeline)
-            newPipelines.push_back(p);
-    }
-    bool deleted = newPipelines.size() != pipelines.size();
-    pipelines = newPipelines;
-    return deleted;
+bool RayEngine::removePipeline(int id) {
+    return pipelines.erase(id);
 }
 
-int RayEngine::runPipeline(Pipeline const &pipeline) {
+int RayEngine::runPipeline(int id) {
     return 0;
 }
 
@@ -42,25 +34,17 @@ int RayEngine::runAll() {
     return 0;
 }
 
-void RayEngine::addGeometry() {
+void RayEngine::addGeometry(Geometry geometry) {
 
 }
 
-void *MissShader::getAssociatedData() {
-    return nullptr;
-}
-
-ShaderOutput MissShader::shade(int id, RayTracerOutput shaderInput, void *dataInput) {
-    return ShaderOutput();
-}
-
-Object::Object(std::vector<double> &vertices, std::vector<double> &normals, std::vector<double> &map,
-               std::vector<uint64_t> &ids) : vertices(vertices), normals(normals), map(map), ids(ids) {
+Object::Object(std::vector<double> const &vertices, std::vector<double> const &normals, std::vector<double> const &map,
+               std::vector<uint64_t> const &ids) : vertices(vertices), normals(normals), map(map), ids(ids) {
     if(ids.size() %3 != 0){
         std::__throw_invalid_argument("Invalid ID Count");
     }
     if(vertices.size() != normals.size()){
-        if(normals.size() != 0){
+        if(!normals.empty()){
             std::__throw_invalid_argument("Invalid Normal Count");
         }
     }else if(vertices.size() != map.size()){
@@ -69,3 +53,39 @@ Object::Object(std::vector<double> &vertices, std::vector<double> &normals, std:
 }
 
 Object::~Object() = default;
+
+Geometry::Geometry() {
+
+}
+
+Geometry::~Geometry() {
+
+}
+
+int Geometry::addStaticObject(Object object, Vector3D position, Vector3D orientation) {
+    return 0;
+}
+
+bool Geometry::removeObject(int id) {
+    return 0;
+}
+
+int Geometry::addAnimatedObject(Object object, Vector3D position, Vector3D orientation) {
+    return 0;
+}
+
+bool Geometry::moveObject(int id, Vector3D newPosition) {
+    return false;
+}
+
+bool Geometry::turnObject(int id, Vector3D newOrientation) {
+    return false;
+}
+
+bool Geometry::moveAndTurnObject(int id, Vector3D newPosition, Vector3D newOrientation) {
+    return false;
+}
+
+bool Geometry::updateAnimatedObject(int id, Object object) {
+    return false;
+}

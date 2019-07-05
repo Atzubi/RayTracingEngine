@@ -5,10 +5,6 @@
 #ifndef RAYENGINE_HBVH_H
 #define RAYENGINE_HBVH_H
 
-
-#include "API/DataManagementUnit.h"
-#include "src/boost.h"
-
 struct BBox {
     uint8_t x1, x2, y1, y2, z1, z2;
 };
@@ -28,8 +24,8 @@ private:
     HBVH * tree;
 
     void
-    findBoundaries(Primitive *primitives, uint64_t *ids, uint64_t min, uint64_t max, double_t *minX, double_t *minY,
-                   double_t *minZ, double_t *maxX, double_t *maxY, double_t *maxZ);
+    findBoundaries(Primitive *primitives, uint64_t *ids, uint64_t min, uint64_t max, double *minX, double *minY,
+                   double *minZ, double *maxX, double *maxY, double *maxZ);
 
     uint64_t partition(uint64_t *ids, Primitive a[], uint64_t left, uint64_t right, uint64_t pivotIndex, uint8_t dim);
 

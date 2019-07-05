@@ -11,7 +11,6 @@
 class BasicMissShader : public MissShader{
 public:
     ShaderOutput shade(int id, RayTracerOutput shaderInput, void *dataInput) override {
-        std::cout << "OMEGALUL\n";
         return ShaderOutput();
     }
 
