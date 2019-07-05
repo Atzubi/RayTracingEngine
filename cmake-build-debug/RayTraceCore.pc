@@ -1,0 +1,12 @@
+prefix=/usr/local
+exec_prefix=/usr/local
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: RayTraceCore
+Description: This library provides a toolset for raytracing on cpu and gpu
+Version: 1.0.0
+
+Requires:
+Libs: -L${libdir} -lRayTraceCore
+Cflags: -I${includedir}

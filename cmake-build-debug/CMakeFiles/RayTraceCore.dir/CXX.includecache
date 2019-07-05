@@ -1,0 +1,20 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/sebastian/CLionProjects/RayTraceCore_V2/API/RayEngine.h
+cstdint
+-
+vector
+-
+
+/home/sebastian/CLionProjects/RayTraceCore_V2/src/Pipeline/Pipeline.cpp
+iostream
+-
+../../API/RayEngine.h
+/home/sebastian/CLionProjects/RayTraceCore_V2/API/RayEngine.h
+
