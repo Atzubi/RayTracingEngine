@@ -1,7 +1,0 @@
-/home/sebastian/CLionProjects/RayTraceCore_V2/cmake-build-debug/CMakeFiles/install/strip.dir
-/home/sebastian/CLionProjects/RayTraceCore_V2/cmake-build-debug/CMakeFiles/edit_cache.dir
-/home/sebastian/CLionProjects/RayTraceCore_V2/cmake-build-debug/CMakeFiles/RayTraceCore.dir
-/home/sebastian/CLionProjects/RayTraceCore_V2/cmake-build-debug/CMakeFiles/list_install_components.dir
-/home/sebastian/CLionProjects/RayTraceCore_V2/cmake-build-debug/CMakeFiles/install/local.dir
-/home/sebastian/CLionProjects/RayTraceCore_V2/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-/home/sebastian/CLionProjects/RayTraceCore_V2/cmake-build-debug/CMakeFiles/install.dir
