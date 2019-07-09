@@ -128,6 +128,14 @@ public:
     virtual ~ControlShader() = default;
 };
 
+/**
+ * Contains all the information needed that defines a pipeline.
+ * Pipeline Model:
+ *                                      OcclusionShader
+ * RayGeneratorShader -> Ray Tracer ->  HitShader       -> ControlShader
+ *                                      PierceShader
+ *                                      MissShader
+ */
 class Pipeline{
 private:
     RayGeneratorShader* rayGeneratorShader;
@@ -152,6 +160,13 @@ public:
     bool addControlShader(ControlShader *controlShader);
 };
 
+/**
+ * Contains all the information required to construct a 3d model based on a 3d triangle mesh.
+ * vertices:        a list of coordinates that are used as vertices
+ * normals:         defines a normal per vertex
+ * map:             defines mapping coordinates per vertex
+ * ids:             a list of vertex ids that form a triangle
+ */
 class Object{
 private:
     std::vector<double>* vertices;
@@ -165,6 +180,9 @@ public:
     ~Object();
 };
 
+/**
+ *
+ */
 class RayEngine{
 private:
     DataManagementUnit* dataManagementUnit;
