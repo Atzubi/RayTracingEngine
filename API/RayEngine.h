@@ -11,8 +11,6 @@
 
 class DataManagementUnit;
 
-class Scene;
-
 struct Vector3D{
     double x;
     double y;
@@ -102,40 +100,26 @@ public:
 
 class Object{
 private:
-    std::vector<double> vertices;
-    std::vector<double> normals;
-    std::vector<double> map;
-    std::vector<uint64_t> ids;
+    std::vector<double>* vertices;
+    std::vector<double>* normals;
+    std::vector<double>* map;
+    std::vector<uint64_t>* ids;
 
 public:
-    Object(std::vector<double> const &vertices, std::vector<double> const &normals, std::vector<double> const &map,
-           std::vector<uint64_t> const &ids);
+    Object(std::vector<double>* vertices, std::vector<double>* normals, std::vector<double>* map,
+           std::vector<uint64_t>* ids);
     ~Object();
-};
-
-class Geometry{
-private:
-    Scene* scene;
-
-public:
-    Geometry();
-    ~Geometry();
-
-    int addStaticObject(Object object, Vector3D position, Vector3D orientation);
-    int addAnimatedObject(Object object, Vector3D position, Vector3D orientation);
-    bool removeObject(int id);
-    bool moveObject(int id, Vector3D newPosition);
-    bool turnObject(int id, Vector3D newOrientation);
-    bool moveAndTurnObject(int id, Vector3D newPosition, Vector3D newOrientation);
-    bool updateAnimatedObject(int id, Object object);
 };
 
 class RayEngine{
 private:
     DataManagementUnit* dataManagementUnit;
-    std::unordered_map<int, Pipeline> pipelines;
 
 public:
+    struct ObjectParameter{
+        double bounding;
+    };
+
     RayEngine();
     ~RayEngine();
 
@@ -145,7 +129,21 @@ public:
     int runPipeline(int id);
     int runAll();
 
-    void addGeometry(Geometry geometry);
+    bool bindGeometryToPipeline(int pipelineId, std::vector<int>* objectIds);
+
+    int addObject(Object const &object, Vector3D position, Vector3D orientation, ObjectParameter objectParameter);
+
+    bool removeObject(int id);
+
+    bool moveObject(int id, Vector3D newPosition);
+
+    bool turnObject(int id, Vector3D newOrientation);
+
+    bool scaleObject(int id, double newScaleFactor);
+
+    bool manipulateObject(int id, Vector3D newPosition, Vector3D newOrientation, double newScaleFactor);
+
+    bool updateObject(int id, Object const &object);
 };
 
 #endif //RAYTRACECORE_RAYENGINE_H
