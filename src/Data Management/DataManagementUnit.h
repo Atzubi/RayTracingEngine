@@ -6,7 +6,10 @@
 #define RAYTRACECORE_DATAMANAGEMENTUNIT_H
 
 class DataManagementUnit{
-
+public:
+    void lol(){
+        std::cout << "you monkey\n";
+    }
 };
 
 #endif //RAYTRACECORE_DATAMANAGEMENTUNIT_H
