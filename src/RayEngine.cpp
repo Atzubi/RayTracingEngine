@@ -46,7 +46,7 @@ bool RayEngine::turnObject(int id, Vector3D newOrientation) {
     return false;
 }
 
-int RayEngine::addObject(Object const &object, Vector3D position, Vector3D orientation, double newScaleFactor,
+int RayEngine::addObject(Object const &object, Vector3D position, Vector3D orientation,
                          RayEngine::ObjectParameter objectParameter) {
     return 0;
 }
