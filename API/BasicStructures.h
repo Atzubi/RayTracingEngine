@@ -14,4 +14,17 @@ struct Vector3D{
     double z;
 };
 
+struct BoundingBox{
+    Vector3D firstCorner, secondCorner;
+};
+
+struct IntersectionInfo{
+
+};
+
+struct Ray{
+    Vector3D origin, direction;
+    void* metaData;
+};
+
 #endif //RAYTRACECORE_BASICSTRUCTURES_H

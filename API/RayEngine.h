@@ -20,12 +20,12 @@ class DataManagementUnit;
 /**
  * The main part of the render engine. It contains all functionality for rendering.
  */
-class RayEngine{
+class RayEngine {
 private:
     /*
      * Contains all data used by the render engine
      */
-    DataManagementUnit* dataManagementUnit;
+    DataManagementUnit *dataManagementUnit;
 
 public:
     /*
@@ -34,11 +34,12 @@ public:
      *                  bigger boxes that cripple general rendering performance but speed up reconstructing the data
      *                  structure on an object update (animations)
      */
-    struct ObjectParameter{
+    struct ObjectParameter {
         double bounding;
     };
 
     RayEngine();
+
     ~RayEngine();
 
     /*
@@ -46,6 +47,7 @@ public:
      * return:          the id of the added pipeline
      */
     int addPipeline(Pipeline const &pipeline);
+
     /*
      * Removes a pipeline by id.
      * return:          true if success, false otherwise
@@ -57,6 +59,7 @@ public:
      * return:          status id (including error codes)
      */
     int runPipeline(int id);
+
     /*
      * Executes all pipelines in the pool.
      * return:          status id (including error codes)
@@ -68,7 +71,7 @@ public:
      * of the pipeline on execution.
      * return:          true if success, false otherwise
      */
-    bool bindGeometryToPipeline(int pipelineId, std::vector<int>* objectIds);
+    bool bindGeometryToPipeline(int pipelineId, std::vector<int> *objectIds);
 
     /*
      * Adds an object to the object pool.
@@ -78,11 +81,11 @@ public:
      * return:          the id of the object
      */
     int addObject(Object const &object, Vector3D position, Vector3D orientation, double newScaleFactor,
-            ObjectParameter objectParameter);
+                  ObjectParameter objectParameter);
 
     /*
      * Removes an object from the pool by id.
-     * return           true if success, false otherwise
+     * return:          true if success, false otherwise
      */
     bool removeObject(int id);
 

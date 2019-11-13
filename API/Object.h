@@ -9,48 +9,24 @@
 #include <cstdint>
 #include "BasicStructures.h"
 
-/**
- * Contains all the information required to construct a 3d model based on a 3d triangle mesh.
- * vertices:        a list of coordinates that are used as vertices
- * normals:         defines a normal per vertex
- * map:             defines mapping coordinates per vertex
- * ids:             a list of vertex ids that form a triangle
- */
-class Object{
-private:
-    std::vector<double>* vertices;
-    std::vector<double>* normals;
-    std::vector<double>* map;
-    std::vector<uint64_t>* ids;
-
+class Object {
 public:
-    Object(std::vector<double>* vertices, std::vector<double>* normals, std::vector<double>* map,
-           std::vector<uint64_t>* ids);
-    ~Object();
+    /*
+     * Default destructor
+     */
+    virtual ~Object() = default;
 
     /*
-     * Moves an object to newPosition.
-     * return:          true if success, false otherwise
+     * Returns the bounding box of the objects geometry.
+     * return:          the bounding box of the object
      */
-    bool moveObject(Vector3D newPosition);
+    virtual BoundingBox getBoundaries() = 0;
 
     /*
-     * Turns an object to newOrientation (euler angles).
-     * return:          true if success, false otherwise
+     * Computes the intersection with ray and this object.
+     * return:          information about the intersection
      */
-    bool turnObject(Vector3D newOrientation);
-
-    /*
-     * Scales an object to newScaleFactor.
-     * return:          true if success, false otherwise
-     */
-    bool scaleObject(double newScaleFactor);
-
-    /*
-     * Combines movement, orientation and scaling.
-     * return:          true if success, false otherwise
-     */
-    bool manipulateObject(Vector3D newPosition, Vector3D newOrientation, double newScaleFactor);
+    virtual IntersectionInfo intersect(Ray ray) = 0;
 };
 
 #endif //RAYTRACECORE_OBJECT_H
