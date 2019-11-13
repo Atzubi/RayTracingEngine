@@ -31,12 +31,12 @@ public:
 
     void setResolution(int width, int height);
 
-    bool addRayGeneratorShader(RayGeneratorShader *rayGeneratorShader);
-    bool addOcclusionShader(OcclusionShader *occlusionShader);
-    bool addPierceShader(PierceShader *pierceShader);
-    bool addHitShader(HitShader *hitShader);
-    bool addMissShader(MissShader *missShader);
-    bool addControlShader(ControlShader *controlShader);
+    bool setRayGeneratorShader(RayGeneratorShader *rayGeneratorShader);
+    bool setOcclusionShader(OcclusionShader *occlusionShader);
+    bool setPierceShader(PierceShader *pierceShader);
+    bool setHitShader(HitShader *hitShader);
+    bool setMissShader(MissShader *missShader);
+    bool setControlShader(ControlShader *controlShader);
 };
 
 #endif //RAYTRACECORE_PIPELINE_H

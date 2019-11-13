@@ -8,9 +8,9 @@ include(GNUInstallDirs)
 
 find_package(Threads)
 
-add_library(RayTraceCore SHARED src/RayEngine.cpp src/Pipeline/Pipeline.cpp API/TriangleMeshObject.h src/Object/TriangleMeshObject.cpp)
+add_library(RayTraceCore SHARED src/RayEngine.cpp src/Pipeline/Pipeline.cpp src/Object/TriangleMeshObject.cpp)
 
-set_target_properties(RayTraceCore PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION 1 PUBLIC_HEADER "API/RayTraceCore.h;API/RayEngine.h;API/MissShader.h;API/HitShader.h;API/OcclusionShader.h;API/PierceShader.h;API/RayGeneratorShader.h;API/Object.h;API/Pipeline.h;API/Shader.h;API/BasicStructures.h")
+set_target_properties(RayTraceCore PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION 1 PUBLIC_HEADER "API/RayTraceCore.h;API/RayEngine.h;API/MissShader.h;API/HitShader.h;API/OcclusionShader.h;API/PierceShader.h;API/RayGeneratorShader.h;API/Object.h;API/Pipeline.h;API/Shader.h;API/BasicStructures.h;API/TriangleMeshObject.h")
 
 configure_file(RayTraceCore.pc.in RayTraceCore.pc @ONLY)
 target_include_directories(RayTraceCore PRIVATE .)

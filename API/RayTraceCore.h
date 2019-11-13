@@ -11,5 +11,6 @@
 #include "PierceShader.h"
 #include "HitShader.h"
 #include "MissShader.h"
+#include "TriangleMeshObject.h"
 
 #endif //RAYTRACECORE_RAYTRACECORE_H

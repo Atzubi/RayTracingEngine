@@ -23,7 +23,7 @@ void Pipeline::setResolution(int resolutionWidth, int resolutionHeight) {
     height = resolutionHeight;
 }
 
-bool Pipeline::addRayGeneratorShader(RayGeneratorShader *rayGeneratorShader) {
+bool Pipeline::setRayGeneratorShader(RayGeneratorShader *rayGeneratorShader) {
     if(this->rayGeneratorShader != nullptr)
         return false;
     else{
@@ -32,7 +32,7 @@ bool Pipeline::addRayGeneratorShader(RayGeneratorShader *rayGeneratorShader) {
     return true;
 }
 
-bool Pipeline::addOcclusionShader(OcclusionShader *occlusionShader) {
+bool Pipeline::setOcclusionShader(OcclusionShader *occlusionShader) {
     if(this->occlusionShader != nullptr)
         return false;
     else{
@@ -41,7 +41,7 @@ bool Pipeline::addOcclusionShader(OcclusionShader *occlusionShader) {
     return true;
 }
 
-bool Pipeline::addPierceShader(PierceShader *pierceShader) {
+bool Pipeline::setPierceShader(PierceShader *pierceShader) {
     if(this->pierceShader != nullptr)
         return false;
     else{
@@ -50,7 +50,7 @@ bool Pipeline::addPierceShader(PierceShader *pierceShader) {
     return true;
 }
 
-bool Pipeline::addHitShader(HitShader *hitShader) {
+bool Pipeline::setHitShader(HitShader *hitShader) {
     if(this->hitShader != nullptr)
         return false;
     else{
@@ -59,7 +59,7 @@ bool Pipeline::addHitShader(HitShader *hitShader) {
     return true;
 }
 
-bool Pipeline::addMissShader(MissShader *missShader) {
+bool Pipeline::setMissShader(MissShader *missShader) {
     if(this->missShader != nullptr)
         return false;
     else{
@@ -68,7 +68,7 @@ bool Pipeline::addMissShader(MissShader *missShader) {
     return true;
 }
 
-bool Pipeline::addControlShader(ControlShader *controlShader) {
+bool Pipeline::setControlShader(ControlShader *controlShader) {
     if(this->controlShader != nullptr)
         return false;
     else{
