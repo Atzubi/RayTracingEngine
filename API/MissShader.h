@@ -10,6 +10,17 @@
 
 class BasicMissShader : public MissShader{
 public:
+    BasicMissShader(){
+
+    }
+    BasicMissShader(const BasicMissShader& copy){
+
+    }
+
+    Shader* clone(){
+        return new BasicMissShader(*this);
+    }
+
     ShaderOutput shade(int id, RayTracerOutput shaderInput, void *dataInput) {
         return ShaderOutput();
     }

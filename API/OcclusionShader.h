@@ -9,6 +9,17 @@
 
 class BasicOcclusionShader : public OcclusionShader{
 public:
+    BasicOcclusionShader(){
+
+    }
+    BasicOcclusionShader(const BasicOcclusionShader& copy){
+
+    }
+
+    Shader* clone(){
+        return new BasicOcclusionShader(*this);
+    }
+
     ShaderOutput shade(int id, RayTracerOutput shaderInput, void *dataInput) {
         return ShaderOutput();
     }

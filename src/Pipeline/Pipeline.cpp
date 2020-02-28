@@ -3,6 +3,8 @@
 //
 
 #include <iostream>
+#include <API/Pipeline.h>
+
 #include "../../API/RayEngine.h"
 
 Pipeline::Pipeline(int resolutionWidth, int resolutionHeight) {

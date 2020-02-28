@@ -41,7 +41,12 @@ struct RayTracerOutput{
 };
 
 class Shader{
-
+public:
+    /*
+     * Clones the object
+     * return:          pointer to a new copy
+     */
+    virtual Shader* clone() = 0;
 };
 
 /**

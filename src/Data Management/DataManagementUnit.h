@@ -10,11 +10,19 @@
 
 class DataManagementUnit{
 private:
-    std::unordered_map<int, Object*> objects;
+    struct ObjectMeta{
+        Object* object;
+        Vector3D position;
+        Vector3D orientation;
+        double newScaleFactor;
+        ObjectParameter objectParameter;
+    };
+
+    std::unordered_map<int, ObjectMeta> objects;
     std::set<int> objectIds;
     std::unordered_map<int, Shader*> shaders;
     std::set<int> shaderIds;
-    std::unordered_map<int, Pipeline*> pipelines;
+    std::unordered_map<int, Pipeline> pipelines;
     std::set<int> pipelineIds;
 
 public:
@@ -25,7 +33,7 @@ public:
      * Adds a pipeline to the pipeline pool.
      * return:          the id of the added pipeline
      */
-    int addPipeline(Pipeline &pipeline);
+    int addPipeline(Pipeline* pipeline);
 
     /*
      * Removes a pipeline by id.
@@ -56,7 +64,7 @@ public:
      * orientation:     the relative orientation of the object in space
      * return:          the id of the object
      */
-    int addObject(Object const &object, Vector3D position, Vector3D orientation, double newScaleFactor,
+    int addObject(Object* object, Vector3D position, Vector3D orientation, double newScaleFactor,
                   ObjectParameter objectParameter);
 
     /*
@@ -69,14 +77,19 @@ public:
      * Updates an objects mesh to a new mesh given by object.
      * return:          true if success, false otherwise
      */
-    bool updateObject(int id, Object const &object);
+    bool updateObject(int id, Object* object);
 
     /*
      * Adds a shader to the shader pool.
      * shader:          the added shader
      * return:          the id of the shader
      */
-    int addShader(Shader shader);
+    int addShader(ControlShader* shader);
+    int addShader(HitShader* shader);
+    int addShader(MissShader* shader);
+    int addShader(OcclusionShader* shader);
+    int addShader(PierceShader* shader);
+    int addShader(RayGeneratorShader* shader);
 
     /*
      * Removes the shader from the pool.

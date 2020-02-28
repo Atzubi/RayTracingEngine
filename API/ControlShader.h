@@ -10,6 +10,17 @@
 
 class BasicControlShader : public ControlShader{
 public:
+    BasicControlShader(){
+
+    }
+    BasicControlShader(const BasicControlShader& copy){
+
+    }
+
+    Shader* clone(){
+        return new BasicControlShader(*this);
+    }
+
     int shade(int id, ShaderOutput shaderInput, void *dataInput) {
 
     }

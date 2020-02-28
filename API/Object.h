@@ -17,6 +17,12 @@ public:
     virtual ~Object() = default;
 
     /*
+     * Clones the object
+     * return:          pointer to a new copy
+     */
+    virtual Object* clone() = 0;
+
+    /*
      * Returns the bounding box of the objects geometry.
      * return:          the bounding box of the object
      */

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(RayTraceCore VERSION 1.0.0 DESCRIPTION "This library provides a toolset for raytracing on cpu and gpu")
 
-set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-std=c++17 ")#-Ofast -march=native")
+set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-std=c++17 -Ofast -march=native")
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules" ${CMAKE_MODULE_PATH})
 
 include(GNUInstallDirs)

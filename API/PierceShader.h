@@ -9,6 +9,17 @@
 
 class BasicPierceShader : public PierceShader{
 public:
+    BasicPierceShader(){
+
+    }
+    BasicPierceShader(const BasicPierceShader& copy){
+
+    }
+
+    Shader* clone(){
+        return new BasicPierceShader(*this);
+    }
+
     ShaderOutput shade(int id, RayTracerOutput shaderInput, void *dataInput) {
         return ShaderOutput();
     }

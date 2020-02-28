@@ -22,7 +22,7 @@ int RayEngine::runAll() {
     return 0;
 }
 
-int RayEngine::addPipeline(Pipeline &pipeline) {
+int RayEngine::addPipeline(Pipeline* pipeline) {
     return dataManagementUnit->addPipeline(pipeline);
 }
 
@@ -31,38 +31,58 @@ bool RayEngine::removePipeline(int id) {
 }
 
 bool RayEngine::bindGeometryToPipeline(int pipelineId, std::vector<int>* objectIds) {
-    return false;
+    return dataManagementUnit->bindGeometryToPipeline(pipelineId, objectIds);
 }
 
-int RayEngine::addObject(Object &object, Vector3D position, Vector3D orientation, double newScaleFactor,
+int RayEngine::addObject(Object* object, Vector3D position, Vector3D orientation, double newScaleFactor,
                       ObjectParameter objectParameter) {
-    return 0;
+    return dataManagementUnit->addObject(object, position, orientation, newScaleFactor, objectParameter);
 }
 
 bool RayEngine::removeObject(int id) {
-    return false;
+    return dataManagementUnit->removeObject(id);
 }
 
-bool RayEngine::updateObject(int id, Object &object) {
-    return false;
+bool RayEngine::updateObject(int id, Object* object) {
+    return dataManagementUnit->updateObject(id, object);
 }
 
 bool RayEngine::bindShaderToPipeline(int pipelineId, int shaderId, std::vector<int> shaderResourceIds) {
-    return false;
+    return dataManagementUnit->bindShaderToPipeline(pipelineId, shaderId, shaderResourceIds);
 }
 
-int RayEngine::addShader(Shader shader) {
-    return 0;
+int RayEngine::addShader(ControlShader* shader) {
+    return dataManagementUnit->addShader(shader);
+}
+
+int RayEngine::addShader(HitShader* shader) {
+    return dataManagementUnit->addShader(shader);
+}
+
+int RayEngine::addShader(MissShader* shader) {
+    return dataManagementUnit->addShader(shader);
+}
+
+int RayEngine::addShader(OcclusionShader* shader) {
+    return dataManagementUnit->addShader(shader);
+}
+
+int RayEngine::addShader(PierceShader* shader) {
+    return dataManagementUnit->addShader(shader);
+}
+
+int RayEngine::addShader(RayGeneratorShader* shader) {
+    return dataManagementUnit->addShader(shader);
 }
 
 bool RayEngine::removeShader(int id) {
-    return false;
+    return dataManagementUnit->removeShader(id);
 }
 
 int RayEngine::addShaderResource(Any resource) {
-    return 0;
+    return dataManagementUnit->addShaderResource(resource);
 }
 
 bool RayEngine::removeShaderResource(int id) {
-    return false;
+    return dataManagementUnit->removeShaderResource(id);
 }

@@ -14,17 +14,20 @@ DataManagementUnit::DataManagementUnit(){
 }
 
 DataManagementUnit::~DataManagementUnit() {
-
+    for(auto obj : objectIds){
+        removeObject(obj);
+    }
 }
 
-int DataManagementUnit::addPipeline(Pipeline &pipeline) {
-    pipelines.insert(std::pair<int, Pipeline*>(*pipelineIds.begin(), &pipeline));
+int DataManagementUnit::addPipeline(Pipeline* pipeline) {
+    pipelines.insert(std::pair<int, Pipeline>(*pipelineIds.begin(), *pipeline));
+
     int buffer = pipelineIds.extract(pipelineIds.begin()).value();
+
     if (pipelineIds.empty()) {
         pipelineIds.insert(buffer + 1);
-
-        std::cout << "test " << buffer + 1 << std::endl;
     }
+
     return buffer;
 }
 
@@ -55,20 +58,66 @@ bool DataManagementUnit::bindShaderToPipeline(int pipelineId, int shaderId, std:
     return false;
 }
 
-int DataManagementUnit::addObject(const Object &object, Vector3D position, Vector3D orientation, double newScaleFactor,
+int DataManagementUnit::addObject(Object* object, Vector3D position, Vector3D orientation, double newScaleFactor,
                                   ObjectParameter objectParameter) {
-    return 0;
+    ObjectMeta objectMeta = {object->clone(), position, orientation, newScaleFactor, objectParameter};
+    objects.insert(std::pair<int, ObjectMeta>(*objectIds.begin(), objectMeta));
+
+    int buffer = objectIds.extract(objectIds.begin()).value();
+
+    if (objectIds.empty()) {
+        objectIds.insert(buffer + 1);
+    }
+
+    return buffer;
 }
 
 bool DataManagementUnit::removeObject(int id) {
+    if(objects.count(id) == 0)
+        return false;
+
+    ObjectMeta objectMeta = objects.extract(id).mapped();
+    objectMeta.object->~Object();
+    free(objectMeta.object);
+    objectIds.insert(id);
+
+    auto iterator =  objectIds.rbegin();
+    int end = *iterator - 1;
+
+    int buffer = *iterator;
+    while(end-- == *++iterator){
+        objectIds.erase(buffer);
+        buffer = *iterator;
+    }
+
+    return true;
+}
+
+bool DataManagementUnit::updateObject(int id, Object* object) {
     return false;
 }
 
-bool DataManagementUnit::updateObject(int id, const Object &object) {
-    return false;
+int DataManagementUnit::addShader(ControlShader* shader) {
+    return 0;
 }
 
-int DataManagementUnit::addShader(Shader shader) {
+int DataManagementUnit::addShader(HitShader* shader) {
+    return 0;
+}
+
+int DataManagementUnit::addShader(MissShader* shader) {
+    return 0;
+}
+
+int DataManagementUnit::addShader(OcclusionShader* shader) {
+    return 0;
+}
+
+int DataManagementUnit::addShader(PierceShader* shader) {
+    return 0;
+}
+
+int DataManagementUnit::addShader(RayGeneratorShader* shader) {
     return 0;
 }
 

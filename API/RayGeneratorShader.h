@@ -9,6 +9,17 @@
 
 class BasicRayGeneratorShader : public RayGeneratorShader{
 public:
+    BasicRayGeneratorShader(){
+
+    }
+    BasicRayGeneratorShader(const BasicRayGeneratorShader& copy){
+
+    }
+
+    Shader* clone(){
+        return new BasicRayGeneratorShader(*this);
+    }
+
     RayGeneratorOutput shade(int id, void *dataInput) {
         return RayGeneratorOutput();
     }

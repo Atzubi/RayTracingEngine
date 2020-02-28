@@ -9,6 +9,17 @@
 
 class BasicHitShader : public HitShader{
 public:
+    BasicHitShader(){
+
+    }
+    BasicHitShader(const BasicHitShader& copy){
+
+    }
+
+    Shader* clone(){
+        return new BasicHitShader(*this);
+    }
+
     ShaderOutput shade(int id, RayTracerOutput shaderInput, void *dataInput) {
         return ShaderOutput();
     }
