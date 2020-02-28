@@ -9,11 +9,11 @@
 
 class BasicOcclusionShader : public OcclusionShader{
 public:
-    ShaderOutput shade(int id, RayTracerOutput shaderInput, void *dataInput) override {
+    ShaderOutput shade(int id, RayTracerOutput shaderInput, void *dataInput) {
         return ShaderOutput();
     }
 
-    void *getAssociatedData() override {
+    void *getAssociatedData() {
         return nullptr;
     }
 };

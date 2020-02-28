@@ -40,14 +40,17 @@ struct RayTracerOutput{
     long objectId;
 };
 
+class Shader{
+
+};
+
 /**
  * Template for the Ray Generator Shader to be implemented. It generates the ray used for ray tracing.
  * getAssociatedData:   returns a pointer to the data that is fed to this RayGeneratorShader on execution
  * shade:               the template for the shader that is used in the pipeline
  */
-class RayGeneratorShader{
+class RayGeneratorShader : public Shader{
 public:
-    virtual void* getAssociatedData() = 0;
     virtual RayGeneratorOutput shade(int id, void* dataInput) = 0;
     virtual ~RayGeneratorShader() = default;
 };
@@ -57,9 +60,8 @@ public:
  * getAssociatedData:   returns a pointer to the data that is fed to this RayGeneratorShader on execution
  * shade:               the template for the shader that is used in the pipeline
  */
-class OcclusionShader{
+class OcclusionShader : public Shader{
 public:
-    virtual void* getAssociatedData() = 0;
     virtual ShaderOutput shade(int id, RayTracerOutput shaderInput, void* dataInput) = 0;
     virtual ~OcclusionShader() = default;
 };
@@ -69,9 +71,8 @@ public:
  * getAssociatedData:   returns a pointer to the data that is fed to this RayGeneratorShader on execution
  * shade:               the template for the shader that is used in the pipeline
  */
-class PierceShader{
+class PierceShader : public Shader{
 public:
-    virtual void* getAssociatedData() = 0;
     virtual ShaderOutput shade(int id, RayTracerOutput shaderInput, void* dataInput) = 0;
     virtual ~PierceShader() = default;
 };
@@ -81,9 +82,8 @@ public:
  * getAssociatedData:   returns a pointer to the data that is fed to this RayGeneratorShader on execution
  * shade:               the template for the shader that is used in the pipeline
  */
-class HitShader{
+class HitShader : public Shader{
 public:
-    virtual void* getAssociatedData() = 0;
     virtual ShaderOutput shade(int id, RayTracerOutput shaderInput, void* dataInput) = 0;
     virtual ~HitShader() = default;
 };
@@ -93,9 +93,8 @@ public:
  * getAssociatedData:   returns a pointer to the data that is fed to this RayGeneratorShader on execution
  * shade:               the template for the shader that is used in the pipeline
  */
-class MissShader{
+class MissShader : public Shader{
 public:
-    virtual void* getAssociatedData() = 0;
     virtual ShaderOutput shade(int id, RayTracerOutput shaderInput, void* dataInput) = 0;
     virtual ~MissShader() = default;
 };
@@ -106,9 +105,8 @@ public:
  * getAssociatedData:   returns a pointer to the data that is fed to this RayGeneratorShader on execution
  * shade:               the template for the shader that is used in the pipeline
  */
-class ControlShader{
+class ControlShader : public Shader{
 public:
-    virtual void* getAssociatedData() = 0;
     virtual int shade(int id, ShaderOutput shaderInput, void* dataInput) = 0;
     virtual ~ControlShader() = default;
 };

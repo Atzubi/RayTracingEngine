@@ -9,11 +9,11 @@
 
 class BasicRayGeneratorShader : public RayGeneratorShader{
 public:
-    RayGeneratorOutput shade(int id, void *dataInput) override {
+    RayGeneratorOutput shade(int id, void *dataInput) {
         return RayGeneratorOutput();
     }
 
-    void *getAssociatedData() override {
+    void *getAssociatedData() {
         return nullptr;
     }
 };

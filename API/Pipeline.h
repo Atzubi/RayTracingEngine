@@ -17,12 +17,6 @@
  */
 class Pipeline{
 private:
-    RayGeneratorShader* rayGeneratorShader;
-    OcclusionShader* occlusionShader;
-    PierceShader* pierceShader;
-    HitShader* hitShader;
-    MissShader* missShader;
-    ControlShader* controlShader;
     int width, height;
 
 public:
@@ -30,13 +24,6 @@ public:
     ~Pipeline();
 
     void setResolution(int width, int height);
-
-    bool setRayGeneratorShader(RayGeneratorShader *rayGeneratorShader);
-    bool setOcclusionShader(OcclusionShader *occlusionShader);
-    bool setPierceShader(PierceShader *pierceShader);
-    bool setHitShader(HitShader *hitShader);
-    bool setMissShader(MissShader *missShader);
-    bool setControlShader(ControlShader *controlShader);
 };
 
 #endif //RAYTRACECORE_PIPELINE_H

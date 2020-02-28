@@ -10,6 +10,7 @@
 #include <unordered_map>
 #include "Pipeline.h"
 #include "Object.h"
+#include "Shader.h"
 
 /**
  * Contains all data structures
@@ -18,7 +19,7 @@ class DataManagementUnit;
 
 
 /**
- * The main part of the render engine. It contains all functionality for rendering.
+ * The interface of the render engine. It contains all functionality for rendering.
  */
 class RayEngine {
 private:
@@ -74,6 +75,15 @@ public:
     bool bindGeometryToPipeline(int pipelineId, std::vector<int> *objectIds);
 
     /*
+     * Binds a shader with its resources to a pipeline.
+     * pipelineId:      the pipeline id, the shader with its resources gets bound to
+     * shaderId:        the shader id
+     * shaderResourceIds:   the vector of shader resource ids that are associated with the shader
+     * return:          true if success, false otherwise
+     */
+    bool bindShaderToPipeline(int pipelineId, int shaderId, std::vector<int> shaderResourceIds);
+
+    /*
      * Adds an object to the object pool.
      * object:          the basic definition of the object
      * position:        the relative position of the object in space
@@ -94,6 +104,34 @@ public:
      * return:          true if success, false otherwise
      */
     bool updateObject(int id, Object const &object);
+
+    /*
+     * Adds a shader to the shader pool.
+     * shader:          the added shader
+     * return:          the id of the shader
+     */
+    int addShader(Shader shader);
+
+    /*
+     * Removes the shader from the pool.
+     * id:              the id of the shader
+     * return:          true if success, false otherwise
+     */
+    bool removeShader(int id);
+
+    /*
+     * Adds shader related data to the pool.
+     * resource:        the data that is used by a shader
+     * return:          the id of the resource
+     */
+    int addShaderResource(Any resource);
+
+    /*
+     * Removes the shader resource from the pool.
+     * id:              the id of the resource
+     * return:          true if success, false otherwise
+     */
+    bool removeShaderResource(int id);
 };
 
 #endif //RAYTRACECORE_RAYENGINE_H

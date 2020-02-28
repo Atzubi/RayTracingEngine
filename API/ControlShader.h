@@ -10,11 +10,11 @@
 
 class BasicControlShader : public ControlShader{
 public:
-    int shade(int id, ShaderOutput shaderInput, void *dataInput) override {
+    int shade(int id, ShaderOutput shaderInput, void *dataInput) {
 
     }
 
-    void *getAssociatedData() override {
+    void *getAssociatedData() {
         return nullptr;
     }
 };

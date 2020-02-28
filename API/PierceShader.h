@@ -5,15 +5,15 @@
 #ifndef RAYTRACECORE_PIERCESHADER_H
 #define RAYTRACECORE_PIERCESHADER_H
 
-#include "RayEngine.h"
+//#include "RayEngine.h"
 
 class BasicPierceShader : public PierceShader{
 public:
-    ShaderOutput shade(int id, RayTracerOutput shaderInput, void *dataInput) override {
+    ShaderOutput shade(int id, RayTracerOutput shaderInput, void *dataInput) {
         return ShaderOutput();
     }
 
-    void *getAssociatedData() override {
+    void *getAssociatedData() {
         return nullptr;
     }
 };

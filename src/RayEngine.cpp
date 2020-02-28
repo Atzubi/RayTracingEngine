@@ -46,3 +46,23 @@ bool RayEngine::removeObject(int id) {
 bool RayEngine::updateObject(int id, Object const &object) {
     return false;
 }
+
+bool RayEngine::bindShaderToPipeline(int pipelineId, int shaderId, std::vector<int> shaderResourceIds) {
+    return false;
+}
+
+int RayEngine::addShader(Shader shader) {
+    return 0;
+}
+
+bool RayEngine::removeShader(int id) {
+    return false;
+}
+
+int RayEngine::addShaderResource(Any resource) {
+    return 0;
+}
+
+bool RayEngine::removeShaderResource(int id) {
+    return false;
+}
