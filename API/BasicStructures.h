@@ -16,6 +16,16 @@ struct Vector3D {
     double z;
 };
 
+/*
+ * Contains additional parameters of an object that are used when constructing the data structure for rendering.
+ * bounding:        a parameter used for describing the looseness of an objects bounding, higher values create
+ *                  bigger boxes that cripple general rendering performance but speed up reconstructing the data
+ *                  structure on an object update (animations)
+ */
+struct ObjectParameter {
+    double bounding;
+};
+
 struct BoundingBox {
     Vector3D firstCorner, secondCorner;
 };

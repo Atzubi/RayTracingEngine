@@ -7,10 +7,10 @@
 
 #include <cstdint>
 #include <vector>
-#include <unordered_map>
 #include "Pipeline.h"
 #include "Object.h"
 #include "Shader.h"
+#include "BasicStructures.h"
 
 /**
  * Contains all data structures
@@ -29,16 +29,6 @@ private:
     DataManagementUnit *dataManagementUnit;
 
 public:
-    /*
-     * Contains additional parameters of an object that are used when constructing the data structure for rendering.
-     * bounding:        a parameter used for describing the looseness of an objects bounding, higher values create
-     *                  bigger boxes that cripple general rendering performance but speed up reconstructing the data
-     *                  structure on an object update (animations)
-     */
-    struct ObjectParameter {
-        double bounding;
-    };
-
     RayEngine();
 
     ~RayEngine();
@@ -47,7 +37,7 @@ public:
      * Adds a pipeline to the pipeline pool.
      * return:          the id of the added pipeline
      */
-    int addPipeline(Pipeline const &pipeline);
+    int addPipeline(Pipeline &pipeline);
 
     /*
      * Removes a pipeline by id.
@@ -90,7 +80,7 @@ public:
      * orientation:     the relative orientation of the object in space
      * return:          the id of the object
      */
-    int addObject(Object const &object, Vector3D position, Vector3D orientation, double newScaleFactor,
+    int addObject(Object &object, Vector3D position, Vector3D orientation, double newScaleFactor,
                   ObjectParameter objectParameter);
 
     /*
@@ -103,7 +93,7 @@ public:
      * Updates an objects mesh to a new mesh given by object.
      * return:          true if success, false otherwise
      */
-    bool updateObject(int id, Object const &object);
+    bool updateObject(int id, Object &object);
 
     /*
      * Adds a shader to the shader pool.

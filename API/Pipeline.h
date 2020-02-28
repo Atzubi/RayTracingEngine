@@ -20,7 +20,7 @@ private:
     int width, height;
 
 public:
-    Pipeline();
+    Pipeline(int width, int height);
     ~Pipeline();
 
     void setResolution(int width, int height);

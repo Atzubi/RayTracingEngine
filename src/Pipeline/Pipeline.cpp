@@ -5,9 +5,9 @@
 #include <iostream>
 #include "../../API/RayEngine.h"
 
-Pipeline::Pipeline() {
-    width = 0;
-    height = 0;
+Pipeline::Pipeline(int resolutionWidth, int resolutionHeight) {
+    this->width = resolutionWidth;
+    this->height = resolutionHeight;
 }
 
 Pipeline::~Pipeline() = default;

@@ -22,20 +22,20 @@ int RayEngine::runAll() {
     return 0;
 }
 
-int RayEngine::addPipeline(Pipeline const &pipeline) {
-    return 0;
+int RayEngine::addPipeline(Pipeline &pipeline) {
+    return dataManagementUnit->addPipeline(pipeline);
 }
 
 bool RayEngine::removePipeline(int id) {
-    return false;
+    return dataManagementUnit->removePipeline(id);
 }
 
 bool RayEngine::bindGeometryToPipeline(int pipelineId, std::vector<int>* objectIds) {
     return false;
 }
 
-int RayEngine::addObject(Object const &object, Vector3D position, Vector3D orientation, double newScaleFactor,
-                      RayEngine::ObjectParameter objectParameter) {
+int RayEngine::addObject(Object &object, Vector3D position, Vector3D orientation, double newScaleFactor,
+                      ObjectParameter objectParameter) {
     return 0;
 }
 
@@ -43,7 +43,7 @@ bool RayEngine::removeObject(int id) {
     return false;
 }
 
-bool RayEngine::updateObject(int id, Object const &object) {
+bool RayEngine::updateObject(int id, Object &object) {
     return false;
 }
 
