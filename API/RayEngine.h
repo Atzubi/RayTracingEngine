@@ -177,7 +177,7 @@ public:
      * resource:        the data that is used by a shader
      * return:          the id of the resource
      */
-    int addShaderResource(Any resource);
+    int addShaderResource(Any *resource);
 
     /*
      * Removes the shader resource from the pool.

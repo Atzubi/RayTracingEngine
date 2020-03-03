@@ -20,7 +20,12 @@ private:
 
     std::unordered_map<int, Object *> objects;
     std::set<int> objectIds;
-    std::unordered_map<int, Shader *> shaders;
+    std::unordered_map<int, ControlShader *> controlShaders;
+    std::unordered_map<int, HitShader *> hitShaders;
+    std::unordered_map<int, MissShader *> missShaders;
+    std::unordered_map<int, OcclusionShader *> occlusionShaders;
+    std::unordered_map<int, PierceShader *> pierceShaders;
+    std::unordered_map<int, RayGeneratorShader *> rayGeneratorShaders;
     std::set<int> shaderIds;
     std::unordered_map<int, Any *> shadersResources;
     std::set<int> shaderResourceIds;
@@ -114,7 +119,7 @@ public:
     /*
      * Removes a single shader instance from the specified pipeline.
      * pipelineId:      the pipeline the object instance is associated with
-     * shaderInstanceId:    the shaders instance id
+     * shaderInstanceId:    the shaders instance id    objects.erase(id);
      * return:          true if success, false otherwise
      */
     bool removePipelineShader(int pipelineId, int shaderInstanceId);
@@ -192,7 +197,7 @@ public:
      * resource:        the data that is used by a shader
      * return:          the id of the resource
      */
-    int addShaderResource(Any resource);
+    int addShaderResource(Any *resource);
 
     /*
      * Removes the shader resource from the pool.

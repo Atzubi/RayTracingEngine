@@ -58,7 +58,7 @@ DataManagementUnit::updatePipelineShader(int pipelineId, int shaderInstanceId, s
 }
 
 bool DataManagementUnit::bindObjectToPipeline(int pipelineId, int *objectId, Vector3D position, Vector3D orientation,
-                                           double newScaleFactor, ObjectParameter objectParameter) {
+                                              double newScaleFactor, ObjectParameter objectParameter) {
     return false;
 }
 
@@ -114,42 +114,145 @@ bool DataManagementUnit::removeObject(int id) {
 }
 
 bool DataManagementUnit::updateObject(int id, Object *object) {
-    return false;
+    if(objects.count(id) == 0) {
+        return false;
+    }else{
+        objects.at(id) = object->clone();
+        return true;
+    }
 }
 
 int DataManagementUnit::addShader(ControlShader *shader) {
-    return 0;
+    controlShaders.insert(std::pair<int, ControlShader *>(*shaderIds.begin(), shader));
+
+    int buffer = shaderIds.extract(shaderIds.begin()).value();
+
+    if (shaderIds.empty()) {
+        shaderIds.insert(buffer + 1);
+    }
+
+    return buffer;
 }
 
 int DataManagementUnit::addShader(HitShader *shader) {
-    return 0;
+    hitShaders.insert(std::pair<int, HitShader *>(*shaderIds.begin(), shader));
+
+    int buffer = shaderIds.extract(shaderIds.begin()).value();
+
+    if (shaderIds.empty()) {
+        shaderIds.insert(buffer + 1);
+    }
+
+    return buffer;
 }
 
 int DataManagementUnit::addShader(MissShader *shader) {
-    return 0;
+    missShaders.insert(std::pair<int, MissShader *>(*shaderIds.begin(), shader));
+
+    int buffer = shaderIds.extract(shaderIds.begin()).value();
+
+    if (shaderIds.empty()) {
+        shaderIds.insert(buffer + 1);
+    }
+
+    return buffer;
 }
 
 int DataManagementUnit::addShader(OcclusionShader *shader) {
-    return 0;
+    occlusionShaders.insert(std::pair<int, OcclusionShader *>(*shaderIds.begin(), shader));
+
+    int buffer = shaderIds.extract(shaderIds.begin()).value();
+
+    if (shaderIds.empty()) {
+        shaderIds.insert(buffer + 1);
+    }
+
+    return buffer;
 }
 
 int DataManagementUnit::addShader(PierceShader *shader) {
-    return 0;
+    pierceShaders.insert(std::pair<int, PierceShader *>(*shaderIds.begin(), shader));
+
+    int buffer = shaderIds.extract(shaderIds.begin()).value();
+
+    if (shaderIds.empty()) {
+        shaderIds.insert(buffer + 1);
+    }
+
+    return buffer;
 }
 
 int DataManagementUnit::addShader(RayGeneratorShader *shader) {
-    return 0;
+    rayGeneratorShaders.insert(std::pair<int, RayGeneratorShader *>(*shaderIds.begin(), shader));
+
+    int buffer = shaderIds.extract(shaderIds.begin()).value();
+
+    if (shaderIds.empty()) {
+        shaderIds.insert(buffer + 1);
+    }
+
+    return buffer;
 }
 
 bool DataManagementUnit::removeShader(int id) {
-    return false;
+    if (controlShaders.count(id) != 0) {
+        controlShaders.erase(id);
+    } else if (hitShaders.count(id) != 0) {
+        hitShaders.erase(id);
+    } else if (missShaders.count(id) != 0) {
+        missShaders.erase(id);
+    } else if (occlusionShaders.count(id) != 0) {
+        occlusionShaders.erase(id);
+    } else if (pierceShaders.count(id) != 0) {
+        pierceShaders.erase(id);
+    } else if (rayGeneratorShaders.count(id) != 0) {
+        rayGeneratorShaders.erase(id);
+    } else {
+        return false;
+    }
+
+    shaderIds.insert(id);
+
+    auto iterator = shaderIds.rbegin();
+    int end = *iterator - 1;
+
+    int buffer = *iterator;
+    while (end-- == *++iterator) {
+        shaderIds.erase(buffer);
+        buffer = *iterator;
+    }
+
+    return true;
 }
 
-int DataManagementUnit::addShaderResource(Any resource) {
-    return 0;
+int DataManagementUnit::addShaderResource(Any *resource) {
+    shadersResources.insert(std::pair<int, Any *>(*shaderResourceIds.begin(), resource));
+
+    int buffer = shaderResourceIds.extract(shaderResourceIds.begin()).value();
+
+    if (shaderResourceIds.empty()) {
+        shaderResourceIds.insert(buffer + 1);
+    }
+
+    return buffer;
 }
 
 bool DataManagementUnit::removeShaderResource(int id) {
-    return false;
+    if (shadersResources.count(id) == 0)
+        return false;
+
+    shadersResources.erase(id);
+    shaderResourceIds.insert(id);
+
+    auto iterator = shaderResourceIds.rbegin();
+    int end = *iterator - 1;
+
+    int buffer = *iterator;
+    while (end-- == *++iterator) {
+        shaderResourceIds.erase(buffer);
+        buffer = *iterator;
+    }
+
+    return true;
 }
 
