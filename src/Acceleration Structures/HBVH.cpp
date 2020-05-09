@@ -271,8 +271,10 @@ void HeapBVH::recursiveBuild(uint64_t min, uint64_t max, Primitive *primitives, 
     // Spawns multiple threads to work on the sub problems up to a certain amount
     if (depth < 4) {
         std::thread left, right;
-        left = std::thread(&HeapBVH::recursiveBuild, this, min, min + midpoint - 1, primitives, depth + 1, ids, tree, pos * 2 + 1, bMin, bMax);
-        right = std::thread(&HeapBVH::recursiveBuild, this, min + midpoint, max, primitives, depth + 1, ids, tree, pos * 2 + 2, bMin, bMax);
+        left = std::thread(&HeapBVH::recursiveBuild, this, min, min + midpoint - 1, primitives, depth + 1, ids, tree,
+                           pos * 2 + 1, bMin, bMax);
+        right = std::thread(&HeapBVH::recursiveBuild, this, min + midpoint, max, primitives, depth + 1, ids, tree,
+                            pos * 2 + 2, bMin, bMax);
         left.join();
         right.join();
     } else {
@@ -322,7 +324,7 @@ void HeapBVH::build(Primitive *primitives, uint64_t size) {
 
     //-------------done building the tree---------------------------------------------------------
 
-    free(ids);
+    delete (ids);
 }
 
 HBVH *HeapBVH::getHBVH() {
