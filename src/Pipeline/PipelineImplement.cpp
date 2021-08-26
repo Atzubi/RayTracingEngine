@@ -75,7 +75,7 @@ int PipelineImplement::run() {
 
                         for (auto hitShader : hitShaders) {
                             auto pixel = hitShader->shade(rays.id, &pipelineInfo, &info, nullptr, &newRays);
-                            std::cout << rays.id << " " << (int)pixel.color[0] << " " << (int)pixel.color[1] << " " << (int)pixel.color[2] << std::endl;
+                            //std::cout << rays.id << " " << (int)pixel.color[0] << " " << (int)pixel.color[1] << " " << (int)pixel.color[2] << std::endl;
                             result.image[rays.id * 3] += pixel.color[0];
                             result.image[rays.id * 3 + 1] += pixel.color[1];
                             result.image[rays.id * 3 + 2] += pixel.color[2];
