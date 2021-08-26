@@ -8,6 +8,7 @@
 #include "API/Pipeline.h"
 #include "API/Shader.h"
 #include "API/Object.h"
+#include "limits"
 
 /**
  * Contains all the information needed that defines a pipeline.
