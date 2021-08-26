@@ -7,20 +7,17 @@
 
 #include <set>
 #include <unordered_map>
+#include "API/Pipeline.h"
+#include "API/Shader.h"
+#include "src/Pipeline/PipelineImplement.h"
 
 class DataManagementUnit {
 private:
-    struct ObjectMeta {
-        Object *object;
-        Vector3D position;
-        Vector3D orientation;
-        double newScaleFactor;
-        ObjectParameter objectParameter;
-    };
-
     std::unordered_map<int, Object *> objects;
     std::set<int> objectIds;
-    std::unordered_map<int, ControlShader *> controlShaders;
+    std::unordered_map<int, int> objectInstances;
+    std::set<int> objectInstanceIds;
+    std::unordered_map<int, ControlShader*> controlShaders;
     std::unordered_map<int, HitShader *> hitShaders;
     std::unordered_map<int, MissShader *> missShaders;
     std::unordered_map<int, OcclusionShader *> occlusionShaders;
@@ -29,7 +26,7 @@ private:
     std::set<int> shaderIds;
     std::unordered_map<int, Any *> shadersResources;
     std::set<int> shaderResourceIds;
-    std::unordered_map<int, Pipeline> pipelines;
+    std::unordered_map<int, PipelineImplement> pipelines;
     std::set<int> pipelineIds;
 
 public:
@@ -41,7 +38,12 @@ public:
      * Adds a pipeline to the pipeline pool.
      * return:          the id of the added pipeline
      */
-    int addPipeline(Pipeline *pipeline);
+    int addPipeline(PipelineDescription *pipelineDescription);
+
+    void updatePipelineCamera(int id, int resolutionX, int resolutionY, Vector3D cameraPosition, Vector3D cameraDirection,
+                              Vector3D cameraUp);
+
+    Texture getPipelineResult(int id);
 
     /*
      * Removes a pipeline by id.
@@ -60,9 +62,8 @@ public:
      * objectParameter: object specific information in addition to geometry
      * return:          true if success, false otherwise, objectIds will be overwritten with object instance ids
      */
-    bool bindGeometryToPipeline(int pipelineId, std::vector<int> *objectIds, std::vector<Vector3D> *position,
-                                std::vector<Vector3D> *orientation, std::vector<double> *newScaleFactor,
-                                std::vector<ObjectParameter> *objectParameter);
+    bool bindGeometryToPipeline(int pipelineId, std::vector<int> *objectIds, std::vector<Matrix4x4> *transforms,
+                                std::vector<ObjectParameter> *objectParameters, std::vector<int>*instanceIDs);
 
     /*
      * Binds a shader with its resources to a pipeline.
@@ -83,8 +84,9 @@ public:
      * objectParameter: the new object parameters
      * return:          true if success, false otherwise
      */
-    bool updatePipelineObject(int pipelineId, int objectInstanceId, Vector3D position, Vector3D orientation,
-                              double newScaleFactor, ObjectParameter objectParameter);
+    bool updatePipelineObjects(int pipelineId, std::vector<int> *objectInstanceIDs,
+                               std::vector<Matrix4x4 *> *transforms,
+                               std::vector<ObjectParameter *> *objectParameters);
 
     /*
      * Changes existing shader instance in pipeline
@@ -94,19 +96,6 @@ public:
      * return:          true if success, false otherwise
      */
     bool updatePipelineShader(int pipelineId, int shaderInstanceId, std::vector<int> *shaderResourceIds);
-
-    /*
-     * Adds a single object to the pipeline
-     * pipelineId:      the pipeline the new object instance is added to
-     * objectId:        the object id of the new object instance
-     * position:        the new position of the object
-     * orientation:     the new orientation of the object
-     * newScaleFactor:  the new scale of the object
-     * objectParameter: the new object parameters
-     * return:          true if success, false otherwise, objectId will be overwritten with the object instance id
-     */
-    bool bindObjectToPipeline(int pipelineId, int *objectId, Vector3D position, Vector3D orientation,
-                           double newScaleFactor, ObjectParameter objectParameter);
 
     /*
      * Removes a single object instance from the specified pipeline.
@@ -205,6 +194,10 @@ public:
      * return:          true if success, false otherwise
      */
     bool removeShaderResource(int id);
+
+    int runPipeline(int id);
+
+    int runAllPipelines();
 };
 
 #endif //RAYTRACECORE_DATAMANAGEMENTUNIT_H

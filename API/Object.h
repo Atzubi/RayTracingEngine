@@ -7,7 +7,7 @@
 
 #include <vector>
 #include <cstdint>
-#include "BasicStructures.h"
+#include "Shader.h"
 
 class Object {
 public:
@@ -20,7 +20,7 @@ public:
      * Clones the object
      * return:          pointer to a new copy
      */
-    virtual Object* clone() = 0;
+    virtual Object *clone() = 0;
 
     /*
      * Returns the bounding box of the objects geometry.
@@ -32,7 +32,11 @@ public:
      * Computes the intersection with ray and this object.
      * return:          information about the intersection
      */
-    virtual IntersectionInfo intersect(Ray ray) = 0;
+    virtual bool intersect(IntersectionInfo *intersectionInfo, Ray *ray) = 0;
+
+    virtual double getSurfaceArea() = 0;
+
+    virtual bool operator==(Object *object) = 0;
 };
 
 #endif //RAYTRACECORE_OBJECT_H

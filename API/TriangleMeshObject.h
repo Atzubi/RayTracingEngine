@@ -14,46 +14,37 @@
  * map:             defines mapping coordinates per vertex
  * ids:             a list of vertex ids that form a triangle
  */
-class TriangleMeshObject : Object {
+class TriangleMeshObject : public Object {
+public:
+    struct Vertex {
+        Vector3D position;
+        Vector3D normal;
+        Vector2D texture;
+    };
+
 private:
-    std::vector<double> *vertices;
-    std::vector<double> *normals;
-    std::vector<double> *map;
-    std::vector<uint64_t> *ids;
+    friend class Triangle;
+    std::vector<Vertex> vertices;
+    std::vector<uint64_t> indices;
+    Material material;
+
+    std::vector<Object *> triangles;
+    Object *structure;
 
 public:
-    TriangleMeshObject(std::vector<double> *vertices, std::vector<double> *normals, std::vector<double> *map,
-                       std::vector<uint64_t> *ids);
+    TriangleMeshObject(const std::vector<Vertex>* vertices, const std::vector<uint64_t>* indices, const Material* material);
 
     ~TriangleMeshObject();
 
-    BoundingBox getBoundaries();
+    BoundingBox getBoundaries() override;
 
-    IntersectionInfo intersect(Ray ray);
+    bool intersect(IntersectionInfo *intersectionInfo, Ray *ray) override;
 
-    /*
-     * Moves an object to newPosition.
-     * return:          true if success, false otherwise
-     */
-    bool moveObject(Vector3D newPosition);
+    Object *clone() override;
 
-    /*
-     * Turns an object to newOrientation (euler angles).
-     * return:          true if success, false otherwise
-     */
-    bool turnObject(Vector3D newOrientation);
+    double getSurfaceArea() override;
 
-    /*
-     * Scales an object to newScaleFactor.
-     * return:          true if success, false otherwise
-     */
-    bool scaleObject(double newScaleFactor);
-
-    /*
-     * Combines movement, orientation and scaling.
-     * return:          true if success, false otherwise
-     */
-    bool manipulateObject(Vector3D newPosition, Vector3D newOrientation, double newScaleFactor);
+    bool operator==(Object *object) override;
 };
 
 #endif //RAYTRACECORE_TRIANGLEMESHOBJECT_H

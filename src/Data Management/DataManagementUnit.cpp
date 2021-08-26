@@ -2,10 +2,14 @@
 // Created by sebastian on 28.02.20.
 //
 
-#include <API/Pipeline.h>
+
 #include <vector>
-#include <API/Object.h>
+#include "API/Object.h"
 #include "DataManagementUnit.h"
+#include "src/Pipeline/PipelineImplement.h"
+#include "src/Acceleration Structures/DBVH.h"
+#include "src/Object/Instance.h"
+
 
 DataManagementUnit::DataManagementUnit() {
     objectIds.insert(0);
@@ -15,8 +19,48 @@ DataManagementUnit::DataManagementUnit() {
 
 DataManagementUnit::~DataManagementUnit() = default;
 
-int DataManagementUnit::addPipeline(Pipeline *pipeline) {
-    pipelines.insert(std::pair<int, Pipeline>(*pipelineIds.begin(), *pipeline));
+int DataManagementUnit::addPipeline(PipelineDescription *pipelineDescription) {
+    DBVH *dbvh = new DBVH();
+    std::vector<Object *> pipelineObjects;
+    for (auto id : pipelineDescription->objectIDs) {
+        pipelineObjects.push_back(objects.at(id));
+    }
+    dbvh->addObjects(&pipelineObjects);
+
+    std::vector<RayGeneratorShader *> pipelineRayGeneratorShaders;
+    for (auto id : pipelineDescription->rayGeneratorShaderIDs) {
+        pipelineRayGeneratorShaders.push_back(rayGeneratorShaders.at(id));
+    }
+
+    std::vector<OcclusionShader *> pipelineOcclusionShaders;
+    for (auto id : pipelineDescription->occlusionShaderIDs) {
+        pipelineOcclusionShaders.push_back(occlusionShaders.at(id));
+    }
+
+    std::vector<HitShader *> pipelineHitShaders;
+    for (auto id : pipelineDescription->hitShaderIDs) {
+        pipelineHitShaders.push_back(hitShaders.at(id));
+    }
+
+    std::vector<PierceShader *> pipelinePierceShaders;
+    for (auto id : pipelineDescription->pierceShaderIDs) {
+        pipelinePierceShaders.push_back(pierceShaders.at(id));
+    }
+
+    std::vector<MissShader *> pipelineMissShaders;
+    for (auto id : pipelineDescription->missShaderIDs) {
+        pipelineMissShaders.push_back(missShaders.at(id));
+    }
+
+    PipelineImplement pipeline = PipelineImplement(pipelineDescription->resolutionX,
+                                                   pipelineDescription->resolutionY,
+                                                   &pipelineDescription->cameraPosition,
+                                                   &pipelineDescription->cameraDirection,
+                                                   &pipelineDescription->cameraUp, &pipelineRayGeneratorShaders,
+                                                   &pipelineOcclusionShaders, &pipelineHitShaders,
+                                                   &pipelinePierceShaders, &pipelineMissShaders, dbvh);
+
+    pipelines.insert(std::pair<int, PipelineImplement>(*pipelineIds.begin(), pipeline));
 
     int buffer = pipelineIds.extract(pipelineIds.begin()).value();
 
@@ -47,18 +91,14 @@ bool DataManagementUnit::removePipeline(int id) {
 }
 
 bool
-DataManagementUnit::updatePipelineObject(int pipelineId, int objectInstanceId, Vector3D position, Vector3D orientation,
-                                         double newScaleFactor, ObjectParameter objectParameter) {
+DataManagementUnit::updatePipelineObjects(int pipelineId, std::vector<int> *objectInstanceIDs,
+                                          std::vector<Matrix4x4 *> *transforms,
+                                          std::vector<ObjectParameter *> *objectParameters) {
     return false;
 }
 
 bool
 DataManagementUnit::updatePipelineShader(int pipelineId, int shaderInstanceId, std::vector<int> *shaderResourceIds) {
-    return false;
-}
-
-bool DataManagementUnit::bindObjectToPipeline(int pipelineId, int *objectId, Vector3D position, Vector3D orientation,
-                                              double newScaleFactor, ObjectParameter objectParameter) {
     return false;
 }
 
@@ -71,9 +111,10 @@ bool DataManagementUnit::removePipelineShader(int pipelineId, int shaderInstance
 }
 
 bool
-DataManagementUnit::bindGeometryToPipeline(int pipelineId, std::vector<int> *objectIds, std::vector<Vector3D> *position,
-                                           std::vector<Vector3D> *orientation, std::vector<double> *newScaleFactor,
-                                           std::vector<ObjectParameter> *objectParameter) {
+DataManagementUnit::bindGeometryToPipeline(int pipelineId, std::vector<int> *objectIds,
+                                           std::vector<Matrix4x4> *transforms,
+                                           std::vector<ObjectParameter> *objectParameters,
+                                           std::vector<int> *instanceIDs) {
     //TODO build acceleration data structure
     return false;
 }
@@ -114,9 +155,9 @@ bool DataManagementUnit::removeObject(int id) {
 }
 
 bool DataManagementUnit::updateObject(int id, Object *object) {
-    if(objects.count(id) == 0) {
+    if (objects.count(id) == 0) {
         return false;
-    }else{
+    } else {
         objects.at(id) = object->clone();
         return true;
     }
@@ -254,5 +295,28 @@ bool DataManagementUnit::removeShaderResource(int id) {
     }
 
     return true;
+}
+
+int DataManagementUnit::runPipeline(int id) {
+    return pipelines.at(id).run();
+}
+
+int DataManagementUnit::runAllPipelines() {
+    for(auto p : pipelines){
+        p.second.run();
+    }
+    return 0;
+}
+
+void DataManagementUnit::updatePipelineCamera(int id, int resolutionX, int resolutionY, Vector3D cameraPosition,
+                                              Vector3D cameraDirection, Vector3D cameraUp) {
+    auto pipeline = pipelines.at(id);
+    pipeline.setResolution(resolutionX, resolutionY);
+    pipeline.setCamera(cameraPosition, cameraDirection, cameraUp);
+}
+
+Texture DataManagementUnit::getPipelineResult(int id) {
+    auto pipeline = pipelines.at(id);
+    return pipeline.getResult();
 }
 

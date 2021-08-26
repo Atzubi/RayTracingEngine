@@ -16,11 +16,11 @@ public:
 
     }
 
-    Shader* clone(){
+    Shader* clone() override{
         return new BasicPierceShader(*this);
     }
 
-    ShaderOutput shade(int id, RayTracerOutput shaderInput, void *dataInput) {
+    ShaderOutput shade(int id, PipelineInfo *pipelineInfo, IntersectionInfo *shaderInput, void* dataInput, RayGeneratorOutput *newRays) override{
         return ShaderOutput();
     }
 

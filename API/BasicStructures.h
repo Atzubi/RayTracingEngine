@@ -16,6 +16,120 @@ struct Vector3D {
     double z;
 };
 
+/**
+ * Contains x and y coordinates representing a vector in 2 dimensions
+ */
+struct Vector2D {
+    double x;
+    double y;
+};
+
+struct Matrix4x4 {
+    double elements[4][4];
+
+    void multiplyBy(Matrix4x4 *matrix) {
+        double e[4][4];
+        for (int row = 0; row < 4; row++) {
+            for (int column = 0; column < 4; column++) {
+                e[row][column] = 0;
+                for (int index = 0; index < 4; index++) {
+                    e[row][column] += elements[row][index] * matrix->elements[index][column];
+                }
+            }
+        }
+        for (int row = 0; row < 4; row++) {
+            for (int column = 0; column < 4; column++) {
+                elements[row][column] = e[row][column];
+            }
+        }
+    }
+
+    Matrix4x4 getInverse() {
+        double det = elements[0][0] * elements[1][1] * elements[2][2] *
+                     elements[3][3] -
+                     elements[0][0] * elements[1][2] * elements[2][1] *
+                     elements[3][3] -
+                     elements[0][1] * elements[1][0] * elements[2][2] *
+                     elements[3][3] +
+                     elements[0][2] * elements[1][0] * elements[2][1] *
+                     elements[3][3] +
+                     elements[0][1] * elements[1][2] * elements[2][0] *
+                     elements[3][3] -
+                     elements[0][2] * elements[1][1] * elements[2][0] *
+                     elements[3][3];
+
+        Matrix4x4 inverse{};
+
+        inverse.elements[0][0] = elements[1][1] * elements[2][2] * elements[3][3] -
+                                 elements[1][2] * elements[2][1] * elements[3][3];
+        inverse.elements[0][1] =
+                -elements[0][1] * elements[2][2] * elements[3][3] +
+                elements[0][2] * elements[2][1] * elements[3][3];
+        inverse.elements[0][2] = elements[0][1] * elements[1][2] * elements[3][3] -
+                                 elements[0][2] * elements[1][1] * elements[3][3];
+        inverse.elements[0][3] =
+                -elements[0][1] * elements[1][2] * elements[2][3] -
+                elements[0][2] * elements[1][3] * elements[2][1] -
+                elements[0][3] * elements[1][1] * elements[2][2] +
+                elements[0][3] * elements[1][2] * elements[2][1] +
+                elements[0][2] * elements[1][1] * elements[2][3] +
+                elements[0][1] * elements[1][3] * elements[2][2];
+        inverse.elements[1][0] =
+                -elements[1][0] * elements[2][2] * elements[3][3] +
+                elements[1][2] * elements[2][0] * elements[3][3];
+        inverse.elements[1][1] = elements[0][0] * elements[2][2] * elements[3][3] -
+                                 elements[0][2] * elements[2][0] * elements[3][3];
+        inverse.elements[1][2] =
+                -elements[0][0] * elements[1][2] * elements[3][3] +
+                elements[0][2] * elements[1][0] * elements[3][3];
+        inverse.elements[1][3] = elements[0][0] * elements[1][2] * elements[2][3] +
+                                 elements[0][2] * elements[1][3] * elements[2][0] +
+                                 elements[0][3] * elements[1][0] * elements[2][2] -
+                                 elements[0][3] * elements[1][2] * elements[2][0] -
+                                 elements[0][2] * elements[1][0] * elements[2][3] -
+                                 elements[0][0] * elements[1][3] * elements[2][2];
+        inverse.elements[2][0] = elements[1][0] * elements[2][1] * elements[3][3] -
+                                 elements[1][1] * elements[2][0] * elements[3][3];
+        inverse.elements[2][1] =
+                -elements[0][0] * elements[2][1] * elements[3][3] +
+                elements[0][1] * elements[2][0] * elements[3][3];
+        inverse.elements[2][2] = elements[0][0] * elements[1][1] * elements[3][3] -
+                                 elements[0][1] * elements[1][0] * elements[3][3];
+        inverse.elements[2][3] =
+                -elements[0][0] * elements[1][1] * elements[2][3] -
+                elements[0][1] * elements[1][3] * elements[2][0] -
+                elements[0][3] * elements[1][0] * elements[2][1] +
+                elements[0][3] * elements[1][1] * elements[1][0] +
+                elements[0][1] * elements[2][0] * elements[2][3] +
+                elements[0][0] * elements[1][3] * elements[2][1];
+        inverse.elements[3][3] = elements[0][0] * elements[1][1] * elements[2][2] +
+                                 elements[0][1] * elements[1][2] * elements[2][0] +
+                                 elements[0][2] * elements[1][0] * elements[2][1] -
+                                 elements[0][2] * elements[1][1] * elements[2][0] -
+                                 elements[0][1] * elements[1][0] * elements[2][2] -
+                                 elements[0][0] * elements[1][2] * elements[2][1];
+
+        inverse.elements[0][0] = (1 / det) * inverse.elements[0][0];
+        inverse.elements[0][1] = (1 / det) * inverse.elements[0][1];
+        inverse.elements[0][2] = (1 / det) * inverse.elements[0][2];
+        inverse.elements[0][3] = (1 / det) * inverse.elements[0][3];
+        inverse.elements[1][0] = (1 / det) * inverse.elements[1][0];
+        inverse.elements[1][1] = (1 / det) * inverse.elements[1][1];
+        inverse.elements[1][2] = (1 / det) * inverse.elements[1][2];
+        inverse.elements[1][3] = (1 / det) * inverse.elements[1][3];
+        inverse.elements[2][0] = (1 / det) * inverse.elements[2][0];
+        inverse.elements[2][1] = (1 / det) * inverse.elements[2][1];
+        inverse.elements[2][2] = (1 / det) * inverse.elements[2][2];
+        inverse.elements[2][3] = (1 / det) * inverse.elements[2][3];
+        inverse.elements[3][0] = 0;
+        inverse.elements[3][1] = 0;
+        inverse.elements[3][2] = 0;
+        inverse.elements[3][3] = (1 / det) * inverse.elements[3][3];
+
+        return inverse;
+    }
+};
+
 /*
  * Contains additional parameters of an object that are used when constructing the data structure for rendering.
  * bounding:        a parameter used for describing the looseness of an objects bounding, higher values create
@@ -27,16 +141,55 @@ struct ObjectParameter {
 };
 
 struct BoundingBox {
-    Vector3D firstCorner, secondCorner;
+    Vector3D minCorner, maxCorner;
+
+    [[nodiscard]] double getSA() const {
+        return (maxCorner.x - minCorner.x) * (maxCorner.y - minCorner.y) +
+               (maxCorner.x - minCorner.x) * (maxCorner.z - minCorner.z) +
+               (maxCorner.y - minCorner.y) * (maxCorner.z - minCorner.z);
+    }
 };
 
-struct IntersectionInfo {
+struct Texture {
+    std::string name;
+    int w;
+    int h;
+    unsigned char *image;
+};
 
+struct Material {
+    // Material Name
+    std::string name;
+    // Ambient Color
+    Vector3D Ka;
+    // Diffuse Color
+    Vector3D Kd;
+    // Specular Color
+    Vector3D Ks;
+    // Specular Exponent
+    float Ns;
+    // Optical Density
+    float Ni;
+    // Dissolve
+    float d;
+    // Illumination
+    int illum;
+    // Ambient Texture Map
+    Texture map_Ka;
+    // Diffuse Texture Map
+    Texture map_Kd;
+    // Specular Texture Map
+    Texture map_Ks;
+    // Specular Hightlight Map
+    Texture map_Ns;
+    // Alpha Texture Map
+    Texture map_d;
+    // Bump Map
+    Texture map_bump;
 };
 
 struct Ray {
-    Vector3D origin, direction;
-    void *metaData;
+    Vector3D origin, direction, dirfrac;
 };
 
 

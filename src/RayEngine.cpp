@@ -4,7 +4,7 @@
 
 #include <iostream>
 #include "../API/RayEngine.h"
-#include "./Data Management/DataManagementUnit.h"
+#include "Data Management/DataManagementUnit.h"
 
 RayEngine::RayEngine() {
     dataManagementUnit = new DataManagementUnit();
@@ -15,30 +15,27 @@ RayEngine::~RayEngine() {
 }
 
 int RayEngine::runPipeline(int id) {
-    return 0;
+    return dataManagementUnit->runPipeline(id);
 }
 
 int RayEngine::runAll() {
-    return 0;
+    return dataManagementUnit->runAllPipelines();
 }
 
-int RayEngine::addPipeline(Pipeline *pipeline) {
-    return dataManagementUnit->addPipeline(pipeline);
+int RayEngine::createPipeline(PipelineDescription *pipelineDescription) {
+    return dataManagementUnit->addPipeline(pipelineDescription);
 }
 
-bool RayEngine::removePipeline(int id) {
+bool RayEngine::deletePipeline(int id) {
     return dataManagementUnit->removePipeline(id);
 }
 
-bool RayEngine::bindGeometryToPipeline(int pipelineId, std::vector<int> *objectIds, std::vector<Vector3D> *position,
-                                       std::vector<Vector3D> *orientation, std::vector<double> *newScaleFactor,
-                                       std::vector<ObjectParameter> *objectParameter) {
-    return dataManagementUnit->bindGeometryToPipeline(pipelineId, objectIds, position, orientation, newScaleFactor,
-                                                      objectParameter);
+bool RayEngine::bindGeometryToPipeline(int pipelineId, std::vector<int> *objectIds, std::vector<Matrix4x4> *transforms,
+                                       std::vector<ObjectParameter> *objectParameters, std::vector<int>*instanceIDs) {
+    return dataManagementUnit->bindGeometryToPipeline(pipelineId, objectIds, transforms, objectParameters, instanceIDs);
 }
 
-int RayEngine::addObject(Object *object, Vector3D position, Vector3D orientation, double newScaleFactor,
-                         ObjectParameter objectParameter) {
+int RayEngine::addObject(Object *object) {
     return dataManagementUnit->addObject(object);
 }
 
@@ -90,10 +87,10 @@ bool RayEngine::removeShaderResource(int id) {
     return dataManagementUnit->removeShaderResource(id);
 }
 
-bool RayEngine::updatePipelineObject(int pipelineId, int objectInstanceId, Vector3D position, Vector3D orientation,
-                                     double newScaleFactor, ObjectParameter objectParameter) {
-    return dataManagementUnit->updatePipelineObject(pipelineId, objectInstanceId, position, orientation, newScaleFactor,
-                                                    objectParameter);
+bool RayEngine::updatePipelineObjects(int pipelineId, std::vector<int> *objectInstanceIDs,
+                                      std::vector<Matrix4x4 *> *transforms,
+                                      std::vector<ObjectParameter *> *objectParameters) {
+    return dataManagementUnit->updatePipelineObjects(pipelineId, objectInstanceIDs, transforms, objectParameters);
 }
 
 bool RayEngine::updatePipelineShader(int pipelineId, int shaderInstanceId, std::vector<int> *shaderResourceIds) {
@@ -108,8 +105,12 @@ bool RayEngine::removePipelineShader(int pipelineId, int shaderInstanceId) {
     return dataManagementUnit->removePipelineShader(pipelineId, shaderInstanceId);
 }
 
-bool RayEngine::bindObjectToPipeline(int pipelineId, int *objectId, Vector3D position, Vector3D orientation,
-                                     double newScaleFactor, ObjectParameter objectParameter) {
-    return dataManagementUnit->bindObjectToPipeline(pipelineId, objectId, position, orientation, newScaleFactor,
-                                                    objectParameter);
+void
+RayEngine::updatePipelineCamera(int id, int resolutionX, int resolutionY, Vector3D cameraPosition, Vector3D cameraDirection,
+                                Vector3D cameraUp) {
+    dataManagementUnit->updatePipelineCamera(id, resolutionX, resolutionY, cameraPosition, cameraDirection, cameraUp);
+}
+
+Texture RayEngine::getPipelineResult(int id) {
+    return dataManagementUnit->getPipelineResult(id);
 }

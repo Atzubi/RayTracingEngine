@@ -17,11 +17,11 @@ public:
 
     }
 
-    Shader* clone(){
+    Shader* clone() override{
         return new BasicControlShader(*this);
     }
 
-    int shade(int id, ShaderOutput shaderInput, void *dataInput) {
+    int shade(int id, PipelineInfo *pipelineInfo, ShaderOutput *shaderInput, void* dataInput) override {
 
     }
 

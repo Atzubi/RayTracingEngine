@@ -6,10 +6,9 @@
 #define RAYTRACECORE_RAYENGINE_H
 
 #include <cstdint>
-#include <vector>
-#include "Pipeline.h"
 #include "Object.h"
 #include "Shader.h"
+#include "Pipeline.h"
 #include "BasicStructures.h"
 
 /**
@@ -37,13 +36,18 @@ public:
      * Adds a pipeline to the pipeline pool.
      * return:          the id of the added pipeline
      */
-    int addPipeline(Pipeline *pipeline);
+    int createPipeline(PipelineDescription *pipelineDescription);
+
+    void updatePipelineCamera(int id, int resolutionX, int resolutionY, Vector3D cameraPosition, Vector3D cameraDirection,
+                              Vector3D cameraUp);
+
+    Texture getPipelineResult(int id);
 
     /*
      * Removes a pipeline by id.
      * return:          true if success, false otherwise
      */
-    bool removePipeline(int id);
+    bool deletePipeline(int id);
 
     /*
      * Executes a pipeline by id.
@@ -62,9 +66,8 @@ public:
      * of the pipeline on execution.
      * return:          true if success, false otherwise
      */
-    bool bindGeometryToPipeline(int pipelineId, std::vector<int> *objectIds, std::vector<Vector3D> *position,
-                                std::vector<Vector3D> *orientation, std::vector<double> *newScaleFactor,
-                                std::vector<ObjectParameter> *objectParameter);
+    bool bindGeometryToPipeline(int pipelineId, std::vector<int> *objectIDs, std::vector<Matrix4x4> *transforms,
+                                std::vector<ObjectParameter> *objectParameters, std::vector<int> *instanceIDs);
 
     /*
      * Binds a shader with its resources to a pipeline.
@@ -79,14 +82,13 @@ public:
      * Changes existing object instance in pipeline.
      * pipelineId:      the pipeline the object instance is associated with
      * objectInstanceId:    the object instances id
-     * position:        the new position of the object
-     * orientation:     the new orientation of the object
-     * newScaleFactor:  the new scale of the object
+     * transform:       the new transform of the object instance
      * objectParameter: the new object parameters
      * return:          true if success, false otherwise
      */
-    bool updatePipelineObject(int pipelineId, int objectInstanceId, Vector3D position, Vector3D orientation,
-                              double newScaleFactor, ObjectParameter objectParameter);
+    bool updatePipelineObjects(int pipelineId, std::vector<int> *objectInstanceIDs,
+                               std::vector<Matrix4x4 *> *transforms,
+                               std::vector<ObjectParameter *> *objectParameters);
 
     /*
      * Changes existing shader instance in pipeline
@@ -96,19 +98,6 @@ public:
      * return:          true if success, false otherwise
      */
     bool updatePipelineShader(int pipelineId, int shaderInstanceId, std::vector<int> *shaderResourceIds);
-
-    /*
-     * Adds a single object to the pipeline
-     * pipelineId:      the pipeline the new object instance is added to
-     * objectId:        the object id of the new object instance
-     * position:        the new position of the object
-     * orientation:     the new orientation of the object
-     * newScaleFactor:  the new scale of the object
-     * objectParameter: the new object parameters
-     * return:          true if success, false otherwise, objectId will be overwritten with the object instance id
-     */
-    bool bindObjectToPipeline(int pipelineId, int *objectId, Vector3D position, Vector3D orientation,
-                              double newScaleFactor, ObjectParameter objectParameter);
 
     /*
      * Removes a single object instance from the specified pipeline.
@@ -133,8 +122,7 @@ public:
      * orientation:     the relative orientation of the object in space
      * return:          the id of the object
      */
-    int addObject(Object *object, Vector3D position, Vector3D orientation, double newScaleFactor,
-                  ObjectParameter objectParameter);
+    int addObject(Object *object);
 
     /*
      * Removes an object from the pool by id.
