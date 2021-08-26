@@ -3,7 +3,7 @@
 //
 
 #include <iostream>
-#include <API/Pipeline.h>
+#include <src/Pipeline/Pipeline.h>
 
 #include "../../API/RayEngine.h"
 

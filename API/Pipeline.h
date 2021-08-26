@@ -1,29 +1,8 @@
 //
-// Created by sebastian on 13.11.19.
+// Created by sebastian on 21.07.21.
 //
 
 #ifndef RAYTRACECORE_PIPELINE_H
 #define RAYTRACECORE_PIPELINE_H
-
-#include "Shader.h"
-
-/**
- * Contains all the information needed that defines a pipeline.
- * Pipeline Model:
- *                                      OcclusionShader
- * RayGeneratorShader -> Ray Tracer ->  HitShader       -> ControlShader
- *                                      PierceShader
- *                                      MissShader
- */
-class Pipeline{
-private:
-    int width, height;
-
-public:
-    Pipeline(int width, int height);
-    ~Pipeline();
-
-    void setResolution(int width, int height);
-};
 
 #endif //RAYTRACECORE_PIPELINE_H
