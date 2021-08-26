@@ -63,7 +63,7 @@ public:
         light.y = 0.707107;
         light.z = 0;
 
-        if (shaderInput->distance == std::numeric_limits<double_t>::max()) return;
+        if (shaderInput->distance == std::numeric_limits<double_t>::max()) return shaderOutput;
 
         Vector3D n{}, l{}, v{}, r{};
         double_t nl;
