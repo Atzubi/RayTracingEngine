@@ -63,6 +63,8 @@ public:
         light.y = 0.707107;
         light.z = 0;
 
+        ShaderOutput shaderOutput;
+
         if (shaderInput->distance == std::numeric_limits<double_t>::max()) return shaderOutput;
 
         Vector3D n{}, l{}, v{}, r{};
@@ -106,8 +108,6 @@ public:
         r.z /= length;
 
         double_t dot = fmax(v.x * r.x + v.y * r.y + v.z * r.z, 0);
-
-        ShaderOutput shaderOutput;
 
         shaderOutput.color[0] = (uint8_t) fmin((ambient * Ka.x + diffuse * nl * Kd.x + specular * powf(dot, exponent) * Ks.x) * pix[0],
                                   255);
