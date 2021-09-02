@@ -21,7 +21,7 @@ public:
         return new BasicMissShader(*this);
     }
 
-    ShaderOutput shade(int id, PipelineInfo *pipelineInfo, IntersectionInfo *shaderInput, void* dataInput, RayGeneratorOutput *newRays) override{
+    ShaderOutput shade(uint64_t id, PipelineInfo *pipelineInfo, MissShaderInput *shaderInput, void* dataInput, RayGeneratorOutput *newRays) override{
         return ShaderOutput();
     }
 

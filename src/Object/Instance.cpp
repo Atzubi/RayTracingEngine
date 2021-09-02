@@ -207,7 +207,7 @@ void Instance::applyTransform(Matrix4x4 *newTransform) {
 
 Instance::~Instance() = default;
 
-bool Instance::intersect(IntersectionInfo *intersectionInfo, Ray *ray) {
+bool Instance::intersectFirst(IntersectionInfo *intersectionInfo, Ray *ray) {
     Ray newRay = *ray;
 
     BoundingBox originalAABB = baseObject->getBoundaries();
@@ -275,7 +275,7 @@ bool Instance::intersect(IntersectionInfo *intersectionInfo, Ray *ray) {
     intersectionInformationBuffer.hit = false;
     intersectionInformationBuffer.distance = std::numeric_limits<double>::max();
     intersectionInformationBuffer.position = {0, 0, 0};
-    bool hit = baseObject->intersect(&intersectionInformationBuffer, &newRay);
+    bool hit = baseObject->intersectFirst(&intersectionInformationBuffer, &newRay);
 
     if (hit) {
         Vector3D pos = intersectionInformationBuffer.position;
@@ -341,6 +341,16 @@ bool Instance::intersect(IntersectionInfo *intersectionInfo, Ray *ray) {
             return true;
         }
     }
+    return false;
+}
+
+bool Instance::intersectAny(IntersectionInfo *intersectionInfo, Ray *ray) {
+    // TODO
+    return false;
+}
+
+bool Instance::intersectAll(std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray) {
+    // TODO
     return false;
 }
 

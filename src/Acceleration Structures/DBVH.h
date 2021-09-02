@@ -63,7 +63,11 @@ private:
 
     void remove(Node **currentNode, std::vector<Object *> *objects);
 
-    bool traverse(IntersectionInfo *intersectionInfo, Ray *ray);
+    bool traverseALl(std::vector<IntersectionInfo*> *intersectionInfo, Ray*ray);
+
+    bool traverseFirst(IntersectionInfo *intersectionInfo, Ray *ray);
+
+    bool traverseAny(IntersectionInfo* intersectionInfo, Ray* ray);
 
     Node *root;
     uint8_t maxDepth;
@@ -83,7 +87,9 @@ public:
 
     BoundingBox getBoundaries() override;
 
-    bool intersect(IntersectionInfo *intersectionInfo, Ray *ray) override;
+    bool intersectFirst(IntersectionInfo *intersectionInfo, Ray *ray) override;
+    bool intersectAny(IntersectionInfo *intersectionInfo, Ray *ray) override;
+    bool intersectAll(std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray) override;
 
     double getSurfaceArea() override;
 

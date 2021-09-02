@@ -22,7 +22,7 @@ public:
         return new BasicRayGeneratorShader(*this);
     }
 
-    RayGeneratorOutput shade(int id, PipelineInfo *pipelineInfo, void *dataInput) override {
+    RayGeneratorOutput shade(uint64_t id, PipelineInfo *pipelineInfo, void *dataInput) override {
         int x = (id % pipelineInfo->width) - (pipelineInfo->width) / 2;
         int y = -(id / pipelineInfo->height) + (pipelineInfo->height) / 2;
 

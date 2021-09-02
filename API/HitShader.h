@@ -20,30 +20,33 @@ public:
         return new BasicHitShader(*this);
     }
 
-    ShaderOutput shade(int id, PipelineInfo *pipelineInfo, IntersectionInfo *shaderInput, void* dataInput, RayGeneratorOutput *newRays) override{
+    ShaderOutput shade(uint64_t id, PipelineInfo *pipelineInfo, HitShaderInput *shaderInput, void* dataInput, RayGeneratorOutput *newRays) override{
         Vector3D Ka = {1, 1, 1};
         Vector3D Kd = {1, 1, 1};
         Vector3D Ks = {1, 1, 1};
         uint8_t pix[3];
-        unsigned char *image = shaderInput->material->map_Kd.image;
+
+        auto shaderInputInfo = shaderInput->intersectionInfo;
+
+        unsigned char *image = shaderInputInfo->material->map_Kd.image;
 
         double_t diffuse = 1, specular = 0.5, exponent = 8, ambient = 0.1;
 
         if (image == nullptr) {
-            if (shaderInput->material->illum == 2) {
-                exponent = shaderInput->material->Ns;
-                Ka = shaderInput->material->Ka;
-                Kd = shaderInput->material->Kd;
-                Ks = shaderInput->material->Ks;
+            if (shaderInputInfo->material->illum == 2) {
+                exponent = shaderInputInfo->material->Ns;
+                Ka = shaderInputInfo->material->Ka;
+                Kd = shaderInputInfo->material->Kd;
+                Ks = shaderInputInfo->material->Ks;
             }
             pix[0] = 255;
             pix[1] = 255;
             pix[2] = 255;
         } else {
-            int w = shaderInput->material->map_Kd.w;
-            int h = shaderInput->material->map_Kd.h;
-            double x = fmod(shaderInput->texture.x, 1.0);
-            double y = -fmod(shaderInput->texture.y, 1.0);
+            int w = shaderInputInfo->material->map_Kd.w;
+            int h = shaderInputInfo->material->map_Kd.h;
+            double x = fmod(shaderInputInfo->texture.x, 1.0);
+            double y = -fmod(shaderInputInfo->texture.y, 1.0);
             if (x < 0) x = 1 + x;
             if (y < 0) y = 1 + y;
 
@@ -53,9 +56,9 @@ public:
             pix[1] = image[pixelCoordinate * 3 + 1];
             pix[2] = image[pixelCoordinate * 3 + 2];
 
-            Ka = shaderInput->material->Ka;
-            Kd = shaderInput->material->Kd;
-            Ks = shaderInput->material->Ks;
+            Ka = shaderInputInfo->material->Ka;
+            Kd = shaderInputInfo->material->Kd;
+            Ks = shaderInputInfo->material->Ks;
         }
 
         Vector3D light{};
@@ -65,7 +68,7 @@ public:
 
         ShaderOutput shaderOutput;
 
-        if (shaderInput->distance == std::numeric_limits<double_t>::max()) return shaderOutput;
+        if (shaderInputInfo->distance == std::numeric_limits<double_t>::max()) return shaderOutput;
 
         Vector3D n{}, l{}, v{}, r{};
         double_t nl;
@@ -74,11 +77,11 @@ public:
         l.y = light.y;
         l.z = light.z;
 
-        n = shaderInput->normal;
+        n = shaderInputInfo->normal;
 
-        v.x = -1.0 * (shaderInput->rayOrigin.x - pipelineInfo->cameraPosition.x);
-        v.y = -1.0 * (shaderInput->rayOrigin.y - pipelineInfo->cameraPosition.y);
-        v.z = -1.0 * (shaderInput->rayOrigin.z - pipelineInfo->cameraPosition.z);
+        v.x = -1.0 * (shaderInputInfo->rayOrigin.x - pipelineInfo->cameraPosition.x);
+        v.y = -1.0 * (shaderInputInfo->rayOrigin.y - pipelineInfo->cameraPosition.y);
+        v.z = -1.0 * (shaderInputInfo->rayOrigin.z - pipelineInfo->cameraPosition.z);
 
 
         double_t length = sqrt(l.x * l.x + l.y * l.y + l.z * l.z);

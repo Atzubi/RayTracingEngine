@@ -25,7 +25,9 @@ public:
 
     BoundingBox getBoundaries() override;
 
-    bool intersect(IntersectionInfo *intersectionInfo, Ray *ray) override;
+    bool intersectFirst(IntersectionInfo *intersectionInfo, Ray *ray) override;
+    bool intersectAny(IntersectionInfo *intersectionInfo, Ray *ray) override;
+    bool intersectAll(std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray) override;
 
     double getSurfaceArea() override;
 

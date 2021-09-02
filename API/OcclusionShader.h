@@ -20,7 +20,7 @@ public:
         return new BasicOcclusionShader(*this);
     }
 
-    ShaderOutput shade(int id, PipelineInfo *pipelineInfo, IntersectionInfo *shaderInput, void* dataInput, RayGeneratorOutput *newRays) override{
+    ShaderOutput shade(uint64_t id, PipelineInfo *pipelineInfo, OcclusionShaderInput *shaderInput, void* dataInput, RayGeneratorOutput *newRays) override{
         return ShaderOutput();
     }
 

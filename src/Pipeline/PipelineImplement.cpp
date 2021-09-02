@@ -49,46 +49,212 @@ Object *PipelineImplement::getGeometryAsObject() {
 }
 
 int PipelineImplement::run() {
-    for (int x = 0; x < pipelineInfo.width; x++) {
-        for (int y = 0; y < pipelineInfo.height; y++) {
-            for (auto generator : rayGeneratorShaders) {
-                int rayID = x + y * pipelineInfo.width;
-                auto rays = generator->shade(rayID, &pipelineInfo, nullptr);
-                rays.id = rayID;
-                while (!rays.rayOrigin.empty()) {
-                    Ray ray{};
-                    ray.origin = rays.rayOrigin.back();
-                    ray.direction = rays.rayDirection.back();
-                    ray.dirfrac.x = 1.0 / ray.direction.x;
-                    ray.dirfrac.y = 1.0 / ray.direction.y;
-                    ray.dirfrac.z = 1.0 / ray.direction.z;
+    if (!pierceShaders.empty()) {
+        // worst case, full traversal
+        for (int x = 0; x < pipelineInfo.width; x++) {
+            for (int y = 0; y < pipelineInfo.height; y++) {
+                for (auto generator: rayGeneratorShaders) {
+                    int rayID = x + y * pipelineInfo.width;
+                    auto rays = generator->shade(rayID, &pipelineInfo, nullptr);
+                    rays.id = rayID;
+                    while (!rays.rayOrigin.empty()) {
+                        Ray ray{};
+                        ray.origin = rays.rayOrigin.back();
+                        ray.direction = rays.rayDirection.back();
+                        ray.dirfrac.x = 1.0 / ray.direction.x;
+                        ray.dirfrac.y = 1.0 / ray.direction.y;
+                        ray.dirfrac.z = 1.0 / ray.direction.z;
 
-                    rays.rayOrigin.pop_back();
+                        rays.rayOrigin.pop_back();
 
-                    IntersectionInfo info = {false, std::numeric_limits<double>::max(), ray.origin, ray.direction, 0, 0,
-                                             0, 0, 0};
-                    geometry->intersect(&info, &ray);
+                        std::vector<IntersectionInfo *> infos;
+                        geometry->intersectAll(&infos, &ray);
 
-                    RayGeneratorOutput newRays;
+                        RayGeneratorOutput newRays;
 
-                    if(info.hit) {
-
-                        for (auto hitShader : hitShaders) {
-                            auto pixel = hitShader->shade(rays.id, &pipelineInfo, &info, nullptr, &newRays);
-                            //std::cout << rays.id << " " << (int)pixel.color[0] << " " << (int)pixel.color[1] << " " << (int)pixel.color[2] << std::endl;
+                        for (auto pierceShader: pierceShaders) {
+                            PierceShaderInput pierceShaderInput = {infos};
+                            auto pixel = pierceShader->shade(rays.id, &pipelineInfo, &pierceShaderInput, nullptr,
+                                                             &newRays);
                             result.image[rays.id * 3] += pixel.color[0];
                             result.image[rays.id * 3 + 1] += pixel.color[1];
                             result.image[rays.id * 3 + 2] += pixel.color[2];
                         }
-                    }
 
-                    rays.rayOrigin.insert(rays.rayOrigin.begin(), newRays.rayOrigin.begin(), newRays.rayOrigin.end());
-                    rays.rayDirection.insert(rays.rayDirection.begin(), newRays.rayDirection.begin(),
-                                             newRays.rayDirection.end());
+                        IntersectionInfo closest = {false, std::numeric_limits<double>::max(), ray.origin,
+                                                    ray.direction, 0, 0, 0, 0, 0};
+                        bool hitAny = false;
+                        for (auto info: infos) {
+                            if (info->hit) {
+                                hitAny = true;
+                                if (closest.distance > info->distance) {
+                                    closest = *info;
+                                }
+                            }
+                        }
+
+                        if (closest.hit) {
+                            for (auto hitShader: hitShaders) {
+                                HitShaderInput hitShaderInput = {&closest};
+                                auto pixel = hitShader->shade(rays.id, &pipelineInfo, &hitShaderInput, nullptr,
+                                                              &newRays);
+                                result.image[rays.id * 3] += pixel.color[0];
+                                result.image[rays.id * 3 + 1] += pixel.color[1];
+                                result.image[rays.id * 3 + 2] += pixel.color[2];
+                            }
+                        }
+
+                        if (closest.hit) {
+                            for (auto occlusionShader: occlusionShaders) {
+                                OcclusionShaderInput occlusionShaderInput = {ray.origin, ray.direction};
+                                auto pixel = occlusionShader->shade(rays.id, &pipelineInfo, &occlusionShaderInput,
+                                                                    nullptr, &newRays);
+                                result.image[rays.id * 3] += pixel.color[0];
+                                result.image[rays.id * 3 + 1] += pixel.color[1];
+                                result.image[rays.id * 3 + 2] += pixel.color[2];
+                            }
+                        }
+
+                        if (!hitAny) {
+                            for (auto missShader: missShaders) {
+                                MissShaderInput missShaderInput = {ray.origin, ray.direction};
+                                auto pixel = missShader->shade(rays.id, &pipelineInfo, &missShaderInput, nullptr,
+                                                               &newRays);
+                                result.image[rays.id * 3] += pixel.color[0];
+                                result.image[rays.id * 3 + 1] += pixel.color[1];
+                                result.image[rays.id * 3 + 2] += pixel.color[2];
+                            }
+                        }
+
+                        rays.rayOrigin.insert(rays.rayOrigin.begin(), newRays.rayOrigin.begin(),
+                                              newRays.rayOrigin.end());
+                        rays.rayDirection.insert(rays.rayDirection.begin(), newRays.rayDirection.begin(),
+                                                 newRays.rayDirection.end());
+
+                        while (!infos.empty()) {
+                            delete infos.back();
+                            infos.pop_back();
+                        }
+                    }
+                }
+            }
+        }
+    } else if (!hitShaders.empty()) {
+        // normal case, early out when closest found
+        for (int x = 0; x < pipelineInfo.width; x++) {
+            for (int y = 0; y < pipelineInfo.height; y++) {
+                for (auto generator: rayGeneratorShaders) {
+                    int rayID = x + y * pipelineInfo.width;
+                    auto rays = generator->shade(rayID, &pipelineInfo, nullptr);
+                    rays.id = rayID;
+                    while (!rays.rayOrigin.empty()) {
+                        Ray ray{};
+                        ray.origin = rays.rayOrigin.back();
+                        ray.direction = rays.rayDirection.back();
+                        ray.dirfrac.x = 1.0 / ray.direction.x;
+                        ray.dirfrac.y = 1.0 / ray.direction.y;
+                        ray.dirfrac.z = 1.0 / ray.direction.z;
+
+                        rays.rayOrigin.pop_back();
+
+                        IntersectionInfo info = {false, std::numeric_limits<double>::max(), ray.origin, ray.direction,
+                                                 0, 0, 0, 0, 0};
+                        geometry->intersectFirst(&info, &ray);
+
+                        RayGeneratorOutput newRays;
+
+                        if (info.hit) {
+                            for (auto hitShader: hitShaders) {
+                                HitShaderInput hitShaderInput = {&info};
+                                auto pixel = hitShader->shade(rays.id, &pipelineInfo, &hitShaderInput, nullptr,
+                                                              &newRays);
+                                //std::cout << rays.id << " " << (int)pixel.color[0] << " " << (int)pixel.color[1] << " " << (int)pixel.color[2] << std::endl;
+                                result.image[rays.id * 3] += pixel.color[0];
+                                result.image[rays.id * 3 + 1] += pixel.color[1];
+                                result.image[rays.id * 3 + 2] += pixel.color[2];
+                            }
+
+                            for (auto occlusionShader: occlusionShaders) {
+                                OcclusionShaderInput occlusionShaderInput = {ray.origin, ray.direction};
+                                auto pixel = occlusionShader->shade(rays.id, &pipelineInfo, &occlusionShaderInput,
+                                                                    nullptr, &newRays);
+                                result.image[rays.id * 3] += pixel.color[0];
+                                result.image[rays.id * 3 + 1] += pixel.color[1];
+                                result.image[rays.id * 3 + 2] += pixel.color[2];
+                            }
+                        } else {
+                            for (auto missShader: missShaders) {
+                                MissShaderInput missShaderInput = {ray.origin, ray.direction};
+                                auto pixel = missShader->shade(rays.id, &pipelineInfo, &missShaderInput, nullptr,
+                                                               &newRays);
+                                result.image[rays.id * 3] += pixel.color[0];
+                                result.image[rays.id * 3 + 1] += pixel.color[1];
+                                result.image[rays.id * 3 + 2] += pixel.color[2];
+                            }
+                        }
+
+                        rays.rayOrigin.insert(rays.rayOrigin.begin(), newRays.rayOrigin.begin(),
+                                              newRays.rayOrigin.end());
+                        rays.rayDirection.insert(rays.rayDirection.begin(), newRays.rayDirection.begin(),
+                                                 newRays.rayDirection.end());
+                    }
+                }
+            }
+        }
+    } else {
+        // best case, early out when any found
+        for (int x = 0; x < pipelineInfo.width; x++) {
+            for (int y = 0; y < pipelineInfo.height; y++) {
+                for (auto generator: rayGeneratorShaders) {
+                    int rayID = x + y * pipelineInfo.width;
+                    auto rays = generator->shade(rayID, &pipelineInfo, nullptr);
+                    rays.id = rayID;
+                    while (!rays.rayOrigin.empty()) {
+                        Ray ray{};
+                        ray.origin = rays.rayOrigin.back();
+                        ray.direction = rays.rayDirection.back();
+                        ray.dirfrac.x = 1.0 / ray.direction.x;
+                        ray.dirfrac.y = 1.0 / ray.direction.y;
+                        ray.dirfrac.z = 1.0 / ray.direction.z;
+
+                        rays.rayOrigin.pop_back();
+
+                        IntersectionInfo info = {false, std::numeric_limits<double>::max(), ray.origin, ray.direction,
+                                                 0, 0, 0, 0, 0};
+                        geometry->intersectAny(&info, &ray);
+
+                        RayGeneratorOutput newRays;
+
+                        if (info.hit) {
+                            for (auto occlusionShader: occlusionShaders) {
+                                OcclusionShaderInput occlusionShaderInput = {ray.origin, ray.direction};
+                                auto pixel = occlusionShader->shade(rays.id, &pipelineInfo, &occlusionShaderInput,
+                                                                    nullptr, &newRays);
+                                result.image[rays.id * 3] += pixel.color[0];
+                                result.image[rays.id * 3 + 1] += pixel.color[1];
+                                result.image[rays.id * 3 + 2] += pixel.color[2];
+                            }
+                        } else {
+                            for (auto missShader: missShaders) {
+                                MissShaderInput missShaderInput = {ray.origin, ray.direction};
+                                auto pixel = missShader->shade(rays.id, &pipelineInfo, &missShaderInput, nullptr,
+                                                               &newRays);
+                                result.image[rays.id * 3] += pixel.color[0];
+                                result.image[rays.id * 3 + 1] += pixel.color[1];
+                                result.image[rays.id * 3 + 2] += pixel.color[2];
+                            }
+                        }
+
+                        rays.rayOrigin.insert(rays.rayOrigin.begin(), newRays.rayOrigin.begin(),
+                                              newRays.rayOrigin.end());
+                        rays.rayDirection.insert(rays.rayDirection.begin(), newRays.rayDirection.begin(),
+                                                 newRays.rayDirection.end());
+                    }
                 }
             }
         }
     }
+
     return 0;
 }
 

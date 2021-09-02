@@ -19,7 +19,7 @@ void refit(BoundingBox &aabb, Object *object) {
 
 void refit(BoundingBox &aabb, std::vector<Object *> *objects, double looseness) {
     // refit box to fit all objects
-    for (auto &object : *objects) {
+    for (auto &object: *objects) {
         refit(aabb, object);
     }
 
@@ -54,7 +54,7 @@ double evaluateBucket(BoundingBox *leftChildBox, BoundingBox *rightChildBox, dou
 
     // sort all objects into their bucket, then update the buckets bounding box
     if (splittingPlane.x != 0) {
-        for (auto &object : *objects) {
+        for (auto &object: *objects) {
             if ((object->getBoundaries().maxCorner.x + object->getBoundaries().minCorner.x) / 2 <
                 splittingPlane.x) {
                 refit(aabbLeft, object);
@@ -65,7 +65,7 @@ double evaluateBucket(BoundingBox *leftChildBox, BoundingBox *rightChildBox, dou
             }
         }
     } else if (splittingPlane.y != 0) {
-        for (auto &object : *objects) {
+        for (auto &object: *objects) {
             if ((object->getBoundaries().maxCorner.y + object->getBoundaries().minCorner.y) / 2 <
                 splittingPlane.y) {
                 refit(aabbLeft, object);
@@ -76,7 +76,7 @@ double evaluateBucket(BoundingBox *leftChildBox, BoundingBox *rightChildBox, dou
             }
         }
     } else {
-        for (auto &object : *objects) {
+        for (auto &object: *objects) {
             if ((object->getBoundaries().maxCorner.z + object->getBoundaries().minCorner.z) / 2 <
                 splittingPlane.z) {
                 refit(aabbLeft, object);
@@ -152,7 +152,7 @@ double evaluateBucket(BoundingBox *leftChildBox, BoundingBox *rightChildBox, dou
 void split(std::vector<Object *> *leftChild, std::vector<Object *> *rightChild, std::vector<Object *> *objects,
            Vector3D splittingPlane) {
     if (splittingPlane.x != 0) {
-        for (auto &object : *objects) {
+        for (auto &object: *objects) {
             if ((object->getBoundaries().maxCorner.x + object->getBoundaries().minCorner.x) / 2 <
                 splittingPlane.x) {
                 leftChild->push_back(object);
@@ -161,7 +161,7 @@ void split(std::vector<Object *> *leftChild, std::vector<Object *> *rightChild, 
             }
         }
     } else if (splittingPlane.y != 0) {
-        for (auto &object : *objects) {
+        for (auto &object: *objects) {
             if ((object->getBoundaries().maxCorner.y + object->getBoundaries().minCorner.y) / 2 <
                 splittingPlane.y) {
                 leftChild->push_back(object);
@@ -170,7 +170,7 @@ void split(std::vector<Object *> *leftChild, std::vector<Object *> *rightChild, 
             }
         }
     } else {
-        for (auto &object : *objects) {
+        for (auto &object: *objects) {
             if ((object->getBoundaries().maxCorner.z + object->getBoundaries().minCorner.z) / 2 <
                 splittingPlane.z) {
                 leftChild->push_back(object);
@@ -811,7 +811,7 @@ void DBVH::remove(DBVH::Node **currentNode, std::vector<Object *> *objects) {
     if (*currentNode == nullptr) return;
     // find object in tree by insertion
     // remove object and refit nodes going the tree back up
-    for (auto &object : *objects) {
+    for (auto &object: *objects) {
         if ((*currentNode)->getType() == 0) {
             auto node = (InnerNode *) *currentNode;
             if (node->leftChild->getType() == 1) {
@@ -841,13 +841,67 @@ void DBVH::remove(DBVH::Node **currentNode, std::vector<Object *> *objects) {
     }
 }
 
-bool DBVH::traverse(IntersectionInfo *intersectionInfo, Ray *ray) {
+bool DBVH::traverseALl(std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray) {
+    Node *stack[maxDepth];
+    uint64_t stackPointer = 1;
+    stack[0] = root;
+
+    while (stackPointer != 0) {
+        auto *node = (InnerNode *) (stack[stackPointer - 1]);
+        stackPointer--;
+
+        double distanceRight = 0;
+        double distanceLeft = 0;
+
+        if (node->rightChild->getType() == 0) {
+            auto *rightChild = (InnerNode *) node->rightChild;
+            if (rayBoxIntersection(&(rightChild->boundingBox.minCorner),
+                                   &(rightChild->boundingBox.maxCorner), ray, &distanceRight)) {
+                stack[stackPointer++] = node->rightChild;
+            }
+        } else {
+            auto *intersectionInformationBuffer = new IntersectionInfo();
+            intersectionInformationBuffer->hit = false;
+            intersectionInformationBuffer->distance = std::numeric_limits<double>::max();
+            intersectionInformationBuffer->position = {0, 0, 0};
+            auto *rightChild = (Child *) (node->rightChild);
+            rightChild->object->intersectFirst(intersectionInformationBuffer, ray);
+            if (intersectionInformationBuffer->hit) {
+                intersectionInfo->push_back(intersectionInformationBuffer);
+            }else{
+                delete intersectionInformationBuffer;
+            }
+        }
+        if (node->leftChild->getType() == 0) {
+            auto *leftChild = (InnerNode *) node->leftChild;
+            if (rayBoxIntersection(&(leftChild->boundingBox.minCorner),
+                                   &(leftChild->boundingBox.maxCorner), ray, &distanceLeft)) {
+                stack[stackPointer++] = node->leftChild;
+            }
+        } else {
+            auto *intersectionInformationBuffer = new IntersectionInfo();
+            intersectionInformationBuffer->hit = false;
+            intersectionInformationBuffer->distance = std::numeric_limits<double>::max();
+            intersectionInformationBuffer->position = {0, 0, 0};
+            auto *leftChild = (Child *) (node->leftChild);
+            leftChild->object->intersectFirst(intersectionInformationBuffer, ray);
+            if (intersectionInformationBuffer->hit) {
+                intersectionInfo->push_back(intersectionInformationBuffer);
+            }else{
+                delete intersectionInformationBuffer;
+            }
+        }
+    }
+
+    return false;
+}
+
+bool DBVH::traverseFirst(IntersectionInfo *intersectionInfo, Ray *ray) {
     bool hit = false;
 
     TraversalContainer stack[maxDepth];
-    uint64_t stackPointer = 0;
+    uint64_t stackPointer = 1;
     stack[0] = {root, 0};
-    stackPointer++;
 
     while (stackPointer != 0) {
         if (stack[stackPointer - 1].distance >= intersectionInfo->distance) {
@@ -872,7 +926,7 @@ bool DBVH::traverse(IntersectionInfo *intersectionInfo, Ray *ray) {
             intersectionInformationBuffer.distance = std::numeric_limits<double>::max();
             intersectionInformationBuffer.position = {0, 0, 0};
             auto *rightChild = (Child *) (node->rightChild);
-            rightChild->object->intersect(&intersectionInformationBuffer, ray);
+            rightChild->object->intersectFirst(&intersectionInformationBuffer, ray);
             if (intersectionInformationBuffer.hit) {
                 if (intersectionInformationBuffer.distance < intersectionInfo->distance) {
                     *intersectionInfo = intersectionInformationBuffer;
@@ -890,7 +944,7 @@ bool DBVH::traverse(IntersectionInfo *intersectionInfo, Ray *ray) {
             intersectionInformationBuffer.distance = std::numeric_limits<double>::max();
             intersectionInformationBuffer.position = {0, 0, 0};
             auto *leftChild = (Child *) (node->leftChild);
-            leftChild->object->intersect(&intersectionInformationBuffer, ray);
+            leftChild->object->intersectFirst(&intersectionInformationBuffer, ray);
             if (intersectionInformationBuffer.hit) {
                 if (intersectionInformationBuffer.distance < intersectionInfo->distance) {
                     *intersectionInfo = intersectionInformationBuffer;
@@ -915,6 +969,59 @@ bool DBVH::traverse(IntersectionInfo *intersectionInfo, Ray *ray) {
     }
 
     return hit;
+}
+
+bool DBVH::traverseAny(IntersectionInfo *intersectionInfo, Ray *ray) {
+    Node *stack[maxDepth];
+    uint64_t stackPointer = 1;
+    stack[0] = root;
+
+    while (stackPointer != 0) {
+        auto *node = (InnerNode *) (stack[stackPointer - 1]);
+        stackPointer--;
+
+        double distanceRight = 0;
+        double distanceLeft = 0;
+
+        if (node->rightChild->getType() == 0) {
+            auto *rightChild = (InnerNode *) node->rightChild;
+            if (rayBoxIntersection(&(rightChild->boundingBox.minCorner),
+                                   &(rightChild->boundingBox.maxCorner), ray, &distanceRight)) {
+                stack[stackPointer++] = node->rightChild;
+            }
+        } else {
+            IntersectionInfo intersectionInformationBuffer{};
+            intersectionInformationBuffer.hit = false;
+            intersectionInformationBuffer.distance = std::numeric_limits<double>::max();
+            intersectionInformationBuffer.position = {0, 0, 0};
+            auto *rightChild = (Child *) (node->rightChild);
+            rightChild->object->intersectFirst(&intersectionInformationBuffer, ray);
+            if (intersectionInformationBuffer.hit) {
+                    *intersectionInfo = intersectionInformationBuffer;
+                    return true;
+            }
+        }
+        if (node->leftChild->getType() == 0) {
+            auto *leftChild = (InnerNode *) node->leftChild;
+            if (rayBoxIntersection(&(leftChild->boundingBox.minCorner),
+                                   &(leftChild->boundingBox.maxCorner), ray, &distanceLeft)) {
+                stack[stackPointer++] = node->leftChild;
+            }
+        } else {
+            IntersectionInfo intersectionInformationBuffer{};
+            intersectionInformationBuffer.hit = false;
+            intersectionInformationBuffer.distance = std::numeric_limits<double>::max();
+            intersectionInformationBuffer.position = {0, 0, 0};
+            auto *leftChild = (Child *) (node->leftChild);
+            leftChild->object->intersectFirst(&intersectionInformationBuffer, ray);
+            if (intersectionInformationBuffer.hit) {
+                    *intersectionInfo = intersectionInformationBuffer;
+                    return true;
+            }
+        }
+    }
+
+    return false;
 }
 
 DBVH::DBVH() {
@@ -964,16 +1071,46 @@ BoundingBox DBVH::getBoundaries() {
     return root->getBoundingBox();
 }
 
-bool DBVH::intersect(IntersectionInfo *intersectionInfo, Ray *ray) {
+bool DBVH::intersectFirst(IntersectionInfo *intersectionInfo, Ray *ray) {
     bool hit;
 
     if (root == nullptr) return false;
 
     if (root->getType() == 1) {
         auto *node = (Child *) (root);
-        hit = node->object->intersect(intersectionInfo, ray);
+        hit = node->object->intersectFirst(intersectionInfo, ray);
     } else {
-        hit = traverse(intersectionInfo, ray);
+        hit = traverseFirst(intersectionInfo, ray);
+    }
+
+    return hit;
+}
+
+bool DBVH::intersectAny(IntersectionInfo *intersectionInfo, Ray *ray) {
+    bool hit;
+
+    if (root == nullptr) return false;
+
+    if (root->getType() == 1) {
+        auto *node = (Child *) (root);
+        hit = node->object->intersectAny(intersectionInfo, ray);
+    } else {
+        hit = traverseAny(intersectionInfo, ray);
+    }
+
+    return hit;
+}
+
+bool DBVH::intersectAll(std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray) {
+    bool hit;
+
+    if (root == nullptr) return false;
+
+    if (root->getType() == 1) {
+        auto *node = (Child *) (root);
+        hit = node->object->intersectAll(intersectionInfo, ray);
+    } else {
+        hit = traverseALl(intersectionInfo, ray);
     }
 
     return hit;

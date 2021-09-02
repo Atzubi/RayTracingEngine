@@ -34,11 +34,13 @@ private:
 public:
     TriangleMeshObject(const std::vector<Vertex>* vertices, const std::vector<uint64_t>* indices, const Material* material);
 
-    ~TriangleMeshObject();
+    ~TriangleMeshObject() override;
 
     BoundingBox getBoundaries() override;
 
-    bool intersect(IntersectionInfo *intersectionInfo, Ray *ray) override;
+    bool intersectFirst(IntersectionInfo *intersectionInfo, Ray *ray) override;
+    bool intersectAny(IntersectionInfo *intersectionInfo, Ray *ray) override;
+    bool intersectAll(std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray) override;
 
     Object *clone() override;
 
