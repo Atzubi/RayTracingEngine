@@ -14,7 +14,7 @@
  * Contains all the information needed that defines a pipeline.
  * PipelineImplement Model:
  *                                      OcclusionShader
- * RayGeneratorShader -> Ray Tracer ->  HitShader       -> ControlShader
+ * RayGeneratorShader -> Ray Tracer ->  HitShader
  *                                      PierceShader
  *                                      MissShader
  */

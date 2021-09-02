@@ -163,18 +163,6 @@ bool DataManagementUnit::updateObject(int id, Object *object) {
     }
 }
 
-int DataManagementUnit::addShader(ControlShader *shader) {
-    controlShaders.insert(std::pair<int, ControlShader *>(*shaderIds.begin(), shader));
-
-    int buffer = shaderIds.extract(shaderIds.begin()).value();
-
-    if (shaderIds.empty()) {
-        shaderIds.insert(buffer + 1);
-    }
-
-    return buffer;
-}
-
 int DataManagementUnit::addShader(HitShader *shader) {
     hitShaders.insert(std::pair<int, HitShader *>(*shaderIds.begin(), shader));
 
@@ -236,9 +224,7 @@ int DataManagementUnit::addShader(RayGeneratorShader *shader) {
 }
 
 bool DataManagementUnit::removeShader(int id) {
-    if (controlShaders.count(id) != 0) {
-        controlShaders.erase(id);
-    } else if (hitShaders.count(id) != 0) {
+    if (hitShaders.count(id) != 0) {
         hitShaders.erase(id);
     } else if (missShaders.count(id) != 0) {
         missShaders.erase(id);

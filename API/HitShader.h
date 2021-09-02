@@ -7,13 +7,16 @@
 
 //#include "RayEngine.h"
 
+/**
+ * Default implementation of a hit shader. Shades light based on the Phong shading model. Considers textures.
+ */
 class BasicHitShader : public HitShader{
 public:
     BasicHitShader(){
 
     }
     BasicHitShader(const BasicHitShader& copy){
-
+        // TODO
     }
 
     Shader* clone() override{
@@ -120,10 +123,6 @@ public:
                                   255);
 
         return shaderOutput;
-    }
-
-    void *getAssociatedData() {
-        return nullptr;
     }
 };
 

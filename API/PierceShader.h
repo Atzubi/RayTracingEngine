@@ -7,13 +7,16 @@
 
 //#include "RayEngine.h"
 
+/**
+ * Default implementation of a pierce shader.
+ */
 class BasicPierceShader : public PierceShader{
 public:
     BasicPierceShader(){
 
     }
     BasicPierceShader(const BasicPierceShader& copy){
-
+        // TODO
     }
 
     Shader* clone() override{
@@ -21,11 +24,8 @@ public:
     }
 
     ShaderOutput shade(uint64_t id, PipelineInfo *pipelineInfo, PierceShaderInput *shaderInput, void* dataInput, RayGeneratorOutput *newRays) override{
+        // TODO
         return ShaderOutput();
-    }
-
-    void *getAssociatedData() {
-        return nullptr;
     }
 };
 

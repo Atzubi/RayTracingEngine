@@ -9,10 +9,12 @@
 
 /**
  * Contains all the information required to construct a 3d model based on a 3d triangle mesh.
- * vertices:        a list of coordinates that are used as vertices
- * normals:         defines a normal per vertex
- * map:             defines mapping coordinates per vertex
- * ids:             a list of vertex ids that form a triangle
+ * Provides necessary methods for using it as object in the ray tracing engine.
+ * vertices:        a list of coordinates for position, normal and texture data
+ * indices:         a list of indices for the vertices where every 3 define one triangle
+ * material:        contains information about an objects surface properties, like texture, reflectiveness, etc.
+ * triangles:       object form of every triangle defined by vertices and indices
+ * structure:       an intersection acceleration data structure
  */
 class TriangleMeshObject : public Object {
 public:
@@ -24,6 +26,7 @@ public:
 
 private:
     friend class Triangle;
+
     std::vector<Vertex> vertices;
     std::vector<uint64_t> indices;
     Material material;
@@ -32,20 +35,68 @@ private:
     Object *structure;
 
 public:
-    TriangleMeshObject(const std::vector<Vertex>* vertices, const std::vector<uint64_t>* indices, const Material* material);
+    /**
+     * Initializes the object given the base information. Creates an acceleration data structure for faster intersection tests.
+     * @param vertices  Vector of vertices, each containing a position, a normal and a texture coordinate.
+     * @param indices   Vector of indices for the vertices. Every 3 indices define one triangle.
+     * @param material  The objects material.
+     */
+    TriangleMeshObject(const std::vector<Vertex> *vertices, const std::vector<uint64_t> *indices,
+                       const Material *material);
 
+    /**
+     * Destructor, cleans up this object on deletion.
+     */
     ~TriangleMeshObject() override;
 
+    /**
+     * Computes the axis aligned bounding box of this object.
+     * @return An axis aligned bounding box of this object.
+     */
     BoundingBox getBoundaries() override;
 
+    /**
+     * Computes the first intersection of a ray with this object.
+     * @param intersectionInfo  Information container that will be filled with the intersection details on intersection.
+     * @param ray               The ray that is used for the intersection calculation.
+     * @return                  Returns true if there is an intersection, false otherwise.
+     */
     bool intersectFirst(IntersectionInfo *intersectionInfo, Ray *ray) override;
+
+    /**
+     * Computes the first intersection of a ray with this object.
+     * @param intersectionInfo  Information container that will be filled with the intersection details on intersection.
+     * @param ray               The ray that is used for the intersection calculation.
+     * @return                  Returns true if there is an intersection, false otherwise.
+     */
     bool intersectAny(IntersectionInfo *intersectionInfo, Ray *ray) override;
+
+    /**
+     * Computes all intersections of a ray with this object.
+     * @param intersectionInfo  Vector of intersection information containers that will be filled with the intersection
+     *                          details for all intersections.
+     * @param ray               The ray that is used for the intersection calculation.
+     * @return                  Returns true if there is at least one intersection, false otherwise.
+     */
     bool intersectAll(std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray) override;
 
+    /**
+     * Makes a perfect clone of this object.
+     * @return  Pointer to the new clone.
+     */
     Object *clone() override;
 
+    /**
+     * Computes the effective surface area of this object.
+     * @return The surface area of this object.
+     */
     double getSurfaceArea() override;
 
+    /**
+     * Tests whether the object in question is identical to this object.
+     * @param object    Another object.
+     * @return          True if they are equal, false otherwise.
+     */
     bool operator==(Object *object) override;
 };
 

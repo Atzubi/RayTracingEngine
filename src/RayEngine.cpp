@@ -51,10 +51,6 @@ bool RayEngine::bindShaderToPipeline(int pipelineId, int *shaderId, std::vector<
     return dataManagementUnit->bindShaderToPipeline(pipelineId, shaderId, shaderResourceIds);
 }
 
-int RayEngine::addShader(ControlShader *shader) {
-    return dataManagementUnit->addShader(shader);
-}
-
 int RayEngine::addShader(HitShader *shader) {
     return dataManagementUnit->addShader(shader);
 }

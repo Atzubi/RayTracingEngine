@@ -8,6 +8,9 @@
 #include <cmath>
 #include "RayEngine.h"
 
+/**
+ * Default implementation of a ray generator shader. It generates a view frustum given a camera position and resolution.
+ */
 class BasicRayGeneratorShader : public RayGeneratorShader {
 public:
     BasicRayGeneratorShader() {

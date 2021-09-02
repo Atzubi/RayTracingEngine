@@ -17,7 +17,6 @@ private:
     std::set<int> objectIds;
     std::unordered_map<int, int> objectInstances;
     std::set<int> objectInstanceIds;
-    std::unordered_map<int, ControlShader*> controlShaders;
     std::unordered_map<int, HitShader *> hitShaders;
     std::unordered_map<int, MissShader *> missShaders;
     std::unordered_map<int, OcclusionShader *> occlusionShaders;
@@ -131,13 +130,6 @@ public:
      * return:          true if success, false otherwise
      */
     bool updateObject(int id, Object *object);
-
-    /*
-     * Adds a control shader to the shader pool.
-     * shader:          the added shader
-     * return:          the id of the shader
-     */
-    int addShader(ControlShader *shader);
 
     /*
      * Adds a hit shader to the shader pool.

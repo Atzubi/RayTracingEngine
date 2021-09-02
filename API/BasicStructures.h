@@ -8,7 +8,7 @@
 #include <iostream>
 
 /**
- * Contains x, y and z coordinates representing a vector in 3 dimensions
+ * Contains x, y and z coordinates representing a vector in 3 dimensions.
  */
 struct Vector3D {
     double x;
@@ -17,16 +17,24 @@ struct Vector3D {
 };
 
 /**
- * Contains x and y coordinates representing a vector in 2 dimensions
+ * Contains x and y coordinates representing a vector in 2 dimensions.
  */
 struct Vector2D {
     double x;
     double y;
 };
 
+/**
+ * Contains a 4 by 4 matrix.
+ * elements:    The matrix.
+ */
 struct Matrix4x4 {
     double elements[4][4];
 
+    /**
+     * Multiplies another matrix with this matrix. Stores the result in the current matrix.
+     * @param matrix    Another matrix.
+     */
     void multiplyBy(Matrix4x4 *matrix) {
         double e[4][4];
         for (int row = 0; row < 4; row++) {
@@ -44,6 +52,10 @@ struct Matrix4x4 {
         }
     }
 
+    /**
+     * Computes the inverse of this matrix.
+     * @return  The inverse of this matrix.
+     */
     Matrix4x4 getInverse() {
         double det = elements[0][0] * elements[1][1] * elements[2][2] *
                      elements[3][3] -
@@ -130,7 +142,7 @@ struct Matrix4x4 {
     }
 };
 
-/*
+/**
  * Contains additional parameters of an object that are used when constructing the data structure for rendering.
  * bounding:        a parameter used for describing the looseness of an objects bounding, higher values create
  *                  bigger boxes that cripple general rendering performance but speed up reconstructing the data
@@ -140,9 +152,18 @@ struct ObjectParameter {
     double bounding;
 };
 
+/**
+ * Container for an axis aligned bounding box.
+ * minCorner:   The corner with minimum values.
+ * maxCorner:   The corner with maximum values.
+ */
 struct BoundingBox {
     Vector3D minCorner, maxCorner;
 
+    /**
+     * Computes the surface area of the axis aligned bounding box.
+     * @return  The surface area divided by two.
+     */
     [[nodiscard]] double getSA() const {
         return (maxCorner.x - minCorner.x) * (maxCorner.y - minCorner.y) +
                (maxCorner.x - minCorner.x) * (maxCorner.z - minCorner.z) +
@@ -150,6 +171,13 @@ struct BoundingBox {
     }
 };
 
+/**
+ * Container for storing an image/texture.
+ * name:    The name of the texture.
+ * w:       The horizontal resolution of the texture.
+ * h:       The vertical resolution of the texture.
+ * image:   Byte sized rgb values. Every 3 chars define the color of pixel.
+ */
 struct Texture {
     std::string name;
     int w;
@@ -157,6 +185,9 @@ struct Texture {
     unsigned char *image;
 };
 
+/**
+ * Material of an object.
+ */
 struct Material {
     // Material Name
     std::string name;
@@ -188,11 +219,19 @@ struct Material {
     Texture map_bump;
 };
 
+/**
+ * Container of a ray.
+ * origin:      Origin of the ray.
+ * direction:   Direction of the ray.
+ * dirfrac:     1/direction of the ray. (Performance optimization)
+ */
 struct Ray {
     Vector3D origin, direction, dirfrac;
 };
 
-
+/**
+ * Container for arbitrary data.
+ */
 class Any {
 public:
     Any() : content(nullptr) {}
@@ -201,7 +240,7 @@ public:
         delete content;
     }
 
-    Any(const Any& rhs){
+    Any(const Any &rhs) {
         content = rhs.content->clone();
     }
     //Any& operator=(const Any& rhs){};

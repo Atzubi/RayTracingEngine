@@ -8,13 +8,16 @@
 #include <iostream>
 #include "RayEngine.h"
 
+/**
+ * Default implementation of a miss shader.
+ */
 class BasicMissShader : public MissShader{
 public:
     BasicMissShader(){
 
     }
     BasicMissShader(const BasicMissShader& copy){
-
+        // TODO
     }
 
     Shader* clone() override{
@@ -22,11 +25,8 @@ public:
     }
 
     ShaderOutput shade(uint64_t id, PipelineInfo *pipelineInfo, MissShaderInput *shaderInput, void* dataInput, RayGeneratorOutput *newRays) override{
+        // TODO
         return ShaderOutput();
-    }
-
-    void *getAssociatedData() {
-        return nullptr;
     }
 };
 
