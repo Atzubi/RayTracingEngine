@@ -30,4 +30,5 @@ $ make
 $ sudo make install
 ```
 The last step will install the header files and binaries to your default library 
-folders. You can now include the headers in your own project.
+folders. You can now include the headers in your own project. For more details on
+how to get started check the examples.
