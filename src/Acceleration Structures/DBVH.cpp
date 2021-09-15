@@ -1059,8 +1059,6 @@ void DBVH::addObjects(std::vector<Object *> *objects) {
         root = new InnerNode();
     }
     add(root, objects, 1);
-
-    std::cout << ((InnerNode *) root)->surfaceArea << std::endl;
 }
 
 void DBVH::removeObjects(std::vector<Object *> *objects) {
