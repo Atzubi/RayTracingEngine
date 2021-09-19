@@ -1,13 +1,13 @@
 cmake_minimum_required(VERSION 3.20)
 project(MinimalExample)
 
-set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-std=c++20 -O0 -lsfml-graphics -lsfml-window -lsfml-system")
+set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-std=c++20 -O0")
 
 add_executable(MinimalExample main.cpp)
 
-target_link_libraries(MinimalExample RayTraceEngine)
+find_library(RAY_TRACE_ENGINE NAMES RayTraceEngine)
 
-set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules" ${CMAKE_MODULE_PATH})
-find_package(SFML 2 REQUIRED network audio graphics window system)
-include_directories(${SFML_INCLUDE_DIR})
-target_link_libraries(MinimalExample ${SFML_LIBRARIES} ${SFML_DEPENDENCIES})
+target_link_libraries(MinimalExample ${RAY_TRACE_ENGINE})
+
+find_package(SFML 2 COMPONENTS network graphics audio window system REQUIRED)
+target_link_libraries(MinimalExample sfml-graphics sfml-audio)
