@@ -3,7 +3,7 @@
 //
 
 #include <iostream>
-#include "../include/RayEngine.h"
+#include "include/RayEngine.h"
 #include "Data Management/DataManagementUnit.h"
 
 RayEngine::RayEngine() {
