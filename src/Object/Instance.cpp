@@ -3,7 +3,7 @@
 //
 
 #include "Instance.h"
-#include "API/BasicStructures.h"
+#include "include/BasicStructures.h"
 #include "src/Acceleration Structures/DBVH.h"
 
 void createAABB(BoundingBox *aabb, Matrix4x4 *transform) {

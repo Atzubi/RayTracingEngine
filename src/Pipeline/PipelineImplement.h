@@ -5,9 +5,9 @@
 #ifndef RAYTRACECORE_PIPELINEIMPLEMENT_H
 #define RAYTRACECORE_PIPELINEIMPLEMENT_H
 
-#include "API/Pipeline.h"
-#include "API/Shader.h"
-#include "API/Object.h"
+#include "include/Pipeline.h"
+#include "include/Shader.h"
+#include "include/Object.h"
 #include "limits"
 
 /**
