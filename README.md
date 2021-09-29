@@ -14,7 +14,7 @@ the setup section if you want to give it a try.
 | Accelaration Structures       | Done!         |
 | Shader Support                | Done!         |
 | Distributed Data Management   | In Progress   |
-| Task Based Parallelization    | In Progress   |
+| Task Based Parallelisation    | In Progress   |
 | GPU Support                   | Pending       |
 | Distributed Computing         | Pending       |
 | Optimization                  | Pending       |
