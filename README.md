@@ -17,7 +17,7 @@ the setup section if you want to give it a try.
 | Task Based Parallelisation    | In Progress   |
 | GPU Support                   | Pending       |
 | Distributed Computing         | Pending       |
-| Optimization                  | Pending       |
+| Optimisation                  | Pending       |
 	
 ## Linux Setup
 This project uses cmake. Inside the project folder run:
