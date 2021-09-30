@@ -19,8 +19,8 @@ set(ATZUBI_RTENGINE_INSTALL_CMAKE_DIR "${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NA
 add_subdirectory(src lib)
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
-add_library(atzubi::rtengine ALIAS atzubi-rtengine)
-target_include_directories(atzubi-rtengine INTERFACE
+add_library(atzubi::rtengine ALIAS RayTraceEngine)
+target_include_directories(RayTraceEngine INTERFACE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
@@ -28,7 +28,7 @@ target_include_directories(atzubi-rtengine INTERFACE
 # examples
 option(ATZUBI_RTENGINE_BUILD_EXAMPLES "Build example programs" ${ATZUBI_RTENGINE_IS_MAIN_PROJECT})
 if(ATZUBI_RTENGINE_BUILD_EXAMPLES)
-  add_subdirectory(Examples/MinimalExample)
+  add_subdirectory(Examples/MinimalExample example/MinimalExample)
 endif()
 
 option(ATZUBI_RTENGINE_INSTALL "Generate the install target" ${ATZUBI_RTENGINE_IS_MAIN_PROJECT})
@@ -46,7 +46,7 @@ if(ATZUBI_RTENGINE_INSTALL)
   write_basic_package_version_file(${PROJECT_NAME}-config-version.cmake COMPATIBILITY SameMajorVersion)
 
   # install and export target
-  install(TARGETS atzubi-rtengine EXPORT ${PROJECT_NAME}-targets)
+  install(TARGETS RayTraceEngine EXPORT ${PROJECT_NAME}-targets)
   install(FILES
     ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake
     ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake
@@ -57,7 +57,7 @@ if(ATZUBI_RTENGINE_INSTALL)
     DESTINATION ${ATZUBI_RTENGINE_INSTALL_CMAKE_DIR}
   )
 
-  install(TARGETS atzubi-rtengine LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+  install(TARGETS RayTraceEngine LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
   install(FILES ${CMAKE_BINARY_DIR}/RayTraceEngine.pc DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig)
 
 

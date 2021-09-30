@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 
 add_executable(MinimalExample main.cpp)
-target_link_libraries(MinimalExample atzubi-rtengine)
+target_link_libraries(MinimalExample RayTraceEngine)
 
 find_package(SFML 2 COMPONENTS network graphics audio window system REQUIRED)
 target_link_libraries(MinimalExample sfml-graphics sfml-audio)
