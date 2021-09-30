@@ -2,9 +2,10 @@
 // Created by sebastian on 22.07.21.
 //
 
-#include "Instance.h"
-#include "include/BasicStructures.h"
-#include "src/Acceleration Structures/DBVH.h"
+#include "API/BasicStructures.h"
+#include "Acceleration Structures/DBVH.h"
+#include "Object/Instance.h"
+
 
 void createAABB(BoundingBox *aabb, Matrix4x4 *transform) {
     // apply transformation to box

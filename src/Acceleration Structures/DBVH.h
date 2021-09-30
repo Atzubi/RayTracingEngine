@@ -8,8 +8,9 @@
 #include <list>
 #include <utility>
 #include <deque>
-#include <include/Object.h>
-#include "../Utils/HashMap/robin_map.h"
+
+#include "API/Object.h"
+#include "Utils/HashMap/robin_map.h"
 
 class DBVH : public Object {
 private:

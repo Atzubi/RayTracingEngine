@@ -2,7 +2,8 @@
 // Created by sebastian on 19.07.21.
 //
 
-#include "DBVH.h"
+#include "Acceleration Structures/DBVH.h"
+
 
 void refit(BoundingBox *target, BoundingBox resizeBy) {
     target->minCorner.x = std::min(target->minCorner.x, resizeBy.minCorner.x);

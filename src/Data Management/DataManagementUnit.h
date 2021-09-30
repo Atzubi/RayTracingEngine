@@ -7,9 +7,11 @@
 
 #include <set>
 #include <unordered_map>
-#include "include/Pipeline.h"
-#include "include/Shader.h"
-#include "src/Pipeline/PipelineImplement.h"
+
+#include "API/Pipeline.h"
+#include "API/Shader.h"
+#include "Pipeline/PipelineImplement.h"
+
 
 class DataManagementUnit {
 private:

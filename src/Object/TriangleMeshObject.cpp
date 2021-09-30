@@ -2,8 +2,9 @@
 // Created by sebastian on 13.11.19.
 //
 
-#include "include/TriangleMeshObject.h"
-#include "../Acceleration Structures/DBVH.h"
+#include "API/TriangleMeshObject.h"
+#include "Acceleration Structures/DBVH.h"
+
 
 class Triangle : public Object {
 public:

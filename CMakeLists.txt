@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(atzubi-rtengine VERSION 1.0.0 LANGUAGES CXX DESCRIPTION "This library provides a toolset for raytracing on cpu and gpu")
+project(RayTraceEngine VERSION 1.0.0 LANGUAGES CXX DESCRIPTION "This library provides a toolset for raytracing on cpu and gpu")
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -14,11 +14,12 @@ endif()
 # installation directories
 include(GNUInstallDirs)
 
-set(ATZUBI_RTENGINE_INSTALL_CMAKE_DIR "${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/cmake" CACHE STRING "The installation cmake directory")
-
-add_subdirectory(src lib)
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
+set(ATZUBI_RTENGINE_INSTALL_CMAKE_DIR "${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/cmake" CACHE STRING "The installation cmake directory")
+
+
+add_subdirectory(src lib)
 add_library(atzubi::rtengine ALIAS RayTraceEngine)
 target_include_directories(RayTraceEngine INTERFACE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -62,7 +63,7 @@ if(ATZUBI_RTENGINE_INSTALL)
 
 
   export(EXPORT ${PROJECT_NAME}-targets
-    FILE ${atzubi-rtengine_BINARY_DIR}/${PROJECT_NAME}-targets.cmake
+    FILE ${RayTraceEngine_BINARY_DIR}/${PROJECT_NAME}-targets.cmake
     NAMESPACE atzubi::
   )
 endif()

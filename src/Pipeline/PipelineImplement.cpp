@@ -3,7 +3,9 @@
 //
 
 #include <iostream>
-#include "src/Pipeline/PipelineImplement.h"
+
+#include "Pipeline/PipelineImplement.h"
+
 
 PipelineImplement::PipelineImplement(int width, int height, Vector3D *cameraPosition, Vector3D *cameraDirection,
                                      Vector3D *cameraUp, std::vector<RayGeneratorShader *> *rayGeneratorShaders,
