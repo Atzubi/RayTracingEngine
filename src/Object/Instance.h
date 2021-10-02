@@ -5,7 +5,7 @@
 #ifndef RAYTRACECORE_INSTANCE_H
 #define RAYTRACECORE_INSTANCE_H
 
-#include "API/Object.h"
+#include "RayTraceEngine/Object.h"
 
 
 class Instance : public Object{

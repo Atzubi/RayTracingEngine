@@ -2,7 +2,7 @@
 // Created by sebastian on 22.07.21.
 //
 
-#include "API/BasicStructures.h"
+#include "RayTraceEngine/BasicStructures.h"
 #include "Acceleration Structures/DBVH.h"
 #include "Object/Instance.h"
 

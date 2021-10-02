@@ -2,7 +2,7 @@
 // Created by sebastian on 13.11.19.
 //
 
-#include "API/TriangleMeshObject.h"
+#include "RayTraceEngine/TriangleMeshObject.h"
 #include "Acceleration Structures/DBVH.h"
 
 

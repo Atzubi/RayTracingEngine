@@ -5,7 +5,7 @@
 
 #include <vector>
 
-#include "API/Object.h"
+#include "RayTraceEngine/Object.h"
 #include "Acceleration Structures/DBVH.h"
 #include "Data Management/DataManagementUnit.h"
 #include "Object/Instance.h"

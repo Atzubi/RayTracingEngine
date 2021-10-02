@@ -1,6 +1,6 @@
 // include relevant headers of the ray tracing engine
-#include <API/RayTraceCore.h>
-#include <API/Object.h>
+#include "RayTraceEngine/RayTraceCore.h"
+#include "RayTraceEngine/Object.h"
 
 // include an obj loader for parsing obj files
 #include "OBJ_Loader.h"

@@ -9,7 +9,7 @@
 #include <utility>
 #include <deque>
 
-#include "API/Object.h"
+#include "RayTraceEngine/Object.h"
 #include "Utils/HashMap/robin_map.h"
 
 class DBVH : public Object {

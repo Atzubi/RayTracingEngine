@@ -7,9 +7,9 @@
 
 #include "limits"
 
-#include "API/Object.h"
-#include "API/Pipeline.h"
-#include "API/Shader.h"
+#include "RayTraceEngine/Object.h"
+#include "RayTraceEngine/Pipeline.h"
+#include "RayTraceEngine/Shader.h"
 
 
 /**
