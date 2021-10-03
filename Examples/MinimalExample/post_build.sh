@@ -1,3 +1,3 @@
 #!/bin/bash
 
-cp -R ./Data $1/
+cp -R "./Data" "$1/"
