@@ -1,6 +1,6 @@
 // include relevant headers of the ray tracing engine
-#include <RayTraceCore.h>
-#include <Object.h>
+#include "RayTraceEngine/RayTraceCore.h"
+#include "RayTraceEngine/Object.h"
 
 // include an obj loader for parsing obj files
 #include "OBJ_Loader.h"
@@ -26,7 +26,7 @@ int main() {
     std::vector<int> objectIDs;
 
     // load the obj file
-    if (!loader.LoadFile("../Data/Basketball/Basketball.obj")) return 1;
+    if (!loader.LoadFile("./Data/Basketball/Basketball.obj")) return 1;
 
     // iterate over all meshes defined in the object loaded
     for (auto &m: loader.LoadedMeshes) {

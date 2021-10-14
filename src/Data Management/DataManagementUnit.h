@@ -7,9 +7,11 @@
 
 #include <set>
 #include <unordered_map>
-#include "API/Pipeline.h"
-#include "API/Shader.h"
-#include "src/Pipeline/PipelineImplement.h"
+
+#include "RayTraceEngine/Pipeline.h"
+#include "RayTraceEngine/Shader.h"
+#include "Pipeline/PipelineImplement.h"
+
 
 class DataManagementUnit {
 private:

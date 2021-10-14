@@ -5,10 +5,12 @@
 #ifndef RAYTRACECORE_PIPELINEIMPLEMENT_H
 #define RAYTRACECORE_PIPELINEIMPLEMENT_H
 
-#include "API/Pipeline.h"
-#include "API/Shader.h"
-#include "API/Object.h"
 #include "limits"
+
+#include "RayTraceEngine/Object.h"
+#include "RayTraceEngine/Pipeline.h"
+#include "RayTraceEngine/Shader.h"
+
 
 /**
  * Contains all the information needed that defines a pipeline.

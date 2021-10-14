@@ -4,7 +4,9 @@
 
 #include <thread>
 #include <limits>
-#include "HBVH.h"
+
+#include "Acceleration Structures/HBVH.h"
+
 
 void HeapBVH::findBoundaries(Primitive *primitives, uint64_t *ids, uint64_t min, uint64_t max, double_t *minX,
                              double_t *minY, double_t *minZ, double_t *maxX, double_t *maxY, double_t *maxZ) {

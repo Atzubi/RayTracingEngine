@@ -4,11 +4,12 @@
 
 
 #include <vector>
-#include "API/Object.h"
-#include "DataManagementUnit.h"
-#include "src/Pipeline/PipelineImplement.h"
-#include "src/Acceleration Structures/DBVH.h"
-#include "src/Object/Instance.h"
+
+#include "RayTraceEngine/Object.h"
+#include "Acceleration Structures/DBVH.h"
+#include "Data Management/DataManagementUnit.h"
+#include "Object/Instance.h"
+#include "Pipeline/PipelineImplement.h"
 
 
 DataManagementUnit::DataManagementUnit() {
