@@ -18,17 +18,43 @@ the setup section if you want to give it a try.
 | GPU Support                   | Pending       |
 | Distributed Computing         | Pending       |
 | Optimization                  | Pending       |
-	
-## Linux Setup
-This project uses cmake. Inside the project folder run:
 
+## Getting Started
+This project requires cmake 3.10 or higher.
+If you wish to build the examples you also need SFML (Simple and Fast Multimedia Library). If you are using linux both of which can likely be installed via your distributions package manager.\
+*Note: Windows and MacOS may be able to build but it is currently not something that is actively tested or supported.*
+#### Installing SFML
+```bash
+# ubuntu
+sudo apt install libsfml-dev
+# Arch/Manjaro
+sudo pacman -Syu sfml
+# MacOS
+brew install sfml
 ```
-$ mkdir build
-$ cd build
-$ cmake ..
-$ make
-$ sudo make install
+
+### Setup - Linux
+1. Clone the project and create the build directory.
+```bash
+git clone https://github.com/Atzubi/RayTracingEngine.git
+cd RayTracingEngine
+mkdir build && cd build
 ```
-The last step will install the header files and binaries to your default library 
-folders. You can now include the headers in your own project. For more details on
-how to get started check the examples.
+2. Generate make files.
+```bash
+cmake .. -DATZUBI_RTENGINE_BUILD_EXAMPLES=1
+# If you don't want examples built omit
+# -DATUZBI_RTENGINE_BUILD_EXAMPLES=1 from the cmake command
+```
+3. Build and install.
+```bash
+make -j$(nproc) # uses all cpu cores in build
+sudo make install
+```
+*Note: GNU's default library install directory is not in the default path of many linux distrubutions so be sure to add it.*
+4. Add to your project via cmake.
+```cmake
+target_link_libraries(YOUR_EXECUTABLE RayTraceEngine)
+```
+All done!\
+Be sure to check out the example code to get a feel on how to use the library.
