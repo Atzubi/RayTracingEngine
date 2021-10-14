@@ -51,6 +51,10 @@ Object *PipelineImplement::getGeometryAsObject() {
 }
 
 int PipelineImplement::run() {
+    for (int i = 0; i < pipelineInfo.width * pipelineInfo.height * 3; i++) {
+        result.image[i] = 0;
+    }
+
     if (!pierceShaders.empty()) {
         // worst case, full traversal
         for (int x = 0; x < pipelineInfo.width; x++) {
