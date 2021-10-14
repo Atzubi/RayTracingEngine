@@ -19,6 +19,7 @@ the setup section if you want to give it a try.
 | Distributed Computing         | Pending       |
 | Optimization                  | Pending       |
 
+
 ## Getting Started
 This project requires cmake 3.10 or higher.
 If you wish to build the examples you also need SFML (Simple and Fast Multimedia Library). If you are using linux both of which can likely be installed via your distributions package manager.\
@@ -52,6 +53,7 @@ make -j$(nproc) # uses all cpu cores in build
 sudo make install
 ```
 *Note: GNU's default library install directory is not in the default path of many linux distrubutions so be sure to add it.*
+
 4. Add to your project via cmake.
 ```cmake
 target_link_libraries(YOUR_EXECUTABLE RayTraceEngine)
