@@ -18,50 +18,54 @@ DataManagementUnit::DataManagementUnit() {
     pipelineIds.insert(0);
 }
 
-DataManagementUnit::~DataManagementUnit() = default;
+DataManagementUnit::~DataManagementUnit(){
+    for(auto pair : pipelines){
+        delete pair.second;
+    }
+}
 
 int DataManagementUnit::addPipeline(PipelineDescription *pipelineDescription) {
     DBVH *dbvh = new DBVH();
     std::vector<Object *> pipelineObjects;
-    for (auto id : pipelineDescription->objectIDs) {
+    for (auto id: pipelineDescription->objectIDs) {
         pipelineObjects.push_back(objects.at(id));
     }
     dbvh->addObjects(&pipelineObjects);
 
     std::vector<RayGeneratorShader *> pipelineRayGeneratorShaders;
-    for (auto id : pipelineDescription->rayGeneratorShaderIDs) {
+    for (auto id: pipelineDescription->rayGeneratorShaderIDs) {
         pipelineRayGeneratorShaders.push_back(rayGeneratorShaders.at(id));
     }
 
     std::vector<OcclusionShader *> pipelineOcclusionShaders;
-    for (auto id : pipelineDescription->occlusionShaderIDs) {
+    for (auto id: pipelineDescription->occlusionShaderIDs) {
         pipelineOcclusionShaders.push_back(occlusionShaders.at(id));
     }
 
     std::vector<HitShader *> pipelineHitShaders;
-    for (auto id : pipelineDescription->hitShaderIDs) {
+    for (auto id: pipelineDescription->hitShaderIDs) {
         pipelineHitShaders.push_back(hitShaders.at(id));
     }
 
     std::vector<PierceShader *> pipelinePierceShaders;
-    for (auto id : pipelineDescription->pierceShaderIDs) {
+    for (auto id: pipelineDescription->pierceShaderIDs) {
         pipelinePierceShaders.push_back(pierceShaders.at(id));
     }
 
     std::vector<MissShader *> pipelineMissShaders;
-    for (auto id : pipelineDescription->missShaderIDs) {
+    for (auto id: pipelineDescription->missShaderIDs) {
         pipelineMissShaders.push_back(missShaders.at(id));
     }
 
-    PipelineImplement pipeline = PipelineImplement(pipelineDescription->resolutionX,
-                                                   pipelineDescription->resolutionY,
-                                                   &pipelineDescription->cameraPosition,
-                                                   &pipelineDescription->cameraDirection,
-                                                   &pipelineDescription->cameraUp, &pipelineRayGeneratorShaders,
-                                                   &pipelineOcclusionShaders, &pipelineHitShaders,
-                                                   &pipelinePierceShaders, &pipelineMissShaders, dbvh);
+    auto *pipeline = new PipelineImplement(pipelineDescription->resolutionX,
+                                           pipelineDescription->resolutionY,
+                                           &pipelineDescription->cameraPosition,
+                                           &pipelineDescription->cameraDirection,
+                                           &pipelineDescription->cameraUp, &pipelineRayGeneratorShaders,
+                                           &pipelineOcclusionShaders, &pipelineHitShaders,
+                                           &pipelinePierceShaders, &pipelineMissShaders, dbvh);
 
-    pipelines.insert(std::pair<int, PipelineImplement>(*pipelineIds.begin(), pipeline));
+    pipelines.insert(std::pair<int, PipelineImplement *>(*pipelineIds.begin(), pipeline));
 
     int buffer = pipelineIds.extract(pipelineIds.begin()).value();
 
@@ -285,12 +289,12 @@ bool DataManagementUnit::removeShaderResource(int id) {
 }
 
 int DataManagementUnit::runPipeline(int id) {
-    return pipelines.at(id).run();
+    return pipelines.at(id)->run();
 }
 
 int DataManagementUnit::runAllPipelines() {
-    for(auto p : pipelines){
-        p.second.run();
+    for (auto p: pipelines) {
+        p.second->run();
     }
     return 0;
 }
@@ -298,12 +302,12 @@ int DataManagementUnit::runAllPipelines() {
 void DataManagementUnit::updatePipelineCamera(int id, int resolutionX, int resolutionY, Vector3D cameraPosition,
                                               Vector3D cameraDirection, Vector3D cameraUp) {
     auto pipeline = pipelines.at(id);
-    pipeline.setResolution(resolutionX, resolutionY);
-    pipeline.setCamera(cameraPosition, cameraDirection, cameraUp);
+    pipeline->setResolution(resolutionX, resolutionY);
+    pipeline->setCamera(cameraPosition, cameraDirection, cameraUp);
 }
 
 Texture DataManagementUnit::getPipelineResult(int id) {
     auto pipeline = pipelines.at(id);
-    return pipeline.getResult();
+    return pipeline->getResult();
 }
 

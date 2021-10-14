@@ -27,7 +27,7 @@ private:
     std::set<int> shaderIds;
     std::unordered_map<int, Any *> shadersResources;
     std::set<int> shaderResourceIds;
-    std::unordered_map<int, PipelineImplement> pipelines;
+    std::unordered_map<int, PipelineImplement *> pipelines;
     std::set<int> pipelineIds;
 
 public:
@@ -41,8 +41,9 @@ public:
      */
     int addPipeline(PipelineDescription *pipelineDescription);
 
-    void updatePipelineCamera(int id, int resolutionX, int resolutionY, Vector3D cameraPosition, Vector3D cameraDirection,
-                              Vector3D cameraUp);
+    void
+    updatePipelineCamera(int id, int resolutionX, int resolutionY, Vector3D cameraPosition, Vector3D cameraDirection,
+                         Vector3D cameraUp);
 
     Texture getPipelineResult(int id);
 
@@ -64,7 +65,7 @@ public:
      * return:          true if success, false otherwise, objectIds will be overwritten with object instance ids
      */
     bool bindGeometryToPipeline(int pipelineId, std::vector<int> *objectIds, std::vector<Matrix4x4> *transforms,
-                                std::vector<ObjectParameter> *objectParameters, std::vector<int>*instanceIDs);
+                                std::vector<ObjectParameter> *objectParameters, std::vector<int> *instanceIDs);
 
     /*
      * Binds a shader with its resources to a pipeline.
