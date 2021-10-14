@@ -28,7 +28,7 @@ target_include_directories(RayTraceEngine INTERFACE
 )
 
 # examples
-option(ATZUBI_RTENGINE_BUILD_EXAMPLES "Build example programs" ${ATZUBI_RTENGINE_IS_MAIN_PROJECT})
+option(ATZUBI_RTENGINE_BUILD_EXAMPLES "Build example programs" 0)
 if(ATZUBI_RTENGINE_BUILD_EXAMPLES)
   add_subdirectory(Examples/MinimalExample example/MinimalExample)
 endif()
