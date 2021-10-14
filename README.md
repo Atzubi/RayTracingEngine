@@ -18,10 +18,6 @@ the setup section if you want to give it a try.
 | GPU Support                   | Pending       |
 | Distributed Computing         | Pending       |
 | Optimisation                  | Pending       |
-	
-## Linux Setup
-This project uses cmake. Inside the project folder run:
-
 
 ## Getting Started
 This project requires cmake 3.10 or higher.
