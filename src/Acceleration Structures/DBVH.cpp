@@ -843,7 +843,7 @@ void DBVH::remove(DBVH::Node **currentNode, std::vector<Object *> *objects) {
 }
 
 bool DBVH::traverseALl(std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray) {
-    Node *stack[maxDepth];
+    Node **stack = new Node *[maxDepth];
     uint64_t stackPointer = 1;
     stack[0] = root;
 
@@ -869,7 +869,7 @@ bool DBVH::traverseALl(std::vector<IntersectionInfo *> *intersectionInfo, Ray *r
             rightChild->object->intersectFirst(intersectionInformationBuffer, ray);
             if (intersectionInformationBuffer->hit) {
                 intersectionInfo->push_back(intersectionInformationBuffer);
-            }else{
+            } else {
                 delete intersectionInformationBuffer;
             }
         }
@@ -888,7 +888,7 @@ bool DBVH::traverseALl(std::vector<IntersectionInfo *> *intersectionInfo, Ray *r
             leftChild->object->intersectFirst(intersectionInformationBuffer, ray);
             if (intersectionInformationBuffer->hit) {
                 intersectionInfo->push_back(intersectionInformationBuffer);
-            }else{
+            } else {
                 delete intersectionInformationBuffer;
             }
         }
@@ -900,7 +900,7 @@ bool DBVH::traverseALl(std::vector<IntersectionInfo *> *intersectionInfo, Ray *r
 bool DBVH::traverseFirst(IntersectionInfo *intersectionInfo, Ray *ray) {
     bool hit = false;
 
-    TraversalContainer stack[maxDepth];
+    TraversalContainer *stack = new TraversalContainer[maxDepth];
     uint64_t stackPointer = 1;
     stack[0] = {root, 0};
 
@@ -973,7 +973,7 @@ bool DBVH::traverseFirst(IntersectionInfo *intersectionInfo, Ray *ray) {
 }
 
 bool DBVH::traverseAny(IntersectionInfo *intersectionInfo, Ray *ray) {
-    Node *stack[maxDepth];
+    Node **stack = new Node *[maxDepth];
     uint64_t stackPointer = 1;
     stack[0] = root;
 
@@ -998,8 +998,8 @@ bool DBVH::traverseAny(IntersectionInfo *intersectionInfo, Ray *ray) {
             auto *rightChild = (Child *) (node->rightChild);
             rightChild->object->intersectFirst(&intersectionInformationBuffer, ray);
             if (intersectionInformationBuffer.hit) {
-                    *intersectionInfo = intersectionInformationBuffer;
-                    return true;
+                *intersectionInfo = intersectionInformationBuffer;
+                return true;
             }
         }
         if (node->leftChild->getType() == 0) {
@@ -1016,8 +1016,8 @@ bool DBVH::traverseAny(IntersectionInfo *intersectionInfo, Ray *ray) {
             auto *leftChild = (Child *) (node->leftChild);
             leftChild->object->intersectFirst(&intersectionInformationBuffer, ray);
             if (intersectionInformationBuffer.hit) {
-                    *intersectionInfo = intersectionInformationBuffer;
-                    return true;
+                *intersectionInfo = intersectionInformationBuffer;
+                return true;
             }
         }
     }

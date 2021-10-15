@@ -114,8 +114,8 @@ int main() {
     std::vector<int> instanceIDs;
 
     // instanced objects have their own transformation, create one for each instance
-    std::vector<Matrix4x4*> transforms;
-    for(int i= 0; i < objectIDs.size(); i++) {
+    std::vector<Matrix4x4 *> transforms;
+    for (int i = 0; i < objectIDs.size(); i++) {
         // identity matrix, no transformation
         auto *transform = new Matrix4x4();
         transform->elements[0][0] = 1;
@@ -175,7 +175,7 @@ int main() {
     auto texture = rayEngine.getPipelineResult(pipelineID);
 
     // create image container for sfml
-    sf::Uint8 pixels[1000 * 1000 * 4];
+    sf::Uint8 *pixels = new sf::Uint8[1000 * 1000 * 4];
 
     // translate from texture to sfml
     for (int x = 0; x < 1000; x++) {
@@ -208,8 +208,7 @@ int main() {
     window.display();
 
     // wait for window to close
-    while (window.isOpen())
-    {
+    while (window.isOpen()) {
         sf::Event event{};
         while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed) {
@@ -220,7 +219,7 @@ int main() {
     }
 
     // cleanup
-    for(auto transform : transforms){
+    for (auto transform: transforms) {
         delete transform;
     }
 

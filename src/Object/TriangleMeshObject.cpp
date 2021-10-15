@@ -208,7 +208,7 @@ public:
 TriangleMeshObject::TriangleMeshObject(const std::vector<Vertex> *vertices, const std::vector<uint64_t> *indices,
                                        const Material *material) {
     if (indices->size() % 3 != 0) {
-        std::__throw_invalid_argument("Invalid Index Count");
+        throw std::invalid_argument("Invalid Index Count");
     }
 
     this->vertices = *vertices;
