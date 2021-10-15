@@ -175,7 +175,7 @@ int main() {
     auto texture = rayEngine.getPipelineResult(pipelineID);
 
     // create image container for sfml
-    sf::Uint8 *pixels = new sf::Uint8[1000 * 1000 * 4];
+    auto *pixels = new sf::Uint8[1000 * 1000 * 4];
 
     // translate from texture to sfml
     for (int x = 0; x < 1000; x++) {

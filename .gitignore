@@ -4,3 +4,4 @@ build/
 cmake-build-debug
 cmake-build-release
 CMakeFiles
+SFML-2.5.1
