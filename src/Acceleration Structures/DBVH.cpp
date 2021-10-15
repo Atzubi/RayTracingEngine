@@ -894,13 +894,14 @@ bool DBVH::traverseALl(std::vector<IntersectionInfo *> *intersectionInfo, Ray *r
         }
     }
 
+    delete[] stack;
     return false;
 }
 
 bool DBVH::traverseFirst(IntersectionInfo *intersectionInfo, Ray *ray) {
     bool hit = false;
 
-    TraversalContainer *stack = new TraversalContainer[maxDepth];
+    auto *stack = new TraversalContainer[maxDepth];
     uint64_t stackPointer = 1;
     stack[0] = {root, 0};
 
@@ -969,6 +970,7 @@ bool DBVH::traverseFirst(IntersectionInfo *intersectionInfo, Ray *ray) {
         }
     }
 
+    delete[] stack;
     return hit;
 }
 
@@ -999,6 +1001,7 @@ bool DBVH::traverseAny(IntersectionInfo *intersectionInfo, Ray *ray) {
             rightChild->object->intersectFirst(&intersectionInformationBuffer, ray);
             if (intersectionInformationBuffer.hit) {
                 *intersectionInfo = intersectionInformationBuffer;
+                delete[] stack;
                 return true;
             }
         }
@@ -1017,11 +1020,13 @@ bool DBVH::traverseAny(IntersectionInfo *intersectionInfo, Ray *ray) {
             leftChild->object->intersectFirst(&intersectionInformationBuffer, ray);
             if (intersectionInformationBuffer.hit) {
                 *intersectionInfo = intersectionInformationBuffer;
+                delete[] stack;
                 return true;
             }
         }
     }
 
+    delete[] stack;
     return false;
 }
 

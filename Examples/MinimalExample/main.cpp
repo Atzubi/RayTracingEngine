@@ -223,5 +223,7 @@ int main() {
         delete transform;
     }
 
+    delete[] pixels;
+
     return 0;
 }
