@@ -37,7 +37,8 @@ public:
 
         camRight = {pipelineInfo->cameraUp.y * pipelineInfo->cameraDirection.z -
                     pipelineInfo->cameraUp.z * pipelineInfo->cameraDirection.y,
-                    0,
+                    pipelineInfo->cameraUp.z * pipelineInfo->cameraDirection.x -
+                    pipelineInfo->cameraUp.x * pipelineInfo->cameraDirection.z,
                     pipelineInfo->cameraUp.x * pipelineInfo->cameraDirection.y -
                     pipelineInfo->cameraUp.y * pipelineInfo->cameraDirection.x};
 
