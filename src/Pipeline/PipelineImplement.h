@@ -5,11 +5,12 @@
 #ifndef RAYTRACECORE_PIPELINEIMPLEMENT_H
 #define RAYTRACECORE_PIPELINEIMPLEMENT_H
 
-#include "limits"
+#include <limits>
 
 #include "RayTraceEngine/Object.h"
 #include "RayTraceEngine/Pipeline.h"
 #include "RayTraceEngine/Shader.h"
+#include "Acceleration Structures/DBVHv2.h"
 
 
 /**
@@ -30,7 +31,7 @@ private:
     std::vector<PierceShader *> pierceShaders;
     std::vector<MissShader *> missShaders;
 
-    Object *geometry;
+    DBVHNode *geometry;
 
     Texture result;
 
@@ -39,7 +40,7 @@ public:
                       Vector3D *cameraUp, std::vector<RayGeneratorShader *> *rayGeneratorShaders,
                       std::vector<OcclusionShader *> *occlusionShaders,
                       std::vector<HitShader *> *hitShaders, std::vector<PierceShader *> *pierceShaders,
-                      std::vector<MissShader *> *missShaders, Object *geometry);
+                      std::vector<MissShader *> *missShaders, DBVHNode *geometry);
 
     ~PipelineImplement();
 
@@ -50,6 +51,8 @@ public:
     void setResolution(int width, int height);
 
     void setCamera(Vector3D pos, Vector3D dir, Vector3D up);
+
+    DBVHNode *getGeometry();
 
     Object *getGeometryAsObject();
 };

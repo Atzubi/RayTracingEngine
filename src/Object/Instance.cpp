@@ -2,8 +2,7 @@
 // Created by sebastian on 22.07.21.
 //
 
-#include "RayTraceEngine/BasicStructures.h"
-#include "Acceleration Structures/DBVH.h"
+#include <algorithm>
 #include "Object/Instance.h"
 
 
@@ -163,41 +162,15 @@ void createAABB(BoundingBox *aabb, Matrix4x4 *transform) {
     aabb->maxCorner.z += mid.z;
 }
 
-Instance::Instance(Object *object) {
-    baseObject = object;
-    boundingBox = object->getBoundaries();
-    transform.elements[0][0] = 1;
-    transform.elements[0][1] = 0;
-    transform.elements[0][2] = 0;
-    transform.elements[0][3] = 0;
-    transform.elements[1][0] = 0;
-    transform.elements[1][1] = 1;
-    transform.elements[1][2] = 0;
-    transform.elements[1][3] = 0;
-    transform.elements[2][0] = 0;
-    transform.elements[2][1] = 0;
-    transform.elements[2][2] = 1;
-    transform.elements[2][3] = 0;
-    transform.elements[3][0] = 0;
-    transform.elements[3][1] = 0;
-    transform.elements[3][2] = 0;
-    transform.elements[3][3] = 1;
-    inverseTransform.elements[0][0] = 1;
-    inverseTransform.elements[0][1] = 0;
-    inverseTransform.elements[0][2] = 0;
-    inverseTransform.elements[0][3] = 0;
-    inverseTransform.elements[1][0] = 0;
-    inverseTransform.elements[1][1] = 1;
-    inverseTransform.elements[1][2] = 0;
-    inverseTransform.elements[1][3] = 0;
-    inverseTransform.elements[2][0] = 0;
-    inverseTransform.elements[2][1] = 0;
-    inverseTransform.elements[2][2] = 1;
-    inverseTransform.elements[2][3] = 0;
-    inverseTransform.elements[3][0] = 0;
-    inverseTransform.elements[3][1] = 0;
-    inverseTransform.elements[3][2] = 0;
-    inverseTransform.elements[3][3] = 1;
+Instance::Instance(EngineNode* node, ObjectCapsule* objectCapsule) {
+    engineNode = node;
+    baseObjectId = objectCapsule->id;
+    objectCached = false;
+    objectCache = nullptr;
+    cost = objectCapsule->cost;
+    boundingBox = objectCapsule->boundingBox;
+    transform = Matrix4x4::getIdentity();
+    inverseTransform = Matrix4x4::getIdentity();
 }
 
 void Instance::applyTransform(Matrix4x4 *newTransform) {
@@ -206,9 +179,20 @@ void Instance::applyTransform(Matrix4x4 *newTransform) {
     inverseTransform = transform.getInverse();
 }
 
+void Instance::invalidateCache() {
+    objectCached = false;
+}
+
 Instance::~Instance() = default;
 
 bool Instance::intersectFirst(IntersectionInfo *intersectionInfo, Ray *ray) {
+    Object* baseObject;
+    if(objectCached){
+        baseObject = objectCache;
+    }else{
+        baseObject = engineNode->requestBaseData(baseObjectId);
+    }
+
     Ray newRay = *ray;
 
     BoundingBox originalAABB = baseObject->getBoundaries();
@@ -364,14 +348,13 @@ Object *Instance::clone() {
 }
 
 double Instance::getSurfaceArea() {
-    // TODO
-    return baseObject->getSurfaceArea();
+    return cost + boundingBox.getSA(); // TODO: fix math
 }
 
 bool Instance::operator==(Object *object) {
     auto obj = dynamic_cast<Instance *>(object);
     if (obj == nullptr) return false;
-    else if (obj->baseObject->operator==(object)) {
+    if (obj->baseObjectId == baseObjectId) {
         return obj->transform.elements[0][0] == transform.elements[0][0] &&
                obj->transform.elements[0][1] == transform.elements[0][1] &&
                obj->transform.elements[0][2] == transform.elements[0][2] &&
@@ -390,6 +373,14 @@ bool Instance::operator==(Object *object) {
                obj->transform.elements[3][3] == transform.elements[3][3];
     }
     return false;
+}
+
+ObjectCapsule Instance::getCapsule() {
+    ObjectCapsule capsule{};
+    capsule.cost = getSurfaceArea();
+    capsule.boundingBox = getBoundaries();
+    capsule.id = -1;
+    return capsule;
 }
 
 

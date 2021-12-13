@@ -181,6 +181,14 @@ public:
         return getBoundaries().getSA();
     }
 
+    ObjectCapsule getCapsule() override {
+        ObjectCapsule capsule{};
+        capsule.cost = getSurfaceArea();
+        capsule.boundingBox = getBoundaries();
+        capsule.id = -1;
+        return capsule;
+    }
+
     bool operator==(Object *object) override {
         auto *triangle = dynamic_cast<Triangle *>(object);
         if (triangle == nullptr) {
@@ -257,4 +265,12 @@ double TriangleMeshObject::getSurfaceArea() {
 bool TriangleMeshObject::operator==(Object *object) {
     // TODO
     return false;
+}
+
+ObjectCapsule TriangleMeshObject::getCapsule() {
+    ObjectCapsule capsule{};
+    capsule.cost = getSurfaceArea();
+    capsule.boundingBox = getBoundaries();
+    capsule.id = -1;
+    return capsule;
 }

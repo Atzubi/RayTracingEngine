@@ -14,7 +14,7 @@
 /**
  * Manages data movement within the engine.
  */
-class DataManagementUnit;
+class DataManagementUnitV2;
 
 
 /**
@@ -23,7 +23,7 @@ class DataManagementUnit;
  */
 class RayEngine {
 private:
-    DataManagementUnit *dataManagementUnit;
+    DataManagementUnitV2 *dataManagementUnit;
 
 public:
     /**

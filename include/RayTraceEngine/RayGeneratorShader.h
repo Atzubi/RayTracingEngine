@@ -26,14 +26,14 @@ public:
     }
 
     RayGeneratorOutput shade(uint64_t id, PipelineInfo *pipelineInfo, void *dataInput) override {
-        int x = (id % pipelineInfo->width) - (pipelineInfo->width) / 2;
-        int y = -(id / pipelineInfo->height) + (pipelineInfo->height) / 2;
+        uint64_t x = (id % pipelineInfo->width) - (pipelineInfo->width) / 2;
+        uint64_t y = -(id / pipelineInfo->height) + (pipelineInfo->height) / 2;
 
         RayGeneratorOutput rayGeneratorOutput;
-        Vector3D rayOrigin;
-        Vector3D rayDirection;
+        Vector3D rayOrigin{};
+        Vector3D rayDirection{};
 
-        Vector3D camRight;
+        Vector3D camRight{};
 
         camRight = {pipelineInfo->cameraUp.y * pipelineInfo->cameraDirection.z -
                     pipelineInfo->cameraUp.z * pipelineInfo->cameraDirection.y,

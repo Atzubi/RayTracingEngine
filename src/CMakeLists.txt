@@ -1,4 +1,4 @@
-add_library(RayTraceEngine SHARED RayEngine.cpp Pipeline/PipelineImplement.cpp Object/TriangleMeshObject.cpp "Data Management/DataManagementUnit.cpp" "Acceleration Structures/DBVH.cpp" Object/Instance.cpp "Engine Node/EngineNode.h" "Engine Node/EngineNode.cpp")
+add_library(RayTraceEngine SHARED RayEngine.cpp Pipeline/PipelineImplement.cpp Object/TriangleMeshObject.cpp "Acceleration Structures/DBVH.cpp" Object/Instance.cpp "Engine Node/EngineNode.h" "Engine Node/EngineNode.cpp" "Acceleration Structures/DBVHv2.h" "Data Management/DataManagementUnitV2.h" "Data Management/DataManagementUnitV2.cpp" "Acceleration Structures/DBVHv2.cpp")
 
 target_include_directories(RayTraceEngine PRIVATE .)
 set_target_properties(RayTraceEngine PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION 1)

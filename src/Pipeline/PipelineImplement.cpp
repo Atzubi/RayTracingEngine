@@ -11,7 +11,7 @@ PipelineImplement::PipelineImplement(int width, int height, Vector3D *cameraPosi
                                      Vector3D *cameraUp, std::vector<RayGeneratorShader *> *rayGeneratorShaders,
                                      std::vector<OcclusionShader *> *occlusionShaders,
                                      std::vector<HitShader *> *hitShaders, std::vector<PierceShader *> *pierceShaders,
-                                     std::vector<MissShader *> *missShaders, Object *geometry) {
+                                     std::vector<MissShader *> *missShaders, DBVHNode *geometry) {
     this->pipelineInfo.width = width;
     this->pipelineInfo.height = height;
     this->pipelineInfo.cameraPosition = *cameraPosition;
@@ -45,6 +45,10 @@ void PipelineImplement::setCamera(Vector3D pos, Vector3D dir, Vector3D up) {
     pipelineInfo.cameraUp = up;
 }
 
+DBVHNode *PipelineImplement::getGeometry() {
+    return geometry;
+}
+
 Object *PipelineImplement::getGeometryAsObject() {
     // TODO
     return nullptr;
@@ -74,7 +78,7 @@ int PipelineImplement::run() {
                         rays.rayOrigin.pop_back();
 
                         std::vector<IntersectionInfo *> infos;
-                        geometry->intersectAll(&infos, &ray);
+                        DBVHv2::intersectAll(geometry,&infos,&ray);
 
                         RayGeneratorOutput newRays;
 
@@ -165,7 +169,7 @@ int PipelineImplement::run() {
 
                         IntersectionInfo info = {false, std::numeric_limits<double>::max(), ray.origin, ray.direction,
                                                  0, 0, 0, 0, 0};
-                        geometry->intersectFirst(&info, &ray);
+                        DBVHv2::intersectFirst(geometry, &info, &ray);
 
                         RayGeneratorOutput newRays;
 
@@ -227,7 +231,7 @@ int PipelineImplement::run() {
 
                         IntersectionInfo info = {false, std::numeric_limits<double>::max(), ray.origin, ray.direction,
                                                  0, 0, 0, 0, 0};
-                        geometry->intersectAny(&info, &ray);
+                        DBVHv2::intersectAny(geometry, &info, &ray);
 
                         RayGeneratorOutput newRays;
 

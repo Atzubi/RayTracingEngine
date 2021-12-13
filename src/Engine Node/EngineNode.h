@@ -5,33 +5,52 @@
 #ifndef RAYTRACEENGINE_ENGINENODE_H
 #define RAYTRACEENGINE_ENGINENODE_H
 
-#include "RayTraceEngine/Object.h"
-#include "RayTraceEngine/Pipeline.h"
+#include <unordered_map>
+#include "Object/Instance.h"
+#include "Acceleration Structures/DBVHv2.h"
+#include "Pipeline/PipelineImplement.h"
+
+class Instance;
 
 class EngineNode {
 private:
     class MemoryBlock {
     private:
+        std::unordered_map<int, Object *> objects;
+        std::unordered_map<int, Instance *> objectInstances;
+
+        std::unordered_map<int, Object *> objectCache;
+        std::unordered_map<int, Instance *> objectInstanceCache;
 
     public:
-        void storeBaseDataFragments();
+        void storeBaseDataFragments(Object* object, int id);
 
-        void storeInstanceDataFragments();
+        bool deleteBaseDataFragment(int id);
 
-        void cacheBaseData();
+        Object* getBaseDataFragment(int id);
 
-        void cacheInstanceData();
+        void storeInstanceDataFragments(Instance* instance, int id);
 
-        Object *getTraversalData();
+        bool deleteInstanceDataFragment(int id);
+
+        Instance* getInstanceDataFragment(int id);
+
+        void cacheBaseData(Object* object, int id);
+
+        void cacheInstanceData(Instance* instance, int id);
+
+        void requestTraversalData(int id);
     };
 
     class PipelineBlock {
     private:
+        std::unordered_map<int, PipelineImplement> pipelines;
+        std::unordered_map<DBVHNode*, DBVHNode*> pipelineCache;
 
     public:
         void storePipelineFragments();
 
-        PipelineDescription* getPipelineData();
+        void requestPipelineData();
     };
 
     MemoryBlock memoryBlock;
@@ -40,15 +59,23 @@ private:
 public:
     EngineNode();
 
-    void storeBaseDataFragments();
+    void storeBaseDataFragments(Object* object, int id);
 
-    void storeInstanceDataFragments();
+    bool deleteBaseDataFragment(int id);
 
-    void cacheBaseData();
+    void storeInstanceDataFragments(Instance* instance, int id);
 
-    void cacheInstanceData();
+    bool deleteInstanceDataFragment(int id);
+
+    void cacheBaseData(Object* object, int id);
+
+    void cacheInstanceData(Instance* instance, int id);
 
     void storePipelineFragments();
+
+    Object* requestBaseData(int id);
+
+    Instance* requestInstanceData(int id);
 
     void runPipelines();
 };

@@ -92,6 +92,8 @@ public:
      */
     double getSurfaceArea() override;
 
+    ObjectCapsule getCapsule() override;
+
     /**
      * Tests whether the object in question is identical to this object.
      * @param object    Another object.

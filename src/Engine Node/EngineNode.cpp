@@ -4,31 +4,47 @@
 
 #include "EngineNode.h"
 
-void EngineNode::MemoryBlock::storeBaseDataFragments() {
+void EngineNode::MemoryBlock::storeBaseDataFragments(Object* object, int id) {
 
 }
 
-void EngineNode::MemoryBlock::storeInstanceDataFragments() {
+void EngineNode::MemoryBlock::storeInstanceDataFragments(Instance* instance, int id) {
 
 }
 
-void EngineNode::MemoryBlock::cacheBaseData() {
+void EngineNode::MemoryBlock::cacheBaseData(Object* object, int id) {
 
 }
 
-void EngineNode::MemoryBlock::cacheInstanceData() {
+void EngineNode::MemoryBlock::cacheInstanceData(Instance* instance, int id) {
 
 }
 
-Object *EngineNode::MemoryBlock::getTraversalData() {
-    return nullptr;
+void EngineNode::MemoryBlock::requestTraversalData(int id) {
+
 }
 
 void EngineNode::PipelineBlock::storePipelineFragments() {
 
 }
 
-PipelineDescription* EngineNode::PipelineBlock::getPipelineData() {
+void EngineNode::PipelineBlock::requestPipelineData() {
+
+}
+
+bool EngineNode::MemoryBlock::deleteBaseDataFragment(int id) {
+    return false;
+}
+
+bool EngineNode::MemoryBlock::deleteInstanceDataFragment(int id) {
+    return false;
+}
+
+Object *EngineNode::MemoryBlock::getBaseDataFragment(int id) {
+    return nullptr;
+}
+
+Instance *EngineNode::MemoryBlock::getInstanceDataFragment(int id) {
     return nullptr;
 }
 
@@ -36,19 +52,19 @@ EngineNode::EngineNode() {
 
 }
 
-void EngineNode::storeBaseDataFragments() {
+void EngineNode::storeBaseDataFragments(Object *object, int id) {
 
 }
 
-void EngineNode::storeInstanceDataFragments() {
+void EngineNode::storeInstanceDataFragments(Instance *instance, int id) {
 
 }
 
-void EngineNode::cacheBaseData() {
+void EngineNode::cacheBaseData(Object *object, int id) {
 
 }
 
-void EngineNode::cacheInstanceData() {
+void EngineNode::cacheInstanceData(Instance *instance, int id) {
 
 }
 
@@ -56,6 +72,22 @@ void EngineNode::storePipelineFragments() {
 
 }
 
+Object* EngineNode::requestBaseData(int id) {
+    return nullptr;
+}
+
+Instance* EngineNode::requestInstanceData(int id) {
+    return nullptr;
+}
+
 void EngineNode::runPipelines() {
 
+}
+
+bool EngineNode::deleteBaseDataFragment(int id) {
+    return false;
+}
+
+bool EngineNode::deleteInstanceDataFragment(int id) {
+    return false;
 }

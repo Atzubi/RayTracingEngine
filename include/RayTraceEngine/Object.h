@@ -31,6 +31,12 @@ struct IntersectionInfo {
     Material *material;
 };
 
+struct ObjectCapsule{
+    int id;
+    BoundingBox boundingBox;
+    double cost;
+};
+
 /**
  * Base class for all geometry object that the ray tracing engine can work with.
  */
@@ -83,6 +89,8 @@ public:
      * @return The surface area of this object.
      */
     virtual double getSurfaceArea() = 0;
+
+    virtual ObjectCapsule getCapsule() = 0;
 
     /**
      * Tests whether the object in question is identical to this object.

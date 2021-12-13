@@ -5,11 +5,11 @@
 #include <iostream>
 
 #include "RayTraceEngine/RayEngine.h"
-#include "Data Management/DataManagementUnit.h"
+#include "Data Management/DataManagementUnitV2.h"
 
 
 RayEngine::RayEngine() {
-    dataManagementUnit = new DataManagementUnit();
+    dataManagementUnit = new DataManagementUnitV2();
 }
 
 RayEngine::~RayEngine() {
