@@ -1,0 +1,8 @@
+//
+// Created by Sebastian on 02.12.2021.
+//
+
+#ifndef RAYTRACEENGINE_DBVHV2_H
+#define RAYTRACEENGINE_DBVHV2_H
+
+#endif //RAYTRACEENGINE_DBVHV2_H
