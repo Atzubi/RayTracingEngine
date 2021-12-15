@@ -8,13 +8,13 @@
 #include "RayTraceEngine/Object.h"
 
 struct DBVHNode{
-    uint8_t maxDepthLeft{};
+    uint8_t maxDepthLeft = 0;
     union {
         DBVHNode* leftChild{};
         Object* leftLeaf;
     };
 
-    uint8_t maxDepthRight{};
+    uint8_t maxDepthRight = 0;
     union{
         DBVHNode* rightChild{};
         Object* rightLeaf;

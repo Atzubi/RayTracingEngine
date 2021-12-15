@@ -3,7 +3,7 @@
 //
 
 #include "RayTraceEngine/TriangleMeshObject.h"
-#include "Acceleration Structures/DBVH.h"
+#include "Acceleration Structures/DBVHv2.h"
 
 
 class Triangle : public Object {
@@ -230,9 +230,9 @@ TriangleMeshObject::TriangleMeshObject(const std::vector<Vertex> *vertices, cons
         triangles.push_back(triangle);
     }
 
-    auto *tree = new DBVH();
+    /*auto *tree = new DBVH();
     tree->addObjects(&triangles);
-    structure = tree;
+    structure = tree;*/
 }
 
 TriangleMeshObject::~TriangleMeshObject() {
