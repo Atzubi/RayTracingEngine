@@ -16,7 +16,7 @@
  * cameraDirection: Direction of the virtual camera facing forwards.
  * cameraUp:        Direction of the virtual camera facing upwards.
  */
-struct PipelineInfo{
+struct PipelineInfo {
     int width{}, height{};
     Vector3D cameraPosition{};
     Vector3D cameraDirection{};
@@ -40,22 +40,22 @@ struct PipelineInfo{
  * missShaderIDs:           Ids of the miss shaders used in this pipeline.
  * objectInstanceIDs:       Will be filled with the ids of the resulting object instances.
  */
-struct PipelineDescription{
+struct PipelineDescription {
     int resolutionX;
     int resolutionY;
     Vector3D cameraPosition;
     Vector3D cameraDirection;
     Vector3D cameraUp;
     std::vector<int> objectIDs;
-    std::vector<Matrix4x4*> objectTransformations;
-    std::vector<ObjectParameter*> objectParameters;
+    std::vector<Matrix4x4 *> objectTransformations;
+    std::vector<ObjectParameter *> objectParameters;
     std::vector<int> rayGeneratorShaderIDs;
     std::vector<int> occlusionShaderIDs;
     std::vector<int> hitShaderIDs;
     std::vector<int> pierceShaderIDs;
     std::vector<int> missShaderIDs;
 
-    std::vector<int>* objectInstanceIDs;
+    std::vector<int> *objectInstanceIDs;
 };
 
 #endif //RAYTRACECORE_PIPELINE_H

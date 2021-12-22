@@ -3,6 +3,11 @@
 //
 
 #include "DataManagementUnitV2.h"
+#include "Engine Node/EngineNode.h"
+#include "Pipeline/PipelineImplement.h"
+#include "Object/Instance.h"
+#include "RayTraceEngine/Pipeline.h"
+#include "Acceleration Structures/DBVHv2.h"
 
 DataManagementUnitV2::DataManagementUnitV2() {
     deviceId = getDeviceId();
@@ -10,28 +15,28 @@ DataManagementUnitV2::DataManagementUnitV2() {
     objectIds.insert(0);
     shaderIds.insert(0);
     pipelineIds.insert(0);
+
+    engineNode = new EngineNode(this);
 }
 
-DataManagementUnitV2::~DataManagementUnitV2(){
-    for(auto pair : pipelines){
-        delete pair.second;
-    }
+DataManagementUnitV2::~DataManagementUnitV2() {
+
 }
 
 int DataManagementUnitV2::addPipeline(PipelineDescription *pipelineDescription) {
-    std::vector<Object*> instances;
+    std::vector<Object *> instances;
 
     // pull all objects required to create the pipeline
     // only requires id, box and cost
     int c = 0;
-    for(auto i : pipelineDescription->objectIDs){
-        if(objectIdDeviceMap.count(i) == 1){
-            if(objectIdDeviceMap[i] == deviceId){
-                auto capsule = engineNode.requestBaseData(i)->getCapsule();
+    for (auto i: pipelineDescription->objectIDs) {
+        if (objectIdDeviceMap.count(i) == 1) {
+            if (objectIdDeviceMap[i] == deviceId) {
+                auto capsule = engineNode->requestBaseData(i)->getCapsule();
                 capsule.id = i;
 
                 // create instances of objects
-                auto* instance = new Instance(&engineNode, &capsule);
+                auto *instance = new Instance(engineNode, &capsule);
                 instance->applyTransform(pipelineDescription->objectTransformations[c]);
                 instances.push_back(instance);
 
@@ -44,14 +49,14 @@ int DataManagementUnitV2::addPipeline(PipelineDescription *pipelineDescription) 
 
                 // add instances to engine node
                 // TODO spread over nodes
-                engineNode.storeInstanceDataFragments(instance, instanceId);
+                engineNode->storeInstanceDataFragments(instance, instanceId);
 
                 // add instance location to map
                 objectInstanceIdDeviceMap[instanceId] = deviceId;
-            }else{
+            } else {
                 // TODO request object from other engine nodes
             }
-        }else{
+        } else {
             // TODO error handling, object not found
         }
         c++;
@@ -96,9 +101,9 @@ int DataManagementUnitV2::addPipeline(PipelineDescription *pipelineDescription) 
                                            &pipelineOcclusionShaders, &pipelineHitShaders,
                                            &pipelinePierceShaders, &pipelineMissShaders, root);
 
-    pipelines.insert(std::pair<int, PipelineImplement *>(*pipelineIds.begin(), pipeline));
-
     int buffer = pipelineIds.extract(pipelineIds.begin()).value();
+
+    engineNode->storePipelineFragments(pipeline, buffer);
 
     if (pipelineIds.empty()) {
         pipelineIds.insert(buffer + 1);
@@ -111,42 +116,41 @@ int DataManagementUnitV2::addPipeline(PipelineDescription *pipelineDescription) 
 }
 
 bool DataManagementUnitV2::removePipeline(int id) {
-    if (pipelines.count(id) == 0)
-        return false;
+    // TODO: broadcast remove to all nodes;
+    auto removed = engineNode->deletePipelineFragment(id);
+    if (removed) {
+        pipelineIds.insert(id);
 
-    delete pipelines[id];
+        auto iterator = pipelineIds.rbegin();
+        int end = *iterator - 1;
 
-    pipelines.erase(id);
-    pipelineIds.insert(id);
+        int buffer = *iterator;
+        while (end-- == *++iterator) {
+            pipelineIds.erase(buffer);
+            buffer = *iterator;
+        }
 
-    auto iterator = pipelineIds.rbegin();
-    int end = *iterator - 1;
-
-    int buffer = *iterator;
-    while (end-- == *++iterator) {
-        pipelineIds.erase(buffer);
-        buffer = *iterator;
+        return true;
     }
-
-    return true;
+    return false;
 }
 
 bool
 DataManagementUnitV2::updatePipelineObjects(int pipelineId, std::vector<int> *objectInstanceIDs,
-                                          std::vector<Matrix4x4 *> *transforms,
-                                          std::vector<ObjectParameter *> *objectParameters) {
-    if(objectInstanceIDs->size() != transforms->size()) return false;
+                                            std::vector<Matrix4x4 *> *transforms,
+                                            std::vector<ObjectParameter *> *objectParameters) {
+    if (objectInstanceIDs->size() != transforms->size()) return false;
 
-    for(int i = 0; i < objectInstanceIDs->size(); i++){
-        if(objectInstanceIds.count(objectInstanceIDs->at(i)) == 1) {
+    for (int i = 0; i < objectInstanceIDs->size(); i++) {
+        if (objectInstanceIds.count(objectInstanceIDs->at(i)) == 1) {
             if (objectInstanceIdDeviceMap[objectInstanceIDs->at(i)] == deviceId) {
-                auto instance = engineNode.requestInstanceData(objectInstanceIDs->at(i));
+                auto instance = engineNode->requestInstanceData(objectInstanceIDs->at(i));
                 if (instance == nullptr) continue;
                 instance->applyTransform(transforms->at(i));
             } else {
                 // TODO: update instances on other nodes
             }
-        }else{
+        } else {
             // TODO error handling, object not found
         }
     }
@@ -160,10 +164,10 @@ DataManagementUnitV2::updatePipelineShader(int pipelineId, int shaderInstanceId,
 }
 
 bool DataManagementUnitV2::removePipelineObject(int pipelineId, int objectInstanceId) {
-    if(objectIdDeviceMap.count(objectInstanceId) == 1) {
+    if (objectIdDeviceMap.count(objectInstanceId) == 1) {
         if (objectIdDeviceMap[objectInstanceId] == deviceId) {
-            return engineNode.deleteInstanceDataFragment(objectInstanceId);
-        }else {
+            return engineNode->deleteInstanceDataFragment(objectInstanceId);
+        } else {
             // TODO: delete instance on other nodes
         }
     }
@@ -175,24 +179,25 @@ bool DataManagementUnitV2::removePipelineShader(int pipelineId, int shaderInstan
 }
 
 bool
-DataManagementUnitV2::bindGeometryToPipeline(int pipelineId, std::vector<int> *objectIds,
-                                           std::vector<Matrix4x4> *transforms,
-                                           std::vector<ObjectParameter> *objectParameters,
-                                           std::vector<int> *instanceIDs) {
-    if(objectIds->size() != transforms->size() || pipelines.count(pipelineId) == 0) return false;
+DataManagementUnitV2::bindGeometryToPipeline(int pipelineId, std::vector<int> *objectIDs,
+                                             std::vector<Matrix4x4> *transforms,
+                                             std::vector<ObjectParameter> *objectParameters,
+                                             std::vector<int> *instanceIDs) {
+    auto pipeline = engineNode->requestPipelineFragment(pipelineId);
+    if (objectIDs->size() != transforms->size() || pipeline == nullptr) return false;
 
-    auto geometry = pipelines[pipelineId]->getGeometry();
+    auto geometry = pipeline->getGeometry();
 
-    std::vector<Object*> instances;
+    std::vector<Object *> instances;
 
-    for(int i = 0; i < objectIds->size(); i++){
-        if(objectIdDeviceMap.count(objectIds->at(i)) == 1) {
-            if (objectIdDeviceMap[objectIds->at(i)] == deviceId) {
-                auto capsule = engineNode.requestBaseData(objectIds->at(i))->getCapsule();
-                capsule.id = objectIds->at(i);
+    for (int i = 0; i < objectIDs->size(); i++) {
+        if (objectIdDeviceMap.count(objectIDs->at(i)) == 1) {
+            if (objectIdDeviceMap[objectIDs->at(i)] == deviceId) {
+                auto capsule = engineNode->requestBaseData(objectIDs->at(i))->getCapsule();
+                capsule.id = objectIDs->at(i);
 
                 // create instances of objects
-                auto *instance = new Instance(&engineNode, &capsule);
+                auto *instance = new Instance(engineNode, &capsule);
                 instance->applyTransform(&transforms->at(i));
                 instances.push_back(instance);
 
@@ -205,14 +210,14 @@ DataManagementUnitV2::bindGeometryToPipeline(int pipelineId, std::vector<int> *o
 
                 // add instances to engine node
                 // TODO spread over nodes
-                engineNode.storeInstanceDataFragments(instance, instanceId);
+                engineNode->storeInstanceDataFragments(instance, instanceId);
 
                 // add instance location to map
                 objectInstanceIdDeviceMap[instanceId] = deviceId;
             } else {
                 // TODO request object from other engine nodes
             }
-        }else{
+        } else {
             // TODO error handling, object not found
         }
     }
@@ -230,7 +235,7 @@ int DataManagementUnitV2::addObject(Object *object) {
     int buffer = objectIds.extract(objectIds.begin()).value();
 
     // TODO: spread over nodes
-    engineNode.storeBaseDataFragments(object->clone(), buffer);
+    engineNode->storeBaseDataFragments(object->clone(), buffer);
 
     if (objectIds.empty()) {
         objectIds.insert(buffer + 1);
@@ -240,7 +245,7 @@ int DataManagementUnitV2::addObject(Object *object) {
 }
 
 bool DataManagementUnitV2::removeObject(int id) {
-    if(!engineNode.deleteBaseDataFragment(id)) return false;
+    if (!engineNode->deleteBaseDataFragment(id)) return false;
 
     objectIds.insert(id);
 
@@ -257,8 +262,8 @@ bool DataManagementUnitV2::removeObject(int id) {
 }
 
 bool DataManagementUnitV2::updateObject(int id, Object *object) {
-    if(engineNode.deleteBaseDataFragment(id)) return false;
-    engineNode.storeBaseDataFragments(object->clone(), id);
+    if (engineNode->deleteBaseDataFragment(id)) return false;
+    engineNode->storeBaseDataFragments(object->clone(), id);
     return true;
 }
 
@@ -387,29 +392,40 @@ bool DataManagementUnitV2::removeShaderResource(int id) {
 }
 
 int DataManagementUnitV2::runPipeline(int id) {
-    return pipelines.at(id)->run();
+    engineNode->runPipeline(id);
+    return 0;
 }
 
 int DataManagementUnitV2::runAllPipelines() {
-    for (auto p: pipelines) {
-        p.second->run();
-    }
+    engineNode->runPipelines();
     return 0;
 }
 
 void DataManagementUnitV2::updatePipelineCamera(int id, int resolutionX, int resolutionY, Vector3D cameraPosition,
-                                              Vector3D cameraDirection, Vector3D cameraUp) {
-    auto pipeline = pipelines.at(id);
+                                                Vector3D cameraDirection, Vector3D cameraUp) {
+    auto pipeline = engineNode->requestPipelineFragment(id);
     pipeline->setResolution(resolutionX, resolutionY);
     pipeline->setCamera(cameraPosition, cameraDirection, cameraUp);
 }
 
-Texture DataManagementUnitV2::getPipelineResult(int id) {
-    auto pipeline = pipelines.at(id);
+Texture *DataManagementUnitV2::getPipelineResult(int id) {
+    auto pipeline = engineNode->requestPipelineFragment(id);
     return pipeline->getResult();
 }
 
 int DataManagementUnitV2::getDeviceId() {
     // TODO
     return 0;
+}
+
+Object *DataManagementUnitV2::getBaseDataFragment(int id) {
+    if (objectIdDeviceMap.count(id) == 0) return nullptr;
+    // TODO: request object with id from other device
+    return nullptr;
+}
+
+Instance *DataManagementUnitV2::getInstanceDataFragment(int id) {
+    if (objectInstanceIdDeviceMap.count(id) == 0) return nullptr;
+    // TODO: request object with id from other device
+    return nullptr;
 }

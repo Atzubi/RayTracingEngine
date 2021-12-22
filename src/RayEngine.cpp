@@ -109,6 +109,6 @@ RayEngine::updatePipelineCamera(int id, int resolutionX, int resolutionY, Vector
     dataManagementUnit->updatePipelineCamera(id, resolutionX, resolutionY, cameraPosition, cameraDirection, cameraUp);
 }
 
-Texture RayEngine::getPipelineResult(int id) {
+Texture *RayEngine::getPipelineResult(int id) {
     return dataManagementUnit->getPipelineResult(id);
 }

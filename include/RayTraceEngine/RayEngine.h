@@ -52,15 +52,16 @@ public:
      * @param cameraDirection   Direction of the virtual camera.
      * @param cameraUp          Direction of the virtual camera that is facing upwards.
      */
-    void updatePipelineCamera(int id, int resolutionX, int resolutionY, Vector3D cameraPosition, Vector3D cameraDirection,
-                              Vector3D cameraUp);
+    void
+    updatePipelineCamera(int id, int resolutionX, int resolutionY, Vector3D cameraPosition, Vector3D cameraDirection,
+                         Vector3D cameraUp);
 
     /**
      * Waits on pipeline execution to finish, then returns with the result.
      * @param id    Id of the pipeline.
      * @return      Returns an image containing the render result.
      */
-    Texture getPipelineResult(int id);
+    Texture *getPipelineResult(int id);
 
     /**
      * Deletes a pipeline from the engines pipeline pool.

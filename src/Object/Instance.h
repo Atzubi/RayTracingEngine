@@ -6,17 +6,16 @@
 #define RAYTRACECORE_INSTANCE_H
 
 #include "RayTraceEngine/Object.h"
-#include "Engine Node/EngineNode.h"
 
 class EngineNode;
 
-class Instance : public Object{
+class Instance : public Object {
 private:
-    EngineNode* engineNode;
+    EngineNode *engineNode;
 
     int baseObjectId;
     bool objectCached;
-    Object* objectCache;
+    Object *objectCache;
 
     double cost;
     BoundingBox boundingBox{};
@@ -24,7 +23,7 @@ private:
     Matrix4x4 inverseTransform{};
 
 public:
-    explicit Instance(EngineNode* node, ObjectCapsule* objectCapsule);
+    explicit Instance(EngineNode *node, ObjectCapsule *objectCapsule);
 
     void applyTransform(Matrix4x4 *newTransform);
 
@@ -37,7 +36,9 @@ public:
     BoundingBox getBoundaries() override;
 
     bool intersectFirst(IntersectionInfo *intersectionInfo, Ray *ray) override;
+
     bool intersectAny(IntersectionInfo *intersectionInfo, Ray *ray) override;
+
     bool intersectAll(std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray) override;
 
     double getSurfaceArea() override;

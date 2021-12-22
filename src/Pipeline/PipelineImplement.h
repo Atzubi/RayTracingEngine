@@ -6,12 +6,26 @@
 #define RAYTRACECORE_PIPELINEIMPLEMENT_H
 
 #include <limits>
+#include <vector>
 
-#include "RayTraceEngine/Object.h"
-#include "RayTraceEngine/Pipeline.h"
-#include "RayTraceEngine/Shader.h"
-#include "Acceleration Structures/DBVHv2.h"
+class EngineNode;
 
+class RayGeneratorShader;
+
+class OcclusionShader;
+
+class HitShader;
+
+class PierceShader;
+
+class MissShader;
+
+class Object;
+
+struct PipelineInfo;
+struct DBVHNode;
+struct Texture;
+struct Vector3D;
 
 /**
  * Contains all the information needed that defines a pipeline.
@@ -23,7 +37,9 @@
  */
 class PipelineImplement {
 private:
-    PipelineInfo pipelineInfo;
+    EngineNode *engineNode;
+
+    PipelineInfo *pipelineInfo;
 
     std::vector<RayGeneratorShader *> rayGeneratorShaders;
     std::vector<OcclusionShader *> occlusionShaders;
@@ -33,7 +49,7 @@ private:
 
     DBVHNode *geometry;
 
-    Texture result;
+    Texture *result;
 
 public:
     PipelineImplement(int width, int height, Vector3D *cameraPosition, Vector3D *cameraDirection,
@@ -46,7 +62,7 @@ public:
 
     int run();
 
-    Texture getResult();
+    Texture *getResult();
 
     void setResolution(int width, int height);
 
@@ -55,6 +71,8 @@ public:
     DBVHNode *getGeometry();
 
     Object *getGeometryAsObject();
+
+    void setEngine(EngineNode *engine);
 };
 
 #endif //RAYTRACECORE_PIPELINEIMPLEMENT_H

@@ -180,9 +180,9 @@ int main() {
     // translate from texture to sfml
     for (int x = 0; x < 1000; x++) {
         for (int y = 0; y < 1000; y++) {
-            pixels[(x + y * 1000) * 4 + 0] = texture.image[(x + y * 1000) * 3 + 0];
-            pixels[(x + y * 1000) * 4 + 1] = texture.image[(x + y * 1000) * 3 + 1];
-            pixels[(x + y * 1000) * 4 + 2] = texture.image[(x + y * 1000) * 3 + 2];
+            pixels[(x + y * 1000) * 4 + 0] = texture->image[(x + y * 1000) * 3 + 0];
+            pixels[(x + y * 1000) * 4 + 1] = texture->image[(x + y * 1000) * 3 + 1];
+            pixels[(x + y * 1000) * 4 + 2] = texture->image[(x + y * 1000) * 3 + 2];
             pixels[(x + y * 1000) * 4 + 3] = 255;
         }
     }

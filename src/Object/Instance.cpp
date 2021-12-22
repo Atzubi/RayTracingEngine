@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include "Object/Instance.h"
+#include "Engine Node/EngineNode.h"
 
 
 void createAABB(BoundingBox *aabb, Matrix4x4 *transform) {
@@ -162,7 +163,7 @@ void createAABB(BoundingBox *aabb, Matrix4x4 *transform) {
     aabb->maxCorner.z += mid.z;
 }
 
-Instance::Instance(EngineNode* node, ObjectCapsule* objectCapsule) {
+Instance::Instance(EngineNode *node, ObjectCapsule *objectCapsule) {
     engineNode = node;
     baseObjectId = objectCapsule->id;
     objectCached = false;
@@ -186,10 +187,10 @@ void Instance::invalidateCache() {
 Instance::~Instance() = default;
 
 bool Instance::intersectFirst(IntersectionInfo *intersectionInfo, Ray *ray) {
-    Object* baseObject;
-    if(objectCached){
+    Object *baseObject;
+    if (objectCached) {
         baseObject = objectCache;
-    }else{
+    } else {
         baseObject = engineNode->requestBaseData(baseObjectId);
     }
 
@@ -330,10 +331,10 @@ bool Instance::intersectFirst(IntersectionInfo *intersectionInfo, Ray *ray) {
 }
 
 bool Instance::intersectAny(IntersectionInfo *intersectionInfo, Ray *ray) {
-    Object* baseObject;
-    if(objectCached){
+    Object *baseObject;
+    if (objectCached) {
         baseObject = objectCache;
-    }else{
+    } else {
         baseObject = engineNode->requestBaseData(baseObjectId);
     }
 
@@ -470,10 +471,10 @@ bool Instance::intersectAny(IntersectionInfo *intersectionInfo, Ray *ray) {
 }
 
 bool Instance::intersectAll(std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray) {
-    Object* baseObject;
-    if(objectCached){
+    Object *baseObject;
+    if (objectCached) {
         baseObject = objectCache;
-    }else{
+    } else {
         baseObject = engineNode->requestBaseData(baseObjectId);
     }
 
@@ -544,38 +545,38 @@ bool Instance::intersectAll(std::vector<IntersectionInfo *> *intersectionInfo, R
     bool hit = baseObject->intersectAll(&intersectionInformationBuffers, &newRay);
 
     if (hit) {
-        for(auto intersectionInformationBuffer : intersectionInformationBuffers) {
+        for (auto intersectionInformationBuffer: intersectionInformationBuffers) {
             Vector3D pos = intersectionInformationBuffer->position;
 
             intersectionInformationBuffer->position.x = transform.elements[0][0] * pos.x +
-                                                       transform.elements[0][1] * pos.y +
-                                                       transform.elements[0][2] * pos.z +
-                                                       transform.elements[0][3];
+                                                        transform.elements[0][1] * pos.y +
+                                                        transform.elements[0][2] * pos.z +
+                                                        transform.elements[0][3];
             intersectionInformationBuffer->position.y = transform.elements[1][0] * pos.x +
-                                                       transform.elements[1][1] * pos.y +
-                                                       transform.elements[1][2] * pos.z +
-                                                       transform.elements[1][3];
+                                                        transform.elements[1][1] * pos.y +
+                                                        transform.elements[1][2] * pos.z +
+                                                        transform.elements[1][3];
             intersectionInformationBuffer->position.z = transform.elements[2][0] * pos.x +
-                                                       transform.elements[2][1] * pos.y +
-                                                       transform.elements[2][2] * pos.z +
-                                                       transform.elements[2][3];
+                                                        transform.elements[2][1] * pos.y +
+                                                        transform.elements[2][2] * pos.z +
+                                                        transform.elements[2][3];
 
             Vector3D normal = {intersectionInformationBuffer->normal.x + pos.x,
                                intersectionInformationBuffer->normal.y + pos.y,
                                intersectionInformationBuffer->normal.z + pos.z};
 
             intersectionInformationBuffer->normal.x = transform.elements[0][0] * normal.x +
-                                                     transform.elements[0][1] * normal.y +
-                                                     transform.elements[0][2] * normal.z +
-                                                     transform.elements[0][3];
+                                                      transform.elements[0][1] * normal.y +
+                                                      transform.elements[0][2] * normal.z +
+                                                      transform.elements[0][3];
             intersectionInformationBuffer->normal.y = transform.elements[1][0] * normal.x +
-                                                     transform.elements[1][1] * normal.y +
-                                                     transform.elements[1][2] * normal.z +
-                                                     transform.elements[1][3];
+                                                      transform.elements[1][1] * normal.y +
+                                                      transform.elements[1][2] * normal.z +
+                                                      transform.elements[1][3];
             intersectionInformationBuffer->normal.z = transform.elements[2][0] * normal.x +
-                                                     transform.elements[2][1] * normal.y +
-                                                     transform.elements[2][2] * normal.z +
-                                                     transform.elements[2][3];
+                                                      transform.elements[2][1] * normal.y +
+                                                      transform.elements[2][2] * normal.z +
+                                                      transform.elements[2][3];
 
             intersectionInformationBuffer->normal.x =
                     intersectionInformationBuffer->normal.x - intersectionInformationBuffer->position.x;

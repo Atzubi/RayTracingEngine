@@ -6,16 +6,23 @@
 #define RAYTRACEENGINE_ENGINENODE_H
 
 #include <unordered_map>
-#include "Object/Instance.h"
-#include "Acceleration Structures/DBVHv2.h"
-#include "Pipeline/PipelineImplement.h"
+
+class Object;
 
 class Instance;
+
+class PipelineImplement;
+
+class DataManagementUnitV2;
+
+struct DBVHNode;
 
 class EngineNode {
 private:
     class MemoryBlock {
     private:
+        EngineNode *engineNode;
+
         std::unordered_map<int, Object *> objects;
         std::unordered_map<int, Instance *> objectInstances;
 
@@ -23,59 +30,73 @@ private:
         std::unordered_map<int, Instance *> objectInstanceCache;
 
     public:
-        void storeBaseDataFragments(Object* object, int id);
+        explicit MemoryBlock(EngineNode *engine);
+
+        void storeBaseDataFragments(Object *object, int id);
 
         bool deleteBaseDataFragment(int id);
 
-        Object* getBaseDataFragment(int id);
+        Object *getBaseDataFragment(int id);
 
-        void storeInstanceDataFragments(Instance* instance, int id);
+        void storeInstanceDataFragments(Instance *instance, int id);
 
         bool deleteInstanceDataFragment(int id);
 
-        Instance* getInstanceDataFragment(int id);
+        Instance *getInstanceDataFragment(int id);
 
-        void cacheBaseData(Object* object, int id);
+        void cacheBaseData(Object *object, int id);
 
-        void cacheInstanceData(Instance* instance, int id);
-
-        void requestTraversalData(int id);
+        void cacheInstanceData(Instance *instance, int id);
     };
 
     class PipelineBlock {
     private:
-        std::unordered_map<int, PipelineImplement> pipelines;
-        std::unordered_map<DBVHNode*, DBVHNode*> pipelineCache;
+        std::unordered_map<int, PipelineImplement *> pipelines;
+        std::unordered_map<DBVHNode *, DBVHNode *> pipelineCache;
 
     public:
-        void storePipelineFragments();
+        void storePipelineFragments(PipelineImplement *pipeline, int id);
 
-        void requestPipelineData();
+        bool deletePipelineFragment(int id);
+
+        PipelineImplement *getPipelineFragment(int id);
+
+        void runPipeline(int id);
+
+        void runPipelines();
     };
 
-    MemoryBlock memoryBlock;
-    PipelineBlock pipelineBlock;
+    DataManagementUnitV2 *dataManagementUnit;
+
+    MemoryBlock *memoryBlock;
+    PipelineBlock *pipelineBlock;
 
 public:
-    EngineNode();
+    explicit EngineNode(DataManagementUnitV2 *DMU);
 
-    void storeBaseDataFragments(Object* object, int id);
+    void storeBaseDataFragments(Object *object, int id);
 
     bool deleteBaseDataFragment(int id);
 
-    void storeInstanceDataFragments(Instance* instance, int id);
+    void storeInstanceDataFragments(Instance *instance, int id);
 
     bool deleteInstanceDataFragment(int id);
 
-    void cacheBaseData(Object* object, int id);
+    void cacheBaseData(Object *object, int id);
 
-    void cacheInstanceData(Instance* instance, int id);
+    void cacheInstanceData(Instance *instance, int id);
 
-    void storePipelineFragments();
+    void storePipelineFragments(PipelineImplement *pipeline, int id);
 
-    Object* requestBaseData(int id);
+    bool deletePipelineFragment(int id);
 
-    Instance* requestInstanceData(int id);
+    Object *requestBaseData(int id);
+
+    Instance *requestInstanceData(int id);
+
+    PipelineImplement *requestPipelineFragment(int id);
+
+    void runPipeline(int id);
 
     void runPipelines();
 };

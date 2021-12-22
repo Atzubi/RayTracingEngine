@@ -8,19 +8,36 @@
 #include <set>
 #include <unordered_map>
 
-#include "Engine Node/EngineNode.h"
-#include "Acceleration Structures/DBVHv2.h"
-#include "RayTraceEngine/Pipeline.h"
-#include "RayTraceEngine/Shader.h"
-#include "Pipeline/PipelineImplement.h"
-#include "Object/Instance.h"
+class EngineNode;
 
+class HitShader;
+
+class MissShader;
+
+class OcclusionShader;
+
+class PierceShader;
+
+class RayGeneratorShader;
+
+class Object;
+
+class Instance;
+
+class Any;
+
+struct DBVHNode;
+struct PipelineDescription;
+struct Vector3D;
+struct Texture;
+struct ObjectParameter;
+struct Matrix4x4;
 
 class DataManagementUnitV2 {
 private:
     int deviceId;
 
-    EngineNode engineNode;
+    EngineNode *engineNode;
 
     // stored only in main DMU
     std::set<int> objectIds;
@@ -36,12 +53,12 @@ private:
     std::unordered_map<int, PierceShader *> pierceShaders;
     std::unordered_map<int, RayGeneratorShader *> rayGeneratorShaders;
 
-    std::unordered_map<int, PipelineImplement *> pipelines; // groups  pipeline information, copied to every node
+    //std::unordered_map<int, PipelineImplement *> pipelines; // groups  pipeline information, copied to every node
 
     // maps ids to devices holding the data
     std::unordered_map<int, int> objectIdDeviceMap;
     std::unordered_map<int, int> objectInstanceIdDeviceMap;
-    std::unordered_map<DBVHNode*, int> pipelineTreeDeviceMap;
+    std::unordered_map<DBVHNode *, int> pipelineTreeDeviceMap;
 
     int getDeviceId();
 
@@ -60,7 +77,7 @@ public:
     updatePipelineCamera(int id, int resolutionX, int resolutionY, Vector3D cameraPosition, Vector3D cameraDirection,
                          Vector3D cameraUp);
 
-    Texture getPipelineResult(int id);
+    Texture *getPipelineResult(int id);
 
     /*
      * Removes a pipeline by id.
@@ -72,14 +89,14 @@ public:
      * Binds a list of objects by id to a pipeline by id. These object will be used as geometry in the ray trace stage
      * of the pipeline on execution.
      * pipelineId:      the pipeline id the geometry gets bound to
-     * objectIds:       the object ids of the new object instances
+     * objectIDs:       the object ids of the new object instances
      * position:        the relative position of the object in space
      * orientation:     the relative orientation of the object in space
      * newScaleFactor:  the relative scale of the object in space
      * objectParameter: object specific information in addition to geometry
-     * return:          true if success, false otherwise, objectIds will be overwritten with object instance ids
+     * return:          true if success, false otherwise, objectIDs will be overwritten with object instance ids
      */
-    bool bindGeometryToPipeline(int pipelineId, std::vector<int> *objectIds, std::vector<Matrix4x4> *transforms,
+    bool bindGeometryToPipeline(int pipelineId, std::vector<int> *objectIDs, std::vector<Matrix4x4> *transforms,
                                 std::vector<ObjectParameter> *objectParameters, std::vector<int> *instanceIDs);
 
     /*
@@ -208,6 +225,10 @@ public:
     int runPipeline(int id);
 
     int runAllPipelines();
+
+    Object *getBaseDataFragment(int id);
+
+    Instance *getInstanceDataFragment(int id);
 };
 
 #endif //RAYTRACEENGINE_DATAMANAGEMENTUNITV2_H

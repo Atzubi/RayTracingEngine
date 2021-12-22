@@ -168,7 +168,7 @@ public:
         return intersectFirst(intersectionInfo, ray);
     }
 
-    bool intersectAll(std::vector<IntersectionInfo*>* intersectionInfo, Ray *ray) override{
+    bool intersectAll(std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray) override {
         auto *info = new IntersectionInfo();
         *info = {false, std::numeric_limits<double>::max(), ray->origin, ray->direction, 0, 0,
                  0, 0, 0};
@@ -223,16 +223,16 @@ TriangleMeshObject::TriangleMeshObject(const std::vector<Vertex> *vertices, cons
     this->indices = *indices;
     this->material = *material;
 
-    for (int i = 0; i < indices->size()/3; i++) {
+    for (int i = 0; i < indices->size() / 3; i++) {
         auto *triangle = new Triangle();
         triangle->mesh = this;
         triangle->pos = i * 3;
         triangles.push_back(triangle);
     }
 
-    /*auto *tree = new DBVH();
-    tree->addObjects(&triangles);
-    structure = tree;*/
+    auto *tree = new DBVHNode();
+    DBVHv2::addObjects(tree, &triangles);
+    structure = tree;
 }
 
 TriangleMeshObject::~TriangleMeshObject() {
@@ -240,17 +240,19 @@ TriangleMeshObject::~TriangleMeshObject() {
 };
 
 BoundingBox TriangleMeshObject::getBoundaries() {
-    return structure->getBoundaries();
+    return structure->boundingBox;
 }
 
 bool TriangleMeshObject::intersectFirst(IntersectionInfo *intersectionInfo, Ray *ray) {
-    return structure->intersectFirst(intersectionInfo, ray);
+    return DBVHv2::intersectFirst(structure, intersectionInfo, ray);
 }
+
 bool TriangleMeshObject::intersectAny(IntersectionInfo *intersectionInfo, Ray *ray) {
-    return structure->intersectAny(intersectionInfo, ray);
+    return DBVHv2::intersectAny(structure, intersectionInfo, ray);
 }
+
 bool TriangleMeshObject::intersectAll(std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray) {
-    return structure->intersectAll(intersectionInfo, ray);
+    return DBVHv2::intersectAll(structure, intersectionInfo, ray);
 }
 
 Object *TriangleMeshObject::clone() {
@@ -259,7 +261,7 @@ Object *TriangleMeshObject::clone() {
 }
 
 double TriangleMeshObject::getSurfaceArea() {
-    return structure->getSurfaceArea();
+    return structure->surfaceArea;
 }
 
 bool TriangleMeshObject::operator==(Object *object) {
