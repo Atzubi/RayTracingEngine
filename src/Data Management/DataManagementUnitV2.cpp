@@ -93,7 +93,7 @@ int DataManagementUnitV2::addPipeline(PipelineDescription *pipelineDescription) 
     }
 
     // create new pipeline and add bvh, shaders and description
-    auto *pipeline = new PipelineImplement(pipelineDescription->resolutionX,
+    auto *pipeline = new PipelineImplement(this, pipelineDescription->resolutionX,
                                            pipelineDescription->resolutionY,
                                            &pipelineDescription->cameraPosition,
                                            &pipelineDescription->cameraDirection,

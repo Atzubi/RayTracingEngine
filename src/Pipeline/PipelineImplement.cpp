@@ -4,17 +4,21 @@
 
 #include <iostream>
 
+#include <Data Management/DataManagementUnitV2.h>
 #include "Pipeline/PipelineImplement.h"
 #include "RayTraceEngine/Pipeline.h"
 #include "RayTraceEngine/BasicStructures.h"
 #include "RayTraceEngine/Shader.h"
 #include "Acceleration Structures/DBVHv2.h"
+#include "Engine Node/EngineNode.h"
 
-PipelineImplement::PipelineImplement(int width, int height, Vector3D *cameraPosition, Vector3D *cameraDirection,
+PipelineImplement::PipelineImplement(DataManagementUnitV2* dmu,int width, int height, Vector3D *cameraPosition, Vector3D *cameraDirection,
                                      Vector3D *cameraUp, std::vector<RayGeneratorShader *> *rayGeneratorShaders,
                                      std::vector<OcclusionShader *> *occlusionShaders,
                                      std::vector<HitShader *> *hitShaders, std::vector<PierceShader *> *pierceShaders,
                                      std::vector<MissShader *> *missShaders, DBVHNode *geometry) {
+    this->engineNode = new EngineNode(dmu);
+    this->pipelineInfo = new PipelineInfo();
     this->pipelineInfo->width = width;
     this->pipelineInfo->height = height;
     this->pipelineInfo->cameraPosition = *cameraPosition;
