@@ -38,29 +38,29 @@ int main() {
         std::vector<uint64_t> indices;
 
         // create the material container
-        auto *material = new Material();
+        Material material;
 
         int comp;
 
         // fill the material description
-        material->name = m.MeshMaterial.name;
-        material->Ka = {m.MeshMaterial.Ka.X, m.MeshMaterial.Ka.Y, m.MeshMaterial.Ka.Z};
-        material->Kd = {m.MeshMaterial.Kd.X, m.MeshMaterial.Kd.Y, m.MeshMaterial.Kd.Z};
-        material->Ks = {m.MeshMaterial.Ks.X, m.MeshMaterial.Ks.Y, m.MeshMaterial.Ks.Z};
-        material->Ns = m.MeshMaterial.Ns;
-        material->Ni = m.MeshMaterial.Ni;
-        material->d = m.MeshMaterial.d;
-        material->illum = m.MeshMaterial.illum;
-        material->map_Ka.name = m.MeshMaterial.map_Ka;
-        material->map_Kd.name = m.MeshMaterial.map_Kd;
+        material.name = m.MeshMaterial.name;
+        material.Ka = {m.MeshMaterial.Ka.X, m.MeshMaterial.Ka.Y, m.MeshMaterial.Ka.Z};
+        material.Kd = {m.MeshMaterial.Kd.X, m.MeshMaterial.Kd.Y, m.MeshMaterial.Kd.Z};
+        material.Ks = {m.MeshMaterial.Ks.X, m.MeshMaterial.Ks.Y, m.MeshMaterial.Ks.Z};
+        material.Ns = m.MeshMaterial.Ns;
+        material.Ni = m.MeshMaterial.Ni;
+        material.d = m.MeshMaterial.d;
+        material.illum = m.MeshMaterial.illum;
+        material.map_Ka.name = m.MeshMaterial.map_Ka;
+        material.map_Kd.name = m.MeshMaterial.map_Kd;
         // load the texture using stbi
-        material->map_Kd.image = stbi_load(("../Data/Basketball/" + material->map_Kd.name).c_str(),
-                                           &(material->map_Kd.w), &(material->map_Kd.h), &comp,
+        material.map_Kd.image = stbi_load(("../Data/Basketball/" + material.map_Kd.name).c_str(),
+                                           &(material.map_Kd.w), &(material.map_Kd.h), &comp,
                                            STBI_rgb);
-        material->map_Ks.name = m.MeshMaterial.map_Ks;
-        material->map_Ns.name = m.MeshMaterial.map_Ns;
-        material->map_d.name = m.MeshMaterial.map_d;
-        material->map_bump.name = m.MeshMaterial.map_bump;
+        material.map_Ks.name = m.MeshMaterial.map_Ks;
+        material.map_Ns.name = m.MeshMaterial.map_Ns;
+        material.map_d.name = m.MeshMaterial.map_d;
+        material.map_bump.name = m.MeshMaterial.map_bump;
 
         // copy index list
         for (unsigned int index: m.Indices) {
@@ -81,7 +81,7 @@ int main() {
         }
 
         // create a triangle mesh object
-        TriangleMeshObject triangleMeshObject(&vertices, &indices, material);
+        TriangleMeshObject triangleMeshObject(&vertices, &indices, &material);
 
         // add the object to engine
         auto id = rayEngine.addObject(&triangleMeshObject);

@@ -1161,6 +1161,7 @@ void DBVHv2::addObjects(DBVHNode *root, std::vector<Object *> *objects) {
         objects->pop_back();
         root->maxDepthRight = 1;
     }
+    refit(root->boundingBox, objects, 0);
     if (objects->empty()) return;
     add(root, objects, 1);
 }

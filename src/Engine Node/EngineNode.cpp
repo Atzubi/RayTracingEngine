@@ -7,9 +7,23 @@
 #include "RayTraceEngine/Object.h"
 #include "Pipeline/PipelineImplement.h"
 #include "Object/Instance.h"
+#include "Acceleration Structures/DBVHv2.h"
 
-EngineNode::MemoryBlock::MemoryBlock(EngineNode *engine) {
-    engineNode = engine;
+EngineNode::MemoryBlock::MemoryBlock() = default;
+
+EngineNode::MemoryBlock::~MemoryBlock() {
+    for(auto o : objects){
+        delete o.second;
+    }
+    for(auto o : objectInstances){
+        delete o.second;
+    }
+    for(auto o : objectCache){
+        delete o.second;
+    }
+    for(auto o : objectInstanceCache){
+        delete o.second;
+    }
 }
 
 void EngineNode::MemoryBlock::storeBaseDataFragments(Object *object, int id) {
@@ -48,8 +62,8 @@ Object *EngineNode::MemoryBlock::getBaseDataFragment(int id) {
     if (objects.count(id) == 0) {
         // object was not originally stored on this node, check cache
         if (objectCache.count(id) == 0) {
-            // object is not currently in the cache, request it from other nodes
-            return engineNode->dataManagementUnit->getBaseDataFragment(id);
+            // object is not currently in the cache
+            return nullptr;
         } else {
             // object was found in cache
             return objectCache[id];
@@ -73,6 +87,14 @@ Instance *EngineNode::MemoryBlock::getInstanceDataFragment(int id) {
     } else {
         // object was found in node
         return objectInstances[id];
+    }
+}
+
+EngineNode::PipelineBlock::PipelineBlock() = default;
+
+EngineNode::PipelineBlock::~PipelineBlock() {
+    for(auto p : pipelines){
+        delete p.second;
     }
 }
 
@@ -106,8 +128,13 @@ PipelineImplement *EngineNode::PipelineBlock::getPipelineFragment(int id) {
 
 EngineNode::EngineNode(DataManagementUnitV2 *DMU) {
     dataManagementUnit = DMU;
-    memoryBlock = new MemoryBlock(this);
+    memoryBlock = new MemoryBlock();
     pipelineBlock = new PipelineBlock();
+}
+
+EngineNode::~EngineNode() {
+    delete memoryBlock;
+    delete pipelineBlock;
 }
 
 void EngineNode::storeBaseDataFragments(Object *object, int id) {

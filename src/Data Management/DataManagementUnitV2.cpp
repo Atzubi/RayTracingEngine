@@ -19,9 +19,7 @@ DataManagementUnitV2::DataManagementUnitV2() {
     engineNode = new EngineNode(this);
 }
 
-DataManagementUnitV2::~DataManagementUnitV2() {
-
-}
+DataManagementUnitV2::~DataManagementUnitV2() = default;
 
 int DataManagementUnitV2::addPipeline(PipelineDescription *pipelineDescription) {
     std::vector<Object *> instances;
@@ -268,9 +266,9 @@ bool DataManagementUnitV2::updateObject(int id, Object *object) {
 }
 
 int DataManagementUnitV2::addShader(HitShader *shader) {
-    hitShaders.insert(std::pair<int, HitShader *>(*shaderIds.begin(), shader));
-
     int buffer = shaderIds.extract(shaderIds.begin()).value();
+
+    hitShaders[buffer] = shader;
 
     if (shaderIds.empty()) {
         shaderIds.insert(buffer + 1);
@@ -280,9 +278,9 @@ int DataManagementUnitV2::addShader(HitShader *shader) {
 }
 
 int DataManagementUnitV2::addShader(MissShader *shader) {
-    missShaders.insert(std::pair<int, MissShader *>(*shaderIds.begin(), shader));
-
     int buffer = shaderIds.extract(shaderIds.begin()).value();
+
+    missShaders[buffer] = shader;
 
     if (shaderIds.empty()) {
         shaderIds.insert(buffer + 1);
@@ -292,9 +290,9 @@ int DataManagementUnitV2::addShader(MissShader *shader) {
 }
 
 int DataManagementUnitV2::addShader(OcclusionShader *shader) {
-    occlusionShaders.insert(std::pair<int, OcclusionShader *>(*shaderIds.begin(), shader));
-
     int buffer = shaderIds.extract(shaderIds.begin()).value();
+
+    occlusionShaders[buffer] = shader;
 
     if (shaderIds.empty()) {
         shaderIds.insert(buffer + 1);
@@ -304,9 +302,9 @@ int DataManagementUnitV2::addShader(OcclusionShader *shader) {
 }
 
 int DataManagementUnitV2::addShader(PierceShader *shader) {
-    pierceShaders.insert(std::pair<int, PierceShader *>(*shaderIds.begin(), shader));
-
     int buffer = shaderIds.extract(shaderIds.begin()).value();
+
+    pierceShaders[buffer] = shader;
 
     if (shaderIds.empty()) {
         shaderIds.insert(buffer + 1);
@@ -316,9 +314,9 @@ int DataManagementUnitV2::addShader(PierceShader *shader) {
 }
 
 int DataManagementUnitV2::addShader(RayGeneratorShader *shader) {
-    rayGeneratorShaders.insert(std::pair<int, RayGeneratorShader *>(*shaderIds.begin(), shader));
-
     int buffer = shaderIds.extract(shaderIds.begin()).value();
+
+    rayGeneratorShaders[buffer] = shader;
 
     if (shaderIds.empty()) {
         shaderIds.insert(buffer + 1);

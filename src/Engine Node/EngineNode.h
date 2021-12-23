@@ -21,8 +21,6 @@ class EngineNode {
 private:
     class MemoryBlock {
     private:
-        EngineNode *engineNode;
-
         std::unordered_map<int, Object *> objects;
         std::unordered_map<int, Instance *> objectInstances;
 
@@ -30,7 +28,8 @@ private:
         std::unordered_map<int, Instance *> objectInstanceCache;
 
     public:
-        explicit MemoryBlock(EngineNode *engine);
+        MemoryBlock();
+        ~MemoryBlock();
 
         void storeBaseDataFragments(Object *object, int id);
 
@@ -55,6 +54,9 @@ private:
         std::unordered_map<DBVHNode *, DBVHNode *> pipelineCache;
 
     public:
+        PipelineBlock();
+        ~PipelineBlock();
+
         void storePipelineFragments(PipelineImplement *pipeline, int id);
 
         bool deletePipelineFragment(int id);
@@ -73,6 +75,8 @@ private:
 
 public:
     explicit EngineNode(DataManagementUnitV2 *DMU);
+
+    ~EngineNode();
 
     void storeBaseDataFragments(Object *object, int id);
 
