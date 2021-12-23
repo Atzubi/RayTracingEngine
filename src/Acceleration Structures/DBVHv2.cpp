@@ -683,7 +683,7 @@ static void add(DBVHNode *currentNode, std::vector<Object *> *objects, uint8_t d
                 }
                 newNode->surfaceArea = node->surfaceArea;
                 node->leftChild = newNode;
-                node->maxDepthLeft = std::max(newNode->maxDepthLeft, newNode->maxDepthRight);
+                node->maxDepthLeft = std::max(newNode->maxDepthLeft, newNode->maxDepthRight)+1;
                 node->rightChild = nullptr;
                 node->maxDepthRight = 0;
                 *rightObjects = *objects;
@@ -713,7 +713,7 @@ static void add(DBVHNode *currentNode, std::vector<Object *> *objects, uint8_t d
                 }
                 newNode->surfaceArea = node->surfaceArea;
                 node->leftChild = newNode;
-                node->maxDepthLeft = std::max(newNode->maxDepthLeft, newNode->maxDepthRight);
+                node->maxDepthLeft = std::max(newNode->maxDepthLeft, newNode->maxDepthRight)+1;
                 node->rightChild = nullptr;
                 node->maxDepthRight = 0;
                 break;
@@ -745,7 +745,7 @@ static void add(DBVHNode *currentNode, std::vector<Object *> *objects, uint8_t d
                 }
                 newNode->surfaceArea = node->surfaceArea;
                 node->leftChild = newNode;
-                node->maxDepthLeft = std::max(newNode->maxDepthLeft, newNode->maxDepthRight);
+                node->maxDepthLeft = std::max(newNode->maxDepthLeft, newNode->maxDepthRight)+1;
                 node->rightChild = nullptr;
                 node->maxDepthRight = 0;
                 break;
@@ -861,7 +861,7 @@ static void add(DBVHNode *currentNode, std::vector<Object *> *objects, uint8_t d
     }
 
     // use tree rotations going the tree back up to optimize SAH
-    optimizeSAH(node);
+    //optimizeSAH(node);
 }
 
 static void remove(DBVHNode *currentNode, Object *object) {

@@ -2,6 +2,7 @@
 // Created by sebastian on 13.11.19.
 //
 
+#include <cmath>
 #include "RayTraceEngine/TriangleMeshObject.h"
 #include "Acceleration Structures/DBVHv2.h"
 

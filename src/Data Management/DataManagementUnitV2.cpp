@@ -15,6 +15,8 @@ DataManagementUnitV2::DataManagementUnitV2() {
     objectIds.insert(0);
     shaderIds.insert(0);
     pipelineIds.insert(0);
+    objectInstanceIds.insert(0);
+    shaderResourceIds.insert(0);
 
     engineNode = new EngineNode(this);
 }
@@ -232,6 +234,8 @@ bool DataManagementUnitV2::bindShaderToPipeline(int pipelineId, int *shaderId, s
 int DataManagementUnitV2::addObject(Object *object) {
     int buffer = objectIds.extract(objectIds.begin()).value();
 
+    objectIdDeviceMap[buffer] = deviceId;
+
     // TODO: spread over nodes
     engineNode->storeBaseDataFragments(object->clone(), buffer);
 
@@ -244,6 +248,8 @@ int DataManagementUnitV2::addObject(Object *object) {
 
 bool DataManagementUnitV2::removeObject(int id) {
     if (!engineNode->deleteBaseDataFragment(id)) return false;
+
+    objectIdDeviceMap.erase(id);
 
     objectIds.insert(id);
 

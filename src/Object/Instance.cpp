@@ -3,6 +3,7 @@
 //
 
 #include <algorithm>
+#include <complex>
 #include "Object/Instance.h"
 #include "Engine Node/EngineNode.h"
 
@@ -242,7 +243,7 @@ bool Instance::intersectFirst(IntersectionInfo *intersectionInfo, Ray *ray) {
     newRay.direction.y = newRay.direction.y - newRay.origin.y;
     newRay.direction.z = newRay.direction.z - newRay.origin.z;
 
-    double length = sqrt(newRay.direction.x * newRay.direction.x + newRay.direction.y * newRay.direction.y +
+    double length = std::sqrt(newRay.direction.x * newRay.direction.x + newRay.direction.y * newRay.direction.y +
                          newRay.direction.z * newRay.direction.z);
 
     newRay.direction.x /= length;

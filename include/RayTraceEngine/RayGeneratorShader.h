@@ -26,8 +26,8 @@ public:
     }
 
     RayGeneratorOutput shade(uint64_t id, PipelineInfo *pipelineInfo, void *dataInput) override {
-        uint64_t x = (id % pipelineInfo->width) - (pipelineInfo->width) / 2;
-        uint64_t y = -(id / pipelineInfo->height) + (pipelineInfo->height) / 2;
+        int64_t x = (((int64_t)id) % pipelineInfo->width) - (pipelineInfo->width) / 2;
+        int64_t y = -(((int64_t)id) / pipelineInfo->height) + (pipelineInfo->height) / 2;
 
         RayGeneratorOutput rayGeneratorOutput;
         Vector3D rayOrigin{};
