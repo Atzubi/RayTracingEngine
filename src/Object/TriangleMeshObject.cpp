@@ -237,7 +237,10 @@ TriangleMeshObject::TriangleMeshObject(const std::vector<Vertex> *vertices, cons
 }
 
 TriangleMeshObject::~TriangleMeshObject() {
-    delete structure;
+    for(auto t : triangles){
+        delete t;
+    }
+    DBVHv2::deleteTree(structure);
 };
 
 BoundingBox TriangleMeshObject::getBoundaries() {
@@ -246,6 +249,7 @@ BoundingBox TriangleMeshObject::getBoundaries() {
 
 bool TriangleMeshObject::intersectFirst(IntersectionInfo *intersectionInfo, Ray *ray) {
     return DBVHv2::intersectFirst(structure, intersectionInfo, ray);
+
 }
 
 bool TriangleMeshObject::intersectAny(IntersectionInfo *intersectionInfo, Ray *ray) {

@@ -21,7 +21,9 @@ DataManagementUnitV2::DataManagementUnitV2() {
     engineNode = new EngineNode(this);
 }
 
-DataManagementUnitV2::~DataManagementUnitV2() = default;
+DataManagementUnitV2::~DataManagementUnitV2() {
+    delete engineNode;
+}
 
 int DataManagementUnitV2::addPipeline(PipelineDescription *pipelineDescription) {
     std::vector<Object *> instances;
@@ -93,7 +95,7 @@ int DataManagementUnitV2::addPipeline(PipelineDescription *pipelineDescription) 
     }
 
     // create new pipeline and add bvh, shaders and description
-    auto *pipeline = new PipelineImplement(this, pipelineDescription->resolutionX,
+    auto *pipeline = new PipelineImplement(engineNode, pipelineDescription->resolutionX,
                                            pipelineDescription->resolutionY,
                                            &pipelineDescription->cameraPosition,
                                            &pipelineDescription->cameraDirection,

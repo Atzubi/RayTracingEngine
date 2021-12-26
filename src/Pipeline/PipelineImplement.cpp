@@ -12,12 +12,12 @@
 #include "Acceleration Structures/DBVHv2.h"
 #include "Engine Node/EngineNode.h"
 
-PipelineImplement::PipelineImplement(DataManagementUnitV2* dmu,int width, int height, Vector3D *cameraPosition, Vector3D *cameraDirection,
+PipelineImplement::PipelineImplement(EngineNode* engine,int width, int height, Vector3D *cameraPosition, Vector3D *cameraDirection,
                                      Vector3D *cameraUp, std::vector<RayGeneratorShader *> *rayGeneratorShaders,
                                      std::vector<OcclusionShader *> *occlusionShaders,
                                      std::vector<HitShader *> *hitShaders, std::vector<PierceShader *> *pierceShaders,
                                      std::vector<MissShader *> *missShaders, DBVHNode *geometry) {
-    this->engineNode = new EngineNode(dmu);
+    this->engineNode = engine;
     this->pipelineInfo = new PipelineInfo();
     this->pipelineInfo->width = width;
     this->pipelineInfo->height = height;
@@ -39,7 +39,10 @@ PipelineImplement::PipelineImplement(DataManagementUnitV2* dmu,int width, int he
 
 PipelineImplement::~PipelineImplement() {
     //delete geometry;
+    delete[] result->image;
     delete result;
+    delete pipelineInfo;
+    DBVHv2::deleteTree(geometry);
 }
 
 void PipelineImplement::setResolution(int resolutionWidth, int resolutionHeight) {

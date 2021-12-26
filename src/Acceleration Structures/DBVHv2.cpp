@@ -406,14 +406,14 @@ bool optimizeSAH(DBVHNode *node) {
                 auto buffer = node->rightChild;
                 if (node->leftChild->maxDepthLeft > 1) {
                     node->rightChild = (node->leftChild)->leftChild;
-                    node->maxDepthRight = std::max(node->rightChild->maxDepthLeft, node->rightChild->maxDepthRight);
+                    node->maxDepthRight = std::max(node->rightChild->maxDepthLeft, node->rightChild->maxDepthRight) + 1;
                 } else {
                     node->rightLeaf = (node->leftChild)->leftLeaf;
                     node->maxDepthRight = 1;
                 }
                 (node->leftChild)->boundingBox = swapLeftLeftToRight;
                 (node->leftChild)->leftChild = buffer;
-                (node->leftChild)->maxDepthLeft = std::max(buffer->maxDepthLeft, buffer->maxDepthRight);
+                (node->leftChild)->maxDepthLeft = std::max(buffer->maxDepthLeft, buffer->maxDepthRight) + 1;
 
                 node->surfaceArea = SAHs[1];
                 (node->leftChild)->surfaceArea = rightSA + leftRightSA + swapLeftLeftToRight.getSA();
@@ -422,7 +422,7 @@ bool optimizeSAH(DBVHNode *node) {
                 auto buffer = node->rightLeaf;
                 if (node->leftChild->maxDepthLeft > 1) {
                     node->rightChild = (node->leftChild)->leftChild;
-                    node->maxDepthRight = std::max(node->rightChild->maxDepthLeft, node->rightChild->maxDepthRight);
+                    node->maxDepthRight = std::max(node->rightChild->maxDepthLeft, node->rightChild->maxDepthRight) + 1;
                 } else {
                     node->rightLeaf = (node->leftChild)->leftLeaf;
                     node->maxDepthRight = 1;
@@ -439,25 +439,25 @@ bool optimizeSAH(DBVHNode *node) {
         case 2: {
             if (node->maxDepthRight > 1) {
                 auto buffer = node->rightChild;
-                if (node->leftChild->maxDepthLeft > 1) {
+                if (node->leftChild->maxDepthRight > 1) {
                     node->rightChild = (node->leftChild)->rightChild;
-                    node->maxDepthRight = std::max(node->rightChild->maxDepthLeft, node->rightChild->maxDepthRight);
+                    node->maxDepthRight = std::max(node->rightChild->maxDepthLeft, node->rightChild->maxDepthRight) + 1;
                 } else {
                     node->rightLeaf = (node->leftChild)->rightLeaf;
                     node->maxDepthRight = 1;
                 }
                 (node->leftChild)->boundingBox = swapLeftRightToRight;
                 (node->leftChild)->rightChild = buffer;
-                (node->leftChild)->maxDepthRight = std::max(buffer->maxDepthLeft, buffer->maxDepthRight);
+                (node->leftChild)->maxDepthRight = std::max(buffer->maxDepthLeft, buffer->maxDepthRight) + 1;
 
                 node->surfaceArea = SAHs[2];
                 (node->leftChild)->surfaceArea = rightSA + leftLeftSA + swapLeftRightToRight.getSA();
                 return true;
             } else {
                 auto buffer = node->rightLeaf;
-                if (node->leftChild->maxDepthLeft > 1) {
+                if (node->leftChild->maxDepthRight > 1) {
                     node->rightChild = (node->leftChild)->rightChild;
-                    node->maxDepthRight = std::max(node->rightChild->maxDepthLeft, node->rightChild->maxDepthRight);
+                    node->maxDepthRight = std::max(node->rightChild->maxDepthLeft, node->rightChild->maxDepthRight) + 1;
                 } else {
                     node->rightLeaf = (node->leftChild)->rightLeaf;
                     node->maxDepthRight = 1;
@@ -476,14 +476,14 @@ bool optimizeSAH(DBVHNode *node) {
                 auto buffer = node->leftChild;
                 if (node->rightChild->maxDepthLeft > 1) {
                     node->leftChild = (node->rightChild)->leftChild;
-                    node->maxDepthLeft = std::max(node->leftChild->maxDepthLeft, node->leftChild->maxDepthRight);
+                    node->maxDepthLeft = std::max(node->leftChild->maxDepthLeft, node->leftChild->maxDepthRight) + 1;
                 } else {
                     node->leftLeaf = (node->rightChild)->leftLeaf;
                     node->maxDepthLeft = 1;
                 }
                 (node->rightChild)->boundingBox = swapRightLeftToLeft;
                 (node->rightChild)->leftChild = buffer;
-                (node->rightChild)->maxDepthLeft = std::max(buffer->maxDepthLeft, buffer->maxDepthRight);
+                (node->rightChild)->maxDepthLeft = std::max(buffer->maxDepthLeft, buffer->maxDepthRight) + 1;
 
                 node->surfaceArea = SAHs[3];
                 (node->rightChild)->surfaceArea = leftSA + rightRightSA + swapRightLeftToLeft.getSA();
@@ -492,7 +492,7 @@ bool optimizeSAH(DBVHNode *node) {
                 auto buffer = node->leftLeaf;
                 if (node->rightChild->maxDepthLeft > 1) {
                     node->leftChild = (node->rightChild)->leftChild;
-                    node->maxDepthLeft = std::max(node->leftChild->maxDepthLeft, node->leftChild->maxDepthRight);
+                    node->maxDepthLeft = std::max(node->leftChild->maxDepthLeft, node->leftChild->maxDepthRight) + 1;
                 } else {
                     node->leftLeaf = (node->rightChild)->leftLeaf;
                     node->maxDepthLeft = 1;
@@ -511,14 +511,14 @@ bool optimizeSAH(DBVHNode *node) {
                 auto buffer = node->leftChild;
                 if (node->rightChild->maxDepthRight > 1) {
                     node->leftChild = (node->rightChild)->rightChild;
-                    node->maxDepthLeft = std::max(node->leftChild->maxDepthLeft, node->leftChild->maxDepthRight);
+                    node->maxDepthLeft = std::max(node->leftChild->maxDepthLeft, node->leftChild->maxDepthRight) + 1;
                 } else {
                     node->leftLeaf = (node->rightChild)->rightLeaf;
                     node->maxDepthLeft = 1;
                 }
                 (node->rightChild)->boundingBox = swapRightRightToLeft;
                 (node->rightChild)->rightChild = buffer;
-                (node->rightChild)->maxDepthRight = std::max(buffer->maxDepthLeft, buffer->maxDepthRight);
+                (node->rightChild)->maxDepthRight = std::max(buffer->maxDepthLeft, buffer->maxDepthRight) + 1;
 
                 node->surfaceArea = SAHs[4];
                 (node->rightChild)->surfaceArea = leftSA + rightLeftSA + swapRightRightToLeft.getSA();
@@ -527,7 +527,7 @@ bool optimizeSAH(DBVHNode *node) {
                 auto buffer = node->leftLeaf;
                 if (node->rightChild->maxDepthRight > 1) {
                     node->leftChild = (node->rightChild)->rightChild;
-                    node->maxDepthLeft = std::max(node->leftChild->maxDepthLeft, node->leftChild->maxDepthRight);
+                    node->maxDepthLeft = std::max(node->leftChild->maxDepthLeft, node->leftChild->maxDepthRight) + 1;
                 } else {
                     node->leftLeaf = (node->rightChild)->rightLeaf;
                     node->maxDepthLeft = 1;
@@ -683,7 +683,7 @@ static void add(DBVHNode *currentNode, std::vector<Object *> *objects, uint8_t d
                 }
                 newNode->surfaceArea = node->surfaceArea;
                 node->leftChild = newNode;
-                node->maxDepthLeft = std::max(newNode->maxDepthLeft, newNode->maxDepthRight)+1;
+                node->maxDepthLeft = std::max(newNode->maxDepthLeft, newNode->maxDepthRight) + 1;
                 node->rightChild = nullptr;
                 node->maxDepthRight = 0;
                 *rightObjects = *objects;
@@ -713,7 +713,7 @@ static void add(DBVHNode *currentNode, std::vector<Object *> *objects, uint8_t d
                 }
                 newNode->surfaceArea = node->surfaceArea;
                 node->leftChild = newNode;
-                node->maxDepthLeft = std::max(newNode->maxDepthLeft, newNode->maxDepthRight)+1;
+                node->maxDepthLeft = std::max(newNode->maxDepthLeft, newNode->maxDepthRight) + 1;
                 node->rightChild = nullptr;
                 node->maxDepthRight = 0;
                 break;
@@ -745,7 +745,7 @@ static void add(DBVHNode *currentNode, std::vector<Object *> *objects, uint8_t d
                 }
                 newNode->surfaceArea = node->surfaceArea;
                 node->leftChild = newNode;
-                node->maxDepthLeft = std::max(newNode->maxDepthLeft, newNode->maxDepthRight)+1;
+                node->maxDepthLeft = std::max(newNode->maxDepthLeft, newNode->maxDepthRight) + 1;
                 node->rightChild = nullptr;
                 node->maxDepthRight = 0;
                 break;
@@ -861,7 +861,7 @@ static void add(DBVHNode *currentNode, std::vector<Object *> *objects, uint8_t d
     }
 
     // use tree rotations going the tree back up to optimize SAH
-    //optimizeSAH(node);
+    optimizeSAH(node);
 }
 
 static void remove(DBVHNode *currentNode, Object *object) {
@@ -938,7 +938,8 @@ static void remove(DBVHNode *currentNode, Object *object) {
 }
 
 static bool traverseALl(DBVHNode *root, std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray) {
-    auto **stack = new DBVHNode *[root->maxDepthRight > root->maxDepthLeft ? root->maxDepthRight : root->maxDepthLeft];
+    auto **stack = new DBVHNode *[root->maxDepthRight > root->maxDepthLeft ? root->maxDepthRight + 1 :
+                                  root->maxDepthLeft + 1];
     uint64_t stackPointer = 1;
     stack[0] = root;
 
@@ -1005,8 +1006,8 @@ struct TraversalContainer {
 static bool traverseFirst(DBVHNode *root, IntersectionInfo *intersectionInfo, Ray *ray) {
     bool hit = false;
 
-    auto *stack = new TraversalContainer[root->maxDepthRight > root->maxDepthLeft ? root->maxDepthRight
-                                                                                  : root->maxDepthLeft];
+    auto *stack = new TraversalContainer[root->maxDepthRight > root->maxDepthLeft ? root->maxDepthRight + 1
+                                                                                  : root->maxDepthLeft + 1];
     uint64_t stackPointer = 1;
     stack[0] = {root, 0};
 
@@ -1084,7 +1085,8 @@ static bool traverseFirst(DBVHNode *root, IntersectionInfo *intersectionInfo, Ra
 }
 
 static bool traverseAny(DBVHNode *root, IntersectionInfo *intersectionInfo, Ray *ray) {
-    auto **stack = new DBVHNode *[root->maxDepthRight > root->maxDepthLeft ? root->maxDepthRight : root->maxDepthLeft];
+    auto **stack = new DBVHNode *[root->maxDepthRight > root->maxDepthLeft ? root->maxDepthRight + 1 :
+                                  root->maxDepthLeft + 1];
     uint64_t stackPointer = 1;
     stack[0] = root;
 
@@ -1149,16 +1151,13 @@ void DBVHv2::addObjects(DBVHNode *root, std::vector<Object *> *objects) {
         // TODO error handling (should never happen)
     } else if (root->maxDepthLeft == 0) {
         root->leftLeaf = objects->back();
-        objects->pop_back();
         root->maxDepthLeft = 1;
         if (!objects->empty()) {
             root->rightLeaf = objects->back();
-            objects->pop_back();
             root->maxDepthRight = 1;
         }
     } else if (root->maxDepthRight == 0) {
         root->rightLeaf = objects->back();
-        objects->pop_back();
         root->maxDepthRight = 1;
     }
     refit(root->boundingBox, objects, 0);
@@ -1183,7 +1182,6 @@ void DBVHv2::removeObjects(DBVHNode *root, std::vector<Object *> *objects) {
         }
         if (root->maxDepthLeft == 1) {
             if (root->leftLeaf->operator==(object)) {
-                delete root->leftLeaf;
                 if (root->maxDepthRight == 1) {
                     root->leftLeaf = root->rightLeaf;
                     root->rightLeaf = nullptr;
@@ -1264,4 +1262,18 @@ bool DBVHv2::intersectAll(DBVHNode *root, std::vector<IntersectionInfo *> *inter
     }
 
     return hit;
+}
+
+void DBVHv2::deleteTree(DBVHNode *root) {
+    if(root->maxDepthLeft == 1 && root->maxDepthRight == 1){
+        delete root;
+        return;
+    }
+    if(root->maxDepthLeft > 1){
+        deleteTree(root->leftChild);
+    }
+    if(root->maxDepthRight > 1){
+        deleteTree(root->rightChild);
+    }
+    delete root;
 }

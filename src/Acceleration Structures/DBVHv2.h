@@ -35,6 +35,8 @@ public:
     static bool intersectAny(DBVHNode *root, IntersectionInfo *intersectionInfo, Ray *ray);
 
     static bool intersectAll(DBVHNode *root, std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray);
+
+    static void deleteTree(DBVHNode* root);
 };
 
 #endif //RAYTRACEENGINE_DBVHV2_H

@@ -54,7 +54,7 @@ private:
     Texture *result;
 
 public:
-    PipelineImplement(DataManagementUnitV2* dmu,int width, int height, Vector3D *cameraPosition, Vector3D *cameraDirection,
+    PipelineImplement(EngineNode* engine,int width, int height, Vector3D *cameraPosition, Vector3D *cameraDirection,
                       Vector3D *cameraUp, std::vector<RayGeneratorShader *> *rayGeneratorShaders,
                       std::vector<OcclusionShader *> *occlusionShaders,
                       std::vector<HitShader *> *hitShaders, std::vector<PierceShader *> *pierceShaders,
