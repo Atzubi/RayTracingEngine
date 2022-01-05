@@ -20,7 +20,9 @@ struct DBVHNode {
         Object *rightLeaf;
     };
 
-    BoundingBox boundingBox{};
+    BoundingBox boundingBox{std::numeric_limits<double>::max(), std::numeric_limits<double>::max(),
+                            std::numeric_limits<double>::max(), -std::numeric_limits<double>::max(),
+                            -std::numeric_limits<double>::max(), -std::numeric_limits<double>::max()};
     double surfaceArea{};
 };
 
@@ -36,7 +38,7 @@ public:
 
     static bool intersectAll(DBVHNode *root, std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray);
 
-    static void deleteTree(DBVHNode* root);
+    static void deleteTree(DBVHNode *root);
 };
 
 #endif //RAYTRACEENGINE_DBVHV2_H

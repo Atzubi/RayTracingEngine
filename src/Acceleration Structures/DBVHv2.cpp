@@ -1145,23 +1145,25 @@ static bool traverseAny(DBVHNode *root, IntersectionInfo *intersectionInfo, Ray 
     return false;
 }
 
-void DBVHv2::addObjects(DBVHNode *root, std::vector<Object *> *objects) {
+void DBVHv2::addObjects(DBVHNode* root, std::vector<Object*>* objects) {
     if (objects->empty()) return;
     if (root == nullptr) {
         // TODO error handling (should never happen)
-    } else if (root->maxDepthLeft == 0) {
-        root->leftLeaf = objects->back();
-        root->maxDepthLeft = 1;
-        if (!objects->empty()) {
-            root->rightLeaf = objects->back();
-            root->maxDepthRight = 1;
-        }
-    } else if (root->maxDepthRight == 0) {
-        root->rightLeaf = objects->back();
-        root->maxDepthRight = 1;
+        return;
     }
-    refit(root->boundingBox, objects, 0);
-    if (objects->empty()) return;
+    if (root->maxDepthLeft == 0) {
+        if (objects->size() == 1) {
+            refit(root->boundingBox, objects, 0);
+            root->leftLeaf = objects->back();
+            root->maxDepthLeft = 1;
+            return;
+        }
+    }
+    else if (root->maxDepthRight == 0) {
+        objects->push_back(root->leftLeaf);
+        root->maxDepthLeft = 0;
+    }
+
     add(root, objects, 1);
 }
 
