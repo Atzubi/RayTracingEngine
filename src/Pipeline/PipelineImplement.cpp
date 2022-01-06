@@ -89,6 +89,7 @@ int PipelineImplement::run() {
                         ray.dirfrac.z = 1.0 / ray.direction.z;
 
                         rays.rayOrigin.pop_back();
+                        rays.rayDirection.pop_back();
 
                         std::vector<IntersectionInfo *> infos;
                         DBVHv2::intersectAll(geometry, &infos, &ray);
@@ -179,6 +180,7 @@ int PipelineImplement::run() {
                         ray.dirfrac.z = 1.0 / ray.direction.z;
 
                         rays.rayOrigin.pop_back();
+                        rays.rayDirection.pop_back();
 
                         IntersectionInfo info = {false, std::numeric_limits<double>::max(), ray.origin, ray.direction,
                                                  0, 0, 0, 0, 0};
@@ -241,6 +243,7 @@ int PipelineImplement::run() {
                         ray.dirfrac.z = 1.0 / ray.direction.z;
 
                         rays.rayOrigin.pop_back();
+                        rays.rayDirection.pop_back();
 
                         IntersectionInfo info = {false, std::numeric_limits<double>::max(), ray.origin, ray.direction,
                                                  0, 0, 0, 0, 0};
