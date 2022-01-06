@@ -193,6 +193,8 @@ bool Instance::intersectFirst(IntersectionInfo *intersectionInfo, Ray *ray) {
         baseObject = objectCache;
     } else {
         baseObject = engineNode->requestBaseData(baseObjectId);
+        objectCache = baseObject;
+        objectCached = true;
     }
 
     Ray newRay = *ray;
