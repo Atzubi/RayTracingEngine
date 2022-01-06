@@ -66,6 +66,8 @@ Object *PipelineImplement::getGeometryAsObject() {
 }
 
 int PipelineImplement::run() {
+    RayGeneratorOutput rays;
+
     for (int i = 0; i < pipelineInfo->width * pipelineInfo->height * 3; i++) {
         result->image[i] = 0;
     }
@@ -76,7 +78,7 @@ int PipelineImplement::run() {
             for (int y = 0; y < pipelineInfo->height; y++) {
                 for (auto generator: rayGeneratorShaders) {
                     int rayID = x + y * pipelineInfo->width;
-                    auto rays = generator->shade(rayID, pipelineInfo, nullptr);
+                    generator->shade(rayID, pipelineInfo, nullptr, &rays);
                     rays.id = rayID;
                     while (!rays.rayOrigin.empty()) {
                         Ray ray{};
@@ -166,7 +168,7 @@ int PipelineImplement::run() {
             for (int y = 0; y < pipelineInfo->height; y++) {
                 for (auto generator: rayGeneratorShaders) {
                     int rayID = x + y * pipelineInfo->width;
-                    auto rays = generator->shade(rayID, pipelineInfo, nullptr);
+                    generator->shade(rayID, pipelineInfo, nullptr, &rays);
                     rays.id = rayID;
                     while (!rays.rayOrigin.empty()) {
                         Ray ray{};
@@ -228,7 +230,7 @@ int PipelineImplement::run() {
             for (int y = 0; y < pipelineInfo->height; y++) {
                 for (auto generator: rayGeneratorShaders) {
                     int rayID = x + y * pipelineInfo->width;
-                    auto rays = generator->shade(rayID, pipelineInfo, nullptr);
+                    generator->shade(rayID, pipelineInfo, nullptr, &rays);
                     rays.id = rayID;
                     while (!rays.rayOrigin.empty()) {
                         Ray ray{};

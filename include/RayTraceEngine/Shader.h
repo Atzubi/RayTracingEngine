@@ -90,7 +90,7 @@ public:
      * @param dataInput     Currently unused.
      * @return
      */
-    virtual RayGeneratorOutput shade(uint64_t id, PipelineInfo *pipelineInfo, void *dataInput) = 0;
+    virtual void shade(uint64_t id, PipelineInfo *pipelineInfo, void *dataInput, RayGeneratorOutput* rayGeneratorOutput) = 0;
 
     /**
      * Destructor.

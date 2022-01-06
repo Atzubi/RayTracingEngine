@@ -25,11 +25,11 @@ public:
         return new BasicRayGeneratorShader(*this);
     }
 
-    RayGeneratorOutput shade(uint64_t id, PipelineInfo *pipelineInfo, void *dataInput) override {
-        int64_t x = (((int64_t)id) % pipelineInfo->width) - (pipelineInfo->width) / 2;
-        int64_t y = -(((int64_t)id) / pipelineInfo->height) + (pipelineInfo->height) / 2;
+    void
+    shade(uint64_t id, PipelineInfo *pipelineInfo, void *dataInput, RayGeneratorOutput *rayGeneratorOutput) override {
+        int64_t x = (((int64_t) id) % pipelineInfo->width) - (pipelineInfo->width) / 2;
+        int64_t y = -(((int64_t) id) / pipelineInfo->height) + (pipelineInfo->height) / 2;
 
-        RayGeneratorOutput rayGeneratorOutput;
         Vector3D rayOrigin{};
         Vector3D rayDirection{};
 
@@ -71,10 +71,8 @@ public:
         rayDirection.y /= length;
         rayDirection.z /= length;
 
-        rayGeneratorOutput.rayOrigin.push_back(rayOrigin);
-        rayGeneratorOutput.rayDirection.push_back(rayDirection);
-
-        return rayGeneratorOutput;
+        rayGeneratorOutput->rayOrigin.push_back(rayOrigin);
+        rayGeneratorOutput->rayDirection.push_back(rayDirection);
     }
 
     void *getAssociatedData() {
