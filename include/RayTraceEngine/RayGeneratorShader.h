@@ -71,8 +71,9 @@ public:
         rayDirection.y /= length;
         rayDirection.z /= length;
 
-        rayGeneratorOutput->rayOrigin.push_back(rayOrigin);
-        rayGeneratorOutput->rayDirection.push_back(rayDirection);
+        GeneratorRay generatorRay = {rayOrigin, rayDirection};
+
+        rayGeneratorOutput->rays.push_back(generatorRay);
     }
 
     void *getAssociatedData() {

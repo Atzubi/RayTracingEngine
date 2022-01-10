@@ -211,7 +211,7 @@ public:
      * @param resource  Shader resource.
      * @return          Id of the shader resource for referencing it within the engine.
      */
-    int addShaderResource(Any *resource);
+    int addShaderResource(ShaderResource *resource);
 
     /**
      * Removes a shader resource from the engines pool.

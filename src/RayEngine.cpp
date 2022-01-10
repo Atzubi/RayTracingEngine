@@ -77,7 +77,7 @@ bool RayEngine::removeShader(int id) {
     return dataManagementUnit->removeShader(id);
 }
 
-int RayEngine::addShaderResource(Any *resource) {
+int RayEngine::addShaderResource(ShaderResource *resource) {
     return dataManagementUnit->addShaderResource(resource);
 }
 

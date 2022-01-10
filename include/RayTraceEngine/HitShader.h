@@ -23,7 +23,8 @@ public:
         return new BasicHitShader(*this);
     }
 
-    ShaderOutput shade(uint64_t id, PipelineInfo *pipelineInfo, HitShaderInput *shaderInput, void* dataInput, RayGeneratorOutput *newRays) override{
+    ShaderOutput shade(uint64_t id, PipelineInfo *pipelineInfo, HitShaderInput *shaderInput, ShaderResource *shaderResource,
+                       RayResource **rayResource, RayGeneratorOutput *newRays) override{
         Vector3D Ka = {1, 1, 1};
         Vector3D Kd = {1, 1, 1};
         Vector3D Ks = {1, 1, 1};

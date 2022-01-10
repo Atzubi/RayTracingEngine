@@ -24,6 +24,11 @@ struct Vector2D {
     double y;
 };
 
+struct GeneratorRay{
+    Vector3D rayOrigin;
+    Vector3D rayDirection;
+};
+
 /**
  * Contains a 4 by 4 matrix.
  * elements:    The matrix.

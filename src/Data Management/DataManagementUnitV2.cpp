@@ -71,27 +71,27 @@ int DataManagementUnitV2::addPipeline(PipelineDescription *pipelineDescription) 
     // get shader implementation from id
     std::vector<RayGeneratorShader *> pipelineRayGeneratorShaders;
     for (auto id: pipelineDescription->rayGeneratorShaderIDs) {
-        pipelineRayGeneratorShaders.push_back(rayGeneratorShaders.at(id));
+        pipelineRayGeneratorShaders.push_back((RayGeneratorShader *) engineNode->getShader(id));
     }
 
     std::vector<OcclusionShader *> pipelineOcclusionShaders;
     for (auto id: pipelineDescription->occlusionShaderIDs) {
-        pipelineOcclusionShaders.push_back(occlusionShaders.at(id));
+        pipelineOcclusionShaders.push_back((OcclusionShader *) engineNode->getShader(id));
     }
 
     std::vector<HitShader *> pipelineHitShaders;
     for (auto id: pipelineDescription->hitShaderIDs) {
-        pipelineHitShaders.push_back(hitShaders.at(id));
+        pipelineHitShaders.push_back((HitShader *) engineNode->getShader(id));
     }
 
     std::vector<PierceShader *> pipelinePierceShaders;
     for (auto id: pipelineDescription->pierceShaderIDs) {
-        pipelinePierceShaders.push_back(pierceShaders.at(id));
+        pipelinePierceShaders.push_back((PierceShader *) engineNode->getShader(id));
     }
 
     std::vector<MissShader *> pipelineMissShaders;
     for (auto id: pipelineDescription->missShaderIDs) {
-        pipelineMissShaders.push_back(missShaders.at(id));
+        pipelineMissShaders.push_back((MissShader *) engineNode->getShader(id));
     }
 
     // create new pipeline and add bvh, shaders and description
@@ -276,7 +276,7 @@ bool DataManagementUnitV2::updateObject(int id, Object *object) {
 int DataManagementUnitV2::addShader(HitShader *shader) {
     int buffer = shaderIds.extract(shaderIds.begin()).value();
 
-    hitShaders[buffer] = shader;
+    engineNode->addShader(buffer, shader);
 
     if (shaderIds.empty()) {
         shaderIds.insert(buffer + 1);
@@ -288,7 +288,7 @@ int DataManagementUnitV2::addShader(HitShader *shader) {
 int DataManagementUnitV2::addShader(MissShader *shader) {
     int buffer = shaderIds.extract(shaderIds.begin()).value();
 
-    missShaders[buffer] = shader;
+    engineNode->addShader(buffer, shader);
 
     if (shaderIds.empty()) {
         shaderIds.insert(buffer + 1);
@@ -300,7 +300,7 @@ int DataManagementUnitV2::addShader(MissShader *shader) {
 int DataManagementUnitV2::addShader(OcclusionShader *shader) {
     int buffer = shaderIds.extract(shaderIds.begin()).value();
 
-    occlusionShaders[buffer] = shader;
+    engineNode->addShader(buffer, shader);
 
     if (shaderIds.empty()) {
         shaderIds.insert(buffer + 1);
@@ -312,7 +312,7 @@ int DataManagementUnitV2::addShader(OcclusionShader *shader) {
 int DataManagementUnitV2::addShader(PierceShader *shader) {
     int buffer = shaderIds.extract(shaderIds.begin()).value();
 
-    pierceShaders[buffer] = shader;
+    engineNode->addShader(buffer, shader);
 
     if (shaderIds.empty()) {
         shaderIds.insert(buffer + 1);
@@ -324,7 +324,7 @@ int DataManagementUnitV2::addShader(PierceShader *shader) {
 int DataManagementUnitV2::addShader(RayGeneratorShader *shader) {
     int buffer = shaderIds.extract(shaderIds.begin()).value();
 
-    rayGeneratorShaders[buffer] = shader;
+    engineNode->addShader(buffer, shader);
 
     if (shaderIds.empty()) {
         shaderIds.insert(buffer + 1);
@@ -334,19 +334,7 @@ int DataManagementUnitV2::addShader(RayGeneratorShader *shader) {
 }
 
 bool DataManagementUnitV2::removeShader(int id) {
-    if (hitShaders.count(id) != 0) {
-        hitShaders.erase(id);
-    } else if (missShaders.count(id) != 0) {
-        missShaders.erase(id);
-    } else if (occlusionShaders.count(id) != 0) {
-        occlusionShaders.erase(id);
-    } else if (pierceShaders.count(id) != 0) {
-        pierceShaders.erase(id);
-    } else if (rayGeneratorShaders.count(id) != 0) {
-        rayGeneratorShaders.erase(id);
-    } else {
-        return false;
-    }
+    if (!engineNode->deleteShader(id)) return false;
 
     shaderIds.insert(id);
 
@@ -362,25 +350,21 @@ bool DataManagementUnitV2::removeShader(int id) {
     return true;
 }
 
-int DataManagementUnitV2::addShaderResource(Any *resource) {
-    /*shadersResources.insert(std::pair<int, Any *>(*shaderResourceIds.begin(), resource));
-
+int DataManagementUnitV2::addShaderResource(ShaderResource *resource) {
     int buffer = shaderResourceIds.extract(shaderResourceIds.begin()).value();
+
+    engineNode->storeShaderResource(resource, buffer);
 
     if (shaderResourceIds.empty()) {
         shaderResourceIds.insert(buffer + 1);
     }
 
-    return buffer;*/
-    // TODO ?
-    return -1;
+    return buffer;
 }
 
 bool DataManagementUnitV2::removeShaderResource(int id) {
-    /*if (shadersResources.count(id) == 0)
-        return false;
+    if(!engineNode->deleteShaderResource(id)) return false;
 
-    shadersResources.erase(id);
     shaderResourceIds.insert(id);
 
     auto iterator = shaderResourceIds.rbegin();
@@ -392,9 +376,7 @@ bool DataManagementUnitV2::removeShaderResource(int id) {
         buffer = *iterator;
     }
 
-    return true;*/
-    // TODO ?
-    return false;
+    return true;
 }
 
 int DataManagementUnitV2::runPipeline(int id) {

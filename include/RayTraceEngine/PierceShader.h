@@ -23,7 +23,8 @@ public:
         return new BasicPierceShader(*this);
     }
 
-    ShaderOutput shade(uint64_t id, PipelineInfo *pipelineInfo, PierceShaderInput *shaderInput, void* dataInput, RayGeneratorOutput *newRays) override{
+    ShaderOutput shade(uint64_t id, PipelineInfo *pipelineInfo, PierceShaderInput *shaderInput, ShaderResource *shaderResource,
+                       RayResource **rayResource, RayGeneratorOutput *newRays) override{
         // TODO
         return ShaderOutput();
     }

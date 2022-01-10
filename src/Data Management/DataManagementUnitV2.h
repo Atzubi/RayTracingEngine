@@ -25,7 +25,7 @@ class Object;
 
 class Instance;
 
-class Any;
+class ShaderResource;
 
 struct DBVHNode;
 struct PipelineDescription;
@@ -46,13 +46,6 @@ private:
     std::set<int> shaderIds;
     std::set<int> shaderResourceIds;
     std::set<int> pipelineIds;
-
-    // copied to every node
-    std::unordered_map<int, HitShader *> hitShaders;
-    std::unordered_map<int, MissShader *> missShaders;
-    std::unordered_map<int, OcclusionShader *> occlusionShaders;
-    std::unordered_map<int, PierceShader *> pierceShaders;
-    std::unordered_map<int, RayGeneratorShader *> rayGeneratorShaders;
 
     //std::unordered_map<int, PipelineImplement *> pipelines; // groups  pipeline information, copied to every node
 
@@ -214,7 +207,7 @@ public:
      * resource:        the data that is used by a shader
      * return:          the id of the resource
      */
-    int addShaderResource(Any *resource);
+    int addShaderResource(ShaderResource *resource);
 
     /*
      * Removes the shader resource from the pool.

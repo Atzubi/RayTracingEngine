@@ -10,6 +10,16 @@
 #include "Pipeline.h"
 #include "Object.h"
 
+class ShaderResource {
+public:
+    virtual ShaderResource *clone() = 0;
+};
+
+class RayResource {
+public:
+    virtual RayResource *clone() = 0;
+};
+
 /**
  * Container outputted by the ray generator shader.
  * id:              Original id of the ray, this will be passed to potential child rays. This is equivalent to the pixel id.
@@ -17,9 +27,7 @@
  * rayDirection:    Vector of directions of rays.
  */
 struct RayGeneratorOutput {
-    uint64_t id;
-    std::vector<Vector3D> rayOrigin;
-    std::vector<Vector3D> rayDirection;
+    std::vector<GeneratorRay> rays;
 };
 
 /**
@@ -90,7 +98,8 @@ public:
      * @param dataInput     Currently unused.
      * @return
      */
-    virtual void shade(uint64_t id, PipelineInfo *pipelineInfo, void *dataInput, RayGeneratorOutput* rayGeneratorOutput) = 0;
+    virtual void
+    shade(uint64_t id, PipelineInfo *pipelineInfo, void *dataInput, RayGeneratorOutput *rayGeneratorOutput) = 0;
 
     /**
      * Destructor.
@@ -113,8 +122,9 @@ public:
      * of the current ray.
      * @return              Returns colour information that will be added to the rays corresponding pixel.
      */
-    virtual ShaderOutput shade(uint64_t id, PipelineInfo *pipelineInfo, OcclusionShaderInput *shaderInput, void *dataInput,
-                               RayGeneratorOutput *newRays) = 0;
+    virtual ShaderOutput
+    shade(uint64_t id, PipelineInfo *pipelineInfo, OcclusionShaderInput *shaderInput, ShaderResource *shaderResource,
+          RayResource **rayResource, RayGeneratorOutput *newRays) = 0;
 
     /**
      * Destructor.
@@ -137,8 +147,9 @@ public:
      * of the current ray.
      * @return              Returns colour information that will be added to the rays corresponding pixel.
      */
-    virtual ShaderOutput shade(uint64_t id, PipelineInfo *pipelineInfo, PierceShaderInput *shaderInput, void *dataInput,
-                               RayGeneratorOutput *newRays) = 0;
+    virtual ShaderOutput
+    shade(uint64_t id, PipelineInfo *pipelineInfo, PierceShaderInput *shaderInput, ShaderResource *shaderResource,
+          RayResource **rayResource, RayGeneratorOutput *newRays) = 0;
 
     /**
      * Destructor.
@@ -161,8 +172,9 @@ public:
      * of the current ray.
      * @return              Returns colour information that will be added to the rays corresponding pixel.
      */
-    virtual ShaderOutput shade(uint64_t id, PipelineInfo *pipelineInfo, HitShaderInput *shaderInput, void *dataInput,
-                               RayGeneratorOutput *newRays) = 0;
+    virtual ShaderOutput
+    shade(uint64_t id, PipelineInfo *pipelineInfo, HitShaderInput *shaderInput, ShaderResource *shaderResource,
+          RayResource **rayResource, RayGeneratorOutput *newRays) = 0;
 
     /**
      * Destructor.
@@ -185,8 +197,9 @@ public:
      * of the current ray.
      * @return              Returns colour information that will be added to the rays corresponding pixel.
      */
-    virtual ShaderOutput shade(uint64_t id, PipelineInfo *pipelineInfo, MissShaderInput *shaderInput, void *dataInput,
-                               RayGeneratorOutput *newRays) = 0;
+    virtual ShaderOutput
+    shade(uint64_t id, PipelineInfo *pipelineInfo, MissShaderInput *shaderInput, ShaderResource *shaderResource,
+          RayResource **rayResource, RayGeneratorOutput *newRays) = 0;
 
     /**
      * Destructor.
