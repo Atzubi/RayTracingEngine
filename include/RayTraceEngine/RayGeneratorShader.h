@@ -26,7 +26,7 @@ public:
     }
 
     void
-    shade(uint64_t id, PipelineInfo *pipelineInfo, void *dataInput, RayGeneratorOutput *rayGeneratorOutput) override {
+    shade(uint64_t id, PipelineInfo *pipelineInfo, std::vector<ShaderResource *> *shaderResource, RayGeneratorOutput *rayGeneratorOutput) override {
         int64_t x = (((int64_t) id) % pipelineInfo->width) - (pipelineInfo->width) / 2;
         int64_t y = -(((int64_t) id) / pipelineInfo->height) + (pipelineInfo->height) / 2;
 

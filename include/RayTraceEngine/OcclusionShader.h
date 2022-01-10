@@ -23,7 +23,7 @@ public:
         return new BasicOcclusionShader(*this);
     }
 
-    ShaderOutput shade(uint64_t id, PipelineInfo *pipelineInfo, OcclusionShaderInput *shaderInput, ShaderResource *shaderResource,
+    ShaderOutput shade(uint64_t id, PipelineInfo *pipelineInfo, OcclusionShaderInput *shaderInput, std::vector<ShaderResource *> *shaderResource,
                        RayResource **rayResource, RayGeneratorOutput *newRays) override{
         // TODO
         return ShaderOutput();

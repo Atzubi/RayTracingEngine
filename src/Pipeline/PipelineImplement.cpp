@@ -20,11 +20,13 @@ struct RayContainer {
 };
 
 PipelineImplement::PipelineImplement(EngineNode *engine, int width, int height, Vector3D *cameraPosition,
-                                     Vector3D *cameraDirection,
-                                     Vector3D *cameraUp, std::vector<RayGeneratorShader *> *rayGeneratorShaders,
-                                     std::vector<OcclusionShader *> *occlusionShaders,
-                                     std::vector<HitShader *> *hitShaders, std::vector<PierceShader *> *pierceShaders,
-                                     std::vector<MissShader *> *missShaders, DBVHNode *geometry) {
+                                     Vector3D *cameraDirection, Vector3D *cameraUp,
+                                     std::vector<RayGeneratorShaderPackage> *rayGeneratorShaders,
+                                     std::vector<OcclusionShaderPackage> *occlusionShaders,
+                                     std::vector<HitShaderPackage> *hitShaders,
+                                     std::vector<PierceShaderPackage> *pierceShaders,
+                                     std::vector<MissShaderPackage> *missShaders,
+                                     std::vector<ShaderResourceContainer> *shaderResources, DBVHNode *geometry) {
     this->engineNode = engine;
     this->pipelineInfo = new PipelineInfo();
     this->pipelineInfo->width = width;
@@ -32,11 +34,37 @@ PipelineImplement::PipelineImplement(EngineNode *engine, int width, int height, 
     this->pipelineInfo->cameraPosition = *cameraPosition;
     this->pipelineInfo->cameraDirection = *cameraDirection;
     this->pipelineInfo->cameraUp = *cameraUp;
-    this->rayGeneratorShaders = *rayGeneratorShaders;
-    this->occlusionShaders = *occlusionShaders;
-    this->hitShaders = *hitShaders;
-    this->pierceShaders = *pierceShaders;
-    this->missShaders = *missShaders;
+
+    for (auto &shader: *rayGeneratorShaders) {
+        this->rayGeneratorShaders[shader.id].rayGeneratorShader = shader.rayGeneratorShader;
+    }
+    for (auto &shader: *hitShaders) {
+        this->hitShaders[shader.id].hitShader = shader.hitShader;
+    }
+    for (auto &shader: *occlusionShaders) {
+        this->occlusionShaders[shader.id].occlusionShader = shader.occlusionShader;
+    }
+    for (auto &shader: *pierceShaders) {
+        this->pierceShaders[shader.id].pierceShader = shader.pierceShader;
+    }
+    for (auto &shader: *missShaders) {
+        this->missShaders[shader.id].missShader = shader.missShader;
+    }
+
+    for (const auto &resource: *shaderResources) {
+        if (this->rayGeneratorShaders.count(resource.shaderId) != 0) {
+            this->rayGeneratorShaders[resource.shaderId].shaderResources = resource.shaderResources;
+        } else if (this->hitShaders.count(resource.shaderId) != 0) {
+            this->hitShaders[resource.shaderId].shaderResources = resource.shaderResources;
+        } else if (this->occlusionShaders.count(resource.shaderId) != 0) {
+            this->occlusionShaders[resource.shaderId].shaderResources = resource.shaderResources;
+        } else if (this->pierceShaders.count(resource.shaderId) != 0) {
+            this->pierceShaders[resource.shaderId].shaderResources = resource.shaderResources;
+        } else if (this->missShaders.count(resource.shaderId) != 0) {
+            this->missShaders[resource.shaderId].shaderResources = resource.shaderResources;
+        }
+    }
+
     this->geometry = geometry;
     result = new Texture{"Render", width, height, new unsigned char[width * height * 3]};
 
@@ -86,9 +114,10 @@ int PipelineImplement::run() {
         // worst case, full traversal
         for (int x = 0; x < pipelineInfo->width; x++) {
             for (int y = 0; y < pipelineInfo->height; y++) {
-                for (auto generator: rayGeneratorShaders) {
+                for (auto &generator: rayGeneratorShaders) {
                     int rayID = x + y * pipelineInfo->width;
-                    generator->shade(rayID, pipelineInfo, nullptr, &rays);
+                    generator.second.rayGeneratorShader->shade(rayID, pipelineInfo, &generator.second.shaderResources,
+                                                               &rays);
 
                     for (auto &ray: rays.rays) {
                         RayContainer rayContainer = {rayID, ray.rayOrigin, ray.rayDirection, nullptr};
@@ -112,10 +141,11 @@ int PipelineImplement::run() {
 
                         RayGeneratorOutput newRays;
 
-                        for (auto pierceShader: pierceShaders) {
+                        for (auto &pierceShader: pierceShaders) {
                             PierceShaderInput pierceShaderInput = {infos};
-                            auto pixel = pierceShader->shade(id, pipelineInfo, &pierceShaderInput, nullptr,
-                                                             &rayResource, &newRays);
+                            auto pixel = pierceShader.second.pierceShader->shade(id, pipelineInfo, &pierceShaderInput,
+                                                                                 &pierceShader.second.shaderResources,
+                                                                                 &rayResource, &newRays);
                             result->image[id * 3] += pixel.color[0];
                             result->image[id * 3 + 1] += pixel.color[1];
                             result->image[id * 3 + 2] += pixel.color[2];
@@ -134,10 +164,11 @@ int PipelineImplement::run() {
                         }
 
                         if (closest.hit) {
-                            for (auto hitShader: hitShaders) {
+                            for (auto &hitShader: hitShaders) {
                                 HitShaderInput hitShaderInput = {&closest};
-                                auto pixel = hitShader->shade(id, pipelineInfo, &hitShaderInput, nullptr,
-                                                              &rayResource, &newRays);
+                                auto pixel = hitShader.second.hitShader->shade(id, pipelineInfo, &hitShaderInput,
+                                                                               &hitShader.second.shaderResources,
+                                                                               &rayResource, &newRays);
                                 result->image[id * 3] += pixel.color[0];
                                 result->image[id * 3 + 1] += pixel.color[1];
                                 result->image[id * 3 + 2] += pixel.color[2];
@@ -145,10 +176,13 @@ int PipelineImplement::run() {
                         }
 
                         if (closest.hit) {
-                            for (auto occlusionShader: occlusionShaders) {
+                            for (auto &occlusionShader: occlusionShaders) {
                                 OcclusionShaderInput occlusionShaderInput = {ray.origin, ray.direction};
-                                auto pixel = occlusionShader->shade(id, pipelineInfo, &occlusionShaderInput,
-                                                                    nullptr, &rayResource, &newRays);
+                                auto pixel = occlusionShader.second.occlusionShader->shade(id, pipelineInfo,
+                                                                                           &occlusionShaderInput,
+                                                                                           &occlusionShader.second.shaderResources,
+                                                                                           &rayResource,
+                                                                                           &newRays);
                                 result->image[id * 3] += pixel.color[0];
                                 result->image[id * 3 + 1] += pixel.color[1];
                                 result->image[id * 3 + 2] += pixel.color[2];
@@ -156,10 +190,11 @@ int PipelineImplement::run() {
                         }
 
                         if (!hitAny) {
-                            for (auto missShader: missShaders) {
+                            for (auto &missShader: missShaders) {
                                 MissShaderInput missShaderInput = {ray.origin, ray.direction};
-                                auto pixel = missShader->shade(id, pipelineInfo, &missShaderInput, nullptr,
-                                                               &rayResource, &newRays);
+                                auto pixel = missShader.second.missShader->shade(id, pipelineInfo, &missShaderInput,
+                                                                                 &missShader.second.shaderResources,
+                                                                                 &rayResource, &newRays);
                                 result->image[id * 3] += pixel.color[0];
                                 result->image[id * 3 + 1] += pixel.color[1];
                                 result->image[id * 3 + 2] += pixel.color[2];
@@ -186,9 +221,10 @@ int PipelineImplement::run() {
         // normal case, early out when closest found
         for (int x = 0; x < pipelineInfo->width; x++) {
             for (int y = 0; y < pipelineInfo->height; y++) {
-                for (auto generator: rayGeneratorShaders) {
+                for (auto &generator: rayGeneratorShaders) {
                     int rayID = x + y * pipelineInfo->width;
-                    generator->shade(rayID, pipelineInfo, nullptr, &rays);
+                    generator.second.rayGeneratorShader->shade(rayID, pipelineInfo, &generator.second.shaderResources,
+                                                               &rays);
 
                     for (auto &ray: rays.rays) {
                         RayContainer rayContainer = {rayID, ray.rayOrigin, ray.rayDirection, nullptr};
@@ -214,28 +250,33 @@ int PipelineImplement::run() {
                         RayGeneratorOutput newRays;
 
                         if (info.hit) {
-                            for (auto hitShader: hitShaders) {
+                            for (auto &hitShader: hitShaders) {
                                 HitShaderInput hitShaderInput = {&info};
-                                auto pixel = hitShader->shade(id, pipelineInfo, &hitShaderInput, nullptr,
-                                                              &rayResource, &newRays);
+                                auto pixel = hitShader.second.hitShader->shade(id, pipelineInfo, &hitShaderInput,
+                                                                               &hitShader.second.shaderResources,
+                                                                               &rayResource, &newRays);
                                 result->image[id * 3] += pixel.color[0];
                                 result->image[id * 3 + 1] += pixel.color[1];
                                 result->image[id * 3 + 2] += pixel.color[2];
                             }
 
-                            for (auto occlusionShader: occlusionShaders) {
+                            for (auto &occlusionShader: occlusionShaders) {
                                 OcclusionShaderInput occlusionShaderInput = {ray.origin, ray.direction};
-                                auto pixel = occlusionShader->shade(id, pipelineInfo, &occlusionShaderInput,
-                                                                    nullptr, &rayResource, &newRays);
+                                auto pixel = occlusionShader.second.occlusionShader->shade(id, pipelineInfo,
+                                                                                           &occlusionShaderInput,
+                                                                                           &occlusionShader.second.shaderResources,
+                                                                                           &rayResource,
+                                                                                           &newRays);
                                 result->image[id * 3] += pixel.color[0];
                                 result->image[id * 3 + 1] += pixel.color[1];
                                 result->image[id * 3 + 2] += pixel.color[2];
                             }
                         } else {
-                            for (auto missShader: missShaders) {
+                            for (auto &missShader: missShaders) {
                                 MissShaderInput missShaderInput = {ray.origin, ray.direction};
-                                auto pixel = missShader->shade(id, pipelineInfo, &missShaderInput, nullptr,
-                                                               &rayResource, &newRays);
+                                auto pixel = missShader.second.missShader->shade(id, pipelineInfo, &missShaderInput,
+                                                                                 &missShader.second.shaderResources,
+                                                                                 &rayResource, &newRays);
                                 result->image[id * 3] += pixel.color[0];
                                 result->image[id * 3 + 1] += pixel.color[1];
                                 result->image[id * 3 + 2] += pixel.color[2];
@@ -257,9 +298,10 @@ int PipelineImplement::run() {
         // best case, early out when any found
         for (int x = 0; x < pipelineInfo->width; x++) {
             for (int y = 0; y < pipelineInfo->height; y++) {
-                for (auto generator: rayGeneratorShaders) {
+                for (auto &generator: rayGeneratorShaders) {
                     int rayID = x + y * pipelineInfo->width;
-                    generator->shade(rayID, pipelineInfo, nullptr, &rays);
+                    generator.second.rayGeneratorShader->shade(rayID, pipelineInfo, &generator.second.shaderResources,
+                                                               &rays);
                     for (auto &ray: rays.rays) {
                         RayContainer rayContainer = {rayID, ray.rayOrigin, ray.rayDirection, nullptr};
                         rayContainers.push_back(rayContainer);
@@ -284,19 +326,23 @@ int PipelineImplement::run() {
                         RayGeneratorOutput newRays;
 
                         if (info.hit) {
-                            for (auto occlusionShader: occlusionShaders) {
+                            for (auto &occlusionShader: occlusionShaders) {
                                 OcclusionShaderInput occlusionShaderInput = {ray.origin, ray.direction};
-                                auto pixel = occlusionShader->shade(id, pipelineInfo, &occlusionShaderInput,
-                                                                    nullptr, &rayResource, &newRays);
+                                auto pixel = occlusionShader.second.occlusionShader->shade(id, pipelineInfo,
+                                                                                           &occlusionShaderInput,
+                                                                                           &occlusionShader.second.shaderResources,
+                                                                                           &rayResource,
+                                                                                           &newRays);
                                 result->image[id * 3] += pixel.color[0];
                                 result->image[id * 3 + 1] += pixel.color[1];
                                 result->image[id * 3 + 2] += pixel.color[2];
                             }
                         } else {
-                            for (auto missShader: missShaders) {
+                            for (auto &missShader: missShaders) {
                                 MissShaderInput missShaderInput = {ray.origin, ray.direction};
-                                auto pixel = missShader->shade(id, pipelineInfo, &missShaderInput, nullptr,
-                                                               &rayResource, &newRays);
+                                auto pixel = missShader.second.missShader->shade(id, pipelineInfo, &missShaderInput,
+                                                                                 &missShader.second.shaderResources,
+                                                                                 &rayResource, &newRays);
                                 result->image[id * 3] += pixel.color[0];
                                 result->image[id * 3 + 1] += pixel.color[1];
                                 result->image[id * 3 + 2] += pixel.color[2];

@@ -65,6 +65,8 @@ private:
 
         void storeShaderResource(ShaderResource *shaderResource, int id);
 
+        ShaderResource* getShaderResource(int id);
+
         bool deleteShaderResource(int id);
     };
 
@@ -133,6 +135,8 @@ public:
     void storeShaderResource(ShaderResource *shaderResource, int id);
 
     bool deleteShaderResource(int id);
+
+    ShaderResource* getShaderResource(int id);
 
     void storePipelineFragments(PipelineImplement *pipeline, int id);
 

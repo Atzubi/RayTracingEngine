@@ -102,6 +102,10 @@ Instance *EngineNode::MemoryBlock::getInstanceDataFragment(int id) {
     }
 }
 
+ShaderResource *EngineNode::MemoryBlock::getShaderResource(int id) {
+    return shaderResources.at(id);
+}
+
 EngineNode::PipelineBlock::PipelineBlock() = default;
 
 EngineNode::PipelineBlock::~PipelineBlock() {
@@ -252,6 +256,10 @@ Instance *EngineNode::requestInstanceData(int id) {
         memoryBlock->cacheInstanceData(fragment, id);
     }
     return fragment;
+}
+
+ShaderResource *EngineNode::getShaderResource(int id) {
+    return memoryBlock->getShaderResource(id);
 }
 
 PipelineImplement *EngineNode::requestPipelineFragment(int id) {

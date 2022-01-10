@@ -10,21 +10,23 @@
 /**
  * Default implementation of a hit shader. Shades light based on the Phong shading model. Considers textures.
  */
-class BasicHitShader : public HitShader{
+class BasicHitShader : public HitShader {
 public:
-    BasicHitShader(){
+    BasicHitShader() {
 
     }
-    BasicHitShader(const BasicHitShader& copy){
+
+    BasicHitShader(const BasicHitShader &copy) {
         // TODO
     }
 
-    Shader* clone() override{
+    Shader *clone() override {
         return new BasicHitShader(*this);
     }
 
-    ShaderOutput shade(uint64_t id, PipelineInfo *pipelineInfo, HitShaderInput *shaderInput, ShaderResource *shaderResource,
-                       RayResource **rayResource, RayGeneratorOutput *newRays) override{
+    ShaderOutput shade(uint64_t id, PipelineInfo *pipelineInfo, HitShaderInput *shaderInput,
+                       std::vector<ShaderResource *> *shaderResource,
+                       RayResource **rayResource, RayGeneratorOutput *newRays) override {
         Vector3D Ka = {1, 1, 1};
         Vector3D Kd = {1, 1, 1};
         Vector3D Ks = {1, 1, 1};
@@ -116,12 +118,15 @@ public:
 
         double_t dot = fmax(v.x * r.x + v.y * r.y + v.z * r.z, 0);
 
-        shaderOutput.color[0] = (uint8_t) fmin((ambient * Ka.x + diffuse * nl * Kd.x + specular * powf(dot, exponent) * Ks.x) * pix[0],
-                                  255);
-        shaderOutput.color[1] = (uint8_t) fmin((ambient * Ka.y + diffuse * nl * Kd.y + specular * powf(dot, exponent) * Ks.y) * pix[1],
-                                  255);
-        shaderOutput.color[2] = (uint8_t) fmin((ambient * Ka.z + diffuse * nl * Kd.z + specular * powf(dot, exponent) * Ks.z) * pix[2],
-                                  255);
+        shaderOutput.color[0] = (uint8_t) fmin(
+                (ambient * Ka.x + diffuse * nl * Kd.x + specular * powf(dot, exponent) * Ks.x) * pix[0],
+                255);
+        shaderOutput.color[1] = (uint8_t) fmin(
+                (ambient * Ka.y + diffuse * nl * Kd.y + specular * powf(dot, exponent) * Ks.y) * pix[1],
+                255);
+        shaderOutput.color[2] = (uint8_t) fmin(
+                (ambient * Ka.z + diffuse * nl * Kd.z + specular * powf(dot, exponent) * Ks.z) * pix[2],
+                255);
 
         return shaderOutput;
     }

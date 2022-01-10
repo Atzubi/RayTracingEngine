@@ -257,6 +257,11 @@ struct Ray {
     Vector3D origin, direction, dirfrac;
 };
 
+struct ShaderResourcePackage{
+    int shaderId;
+    std::vector<int> shaderResourceIds;
+};
+
 /**
  * Container for arbitrary data.
  */

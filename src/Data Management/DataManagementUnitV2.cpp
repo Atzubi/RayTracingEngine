@@ -69,29 +69,39 @@ int DataManagementUnitV2::addPipeline(PipelineDescription *pipelineDescription) 
     DBVHv2::addObjects(root, &instances);
 
     // get shader implementation from id
-    std::vector<RayGeneratorShader *> pipelineRayGeneratorShaders;
+    std::vector<RayGeneratorShaderPackage> pipelineRayGeneratorShaders;
     for (auto id: pipelineDescription->rayGeneratorShaderIDs) {
-        pipelineRayGeneratorShaders.push_back((RayGeneratorShader *) engineNode->getShader(id));
+        pipelineRayGeneratorShaders.push_back({(RayGeneratorShader *) engineNode->getShader(id), id});
     }
 
-    std::vector<OcclusionShader *> pipelineOcclusionShaders;
+    std::vector<OcclusionShaderPackage> pipelineOcclusionShaders;
     for (auto id: pipelineDescription->occlusionShaderIDs) {
-        pipelineOcclusionShaders.push_back((OcclusionShader *) engineNode->getShader(id));
+        pipelineOcclusionShaders.push_back({(OcclusionShader *) engineNode->getShader(id), id});
     }
 
-    std::vector<HitShader *> pipelineHitShaders;
+    std::vector<HitShaderPackage> pipelineHitShaders;
     for (auto id: pipelineDescription->hitShaderIDs) {
-        pipelineHitShaders.push_back((HitShader *) engineNode->getShader(id));
+        pipelineHitShaders.push_back({(HitShader *) engineNode->getShader(id), id});
     }
 
-    std::vector<PierceShader *> pipelinePierceShaders;
+    std::vector<PierceShaderPackage> pipelinePierceShaders;
     for (auto id: pipelineDescription->pierceShaderIDs) {
-        pipelinePierceShaders.push_back((PierceShader *) engineNode->getShader(id));
+        pipelinePierceShaders.push_back({(PierceShader *) engineNode->getShader(id), id});
     }
 
-    std::vector<MissShader *> pipelineMissShaders;
+    std::vector<MissShaderPackage> pipelineMissShaders;
     for (auto id: pipelineDescription->missShaderIDs) {
-        pipelineMissShaders.push_back((MissShader *) engineNode->getShader(id));
+        pipelineMissShaders.push_back({(MissShader *) engineNode->getShader(id), id});
+    }
+
+    // get shader resources from id
+    std::vector<ShaderResourceContainer> shaderResources;
+    for(auto &shaderResourcePackage : pipelineDescription->shaderResources){
+        std::vector<ShaderResource*> shaderRes;
+        for(auto id : shaderResourcePackage.shaderResourceIds){
+            shaderRes.push_back(engineNode->getShaderResource(id));
+        }
+        shaderResources.push_back({shaderResourcePackage.shaderId, shaderRes});
     }
 
     // create new pipeline and add bvh, shaders and description
@@ -101,7 +111,7 @@ int DataManagementUnitV2::addPipeline(PipelineDescription *pipelineDescription) 
                                            &pipelineDescription->cameraDirection,
                                            &pipelineDescription->cameraUp, &pipelineRayGeneratorShaders,
                                            &pipelineOcclusionShaders, &pipelineHitShaders,
-                                           &pipelinePierceShaders, &pipelineMissShaders, root);
+                                           &pipelinePierceShaders, &pipelineMissShaders, &shaderResources, root);
 
     int buffer = pipelineIds.extract(pipelineIds.begin()).value();
 
@@ -161,7 +171,7 @@ DataManagementUnitV2::updatePipelineObjects(int pipelineId, std::vector<int> *ob
 }
 
 bool
-DataManagementUnitV2::updatePipelineShader(int pipelineId, int shaderInstanceId, std::vector<int> *shaderResourceIds) {
+DataManagementUnitV2::updatePipelineShader(int pipelineId, int shaderInstanceId, std::vector<int> *resourceIds) {
     return false;
 }
 
@@ -363,7 +373,7 @@ int DataManagementUnitV2::addShaderResource(ShaderResource *resource) {
 }
 
 bool DataManagementUnitV2::removeShaderResource(int id) {
-    if(!engineNode->deleteShaderResource(id)) return false;
+    if (!engineNode->deleteShaderResource(id)) return false;
 
     shaderResourceIds.insert(id);
 

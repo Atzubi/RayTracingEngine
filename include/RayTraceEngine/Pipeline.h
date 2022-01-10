@@ -54,6 +54,7 @@ struct PipelineDescription {
     std::vector<int> hitShaderIDs;
     std::vector<int> pierceShaderIDs;
     std::vector<int> missShaderIDs;
+    std::vector<ShaderResourcePackage> shaderResources;
 
     std::vector<int> *objectInstanceIDs;
 };
