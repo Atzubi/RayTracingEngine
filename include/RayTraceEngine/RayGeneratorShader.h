@@ -25,15 +25,15 @@ public:
         return new BasicRayGeneratorShader(*this);
     }
 
-    RayGeneratorOutput shade(uint64_t id, PipelineInfo *pipelineInfo, void *dataInput) override {
-        int x = (id % pipelineInfo->width) - (pipelineInfo->width) / 2;
-        int y = -(id / pipelineInfo->height) + (pipelineInfo->height) / 2;
+    void
+    shade(uint64_t id, PipelineInfo *pipelineInfo, std::vector<ShaderResource *> *shaderResource, RayGeneratorOutput *rayGeneratorOutput) override {
+        int64_t x = (((int64_t) id) % pipelineInfo->width) - (pipelineInfo->width) / 2;
+        int64_t y = -(((int64_t) id) / pipelineInfo->height) + (pipelineInfo->height) / 2;
 
-        RayGeneratorOutput rayGeneratorOutput;
-        Vector3D rayOrigin;
-        Vector3D rayDirection;
+        Vector3D rayOrigin{};
+        Vector3D rayDirection{};
 
-        Vector3D camRight;
+        Vector3D camRight{};
 
         camRight = {pipelineInfo->cameraUp.y * pipelineInfo->cameraDirection.z -
                     pipelineInfo->cameraUp.z * pipelineInfo->cameraDirection.y,
@@ -71,10 +71,9 @@ public:
         rayDirection.y /= length;
         rayDirection.z /= length;
 
-        rayGeneratorOutput.rayOrigin.push_back(rayOrigin);
-        rayGeneratorOutput.rayDirection.push_back(rayDirection);
+        GeneratorRay generatorRay = {rayOrigin, rayDirection};
 
-        return rayGeneratorOutput;
+        rayGeneratorOutput->rays.push_back(generatorRay);
     }
 
     void *getAssociatedData() {

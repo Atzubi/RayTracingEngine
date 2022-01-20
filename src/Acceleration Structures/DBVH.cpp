@@ -1140,3 +1140,7 @@ bool DBVH::operator==(Object *object) {
 Object *DBVH::clone() {
     return new DBVH(*this);
 }
+
+ObjectCapsule DBVH::getCapsule() {
+    return ObjectCapsule();
+}

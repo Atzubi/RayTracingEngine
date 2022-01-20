@@ -1,4 +1,4 @@
-add_library(RayTraceEngine SHARED RayEngine.cpp Pipeline/PipelineImplement.cpp Object/TriangleMeshObject.cpp "Data Management/DataManagementUnit.cpp" "Acceleration Structures/DBVH.cpp" Object/Instance.cpp)
+add_library(RayTraceEngine SHARED RayEngine.cpp Pipeline/PipelineImplement.cpp Object/TriangleMeshObject.cpp Object/Instance.cpp "Engine Node/EngineNode.h" "Engine Node/EngineNode.cpp" "Acceleration Structures/DBVHv2.h" "Data Management/DataManagementUnitV2.h" "Data Management/DataManagementUnitV2.cpp" "Acceleration Structures/DBVHv2.cpp")
 
 target_include_directories(RayTraceEngine PRIVATE .)
 set_target_properties(RayTraceEngine PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION 1)
@@ -12,7 +12,7 @@ endif ()
 # Compiler optimisations
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     message(STATUS "Linux detected, enabled compiler optimisations..")
-    set(CMAKE_CXX_FLAGS "-pthread -O2 -march=native")
+    set(CMAKE_CXX_FLAGS "-pthread -O0 -march=native")
 endif ()
 
 configure_file(RayTraceEngine.pc.in RayTraceEngine.pc @ONLY)

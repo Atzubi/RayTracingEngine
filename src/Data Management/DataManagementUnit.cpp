@@ -18,8 +18,8 @@ DataManagementUnit::DataManagementUnit() {
     pipelineIds.insert(0);
 }
 
-DataManagementUnit::~DataManagementUnit(){
-    for(auto pair : pipelines){
+DataManagementUnit::~DataManagementUnit() {
+    for (auto pair: pipelines) {
         delete pair.second;
     }
 }

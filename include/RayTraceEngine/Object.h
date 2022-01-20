@@ -9,6 +9,44 @@
 #include <cstdint>
 #include "BasicStructures.h"
 
+struct ObjectId {
+    int objectId;
+
+    bool operator==(const ObjectId &other) const {
+        return objectId == other.objectId;
+    }
+
+    bool operator<(const ObjectId &other) const {
+        return objectId < other.objectId;
+    }
+};
+
+template<>
+struct std::hash<ObjectId> {
+    std::size_t operator()(const ObjectId &k) const {
+        return std::hash<int>()(k.objectId);
+    }
+};
+
+struct InstanceId {
+    int instanceId;
+
+    bool operator==(const InstanceId &other) const {
+        return instanceId == other.instanceId;
+    }
+
+    bool operator<(const InstanceId &other) const {
+        return instanceId < other.instanceId;
+    }
+};
+
+template<>
+struct std::hash<InstanceId> {
+    std::size_t operator()(const InstanceId &k) const {
+        return std::hash<int>()(k.instanceId);
+    }
+};
+
 /**
  * Container outputted by the ray tracing engine.
  * hit:             Whether the ray intersected geometry.
@@ -29,6 +67,12 @@ struct IntersectionInfo {
     Vector3D position;
     Vector2D texture;
     Material *material;
+};
+
+struct ObjectCapsule {
+    ObjectId id;
+    BoundingBox boundingBox;
+    double cost;
 };
 
 /**
@@ -83,6 +127,8 @@ public:
      * @return The surface area of this object.
      */
     virtual double getSurfaceArea() = 0;
+
+    virtual ObjectCapsule getCapsule() = 0;
 
     /**
      * Tests whether the object in question is identical to this object.

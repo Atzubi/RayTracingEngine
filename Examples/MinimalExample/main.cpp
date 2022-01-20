@@ -23,7 +23,7 @@ int main() {
     // ======================================== Create Geometry Objects ===============================================
 
     // create a vector for object ids, they can be used to reference objects within the engine
-    std::vector<int> objectIDs;
+    std::vector<ObjectId> objectIDs;
 
     // load the obj file
     if (!loader.LoadFile("./Data/Basketball/Basketball.obj")) return 1;
@@ -38,29 +38,29 @@ int main() {
         std::vector<uint64_t> indices;
 
         // create the material container
-        auto *material = new Material();
+        Material material;
 
         int comp;
 
         // fill the material description
-        material->name = m.MeshMaterial.name;
-        material->Ka = {m.MeshMaterial.Ka.X, m.MeshMaterial.Ka.Y, m.MeshMaterial.Ka.Z};
-        material->Kd = {m.MeshMaterial.Kd.X, m.MeshMaterial.Kd.Y, m.MeshMaterial.Kd.Z};
-        material->Ks = {m.MeshMaterial.Ks.X, m.MeshMaterial.Ks.Y, m.MeshMaterial.Ks.Z};
-        material->Ns = m.MeshMaterial.Ns;
-        material->Ni = m.MeshMaterial.Ni;
-        material->d = m.MeshMaterial.d;
-        material->illum = m.MeshMaterial.illum;
-        material->map_Ka.name = m.MeshMaterial.map_Ka;
-        material->map_Kd.name = m.MeshMaterial.map_Kd;
+        material.name = m.MeshMaterial.name;
+        material.Ka = {m.MeshMaterial.Ka.X, m.MeshMaterial.Ka.Y, m.MeshMaterial.Ka.Z};
+        material.Kd = {m.MeshMaterial.Kd.X, m.MeshMaterial.Kd.Y, m.MeshMaterial.Kd.Z};
+        material.Ks = {m.MeshMaterial.Ks.X, m.MeshMaterial.Ks.Y, m.MeshMaterial.Ks.Z};
+        material.Ns = m.MeshMaterial.Ns;
+        material.Ni = m.MeshMaterial.Ni;
+        material.d = m.MeshMaterial.d;
+        material.illum = m.MeshMaterial.illum;
+        material.map_Ka.name = m.MeshMaterial.map_Ka;
+        material.map_Kd.name = m.MeshMaterial.map_Kd;
         // load the texture using stbi
-        material->map_Kd.image = stbi_load(("../Data/Basketball/" + material->map_Kd.name).c_str(),
-                                           &(material->map_Kd.w), &(material->map_Kd.h), &comp,
+        material.map_Kd.image = stbi_load(("../Data/Basketball/" + material.map_Kd.name).c_str(),
+                                           &(material.map_Kd.w), &(material.map_Kd.h), &comp,
                                            STBI_rgb);
-        material->map_Ks.name = m.MeshMaterial.map_Ks;
-        material->map_Ns.name = m.MeshMaterial.map_Ns;
-        material->map_d.name = m.MeshMaterial.map_d;
-        material->map_bump.name = m.MeshMaterial.map_bump;
+        material.map_Ks.name = m.MeshMaterial.map_Ks;
+        material.map_Ns.name = m.MeshMaterial.map_Ns;
+        material.map_d.name = m.MeshMaterial.map_d;
+        material.map_bump.name = m.MeshMaterial.map_bump;
 
         // copy index list
         for (unsigned int index: m.Indices) {
@@ -81,7 +81,7 @@ int main() {
         }
 
         // create a triangle mesh object
-        TriangleMeshObject triangleMeshObject(&vertices, &indices, material);
+        TriangleMeshObject triangleMeshObject(&vertices, &indices, &material);
 
         // add the object to engine
         auto id = rayEngine.addObject(&triangleMeshObject);
@@ -97,13 +97,13 @@ int main() {
     BasicHitShader hitShader;
 
     // add hit shader to the engine, id can be used to reference to the shader within the engine
-    int hitShaderID = rayEngine.addShader(&hitShader);
+    auto hitShaderID = rayEngine.addShader(&hitShader);
 
     // use basic ray generator shader prefab
     BasicRayGeneratorShader rayGeneratorShader;
 
     // add ray generator shader to the engine
-    int rayGeneratorShaderID = rayEngine.addShader(&rayGeneratorShader);
+    auto rayGeneratorShaderID = rayEngine.addShader(&rayGeneratorShader);
 
     // ================================================================================================================
 
@@ -111,7 +111,7 @@ int main() {
 
     // objects that are bound to a pipeline get instanced, create instance id vector for referencing instanced objects
     // within a pipeline
-    std::vector<int> instanceIDs;
+    std::vector<InstanceId> instanceIDs;
 
     // instanced objects have their own transformation, create one for each instance
     std::vector<Matrix4x4 *> transforms;
@@ -160,11 +160,11 @@ int main() {
     pipelineDescription.objectTransformations = transforms;
 
     // add shaders to the pipeline
-    pipelineDescription.rayGeneratorShaderIDs.push_back(rayGeneratorShaderID);
-    pipelineDescription.hitShaderIDs.push_back(hitShaderID);
+    pipelineDescription.rayGeneratorShaders.push_back({rayGeneratorShaderID});
+    pipelineDescription.hitShaders.push_back({hitShaderID});
 
     // add pipeline to the engine
-    int pipelineID = rayEngine.createPipeline(&pipelineDescription);
+    auto pipelineID = rayEngine.createPipeline(&pipelineDescription);
 
     // ================================================================================================================
 
@@ -180,9 +180,9 @@ int main() {
     // translate from texture to sfml
     for (int x = 0; x < 1000; x++) {
         for (int y = 0; y < 1000; y++) {
-            pixels[(x + y * 1000) * 4 + 0] = texture.image[(x + y * 1000) * 3 + 0];
-            pixels[(x + y * 1000) * 4 + 1] = texture.image[(x + y * 1000) * 3 + 1];
-            pixels[(x + y * 1000) * 4 + 2] = texture.image[(x + y * 1000) * 3 + 2];
+            pixels[(x + y * 1000) * 4 + 0] = texture->image[(x + y * 1000) * 3 + 0];
+            pixels[(x + y * 1000) * 4 + 1] = texture->image[(x + y * 1000) * 3 + 1];
+            pixels[(x + y * 1000) * 4 + 2] = texture->image[(x + y * 1000) * 3 + 2];
             pixels[(x + y * 1000) * 4 + 3] = 255;
         }
     }

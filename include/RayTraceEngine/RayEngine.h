@@ -14,7 +14,7 @@
 /**
  * Manages data movement within the engine.
  */
-class DataManagementUnit;
+class DataManagementUnitV2;
 
 
 /**
@@ -23,7 +23,7 @@ class DataManagementUnit;
  */
 class RayEngine {
 private:
-    DataManagementUnit *dataManagementUnit;
+    DataManagementUnitV2 *dataManagementUnit;
 
 public:
     /**
@@ -41,7 +41,7 @@ public:
      * @param pipelineDescription   Describes the pipeline to be created.
      * @return                      An id for referencing the pipeline after creation.
      */
-    int createPipeline(PipelineDescription *pipelineDescription);
+    PipelineId createPipeline(PipelineDescription *pipelineDescription);
 
     /**
      * Updates a pipelines virtual camera description.
@@ -52,29 +52,30 @@ public:
      * @param cameraDirection   Direction of the virtual camera.
      * @param cameraUp          Direction of the virtual camera that is facing upwards.
      */
-    void updatePipelineCamera(int id, int resolutionX, int resolutionY, Vector3D cameraPosition, Vector3D cameraDirection,
-                              Vector3D cameraUp);
+    void
+    updatePipelineCamera(PipelineId id, int resolutionX, int resolutionY, Vector3D cameraPosition, Vector3D cameraDirection,
+                         Vector3D cameraUp);
 
     /**
      * Waits on pipeline execution to finish, then returns with the result.
      * @param id    Id of the pipeline.
      * @return      Returns an image containing the render result.
      */
-    Texture getPipelineResult(int id);
+    Texture *getPipelineResult(PipelineId id);
 
     /**
      * Deletes a pipeline from the engines pipeline pool.
      * @param id    Id of the pipeline to be removed.
      * @return      True if the pipeline could successfully be removed, false otherwise.
      */
-    bool deletePipeline(int id);
+    bool deletePipeline(PipelineId id);
 
     /**
      * Executes a pipeline.
      * @param id    Id of the pipeline to be executed.
      * @return      Status identifier including error codes.
      */
-    int runPipeline(int id);
+    int runPipeline(PipelineId id);
 
     /**
      * Executes all pipelines in the pool.
@@ -92,8 +93,8 @@ public:
      * @param instanceIDs       Contains the resulting object instance ids.
      * @return                  True if the objects could successfully be bound to the pipeline, false otherwise.
      */
-    bool bindGeometryToPipeline(int pipelineId, std::vector<int> *objectIDs, std::vector<Matrix4x4> *transforms,
-                                std::vector<ObjectParameter> *objectParameters, std::vector<int> *instanceIDs);
+    bool bindGeometryToPipeline(PipelineId pipelineId, std::vector<ObjectId> *objectIDs, std::vector<Matrix4x4> *transforms,
+                                std::vector<ObjectParameter> *objectParameters, std::vector<InstanceId> *instanceIDs);
 
     /**
      * Binds a shader with its resources to a pipeline.
@@ -102,7 +103,11 @@ public:
      * @param shaderResourceIds Vector of resource ids.
      * @return                  True if the shader could successfully be bound to the pipeline, false otherwise.
      */
-    bool bindShaderToPipeline(int pipelineId, int *shaderId, std::vector<int> *shaderResourceIds);
+    bool bindShaderToPipeline(PipelineId pipelineId, RayGeneratorShaderId shaderId, std::vector<ShaderResourceId> *shaderResourceIds);
+    bool bindShaderToPipeline(PipelineId pipelineId, HitShaderId shaderId, std::vector<ShaderResourceId> *shaderResourceIds);
+    bool bindShaderToPipeline(PipelineId pipelineId, OcclusionShaderId shaderId, std::vector<ShaderResourceId> *shaderResourceIds);
+    bool bindShaderToPipeline(PipelineId pipelineId, PierceShaderId shaderId, std::vector<ShaderResourceId> *shaderResourceIds);
+    bool bindShaderToPipeline(PipelineId pipelineId, MissShaderId shaderId, std::vector<ShaderResourceId> *shaderResourceIds);
 
     /**
      * Updates object instances within a pipeline.
@@ -112,18 +117,22 @@ public:
      * @param objectParameters  New additional parameters for the object instances.
      * @return                  True if the object instances could successfully be updated, false otherwise.
      */
-    bool updatePipelineObjects(int pipelineId, std::vector<int> *objectInstanceIDs,
+    bool updatePipelineObjects(PipelineId pipelineId, std::vector<InstanceId> *objectInstanceIDs,
                                std::vector<Matrix4x4 *> *transforms,
                                std::vector<ObjectParameter *> *objectParameters);
 
     /**
      * Updates Shaders within a pipeline.
      * @param pipelineId        Id of the pipeline.
-     * @param shaderInstanceId  Shader instance id of the shader that will be updated.
+     * @param shaderId  Shader instance id of the shader that will be updated.
      * @param shaderResourceIds New resource ids.
      * @return                  True if the shader could successfully be updated, false otherwise.
      */
-    bool updatePipelineShader(int pipelineId, int shaderInstanceId, std::vector<int> *shaderResourceIds);
+    bool updatePipelineShader(PipelineId pipelineId, RayGeneratorShaderId shaderId, std::vector<ShaderResourceId> *shaderResourceIds);
+    bool updatePipelineShader(PipelineId pipelineId, HitShaderId shaderId, std::vector<ShaderResourceId> *shaderResourceIds);
+    bool updatePipelineShader(PipelineId pipelineId, OcclusionShaderId shaderId, std::vector<ShaderResourceId> *shaderResourceIds);
+    bool updatePipelineShader(PipelineId pipelineId, PierceShaderId shaderId, std::vector<ShaderResourceId> *shaderResourceIds);
+    bool updatePipelineShader(PipelineId pipelineId, MissShaderId shaderId, std::vector<ShaderResourceId> *shaderResourceIds);
 
     /**
      * Removes an object instance from a pipeline.
@@ -131,29 +140,33 @@ public:
      * @param objectInstanceId  Id of the object instance.
      * @return                  True if the object instance could be removed, false otherwise.
      */
-    bool removePipelineObject(int pipelineId, int objectInstanceId);
+    bool removePipelineObject(PipelineId pipelineId, InstanceId objectInstanceId);
 
     /**
      * Removes a shader from a pipeline.
      * @param pipelineId        Id of the pipeline.
-     * @param shaderInstanceId  Id of the shader instance.
+     * @param shaderId  Id of the shader instance.
      * @return                  True if the shader instance could be removed, false otherwise.
      */
-    bool removePipelineShader(int pipelineId, int shaderInstanceId);
+    bool removePipelineShader(PipelineId pipelineId, RayGeneratorShaderId shaderId);
+    bool removePipelineShader(PipelineId pipelineId, HitShaderId shaderId);
+    bool removePipelineShader(PipelineId pipelineId, OcclusionShaderId shaderId);
+    bool removePipelineShader(PipelineId pipelineId, PierceShaderId shaderId);
+    bool removePipelineShader(PipelineId pipelineId, MissShaderId shaderId);
 
     /**
      * Adds an object to the engines object pool.
      * @param object    Pointer to the object that is being added.
      * @return          Returns the object id.
      */
-    int addObject(Object *object);
+    ObjectId addObject(Object *object);
 
     /**
      * Removes and object from the engines object pool.
      * @param id    Id of the object.
      * @return      True if the object could be removed, false otherwise.
      */
-    bool removeObject(int id);
+    bool removeObject(ObjectId id);
 
     /**
      * Updates an existing object with a new one.
@@ -161,63 +174,67 @@ public:
      * @param object    New object.
      * @return          True if the object could be updated, false otherwise.
      */
-    bool updateObject(int id, Object *object);
+    bool updateObject(ObjectId id, Object *object);
 
     /**
      * Adds a shader to the engines shader pool.
      * @param shader    Shader that will be added.
      * @return          Id of the shader for referencing it within the engine.
      */
-    int addShader(HitShader *shader);
+    HitShaderId addShader(HitShader *shader);
 
     /**
      * Adds a shader to the engines shader pool.
      * @param shader    Shader that will be added.
      * @return          Id of the shader for referencing it within the engine.
      */
-    int addShader(MissShader *shader);
+    MissShaderId addShader(MissShader *shader);
 
     /**
      * Adds a shader to the engines shader pool.
      * @param shader    Shader that will be added.
      * @return          Id of the shader for referencing it within the engine.
      */
-    int addShader(OcclusionShader *shader);
+    OcclusionShaderId addShader(OcclusionShader *shader);
 
     /**
      * Adds a shader to the engines shader pool.
      * @param shader    Shader that will be added.
      * @return          Id of the shader for referencing it within the engine.
      */
-    int addShader(PierceShader *shader);
+    PierceShaderId addShader(PierceShader *shader);
 
     /**
      * Adds a shader to the engines shader pool.
      * @param shader    Shader that will be added.
      * @return          Id of the shader for referencing it within the engine.
      */
-    int addShader(RayGeneratorShader *shader);
+    RayGeneratorShaderId addShader(RayGeneratorShader *shader);
 
     /**
      * Removes a shader from the engines shader pool.
      * @param id    Id of the shader.
      * @return      True if the shader could be removed, false otherwise.
      */
-    bool removeShader(int id);
+    bool removeShader(RayGeneratorShaderId id);
+    bool removeShader(HitShaderId id);
+    bool removeShader(OcclusionShaderId id);
+    bool removeShader(PierceShaderId id);
+    bool removeShader(MissShaderId id);
 
     /**
      * Adds shader resources to the engines shader resource pool.
      * @param resource  Shader resource.
      * @return          Id of the shader resource for referencing it within the engine.
      */
-    int addShaderResource(Any *resource);
+    ShaderResourceId addShaderResource(ShaderResource *resource);
 
     /**
      * Removes a shader resource from the engines pool.
      * @param id    Id of the shader resource.
      * @return      True if the shader resource could be removed, false otherwise.
      */
-    bool removeShaderResource(int id);
+    bool removeShaderResource(ShaderResourceId id);
 };
 
 #endif //RAYTRACECORE_RAYENGINE_H

@@ -7,8 +7,171 @@
 
 #include <cstdint>
 #include <vector>
-#include "Pipeline.h"
 #include "Object.h"
+
+struct RayGeneratorShaderId{
+    int rayGeneratorShaderId;
+
+    bool operator==(const RayGeneratorShaderId &other) const {
+        return rayGeneratorShaderId == other.rayGeneratorShaderId;
+    }
+
+    bool operator<(const RayGeneratorShaderId &other) const {
+        return rayGeneratorShaderId < other.rayGeneratorShaderId;
+    }
+};
+
+template<>
+struct std::hash<RayGeneratorShaderId>{
+    std::size_t operator()(const RayGeneratorShaderId& k) const{
+        return std::hash<int>()(k.rayGeneratorShaderId);
+    }
+};
+
+struct HitShaderId{
+    int hitShaderId;
+
+    bool operator==(const HitShaderId &other) const {
+        return hitShaderId == other.hitShaderId;
+    }
+
+    bool operator<(const HitShaderId &other) const {
+        return hitShaderId < other.hitShaderId;
+    }
+};
+
+template<>
+struct std::hash<HitShaderId>{
+    std::size_t operator()(const HitShaderId& k) const{
+        return std::hash<int>()(k.hitShaderId);
+    }
+};
+
+struct OcclusionShaderId{
+    int occlusionShaderId;
+
+    bool operator==(const OcclusionShaderId &other) const {
+        return occlusionShaderId == other.occlusionShaderId;
+    }
+
+    bool operator<(const OcclusionShaderId &other) const {
+        return occlusionShaderId < other.occlusionShaderId;
+    }
+};
+
+template<>
+struct std::hash<OcclusionShaderId>{
+    std::size_t operator()(const OcclusionShaderId& k) const{
+        return std::hash<int>()(k.occlusionShaderId);
+    }
+};
+
+struct PierceShaderId{
+    int pierceShaderId;
+
+    bool operator==(const PierceShaderId &other) const {
+        return pierceShaderId == other.pierceShaderId;
+    }
+
+    bool operator<(const PierceShaderId &other) const {
+        return pierceShaderId < other.pierceShaderId;
+    }
+};
+
+template<>
+struct std::hash<PierceShaderId>{
+    std::size_t operator()(const PierceShaderId& k) const{
+        return std::hash<int>()(k.pierceShaderId);
+    }
+};
+
+struct MissShaderId{
+    int missShaderId;
+
+    bool operator==(const MissShaderId &other) const {
+        return missShaderId == other.missShaderId;
+    }
+
+    bool operator<(const MissShaderId &other) const {
+        return missShaderId < other.missShaderId;
+    }
+};
+
+template<>
+struct std::hash<MissShaderId>{
+    std::size_t operator()(const MissShaderId& k) const{
+        return std::hash<int>()(k.missShaderId);
+    }
+};
+
+struct ShaderResourceId{
+    int shaderResourceId;
+
+    bool operator==(const ShaderResourceId &other) const {
+        return shaderResourceId == other.shaderResourceId;
+    }
+
+    bool operator<(const ShaderResourceId &other) const {
+        return shaderResourceId < other.shaderResourceId;
+    }
+};
+
+template<>
+struct std::hash<ShaderResourceId>{
+    std::size_t operator()(const ShaderResourceId& k) const{
+        return std::hash<int>()(k.shaderResourceId);
+    }
+};
+
+struct RayGeneratorShaderResourcePackage{
+    RayGeneratorShaderId shaderId;
+    std::vector<ShaderResourceId> shaderResourceIds;
+};
+
+struct HitShaderResourcePackage{
+    HitShaderId shaderId;
+    std::vector<ShaderResourceId> shaderResourceIds;
+};
+
+struct OcclusionShaderResourcePackage{
+    OcclusionShaderId shaderId;
+    std::vector<ShaderResourceId> shaderResourceIds;
+};
+
+struct PierceShaderResourcePackage{
+    PierceShaderId shaderId;
+    std::vector<ShaderResourceId> shaderResourceIds;
+};
+
+struct MissShaderResourcePackage{
+    MissShaderId shaderId;
+    std::vector<ShaderResourceId> shaderResourceIds;
+};
+
+class ShaderResource {
+public:
+    virtual ShaderResource *clone() = 0;
+};
+
+class RayResource {
+public:
+    virtual RayResource *clone() = 0;
+};
+
+/**
+ * Container passed to shaders, containing the basic information about the Pipeline.
+ * width:           Horizontal resolution.
+ * height:          Vertical resolution.
+ * cameraPosition:  Position of the virtual camera.
+ * cameraDirection: Direction of the virtual camera facing forwards.
+ * cameraUp:        Direction of the virtual camera facing upwards.
+ */
+struct PipelineInfo {
+    int width{}, height{};
+    Vector3D cameraPosition{};
+    Vector3D cameraDirection{};
+    Vector3D cameraUp{};
+};
 
 /**
  * Container outputted by the ray generator shader.
@@ -17,9 +180,7 @@
  * rayDirection:    Vector of directions of rays.
  */
 struct RayGeneratorOutput {
-    uint64_t id;
-    std::vector<Vector3D> rayOrigin;
-    std::vector<Vector3D> rayDirection;
+    std::vector<GeneratorRay> rays;
 };
 
 /**
@@ -90,7 +251,9 @@ public:
      * @param dataInput     Currently unused.
      * @return
      */
-    virtual RayGeneratorOutput shade(uint64_t id, PipelineInfo *pipelineInfo, void *dataInput) = 0;
+    virtual void
+    shade(uint64_t id, PipelineInfo *pipelineInfo, std::vector<ShaderResource *> *shaderResource,
+          RayGeneratorOutput *rayGeneratorOutput) = 0;
 
     /**
      * Destructor.
@@ -113,8 +276,10 @@ public:
      * of the current ray.
      * @return              Returns colour information that will be added to the rays corresponding pixel.
      */
-    virtual ShaderOutput shade(uint64_t id, PipelineInfo *pipelineInfo, OcclusionShaderInput *shaderInput, void *dataInput,
-                               RayGeneratorOutput *newRays) = 0;
+    virtual ShaderOutput
+    shade(uint64_t id, PipelineInfo *pipelineInfo, OcclusionShaderInput *shaderInput,
+          std::vector<ShaderResource *> *shaderResource,
+          RayResource **rayResource, RayGeneratorOutput *newRays) = 0;
 
     /**
      * Destructor.
@@ -137,8 +302,10 @@ public:
      * of the current ray.
      * @return              Returns colour information that will be added to the rays corresponding pixel.
      */
-    virtual ShaderOutput shade(uint64_t id, PipelineInfo *pipelineInfo, PierceShaderInput *shaderInput, void *dataInput,
-                               RayGeneratorOutput *newRays) = 0;
+    virtual ShaderOutput
+    shade(uint64_t id, PipelineInfo *pipelineInfo, PierceShaderInput *shaderInput,
+          std::vector<ShaderResource *> *shaderResource,
+          RayResource **rayResource, RayGeneratorOutput *newRays) = 0;
 
     /**
      * Destructor.
@@ -161,8 +328,10 @@ public:
      * of the current ray.
      * @return              Returns colour information that will be added to the rays corresponding pixel.
      */
-    virtual ShaderOutput shade(uint64_t id, PipelineInfo *pipelineInfo, HitShaderInput *shaderInput, void *dataInput,
-                               RayGeneratorOutput *newRays) = 0;
+    virtual ShaderOutput
+    shade(uint64_t id, PipelineInfo *pipelineInfo, HitShaderInput *shaderInput,
+          std::vector<ShaderResource *> *shaderResource,
+          RayResource **rayResource, RayGeneratorOutput *newRays) = 0;
 
     /**
      * Destructor.
@@ -185,8 +354,10 @@ public:
      * of the current ray.
      * @return              Returns colour information that will be added to the rays corresponding pixel.
      */
-    virtual ShaderOutput shade(uint64_t id, PipelineInfo *pipelineInfo, MissShaderInput *shaderInput, void *dataInput,
-                               RayGeneratorOutput *newRays) = 0;
+    virtual ShaderOutput
+    shade(uint64_t id, PipelineInfo *pipelineInfo, MissShaderInput *shaderInput,
+          std::vector<ShaderResource *> *shaderResource,
+          RayResource **rayResource, RayGeneratorOutput *newRays) = 0;
 
     /**
      * Destructor.

@@ -7,6 +7,8 @@
 
 #include "Object.h"
 
+struct DBVHNode;
+
 /**
  * Contains all the information required to construct a 3d model based on a 3d triangle mesh.
  * Provides necessary methods for using it as object in the ray tracing engine.
@@ -32,7 +34,7 @@ private:
     Material material;
 
     std::vector<Object *> triangles;
-    Object *structure;
+    DBVHNode *structure;
 
 public:
     /**
@@ -91,6 +93,8 @@ public:
      * @return The surface area of this object.
      */
     double getSurfaceArea() override;
+
+    ObjectCapsule getCapsule() override;
 
     /**
      * Tests whether the object in question is identical to this object.

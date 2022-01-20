@@ -24,6 +24,11 @@ struct Vector2D {
     double y;
 };
 
+struct GeneratorRay{
+    Vector3D rayOrigin;
+    Vector3D rayDirection;
+};
+
 /**
  * Contains a 4 by 4 matrix.
  * elements:    The matrix.
@@ -139,6 +144,29 @@ struct Matrix4x4 {
         inverse.elements[3][3] = (1 / det) * inverse.elements[3][3];
 
         return inverse;
+    }
+
+    static Matrix4x4 getIdentity(){
+        Matrix4x4 identity{};
+
+        identity.elements[0][0] = 1;
+        identity.elements[0][1] = 0;
+        identity.elements[0][2] = 0;
+        identity.elements[0][3] = 0;
+        identity.elements[1][0] = 0;
+        identity.elements[1][1] = 1;
+        identity.elements[1][2] = 0;
+        identity.elements[1][3] = 0;
+        identity.elements[2][0] = 0;
+        identity.elements[2][1] = 0;
+        identity.elements[2][2] = 1;
+        identity.elements[2][3] = 0;
+        identity.elements[3][0] = 0;
+        identity.elements[3][1] = 0;
+        identity.elements[3][2] = 0;
+        identity.elements[3][3] = 1;
+
+        return identity;
     }
 };
 

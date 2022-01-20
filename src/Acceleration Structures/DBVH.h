@@ -94,6 +94,8 @@ public:
 
     double getSurfaceArea() override;
 
+    ObjectCapsule getCapsule() override;
+
     bool operator==(Object *object) override;
 
     Object *clone() override;
