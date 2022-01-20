@@ -183,10 +183,7 @@ public:
     }
 
     ObjectCapsule getCapsule() override {
-        ObjectCapsule capsule{};
-        capsule.cost = getSurfaceArea();
-        capsule.boundingBox = getBoundaries();
-        capsule.id = -1;
+        ObjectCapsule capsule{-1, getBoundaries(), getSurfaceArea()};
         return capsule;
     }
 
@@ -237,7 +234,7 @@ TriangleMeshObject::TriangleMeshObject(const std::vector<Vertex> *vertices, cons
 }
 
 TriangleMeshObject::~TriangleMeshObject() {
-    for(auto t : triangles){
+    for (auto t: triangles) {
         delete t;
     }
     DBVHv2::deleteTree(structure);
@@ -275,9 +272,6 @@ bool TriangleMeshObject::operator==(Object *object) {
 }
 
 ObjectCapsule TriangleMeshObject::getCapsule() {
-    ObjectCapsule capsule{};
-    capsule.cost = getSurfaceArea();
-    capsule.boundingBox = getBoundaries();
-    capsule.id = -1;
+    ObjectCapsule capsule{-1, getBoundaries(), getSurfaceArea()};
     return capsule;
 }

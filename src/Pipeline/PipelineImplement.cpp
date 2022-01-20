@@ -25,8 +25,7 @@ PipelineImplement::PipelineImplement(EngineNode *engine, int width, int height, 
                                      std::vector<OcclusionShaderPackage> *occlusionShaders,
                                      std::vector<HitShaderPackage> *hitShaders,
                                      std::vector<PierceShaderPackage> *pierceShaders,
-                                     std::vector<MissShaderPackage> *missShaders,
-                                     std::vector<ShaderResourceContainer> *shaderResources, DBVHNode *geometry) {
+                                     std::vector<MissShaderPackage> *missShaders, DBVHNode *geometry) {
     this->engineNode = engine;
     this->pipelineInfo = new PipelineInfo();
     this->pipelineInfo->width = width;
@@ -36,33 +35,19 @@ PipelineImplement::PipelineImplement(EngineNode *engine, int width, int height, 
     this->pipelineInfo->cameraUp = *cameraUp;
 
     for (auto &shader: *rayGeneratorShaders) {
-        this->rayGeneratorShaders[shader.id].rayGeneratorShader = shader.rayGeneratorShader;
+        this->rayGeneratorShaders[shader.id] = shader.rayGeneratorShader;
     }
     for (auto &shader: *hitShaders) {
-        this->hitShaders[shader.id].hitShader = shader.hitShader;
+        this->hitShaders[shader.id] = shader.hitShader;
     }
     for (auto &shader: *occlusionShaders) {
-        this->occlusionShaders[shader.id].occlusionShader = shader.occlusionShader;
+        this->occlusionShaders[shader.id] = shader.occlusionShader;
     }
     for (auto &shader: *pierceShaders) {
-        this->pierceShaders[shader.id].pierceShader = shader.pierceShader;
+        this->pierceShaders[shader.id] = shader.pierceShader;
     }
     for (auto &shader: *missShaders) {
-        this->missShaders[shader.id].missShader = shader.missShader;
-    }
-
-    for (const auto &resource: *shaderResources) {
-        if (this->rayGeneratorShaders.count(resource.shaderId) != 0) {
-            this->rayGeneratorShaders[resource.shaderId].shaderResources = resource.shaderResources;
-        } else if (this->hitShaders.count(resource.shaderId) != 0) {
-            this->hitShaders[resource.shaderId].shaderResources = resource.shaderResources;
-        } else if (this->occlusionShaders.count(resource.shaderId) != 0) {
-            this->occlusionShaders[resource.shaderId].shaderResources = resource.shaderResources;
-        } else if (this->pierceShaders.count(resource.shaderId) != 0) {
-            this->pierceShaders[resource.shaderId].shaderResources = resource.shaderResources;
-        } else if (this->missShaders.count(resource.shaderId) != 0) {
-            this->missShaders[resource.shaderId].shaderResources = resource.shaderResources;
-        }
+        this->missShaders[shader.id] = shader.missShader;
     }
 
     this->geometry = geometry;
@@ -363,6 +348,107 @@ int PipelineImplement::run() {
     }
 
     return 0;
+}
+
+void
+PipelineImplement::addShader(RayGeneratorShaderId shaderId, RayGeneratorShaderContainer *rayGeneratorShaderContainer) {
+    rayGeneratorShaders[shaderId] = *rayGeneratorShaderContainer;
+}
+
+void PipelineImplement::addShader(HitShaderId shaderId, HitShaderContainer *hitShaderContainer) {
+    hitShaders[shaderId] = *hitShaderContainer;
+}
+
+void PipelineImplement::addShader(OcclusionShaderId shaderId, OcclusionShaderContainer *occlusionShaderContainer) {
+    occlusionShaders[shaderId] = *occlusionShaderContainer;
+}
+
+void PipelineImplement::addShader(PierceShaderId shaderId, PierceShaderContainer *pierceShaderContainer) {
+    pierceShaders[shaderId] = *pierceShaderContainer;
+}
+
+void PipelineImplement::addShader(MissShaderId shaderId, MissShaderContainer *missShaderContainer) {
+    missShaders[shaderId] = *missShaderContainer;
+}
+
+bool PipelineImplement::removeShader(RayGeneratorShaderId shaderId) {
+    if (rayGeneratorShaders.count(shaderId) != 0) {
+        rayGeneratorShaders.erase(shaderId);
+        return true;
+    }
+    return false;
+}
+
+bool PipelineImplement::removeShader(HitShaderId shaderId) {
+    if (hitShaders.count(shaderId) != 0) {
+        hitShaders.erase(shaderId);
+        return true;
+    }
+    return false;
+}
+
+bool PipelineImplement::removeShader(OcclusionShaderId shaderId) {
+    if (occlusionShaders.count(shaderId) != 0) {
+        occlusionShaders.erase(shaderId);
+        return true;
+    }
+    return false;
+}
+
+bool PipelineImplement::removeShader(PierceShaderId shaderId) {
+    if (pierceShaders.count(shaderId) != 0) {
+        pierceShaders.erase(shaderId);
+        return true;
+    }
+    return false;
+}
+
+bool PipelineImplement::removeShader(MissShaderId shaderId) {
+    if (missShaders.count(shaderId) != 0) {
+        missShaders.erase(shaderId);
+        return true;
+    }
+    return false;
+}
+
+bool PipelineImplement::updateShader(RayGeneratorShaderId shaderId, std::vector<ShaderResource *> *shaderResources) {
+    if (rayGeneratorShaders.count(shaderId) != 0) {
+        rayGeneratorShaders[shaderId].shaderResources = *shaderResources;
+        return true;
+    }
+    return false;
+}
+
+bool PipelineImplement::updateShader(HitShaderId shaderId, std::vector<ShaderResource *> *shaderResources) {
+    if (hitShaders.count(shaderId) != 0) {
+        hitShaders[shaderId].shaderResources = *shaderResources;
+        return true;
+    }
+    return false;
+}
+
+bool PipelineImplement::updateShader(OcclusionShaderId shaderId, std::vector<ShaderResource *> *shaderResources) {
+    if (occlusionShaders.count(shaderId) != 0) {
+        occlusionShaders[shaderId].shaderResources = *shaderResources;
+        return true;
+    }
+    return false;
+}
+
+bool PipelineImplement::updateShader(PierceShaderId shaderId, std::vector<ShaderResource *> *shaderResources) {
+    if (pierceShaders.count(shaderId) != 0) {
+        pierceShaders[shaderId].shaderResources = *shaderResources;
+        return true;
+    }
+    return false;
+}
+
+bool PipelineImplement::updateShader(MissShaderId shaderId, std::vector<ShaderResource *> *shaderResources) {
+    if (missShaders.count(shaderId) != 0) {
+        missShaders[shaderId].shaderResources = *shaderResources;
+        return true;
+    }
+    return false;
 }
 
 Texture *PipelineImplement::getResult() {

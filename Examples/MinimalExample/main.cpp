@@ -23,7 +23,7 @@ int main() {
     // ======================================== Create Geometry Objects ===============================================
 
     // create a vector for object ids, they can be used to reference objects within the engine
-    std::vector<int> objectIDs;
+    std::vector<ObjectId> objectIDs;
 
     // load the obj file
     if (!loader.LoadFile("./Data/Basketball/Basketball.obj")) return 1;
@@ -97,13 +97,13 @@ int main() {
     BasicHitShader hitShader;
 
     // add hit shader to the engine, id can be used to reference to the shader within the engine
-    int hitShaderID = rayEngine.addShader(&hitShader);
+    auto hitShaderID = rayEngine.addShader(&hitShader);
 
     // use basic ray generator shader prefab
     BasicRayGeneratorShader rayGeneratorShader;
 
     // add ray generator shader to the engine
-    int rayGeneratorShaderID = rayEngine.addShader(&rayGeneratorShader);
+    auto rayGeneratorShaderID = rayEngine.addShader(&rayGeneratorShader);
 
     // ================================================================================================================
 
@@ -111,7 +111,7 @@ int main() {
 
     // objects that are bound to a pipeline get instanced, create instance id vector for referencing instanced objects
     // within a pipeline
-    std::vector<int> instanceIDs;
+    std::vector<InstanceId> instanceIDs;
 
     // instanced objects have their own transformation, create one for each instance
     std::vector<Matrix4x4 *> transforms;
@@ -160,11 +160,11 @@ int main() {
     pipelineDescription.objectTransformations = transforms;
 
     // add shaders to the pipeline
-    pipelineDescription.rayGeneratorShaderIDs.push_back(rayGeneratorShaderID);
-    pipelineDescription.hitShaderIDs.push_back(hitShaderID);
+    pipelineDescription.rayGeneratorShaders.push_back({rayGeneratorShaderID});
+    pipelineDescription.hitShaders.push_back({hitShaderID});
 
     // add pipeline to the engine
-    int pipelineID = rayEngine.createPipeline(&pipelineDescription);
+    auto pipelineID = rayEngine.createPipeline(&pipelineDescription);
 
     // ================================================================================================================
 

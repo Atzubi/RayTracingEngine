@@ -26,29 +26,29 @@ EngineNode::MemoryBlock::~MemoryBlock() {
     }
 }
 
-void EngineNode::MemoryBlock::storeBaseDataFragments(Object *object, int id) {
+void EngineNode::MemoryBlock::storeBaseDataFragments(Object *object, ObjectId id) {
     objects[id] = object;
 }
 
-void EngineNode::MemoryBlock::storeInstanceDataFragments(Instance *instance, int id) {
+void EngineNode::MemoryBlock::storeInstanceDataFragments(Instance *instance, InstanceId id) {
     objectInstances[id] = instance;
 }
 
-void EngineNode::MemoryBlock::cacheBaseData(Object *object, int id) {
+void EngineNode::MemoryBlock::cacheBaseData(Object *object, ObjectId id) {
     // TODO: implement cache eviction
     objectCache[id] = object;
 }
 
-void EngineNode::MemoryBlock::cacheInstanceData(Instance *instance, int id) {
+void EngineNode::MemoryBlock::cacheInstanceData(Instance *instance, InstanceId id) {
     // TODO: implement cache eviction
     objectInstanceCache[id] = instance;
 }
 
-void EngineNode::MemoryBlock::storeShaderResource(ShaderResource *shaderResource, int id) {
+void EngineNode::MemoryBlock::storeShaderResource(ShaderResource *shaderResource, ShaderResourceId id) {
     shaderResources[id] = shaderResource;
 }
 
-bool EngineNode::MemoryBlock::deleteShaderResource(int id) {
+bool EngineNode::MemoryBlock::deleteShaderResource(ShaderResourceId id) {
     if (shaderResources.count(id) == 0) return false;
 
     shaderResources.erase(id);
@@ -56,21 +56,21 @@ bool EngineNode::MemoryBlock::deleteShaderResource(int id) {
     return true;
 }
 
-bool EngineNode::MemoryBlock::deleteBaseDataFragment(int id) {
+bool EngineNode::MemoryBlock::deleteBaseDataFragment(ObjectId id) {
     if (objects.count(id) == 0) return false;
     delete objects[id];
     objects.erase(id);
     return true;
 }
 
-bool EngineNode::MemoryBlock::deleteInstanceDataFragment(int id) {
+bool EngineNode::MemoryBlock::deleteInstanceDataFragment(InstanceId id) {
     if (objectInstances.count(id) == 0) return false;
     delete objectInstances[id];
     objectInstances.erase(id);
     return true;
 }
 
-Object *EngineNode::MemoryBlock::getBaseDataFragment(int id) {
+Object *EngineNode::MemoryBlock::getBaseDataFragment(ObjectId id) {
     if (objects.count(id) == 0) {
         // object was not originally stored on this node, check cache
         if (objectCache.count(id) == 0) {
@@ -86,10 +86,10 @@ Object *EngineNode::MemoryBlock::getBaseDataFragment(int id) {
     }
 }
 
-Instance *EngineNode::MemoryBlock::getInstanceDataFragment(int id) {
-    if (objects.count(id) == 0) {
+Instance *EngineNode::MemoryBlock::getInstanceDataFragment(InstanceId id) {
+    if (objectInstances.count(id) == 0) {
         // object was not originally stored on this node, check cache
-        if (objectCache.count(id) == 0) {
+        if (objectInstanceCache.count(id) == 0) {
             // object is not currently in the cache
             return nullptr;
         } else {
@@ -102,7 +102,7 @@ Instance *EngineNode::MemoryBlock::getInstanceDataFragment(int id) {
     }
 }
 
-ShaderResource *EngineNode::MemoryBlock::getShaderResource(int id) {
+ShaderResource *EngineNode::MemoryBlock::getShaderResource(ShaderResourceId id) {
     return shaderResources.at(id);
 }
 
@@ -114,72 +114,113 @@ EngineNode::PipelineBlock::~PipelineBlock() {
     }
 }
 
-void EngineNode::PipelineBlock::storePipelineFragments(PipelineImplement *pipeline, int id) {
+void EngineNode::PipelineBlock::storePipelineFragments(PipelineImplement *pipeline, PipelineId id) {
     pipelines[id] = pipeline;
 }
 
-bool EngineNode::PipelineBlock::deletePipelineFragment(int id) {
+bool EngineNode::PipelineBlock::deletePipelineFragment(PipelineId id) {
     if (pipelines.count(id) == 0) return false;
     delete pipelines[id];
     pipelines.erase(id);
     return true;
 }
 
-void EngineNode::PipelineBlock::addShader(int id, RayGeneratorShader *shader) {
+void EngineNode::PipelineBlock::addShader(RayGeneratorShaderId id, RayGeneratorShader *shader) {
     rayGeneratorShaders[id] = shader;
 }
 
-void EngineNode::PipelineBlock::addShader(int id, HitShader *shader) {
+void EngineNode::PipelineBlock::addShader(HitShaderId id, HitShader *shader) {
     hitShaders[id] = shader;
 }
 
-void EngineNode::PipelineBlock::addShader(int id, OcclusionShader *shader) {
+void EngineNode::PipelineBlock::addShader(OcclusionShaderId id, OcclusionShader *shader) {
     occlusionShaders[id] = shader;
 }
 
-void EngineNode::PipelineBlock::addShader(int id, PierceShader *shader) {
+void EngineNode::PipelineBlock::addShader(PierceShaderId id, PierceShader *shader) {
     pierceShaders[id] = shader;
 }
 
-void EngineNode::PipelineBlock::addShader(int id, MissShader *shader) {
+void EngineNode::PipelineBlock::addShader(MissShaderId id, MissShader *shader) {
     missShaders[id] = shader;
 }
 
-Shader *EngineNode::PipelineBlock::getShader(int id) {
-    if (hitShaders.count(id) != 0) {
-        return (Shader *) hitShaders.at(id);
-    } else if (missShaders.count(id) != 0) {
-        return (Shader *) missShaders.at(id);
-    } else if (occlusionShaders.count(id) != 0) {
-        return (Shader *) occlusionShaders.at(id);
-    } else if (pierceShaders.count(id) != 0) {
-        return (Shader *) pierceShaders.at(id);
-    } else if (rayGeneratorShaders.count(id) != 0) {
-        return (Shader *) rayGeneratorShaders.at(id);
-    } else {
-        return nullptr;
+RayGeneratorShader *EngineNode::PipelineBlock::getShader(RayGeneratorShaderId id) {
+    if (rayGeneratorShaders.count(id) != 0) {
+        return rayGeneratorShaders.at(id);
     }
+    return nullptr;
 }
 
-bool EngineNode::PipelineBlock::deleteShader(int id) {
+HitShader *EngineNode::PipelineBlock::getShader(HitShaderId id) {
+    if (hitShaders.count(id) != 0) {
+        return hitShaders.at(id);
+    }
+    return nullptr;
+}
+
+OcclusionShader *EngineNode::PipelineBlock::getShader(OcclusionShaderId id) {
+    if (occlusionShaders.count(id) != 0) {
+        return occlusionShaders.at(id);
+    }
+    return nullptr;
+}
+
+PierceShader *EngineNode::PipelineBlock::getShader(PierceShaderId id) {
+    if (pierceShaders.count(id) != 0) {
+        return pierceShaders.at(id);
+    }
+    return nullptr;
+}
+
+MissShader *EngineNode::PipelineBlock::getShader(MissShaderId id) {
+    if (missShaders.count(id) != 0) {
+        return missShaders.at(id);
+    }
+    return nullptr;
+}
+
+bool EngineNode::PipelineBlock::deleteShader(RayGeneratorShaderId id) {
+    if (rayGeneratorShaders.count(id) != 0) {
+        rayGeneratorShaders.erase(id);
+        return true;
+    }
+    return false;
+}
+
+bool EngineNode::PipelineBlock::deleteShader(HitShaderId id) {
     if (hitShaders.count(id) != 0) {
         hitShaders.erase(id);
-    } else if (missShaders.count(id) != 0) {
-        missShaders.erase(id);
-    } else if (occlusionShaders.count(id) != 0) {
-        occlusionShaders.erase(id);
-    } else if (pierceShaders.count(id) != 0) {
-        pierceShaders.erase(id);
-    } else if (rayGeneratorShaders.count(id) != 0) {
-        rayGeneratorShaders.erase(id);
-    } else {
-        return false;
+        return true;
     }
-
-    return true;
+    return false;
 }
 
-void EngineNode::PipelineBlock::runPipeline(int id) {
+bool EngineNode::PipelineBlock::deleteShader(OcclusionShaderId id) {
+    if (occlusionShaders.count(id) != 0) {
+        occlusionShaders.erase(id);
+        return true;
+    }
+    return false;
+}
+
+bool EngineNode::PipelineBlock::deleteShader(PierceShaderId id) {
+    if (pierceShaders.count(id) != 0) {
+        pierceShaders.erase(id);
+        return true;
+    }
+    return false;
+}
+
+bool EngineNode::PipelineBlock::deleteShader(MissShaderId id) {
+    if (missShaders.count(id) != 0) {
+        missShaders.erase(id);
+        return true;
+    }
+    return false;
+}
+
+void EngineNode::PipelineBlock::runPipeline(PipelineId id) {
     if (pipelines.count(id) == 1) {
         pipelines[id]->run();
     }
@@ -191,7 +232,7 @@ void EngineNode::PipelineBlock::runPipelines() {
     }
 }
 
-PipelineImplement *EngineNode::PipelineBlock::getPipelineFragment(int id) {
+PipelineImplement *EngineNode::PipelineBlock::getPipelineFragment(PipelineId id) {
     if (pipelines.count(id) == 0) return nullptr;
     return pipelines[id];
 }
@@ -207,40 +248,40 @@ EngineNode::~EngineNode() {
     delete pipelineBlock;
 }
 
-void EngineNode::storeBaseDataFragments(Object *object, int id) {
+void EngineNode::storeBaseDataFragments(Object *object, ObjectId id) {
     memoryBlock->storeBaseDataFragments(object, id);
 }
 
-void EngineNode::storeInstanceDataFragments(Instance *instance, int id) {
+void EngineNode::storeInstanceDataFragments(Instance *instance, InstanceId id) {
     memoryBlock->storeInstanceDataFragments(instance, id);
 }
 
-void EngineNode::cacheBaseData(Object *object, int id) {
+void EngineNode::cacheBaseData(Object *object, ObjectId id) {
     memoryBlock->cacheBaseData(object, id);
 }
 
-void EngineNode::cacheInstanceData(Instance *instance, int id) {
+void EngineNode::cacheInstanceData(Instance *instance, InstanceId id) {
     memoryBlock->cacheInstanceData(instance, id);
 }
 
-void EngineNode::storeShaderResource(ShaderResource *shaderResource, int id) {
+void EngineNode::storeShaderResource(ShaderResource *shaderResource, ShaderResourceId id) {
     memoryBlock->storeShaderResource(shaderResource, id);
 }
 
-bool EngineNode::deleteShaderResource(int id) {
+bool EngineNode::deleteShaderResource(ShaderResourceId id) {
     return memoryBlock->deleteShaderResource(id);
 }
 
-void EngineNode::storePipelineFragments(PipelineImplement *pipeline, int id) {
+void EngineNode::storePipelineFragments(PipelineImplement *pipeline, PipelineId id) {
     pipeline->setEngine(this);
     pipelineBlock->storePipelineFragments(pipeline, id);
 }
 
-bool EngineNode::deletePipelineFragment(int id) {
+bool EngineNode::deletePipelineFragment(PipelineId id) {
     return pipelineBlock->deletePipelineFragment(id);
 }
 
-Object *EngineNode::requestBaseData(int id) {
+Object *EngineNode::requestBaseData(ObjectId id) {
     auto fragment = memoryBlock->getBaseDataFragment(id);
     if (fragment == nullptr) {
         fragment = dataManagementUnit->getBaseDataFragment(id);
@@ -249,7 +290,7 @@ Object *EngineNode::requestBaseData(int id) {
     return fragment;
 }
 
-Instance *EngineNode::requestInstanceData(int id) {
+Instance *EngineNode::requestInstanceData(InstanceId id) {
     auto fragment = memoryBlock->getInstanceDataFragment(id);
     if (fragment == nullptr) {
         fragment = dataManagementUnit->getInstanceDataFragment(id);
@@ -258,43 +299,75 @@ Instance *EngineNode::requestInstanceData(int id) {
     return fragment;
 }
 
-ShaderResource *EngineNode::getShaderResource(int id) {
+ShaderResource *EngineNode::getShaderResource(ShaderResourceId id) {
     return memoryBlock->getShaderResource(id);
 }
 
-PipelineImplement *EngineNode::requestPipelineFragment(int id) {
+PipelineImplement *EngineNode::requestPipelineFragment(PipelineId id) {
     return pipelineBlock->getPipelineFragment(id);
 }
 
-void EngineNode::addShader(int id, RayGeneratorShader *shader) {
+void EngineNode::addShader(RayGeneratorShaderId id, RayGeneratorShader *shader) {
     pipelineBlock->addShader(id, shader);
 }
 
-void EngineNode::addShader(int id, HitShader *shader) {
+void EngineNode::addShader(HitShaderId id, HitShader *shader) {
     pipelineBlock->addShader(id, shader);
 }
 
-void EngineNode::addShader(int id, OcclusionShader *shader) {
+void EngineNode::addShader(OcclusionShaderId id, OcclusionShader *shader) {
     pipelineBlock->addShader(id, shader);
 }
 
-void EngineNode::addShader(int id, PierceShader *shader) {
+void EngineNode::addShader(PierceShaderId id, PierceShader *shader) {
     pipelineBlock->addShader(id, shader);
 }
 
-void EngineNode::addShader(int id, MissShader *shader) {
+void EngineNode::addShader(MissShaderId id, MissShader *shader) {
     pipelineBlock->addShader(id, shader);
 }
 
-Shader *EngineNode::getShader(int id) {
+RayGeneratorShader *EngineNode::getShader(RayGeneratorShaderId id) {
     return pipelineBlock->getShader(id);
 }
 
-bool EngineNode::deleteShader(int id) {
+HitShader *EngineNode::getShader(HitShaderId id) {
+    return pipelineBlock->getShader(id);
+}
+
+OcclusionShader *EngineNode::getShader(OcclusionShaderId id) {
+    return pipelineBlock->getShader(id);
+}
+
+PierceShader *EngineNode::getShader(PierceShaderId id) {
+    return pipelineBlock->getShader(id);
+}
+
+MissShader *EngineNode::getShader(MissShaderId id) {
+    return pipelineBlock->getShader(id);
+}
+
+bool EngineNode::deleteShader(RayGeneratorShaderId id) {
     return pipelineBlock->deleteShader(id);
 }
 
-void EngineNode::runPipeline(int id) {
+bool EngineNode::deleteShader(HitShaderId id) {
+    return pipelineBlock->deleteShader(id);
+}
+
+bool EngineNode::deleteShader(OcclusionShaderId id) {
+    return pipelineBlock->deleteShader(id);
+}
+
+bool EngineNode::deleteShader(PierceShaderId id) {
+    return pipelineBlock->deleteShader(id);
+}
+
+bool EngineNode::deleteShader(MissShaderId id) {
+    return pipelineBlock->deleteShader(id);
+}
+
+void EngineNode::runPipeline(PipelineId id) {
     pipelineBlock->runPipeline(id);
 }
 
@@ -302,10 +375,10 @@ void EngineNode::runPipelines() {
     pipelineBlock->runPipelines();
 }
 
-bool EngineNode::deleteBaseDataFragment(int id) {
+bool EngineNode::deleteBaseDataFragment(ObjectId id) {
     return memoryBlock->deleteBaseDataFragment(id);
 }
 
-bool EngineNode::deleteInstanceDataFragment(int id) {
+bool EngineNode::deleteInstanceDataFragment(InstanceId id) {
     return memoryBlock->deleteInstanceDataFragment(id);
 }

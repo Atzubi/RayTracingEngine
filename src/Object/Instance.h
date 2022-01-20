@@ -13,7 +13,7 @@ class Instance : public Object {
 private:
     EngineNode *engineNode;
 
-    int baseObjectId;
+    ObjectId baseObjectId;
     bool objectCached;
     Object *objectCache;
 

@@ -5,6 +5,8 @@
 #ifndef RAYTRACEENGINE_DATAMANAGEMENTUNITV2_H
 #define RAYTRACEENGINE_DATAMANAGEMENTUNITV2_H
 
+#include "RayTraceEngine/Shader.h"
+#include "RayTraceEngine/Pipeline.h"
 #include <set>
 #include <unordered_map>
 #include <vector>
@@ -34,29 +36,52 @@ struct Texture;
 struct ObjectParameter;
 struct Matrix4x4;
 
+struct DeviceId{
+    int deviceId;
+
+    bool operator==(const DeviceId &other) const {
+        return deviceId == other.deviceId;
+    }
+
+    bool operator<(const DeviceId &other) const {
+        return deviceId < other.deviceId;
+    }
+};
+
+template<>
+struct std::hash<DeviceId>{
+    std::size_t operator()(const DeviceId& k) const{
+        return std::hash<int>()(k.deviceId);
+    }
+};
+
 class DataManagementUnitV2 {
 private:
-    int deviceId;
+    DeviceId deviceId;
 
     EngineNode *engineNode;
 
     // stored only in main DMU
-    std::set<int> objectIds;
-    std::set<int> objectInstanceIds;
-    std::set<int> shaderIds;
-    std::set<int> shaderResourceIds;
-    std::set<int> pipelineIds;
-    std::unordered_map<int, std::set<int>> objectToInstanceMap;
-    std::unordered_map<int, std::set<int>> pipelineToInstanceMap;
+    std::set<ObjectId> objectIds;
+    std::set<InstanceId> objectInstanceIds;
+    std::set<RayGeneratorShaderId> rayGeneratorShaderIds;
+    std::set<HitShaderId> hitShaderIds;
+    std::set<OcclusionShaderId> occlusionShaderIds;
+    std::set<PierceShaderId> pierceShaderIds;
+    std::set<MissShaderId> missShaderIds;
+    std::set<ShaderResourceId> shaderResourceIds;
+    std::set<PipelineId> pipelineIds;
+    std::unordered_map<ObjectId, std::set<InstanceId>> objectToInstanceMap;
+    std::unordered_map<PipelineId, std::set<InstanceId>> pipelineToInstanceMap;
 
     //std::unordered_map<int, PipelineImplement *> pipelines; // groups  pipeline information, copied to every node
 
     // maps ids to devices holding the data
-    std::unordered_map<int, int> objectIdDeviceMap;
-    std::unordered_map<int, int> objectInstanceIdDeviceMap;
-    std::unordered_map<DBVHNode *, int> pipelineTreeDeviceMap;
+    std::unordered_map<ObjectId, DeviceId> objectIdDeviceMap;
+    std::unordered_map<InstanceId, DeviceId> objectInstanceIdDeviceMap;
+    std::unordered_map<DBVHNode *, DeviceId> pipelineTreeDeviceMap;
 
-    int getDeviceId();
+    DeviceId getDeviceId();
 
 public:
     DataManagementUnitV2();
@@ -67,19 +92,19 @@ public:
      * Adds a pipeline to the pipeline pool.
      * return:          the id of the added pipeline
      */
-    int addPipeline(PipelineDescription *pipelineDescription);
+    PipelineId createPipeline(PipelineDescription *pipelineDescription);
 
     void
-    updatePipelineCamera(int id, int resolutionX, int resolutionY, Vector3D cameraPosition, Vector3D cameraDirection,
+    updatePipelineCamera(PipelineId id, int resolutionX, int resolutionY, Vector3D cameraPosition, Vector3D cameraDirection,
                          Vector3D cameraUp);
 
-    Texture *getPipelineResult(int id);
+    Texture *getPipelineResult(PipelineId id);
 
     /*
      * Removes a pipeline by id.
      * return:          true if success, false otherwise
      */
-    bool removePipeline(int id);
+    bool removePipeline(PipelineId id);
 
     /*
      * Binds a list of objects by id to a pipeline by id. These object will be used as geometry in the ray trace stage
@@ -92,8 +117,8 @@ public:
      * objectParameter: object specific information in addition to geometry
      * return:          true if success, false otherwise, objectIDs will be overwritten with object instance ids
      */
-    bool bindGeometryToPipeline(int pipelineId, std::vector<int> *objectIDs, std::vector<Matrix4x4> *transforms,
-                                std::vector<ObjectParameter> *objectParameters, std::vector<int> *instanceIDs);
+    bool bindGeometryToPipeline(PipelineId pipelineId, std::vector<ObjectId> *objectIDs, std::vector<Matrix4x4> *transforms,
+                                std::vector<ObjectParameter> *objectParameters, std::vector<InstanceId> *instanceIDs);
 
     /*
      * Binds a shader with its resources to a pipeline.
@@ -102,7 +127,11 @@ public:
      * shaderResourceIds:   the vector of shader resource ids that are associated with the shader
      * return:          true if success, false otherwise, shaderId will be overwritten with shader instance id
      */
-    bool bindShaderToPipeline(int pipelineId, int *shaderId, std::vector<int> *shaderResourceIds);
+    bool bindShaderToPipeline(PipelineId pipelineId, RayGeneratorShaderId shaderId, std::vector<ShaderResourceId> *shaderResourceIds);
+    bool bindShaderToPipeline(PipelineId pipelineId, HitShaderId shaderId, std::vector<ShaderResourceId> *shaderResourceIds);
+    bool bindShaderToPipeline(PipelineId pipelineId, OcclusionShaderId shaderId, std::vector<ShaderResourceId> *shaderResourceIds);
+    bool bindShaderToPipeline(PipelineId pipelineId, PierceShaderId shaderId, std::vector<ShaderResourceId> *shaderResourceIds);
+    bool bindShaderToPipeline(PipelineId pipelineId, MissShaderId shaderId, std::vector<ShaderResourceId> *shaderResourceIds);
 
     /*
      * Changes existing object instance in pipeline.
@@ -114,7 +143,7 @@ public:
      * objectParameter: the new object parameters
      * return:          true if success, false otherwise
      */
-    bool updatePipelineObjects(int pipelineId, std::vector<int> *objectInstanceIDs,
+    bool updatePipelineObjects(PipelineId pipelineId, std::vector<InstanceId> *objectInstanceIDs,
                                std::vector<Matrix4x4 *> *transforms,
                                std::vector<ObjectParameter *> *objectParameters);
 
@@ -125,7 +154,11 @@ public:
      * shaderResourceIds:   the shaders new resources
      * return:          true if success, false otherwise
      */
-    bool updatePipelineShader(int pipelineId, int shaderInstanceId, std::vector<int> *shaderResourceIds);
+    bool updatePipelineShader(PipelineId pipelineId, RayGeneratorShaderId shaderId, std::vector<ShaderResourceId> *shaderResourceIds);
+    bool updatePipelineShader(PipelineId pipelineId, HitShaderId shaderId, std::vector<ShaderResourceId> *shaderResourceIds);
+    bool updatePipelineShader(PipelineId pipelineId, OcclusionShaderId shaderId, std::vector<ShaderResourceId> *shaderResourceIds);
+    bool updatePipelineShader(PipelineId pipelineId, PierceShaderId shaderId, std::vector<ShaderResourceId> *shaderResourceIds);
+    bool updatePipelineShader(PipelineId pipelineId, MissShaderId shaderId, std::vector<ShaderResourceId> *shaderResourceIds);
 
     /*
      * Removes a single object instance from the specified pipeline.
@@ -133,7 +166,7 @@ public:
      * objectInstanceId:    the objects instance id
      * return:          true if success, false otherwise
      */
-    bool removePipelineObject(int pipelineId, int objectInstanceId);
+    bool removePipelineObject(PipelineId pipelineId, InstanceId objectInstanceId);
 
     /*
      * Removes a single shader instance from the specified pipeline.
@@ -141,90 +174,98 @@ public:
      * shaderInstanceId:    the shaders instance id    objects.erase(id);
      * return:          true if success, false otherwise
      */
-    bool removePipelineShader(int pipelineId, int shaderInstanceId);
+    bool removePipelineShader(PipelineId pipelineId, RayGeneratorShaderId shaderId);
+    bool removePipelineShader(PipelineId pipelineId, HitShaderId shaderId);
+    bool removePipelineShader(PipelineId pipelineId, OcclusionShaderId shaderId);
+    bool removePipelineShader(PipelineId pipelineId, PierceShaderId shaderId);
+    bool removePipelineShader(PipelineId pipelineId, MissShaderId shaderId);
 
     /*
      * Adds an object to the object pool.
      * object:          the basic definition of the object
      * return:          the id of the object
      */
-    int addObject(Object *object);
+    ObjectId addObject(Object *object);
 
     /*
      * Removes an object from the pool by id.
      * return:          true if success, false otherwise
      */
-    bool removeObject(int id);
+    bool removeObject(ObjectId id);
 
     /*
      * Updates an objects mesh to a new mesh given by object.
      * return:          true if success, false otherwise
      */
-    bool updateObject(int id, Object *object);
+    bool updateObject(ObjectId id, Object *object);
 
     /*
      * Adds a hit shader to the shader pool.
      * shader:          the added shader
      * return:          the id of the shader
      */
-    int addShader(HitShader *shader);
+    HitShaderId addShader(HitShader *shader);
 
     /*
      * Adds a miss shader to the shader pool.
      * shader:          the added shader
      * return:          the id of the shader
      */
-    int addShader(MissShader *shader);
+    MissShaderId addShader(MissShader *shader);
 
     /*
      * Adds an occlusion shader to the shader pool.
      * shader:          the added shader
      * return:          the id of the shader
      */
-    int addShader(OcclusionShader *shader);
+    OcclusionShaderId addShader(OcclusionShader *shader);
 
     /*
      * Adds a pierce shader to the shader pool.
      * shader:          the added shader
      * return:          the id of the shader
      */
-    int addShader(PierceShader *shader);
+    PierceShaderId addShader(PierceShader *shader);
 
     /*
      * Adds a ray generator shader to the shader pool.
      * shader:          the added shader
      * return:          the id of the shader
      */
-    int addShader(RayGeneratorShader *shader);
+    RayGeneratorShaderId addShader(RayGeneratorShader *shader);
 
     /*
      * Removes the shader from the pool.
      * id:              the id of the shader
      * return:          true if success, false otherwise
      */
-    bool removeShader(int id);
+    bool removeShader(RayGeneratorShaderId id);
+    bool removeShader(HitShaderId id);
+    bool removeShader(OcclusionShaderId id);
+    bool removeShader(PierceShaderId id);
+    bool removeShader(MissShaderId id);
 
     /*
      * Adds shader related data to the pool.
      * resource:        the data that is used by a shader
      * return:          the id of the resource
      */
-    int addShaderResource(ShaderResource *resource);
+    ShaderResourceId addShaderResource(ShaderResource *resource);
 
     /*
      * Removes the shader resource from the pool.
      * id:              the id of the resource
      * return:          true if success, false otherwise
      */
-    bool removeShaderResource(int id);
+    bool removeShaderResource(ShaderResourceId id);
 
-    int runPipeline(int id);
+    int runPipeline(PipelineId id);
 
     int runAllPipelines();
 
-    Object *getBaseDataFragment(int id);
+    Object *getBaseDataFragment(ObjectId id);
 
-    Instance *getInstanceDataFragment(int id);
+    Instance *getInstanceDataFragment(InstanceId id);
 };
 
 #endif //RAYTRACEENGINE_DATAMANAGEMENTUNITV2_H

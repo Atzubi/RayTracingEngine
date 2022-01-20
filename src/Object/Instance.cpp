@@ -164,9 +164,8 @@ void createAABB(BoundingBox *aabb, Matrix4x4 *transform) {
     aabb->maxCorner.z += mid.z;
 }
 
-Instance::Instance(EngineNode *node, ObjectCapsule *objectCapsule) {
+Instance::Instance(EngineNode *node, ObjectCapsule *objectCapsule) : baseObjectId(objectCapsule->id) {
     engineNode = node;
-    baseObjectId = objectCapsule->id;
     objectCached = false;
     objectCache = nullptr;
     cost = objectCapsule->cost;
@@ -627,7 +626,7 @@ double Instance::getSurfaceArea() {
 bool Instance::operator==(Object *object) {
     auto obj = dynamic_cast<Instance *>(object);
     if (obj == nullptr) return false;
-    if (obj->baseObjectId == baseObjectId) {
+    if (obj->baseObjectId.objectId == baseObjectId.objectId) {
         return obj->transform.elements[0][0] == transform.elements[0][0] &&
                obj->transform.elements[0][1] == transform.elements[0][1] &&
                obj->transform.elements[0][2] == transform.elements[0][2] &&
@@ -649,10 +648,7 @@ bool Instance::operator==(Object *object) {
 }
 
 ObjectCapsule Instance::getCapsule() {
-    ObjectCapsule capsule{};
-    capsule.cost = getSurfaceArea();
-    capsule.boundingBox = getBoundaries();
-    capsule.id = -1;
+    ObjectCapsule capsule{-1, getBoundaries(), getSurfaceArea()};
     return capsule;
 }
 
