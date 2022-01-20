@@ -46,6 +46,8 @@ private:
     std::set<int> shaderIds;
     std::set<int> shaderResourceIds;
     std::set<int> pipelineIds;
+    std::unordered_map<int, std::set<int>> objectToInstanceMap;
+    std::unordered_map<int, std::set<int>> pipelineToInstanceMap;
 
     //std::unordered_map<int, PipelineImplement *> pipelines; // groups  pipeline information, copied to every node
 

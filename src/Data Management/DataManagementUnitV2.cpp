@@ -27,6 +27,7 @@ DataManagementUnitV2::~DataManagementUnitV2() {
 
 int DataManagementUnitV2::addPipeline(PipelineDescription *pipelineDescription) {
     std::vector<Object *> instances;
+    std::vector<int> instanceIds;
 
     // pull all objects required to create the pipeline
     // only requires id, box and cost
@@ -48,6 +49,8 @@ int DataManagementUnitV2::addPipeline(PipelineDescription *pipelineDescription) 
                     objectInstanceIds.insert(instanceId + 1);
                 }
                 pipelineDescription->objectInstanceIDs->push_back(instanceId);
+                objectToInstanceMap[i].insert(instanceId);
+                instanceIds.push_back(instanceId);
 
                 // add instances to engine node
                 // TODO spread over nodes
@@ -115,6 +118,9 @@ int DataManagementUnitV2::addPipeline(PipelineDescription *pipelineDescription) 
 
     int buffer = pipelineIds.extract(pipelineIds.begin()).value();
 
+    // map instances to pipeline
+    pipelineToInstanceMap[buffer].insert(instanceIds.begin(), instanceIds.end());
+
     engineNode->storePipelineFragments(pipeline, buffer);
 
     if (pipelineIds.empty()) {
@@ -129,6 +135,7 @@ int DataManagementUnitV2::addPipeline(PipelineDescription *pipelineDescription) 
 
 bool DataManagementUnitV2::removePipeline(int id) {
     // TODO: broadcast remove to all nodes;
+    // TODO: remove instances used by this pipeline
     auto removed = engineNode->deletePipelineFragment(id);
     if (removed) {
         pipelineIds.insert(id);
@@ -178,6 +185,11 @@ DataManagementUnitV2::updatePipelineShader(int pipelineId, int shaderInstanceId,
 bool DataManagementUnitV2::removePipelineObject(int pipelineId, int objectInstanceId) {
     if (objectIdDeviceMap.count(objectInstanceId) == 1) {
         if (objectIdDeviceMap[objectInstanceId] == deviceId) {
+            auto pipeline = engineNode->requestPipelineFragment(pipelineId);
+            auto geometry = pipeline->getGeometry();
+            auto instance = engineNode->requestInstanceData(objectInstanceId);
+            std::vector<Object*> remove = {instance};
+            DBVHv2::removeObjects(geometry, &remove);
             return engineNode->deleteInstanceDataFragment(objectInstanceId);
         } else {
             // TODO: delete instance on other nodes
@@ -201,6 +213,7 @@ DataManagementUnitV2::bindGeometryToPipeline(int pipelineId, std::vector<int> *o
     auto geometry = pipeline->getGeometry();
 
     std::vector<Object *> instances;
+    std::vector<int> instanceIds;
 
     for (int i = 0; i < objectIDs->size(); i++) {
         if (objectIdDeviceMap.count(objectIDs->at(i)) == 1) {
@@ -219,6 +232,8 @@ DataManagementUnitV2::bindGeometryToPipeline(int pipelineId, std::vector<int> *o
                     objectInstanceIds.insert(instanceId + 1);
                 }
                 instanceIDs->push_back(instanceId);
+                objectToInstanceMap[objectIDs->at((i))].insert(instanceId);
+                instanceIds.push_back(instanceId);
 
                 // add instances to engine node
                 // TODO spread over nodes
@@ -233,6 +248,8 @@ DataManagementUnitV2::bindGeometryToPipeline(int pipelineId, std::vector<int> *o
             // TODO error handling, object not found
         }
     }
+
+    pipelineToInstanceMap[pipelineId].insert(instanceIds.begin(), instanceIds.end());
 
     DBVHv2::addObjects(geometry, &instances);
 
@@ -260,6 +277,17 @@ int DataManagementUnitV2::addObject(Object *object) {
 
 bool DataManagementUnitV2::removeObject(int id) {
     if (!engineNode->deleteBaseDataFragment(id)) return false;
+
+    // remove instances
+    for(auto instanceId : objectToInstanceMap.at(id)){
+        for(auto &pipelineInstances : pipelineToInstanceMap){
+            if(pipelineInstances.second.count(instanceId) != 0){
+                removePipelineObject(pipelineInstances.first, instanceId);
+                pipelineInstances.second.erase(instanceId);
+                break;
+            }
+        }
+    }
 
     objectIdDeviceMap.erase(id);
 
@@ -345,6 +373,7 @@ int DataManagementUnitV2::addShader(RayGeneratorShader *shader) {
 
 bool DataManagementUnitV2::removeShader(int id) {
     if (!engineNode->deleteShader(id)) return false;
+    // TODO: remove shader from pipelines
 
     shaderIds.insert(id);
 
