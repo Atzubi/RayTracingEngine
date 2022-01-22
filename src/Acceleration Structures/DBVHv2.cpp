@@ -3,6 +3,7 @@
 //
 
 #include <algorithm>
+#include <limits>
 #include "DBVHv2.h"
 
 static void refit(BoundingBox *target, BoundingBox resizeBy) {
