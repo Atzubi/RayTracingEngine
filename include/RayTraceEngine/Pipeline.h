@@ -7,26 +7,8 @@
 
 #include "RayTraceEngine/BasicStructures.h"
 #include "RayTraceEngine/Shader.h"
+#include "Utility/Id.h"
 #include <vector>
-
-struct PipelineId {
-    int pipelineId;
-
-    bool operator==(const PipelineId &other) const {
-        return pipelineId == other.pipelineId;
-    }
-
-    bool operator<(const PipelineId &other) const {
-        return pipelineId < other.pipelineId;
-    }
-};
-
-template<>
-struct std::hash<PipelineId> {
-    std::size_t operator()(const PipelineId &k) const {
-        return std::hash<int>()(k.pipelineId);
-    }
-};
 
 /**
  * Description of a pipeline for initialization.

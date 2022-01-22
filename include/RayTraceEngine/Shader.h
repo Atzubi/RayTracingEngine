@@ -8,27 +8,7 @@
 #include <cstdint>
 #include <vector>
 #include "Object.h"
-#include "Utility.h"
-
-struct GenericShaderId: public GenericId {};
-
-struct RayGeneratorShaderId: public GenericShaderId {};
-struct HitShaderId: public GenericShaderId {};
-struct OcclusionShaderId: public GenericShaderId {};
-struct PierceShaderId: public GenericShaderId {};
-struct MissShaderId: public GenericShaderId {};
-struct ShaderResourceId: public GenericShaderId {};
-
-// Compiler macros
-DEFINE_STD_HASH_SPECIALIZATION(RayGeneratorShaderId);
-DEFINE_STD_HASH_SPECIALIZATION(HitShaderId);
-DEFINE_STD_HASH_SPECIALIZATION(OcclusionShaderId);
-DEFINE_STD_HASH_SPECIALIZATION(PierceShaderId);
-DEFINE_STD_HASH_SPECIALIZATION(MissShaderId);
-DEFINE_STD_HASH_SPECIALIZATION(ShaderResourceId);
-
-
-
+#include "Utility/Id.h"
 
 struct RayGeneratorShaderResourcePackage{
     RayGeneratorShaderId shaderId;

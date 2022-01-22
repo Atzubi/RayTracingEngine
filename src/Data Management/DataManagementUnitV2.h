@@ -7,6 +7,7 @@
 
 #include "RayTraceEngine/Shader.h"
 #include "RayTraceEngine/Pipeline.h"
+#include "Utility/Id.h"
 #include <set>
 #include <unordered_map>
 #include <vector>
@@ -35,25 +36,6 @@ struct Vector3D;
 struct Texture;
 struct ObjectParameter;
 struct Matrix4x4;
-
-struct DeviceId{
-    int deviceId;
-
-    bool operator==(const DeviceId &other) const {
-        return deviceId == other.deviceId;
-    }
-
-    bool operator<(const DeviceId &other) const {
-        return deviceId < other.deviceId;
-    }
-};
-
-template<>
-struct std::hash<DeviceId>{
-    std::size_t operator()(const DeviceId& k) const{
-        return std::hash<int>()(k.deviceId);
-    }
-};
 
 class DataManagementUnitV2 {
 private:

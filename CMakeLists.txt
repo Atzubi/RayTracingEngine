@@ -21,6 +21,8 @@ endif ()
 include(GNUInstallDirs)
 
 include_directories(${CMAKE_SOURCE_DIR}/include)
+# this may also include the source tree for the examples which is undesirable
+include_directories(${CMAKE_SOURCE_DIR}/src)
 
 #set(ATZUBI_RTENGINE_INSTALL_DOC_DIR "${CMAKE_INSTALL_DOCDIR}/atzubi/rtengine" CACHE STRING "The installation doc directory")
 set(ATZUBI_RTENGINE_INSTALL_CMAKE_DIR "${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/cmake" CACHE STRING "The installation cmake directory")
