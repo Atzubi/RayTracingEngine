@@ -25,12 +25,4 @@ struct GenericId {
     }
 };
 
-template<>
-struct std::hash<GenericId>{
-    std::size_t operator()(const GenericId& k) const{
-        return std::hash<int>()(k.id);
-    }
-};
-
-
 #endif //RAYTRACECORE_UTILITY_H
