@@ -558,63 +558,63 @@ bool DataManagementUnitV2::updateObject(ObjectId id, Object *object) {
 }
 
 HitShaderId DataManagementUnitV2::addShader(HitShader *shader) {
-    auto buffer = hitShaderIds.extract(hitShaderIds.begin()).value();
+    auto shaderId = hitShaderIds.extract(hitShaderIds.begin()).value();
 
-    engineNode->addShader(buffer, shader);
+    engineNode->addShader(shaderId, shader);
 
     if (hitShaderIds.empty()) {
-        hitShaderIds.insert(HitShaderId{buffer.hitShaderId + 1});
+        hitShaderIds.insert(HitShaderId{shaderId.id + 1});
     }
 
-    return buffer;
+    return shaderId;
 }
 
 MissShaderId DataManagementUnitV2::addShader(MissShader *shader) {
-    auto buffer = missShaderIds.extract(missShaderIds.begin()).value();
+    auto shaderId = missShaderIds.extract(missShaderIds.begin()).value();
 
-    engineNode->addShader(buffer, shader);
+    engineNode->addShader(shaderId, shader);
 
     if (missShaderIds.empty()) {
-        missShaderIds.insert(MissShaderId{buffer.missShaderId + 1});
+        missShaderIds.insert(MissShaderId{shaderId.id + 1});
     }
 
-    return buffer;
+    return shaderId;
 }
 
 OcclusionShaderId DataManagementUnitV2::addShader(OcclusionShader *shader) {
-    auto buffer = occlusionShaderIds.extract(occlusionShaderIds.begin()).value();
+    auto shaderId = occlusionShaderIds.extract(occlusionShaderIds.begin()).value();
 
-    engineNode->addShader(buffer, shader);
+    engineNode->addShader(shaderId, shader);
 
     if (occlusionShaderIds.empty()) {
-        occlusionShaderIds.insert(OcclusionShaderId{buffer.occlusionShaderId + 1});
+        occlusionShaderIds.insert(OcclusionShaderId{shaderId.id + 1});
     }
 
-    return buffer;
+    return shaderId;
 }
 
 PierceShaderId DataManagementUnitV2::addShader(PierceShader *shader) {
-    auto buffer = pierceShaderIds.extract(pierceShaderIds.begin()).value();
+    auto shaderId = pierceShaderIds.extract(pierceShaderIds.begin()).value();
 
-    engineNode->addShader(buffer, shader);
+    engineNode->addShader(shaderId, shader);
 
     if (pierceShaderIds.empty()) {
-        pierceShaderIds.insert(PierceShaderId{buffer.pierceShaderId + 1});
+        pierceShaderIds.insert(PierceShaderId{shaderId.id + 1});
     }
 
-    return buffer;
+    return shaderId;
 }
 
 RayGeneratorShaderId DataManagementUnitV2::addShader(RayGeneratorShader *shader) {
-    auto buffer = rayGeneratorShaderIds.extract(rayGeneratorShaderIds.begin()).value();
+    auto shaderId = rayGeneratorShaderIds.extract(rayGeneratorShaderIds.begin()).value();
 
-    engineNode->addShader(buffer, shader);
+    engineNode->addShader(shaderId, shader);
 
     if (rayGeneratorShaderIds.empty()) {
-        rayGeneratorShaderIds.insert(RayGeneratorShaderId{buffer.rayGeneratorShaderId + 1});
+        rayGeneratorShaderIds.insert(RayGeneratorShaderId{shaderId.id + 1});
     }
 
-    return buffer;
+    return shaderId;
 }
 
 bool DataManagementUnitV2::removeShader(RayGeneratorShaderId id) {
@@ -624,12 +624,12 @@ bool DataManagementUnitV2::removeShader(RayGeneratorShaderId id) {
     rayGeneratorShaderIds.insert(id);
 
     auto iterator = rayGeneratorShaderIds.rbegin();
-    int end = iterator->rayGeneratorShaderId - 1;
+    int end = iterator->id - 1;
 
-    int buffer = iterator->rayGeneratorShaderId;
-    while (end-- == (++iterator)->rayGeneratorShaderId) {
+    int buffer = iterator->id;
+    while (end-- == (++iterator)->id) {
         rayGeneratorShaderIds.erase(RayGeneratorShaderId{buffer});
-        buffer = iterator->rayGeneratorShaderId;
+        buffer = iterator->id;
     }
 
     return true;
@@ -642,12 +642,12 @@ bool DataManagementUnitV2::removeShader(HitShaderId id) {
     hitShaderIds.insert(id);
 
     auto iterator = hitShaderIds.rbegin();
-    int end = iterator->hitShaderId - 1;
+    int end = iterator->id - 1;
 
-    int buffer = iterator->hitShaderId;
-    while (end-- == (++iterator)->hitShaderId) {
+    int buffer = iterator->id;
+    while (end-- == (++iterator)->id) {
         hitShaderIds.erase(HitShaderId{buffer});
-        buffer = iterator->hitShaderId;
+        buffer = iterator->id;
     }
 
     return true;
@@ -660,12 +660,12 @@ bool DataManagementUnitV2::removeShader(OcclusionShaderId id) {
     occlusionShaderIds.insert(id);
 
     auto iterator = occlusionShaderIds.rbegin();
-    int end = iterator->occlusionShaderId - 1;
+    int end = iterator->id - 1;
 
-    int buffer = iterator->occlusionShaderId;
-    while (end-- == (++iterator)->occlusionShaderId) {
+    int buffer = iterator->id;
+    while (end-- == (++iterator)->id) {
         occlusionShaderIds.erase(OcclusionShaderId{buffer});
-        buffer = iterator->occlusionShaderId;
+        buffer = iterator->id;
     }
 
     return true;
@@ -678,12 +678,12 @@ bool DataManagementUnitV2::removeShader(PierceShaderId id) {
     pierceShaderIds.insert(id);
 
     auto iterator = pierceShaderIds.rbegin();
-    int end = iterator->pierceShaderId - 1;
+    int end = iterator->id - 1;
 
-    int buffer = iterator->pierceShaderId;
-    while (end-- == (++iterator)->pierceShaderId) {
+    int buffer = iterator->id;
+    while (end-- == (++iterator)->id) {
         pierceShaderIds.erase(PierceShaderId{buffer});
-        buffer = iterator->pierceShaderId;
+        buffer = iterator->id;
     }
 
     return true;
@@ -696,27 +696,27 @@ bool DataManagementUnitV2::removeShader(MissShaderId id) {
     missShaderIds.insert(id);
 
     auto iterator = missShaderIds.rbegin();
-    int end = iterator->missShaderId - 1;
+    int end = iterator->id - 1;
 
-    int buffer = iterator->missShaderId;
-    while (end-- == (++iterator)->missShaderId) {
+    int buffer = iterator->id;
+    while (end-- == (++iterator)->id) {
         missShaderIds.erase(MissShaderId{buffer});
-        buffer = iterator->missShaderId;
+        buffer = iterator->id;
     }
 
     return true;
 }
 
 ShaderResourceId DataManagementUnitV2::addShaderResource(ShaderResource *resource) {
-    auto buffer = shaderResourceIds.extract(shaderResourceIds.begin()).value();
+    auto shaderId = shaderResourceIds.extract(shaderResourceIds.begin()).value();
 
-    engineNode->storeShaderResource(resource, buffer);
+    engineNode->storeShaderResource(resource, shaderId);
 
     if (shaderResourceIds.empty()) {
-        shaderResourceIds.insert(ShaderResourceId{buffer.shaderResourceId + 1});
+        shaderResourceIds.insert(ShaderResourceId{shaderId.id + 1});
     }
 
-    return buffer;
+    return shaderId;
 }
 
 bool DataManagementUnitV2::removeShaderResource(ShaderResourceId id) {
@@ -725,12 +725,12 @@ bool DataManagementUnitV2::removeShaderResource(ShaderResourceId id) {
     shaderResourceIds.insert(id);
 
     auto iterator = shaderResourceIds.rbegin();
-    int end = iterator->shaderResourceId - 1;
+    int end = iterator->id - 1;
 
-    int buffer = iterator->shaderResourceId;
-    while (end-- == (++iterator)->shaderResourceId) {
+    int buffer = iterator->id;
+    while (end-- == (++iterator)->id) {
         shaderResourceIds.erase(ShaderResourceId{buffer});
-        buffer = iterator->shaderResourceId;
+        buffer = iterator->id;
     }
 
     return true;

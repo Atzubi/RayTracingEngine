@@ -8,120 +8,27 @@
 #include <cstdint>
 #include <vector>
 #include "Object.h"
+#include "Utility.h"
 
-struct RayGeneratorShaderId{
-    int rayGeneratorShaderId;
+struct GenericShaderId: public GenericId {};
 
-    bool operator==(const RayGeneratorShaderId &other) const {
-        return rayGeneratorShaderId == other.rayGeneratorShaderId;
-    }
+struct RayGeneratorShaderId: public GenericShaderId {};
+struct HitShaderId: public GenericShaderId {};
+struct OcclusionShaderId: public GenericShaderId {};
+struct PierceShaderId: public GenericShaderId {};
+struct MissShaderId: public GenericShaderId {};
+struct ShaderResourceId: public GenericShaderId {};
 
-    bool operator<(const RayGeneratorShaderId &other) const {
-        return rayGeneratorShaderId < other.rayGeneratorShaderId;
-    }
-};
+// Compiler macros
+DEFINE_STD_HASH_SPECIALIZATION(RayGeneratorShaderId);
+DEFINE_STD_HASH_SPECIALIZATION(HitShaderId);
+DEFINE_STD_HASH_SPECIALIZATION(OcclusionShaderId);
+DEFINE_STD_HASH_SPECIALIZATION(PierceShaderId);
+DEFINE_STD_HASH_SPECIALIZATION(MissShaderId);
+DEFINE_STD_HASH_SPECIALIZATION(ShaderResourceId);
 
-template<>
-struct std::hash<RayGeneratorShaderId>{
-    std::size_t operator()(const RayGeneratorShaderId& k) const{
-        return std::hash<int>()(k.rayGeneratorShaderId);
-    }
-};
 
-struct HitShaderId{
-    int hitShaderId;
 
-    bool operator==(const HitShaderId &other) const {
-        return hitShaderId == other.hitShaderId;
-    }
-
-    bool operator<(const HitShaderId &other) const {
-        return hitShaderId < other.hitShaderId;
-    }
-};
-
-template<>
-struct std::hash<HitShaderId>{
-    std::size_t operator()(const HitShaderId& k) const{
-        return std::hash<int>()(k.hitShaderId);
-    }
-};
-
-struct OcclusionShaderId{
-    int occlusionShaderId;
-
-    bool operator==(const OcclusionShaderId &other) const {
-        return occlusionShaderId == other.occlusionShaderId;
-    }
-
-    bool operator<(const OcclusionShaderId &other) const {
-        return occlusionShaderId < other.occlusionShaderId;
-    }
-};
-
-template<>
-struct std::hash<OcclusionShaderId>{
-    std::size_t operator()(const OcclusionShaderId& k) const{
-        return std::hash<int>()(k.occlusionShaderId);
-    }
-};
-
-struct PierceShaderId{
-    int pierceShaderId;
-
-    bool operator==(const PierceShaderId &other) const {
-        return pierceShaderId == other.pierceShaderId;
-    }
-
-    bool operator<(const PierceShaderId &other) const {
-        return pierceShaderId < other.pierceShaderId;
-    }
-};
-
-template<>
-struct std::hash<PierceShaderId>{
-    std::size_t operator()(const PierceShaderId& k) const{
-        return std::hash<int>()(k.pierceShaderId);
-    }
-};
-
-struct MissShaderId{
-    int missShaderId;
-
-    bool operator==(const MissShaderId &other) const {
-        return missShaderId == other.missShaderId;
-    }
-
-    bool operator<(const MissShaderId &other) const {
-        return missShaderId < other.missShaderId;
-    }
-};
-
-template<>
-struct std::hash<MissShaderId>{
-    std::size_t operator()(const MissShaderId& k) const{
-        return std::hash<int>()(k.missShaderId);
-    }
-};
-
-struct ShaderResourceId{
-    int shaderResourceId;
-
-    bool operator==(const ShaderResourceId &other) const {
-        return shaderResourceId == other.shaderResourceId;
-    }
-
-    bool operator<(const ShaderResourceId &other) const {
-        return shaderResourceId < other.shaderResourceId;
-    }
-};
-
-template<>
-struct std::hash<ShaderResourceId>{
-    std::size_t operator()(const ShaderResourceId& k) const{
-        return std::hash<int>()(k.shaderResourceId);
-    }
-};
 
 struct RayGeneratorShaderResourcePackage{
     RayGeneratorShaderId shaderId;
