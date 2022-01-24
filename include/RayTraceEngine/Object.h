@@ -95,7 +95,7 @@ public:
      * Computes the axis aligned bounding box of this object.
      * @return An axis aligned bounding box of this object.
      */
-    virtual BoundingBox getBoundaries() = 0;
+    [[nodiscard]] virtual BoundingBox getBoundaries() const = 0;
 
     /**
      * Computes the first intersection of a ray with this object.
@@ -103,7 +103,7 @@ public:
      * @param ray               The ray that is used for the intersection calculation.
      * @return                  Returns true if there is an intersection, false otherwise.
      */
-    virtual bool intersectFirst(IntersectionInfo *intersectionInfo, Ray *ray) = 0;
+    virtual bool intersectFirst(IntersectionInfo *intersectionInfo, Ray *ray) const = 0;
 
     /**
      * Computes the first intersection of a ray with this object.
@@ -111,7 +111,7 @@ public:
      * @param ray               The ray that is used for the intersection calculation.
      * @return                  Returns true if there is an intersection, false otherwise.
      */
-    virtual bool intersectAny(IntersectionInfo *intersectionInfo, Ray *ray) = 0;
+    virtual bool intersectAny(IntersectionInfo *intersectionInfo, Ray *ray) const = 0;
 
     /**
      * Computes all intersections of a ray with this object.
@@ -120,22 +120,22 @@ public:
      * @param ray               The ray that is used for the intersection calculation.
      * @return                  Returns true if there is at least one intersection, false otherwise.
      */
-    virtual bool intersectAll(std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray) = 0;
+    virtual bool intersectAll(std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray) const = 0;
 
     /**
      * Computes the effective surface area of this object.
      * @return The surface area of this object.
      */
-    virtual double getSurfaceArea() = 0;
+    [[nodiscard]] virtual double getSurfaceArea() const = 0;
 
-    virtual ObjectCapsule getCapsule() = 0;
+    [[nodiscard]] virtual ObjectCapsule getCapsule() const = 0;
 
     /**
      * Tests whether the object in question is identical to this object.
      * @param object    Another object.
      * @return          True if they are equal, false otherwise.
      */
-    virtual bool operator==(Object *object) = 0;
+    virtual bool operator==(const Object &object) const = 0;
 };
 
 #endif //RAYTRACECORE_OBJECT_H

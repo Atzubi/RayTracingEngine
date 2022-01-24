@@ -55,7 +55,7 @@ public:
      * Computes the axis aligned bounding box of this object.
      * @return An axis aligned bounding box of this object.
      */
-    BoundingBox getBoundaries() override;
+    [[nodiscard]] BoundingBox getBoundaries() const override;
 
     /**
      * Computes the first intersection of a ray with this object.
@@ -63,7 +63,7 @@ public:
      * @param ray               The ray that is used for the intersection calculation.
      * @return                  Returns true if there is an intersection, false otherwise.
      */
-    bool intersectFirst(IntersectionInfo *intersectionInfo, Ray *ray) override;
+    bool intersectFirst(IntersectionInfo *intersectionInfo, Ray *ray) const override;
 
     /**
      * Computes the first intersection of a ray with this object.
@@ -71,7 +71,7 @@ public:
      * @param ray               The ray that is used for the intersection calculation.
      * @return                  Returns true if there is an intersection, false otherwise.
      */
-    bool intersectAny(IntersectionInfo *intersectionInfo, Ray *ray) override;
+    bool intersectAny(IntersectionInfo *intersectionInfo, Ray *ray) const override;
 
     /**
      * Computes all intersections of a ray with this object.
@@ -80,7 +80,7 @@ public:
      * @param ray               The ray that is used for the intersection calculation.
      * @return                  Returns true if there is at least one intersection, false otherwise.
      */
-    bool intersectAll(std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray) override;
+    bool intersectAll(std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray) const override;
 
     /**
      * Makes a perfect clone of this object.
@@ -92,16 +92,16 @@ public:
      * Computes the effective surface area of this object.
      * @return The surface area of this object.
      */
-    double getSurfaceArea() override;
+    [[nodiscard]] double getSurfaceArea() const override;
 
-    ObjectCapsule getCapsule() override;
+    [[nodiscard]] ObjectCapsule getCapsule() const override;
 
     /**
      * Tests whether the object in question is identical to this object.
      * @param object    Another object.
      * @return          True if they are equal, false otherwise.
      */
-    bool operator==(Object *object) override;
+    bool operator==(const Object &object) const override;
 };
 
 #endif //RAYTRACECORE_TRIANGLEMESHOBJECT_H

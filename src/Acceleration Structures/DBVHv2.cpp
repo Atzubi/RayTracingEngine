@@ -865,11 +865,11 @@ static void add(DBVHNode *currentNode, std::vector<Object *> *objects, uint8_t d
     optimizeSAH(node);
 }
 
-static void remove(DBVHNode *currentNode, Object *object) {
-    if (contains(currentNode->boundingBox, object->getBoundaries())) {
+static void remove(DBVHNode *currentNode, const Object &object) {
+    if (contains(currentNode->boundingBox, object.getBoundaries())) {
         if (currentNode->maxDepthLeft > 1) {
             auto child = currentNode->leftChild;
-            if (contains(child->boundingBox, object->getBoundaries())) {
+            if (contains(child->boundingBox, object.getBoundaries())) {
                 if (child->maxDepthLeft == 1) {
                     auto grandChild = child->leftLeaf;
                     if (grandChild->operator==(object)) {
@@ -901,7 +901,7 @@ static void remove(DBVHNode *currentNode, Object *object) {
         }
         if (currentNode->maxDepthRight > 1) {
             auto child = currentNode->rightChild;
-            if (contains(child->boundingBox, object->getBoundaries())) {
+            if (contains(child->boundingBox, object.getBoundaries())) {
                 if (child->maxDepthLeft == 1) {
                     auto grandChild = child->leftLeaf;
                     if (grandChild->operator==(object)) {
@@ -939,7 +939,7 @@ static void remove(DBVHNode *currentNode, Object *object) {
 }
 
 static bool traverseALl(DBVHNode *root, std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray) {
-    if(root->maxDepthRight >= 64 || root->maxDepthLeft >= 64) {
+    if (root->maxDepthRight >= 64 || root->maxDepthLeft >= 64) {
         auto **stack = new DBVHNode *[root->maxDepthRight > root->maxDepthLeft ? root->maxDepthRight + 1 :
                                       root->maxDepthLeft + 1];
         uint64_t stackPointer = 1;
@@ -998,7 +998,7 @@ static bool traverseALl(DBVHNode *root, std::vector<IntersectionInfo *> *interse
 
         delete[] stack;
         return false;
-    }else{
+    } else {
         DBVHNode *stack[64];
         uint64_t stackPointer = 1;
         stack[0] = root;
@@ -1064,7 +1064,7 @@ struct TraversalContainer {
 };
 
 static bool traverseFirst(DBVHNode *root, IntersectionInfo *intersectionInfo, Ray *ray) {
-    if(root->maxDepthRight >= 64 || root->maxDepthLeft >= 64) {
+    if (root->maxDepthRight >= 64 || root->maxDepthLeft >= 64) {
         bool hit = false;
 
         auto *stack = new TraversalContainer[root->maxDepthRight > root->maxDepthLeft ? root->maxDepthRight + 1
@@ -1143,7 +1143,7 @@ static bool traverseFirst(DBVHNode *root, IntersectionInfo *intersectionInfo, Ra
 
         delete[] stack;
         return hit;
-    }else{
+    } else {
         bool hit = false;
 
         TraversalContainer stack[64];
@@ -1224,7 +1224,7 @@ static bool traverseFirst(DBVHNode *root, IntersectionInfo *intersectionInfo, Ra
 }
 
 static bool traverseAny(DBVHNode *root, IntersectionInfo *intersectionInfo, Ray *ray) {
-    if(root->maxDepthRight >= 64 || root->maxDepthLeft >= 64) {
+    if (root->maxDepthRight >= 64 || root->maxDepthLeft >= 64) {
         auto **stack = new DBVHNode *[root->maxDepthRight > root->maxDepthLeft ? root->maxDepthRight + 1 :
                                       root->maxDepthLeft + 1];
         uint64_t stackPointer = 1;
@@ -1283,7 +1283,7 @@ static bool traverseAny(DBVHNode *root, IntersectionInfo *intersectionInfo, Ray 
 
         delete[] stack;
         return false;
-    }else{
+    } else {
         DBVHNode *stack[64];
         uint64_t stackPointer = 1;
         stack[0] = root;
@@ -1362,107 +1362,146 @@ void DBVHv2::addObjects(DBVHNode *root, std::vector<Object *> *objects) {
     add(root, objects, 1);
 }
 
-void DBVHv2::removeObjects(DBVHNode *root, std::vector<Object *> *objects) {
-    if (root == nullptr) return;
+bool isEmpty(const DBVHNode &root) {
+    return root.maxDepthLeft == 0;
+}
+
+bool isLastElement(const DBVHNode &root) {
+    return root.maxDepthRight == 0;
+}
+
+bool isLastElementLeft(const DBVHNode &root) {
+    return root.maxDepthLeft == 1;
+}
+
+bool isLastElementRight(const DBVHNode &root){
+    return root.maxDepthRight == 1;
+}
+
+void removeLastChild(DBVHNode &root) {
+    root.maxDepthLeft = 0;
+    root.surfaceArea = 0;
+    root.leftLeaf = nullptr;
+}
+
+void removeSecondToLastChildLeft(DBVHNode &root) {
+    root.leftLeaf = root.rightLeaf;
+    root.rightLeaf = nullptr;
+    root.maxDepthRight = 0;
+    root.boundingBox = root.leftLeaf->getBoundaries();
+    root.surfaceArea = root.leftLeaf->getSurfaceArea();
+}
+
+void removeSecondToLastChildRight(DBVHNode &root) {
+    root.rightLeaf = nullptr;
+    root.maxDepthRight = 0;
+    root.boundingBox = root.leftLeaf->getBoundaries();
+    root.surfaceArea = root.leftLeaf->getSurfaceArea();
+}
+
+void replaceRootWithChild(DBVHNode& root, const DBVHNode& child){
+    if(isLastElementLeft(child)){
+        root.leftLeaf = child.leftLeaf;
+    }else{
+        root.leftChild = child.leftChild;
+    }
+    if(isLastElementRight(child)){
+        root.rightLeaf = child.rightLeaf;
+    }else{
+        root.rightChild = child.rightChild;
+    }
+
+    root.maxDepthLeft = child.maxDepthLeft;
+    root.maxDepthRight = child.maxDepthRight;
+    root.boundingBox = child.boundingBox;
+    root.surfaceArea = child.surfaceArea;
+}
+
+void replaceRootWithRightChild(DBVHNode &root){
+    replaceRootWithChild(root, *root.rightChild);
+}
+
+void replaceRootWithLeftChild(DBVHNode &root){
+    replaceRootWithChild(root, *root.leftChild);
+}
+
+bool removeSpecialCases(DBVHNode *root, const Object& object){
+    if (isLastElement(*root)) {
+        if (*root->leftLeaf == object) {
+            removeLastChild(*root);
+            return true;
+        }
+    } else if (isLastElementLeft(*root) && *root->leftLeaf == object) {
+        if(isLastElementRight(*root)) {
+            removeSecondToLastChildLeft(*root);
+        }else{
+            replaceRootWithRightChild(*root);
+        }
+        return true;
+    } else if (isLastElementRight(*root) && *root->rightLeaf == object) {
+        if(isLastElementLeft(*root)){
+            removeSecondToLastChildRight(*root);
+        }else{
+            replaceRootWithLeftChild(*root);
+        }
+        return true;
+    }
+    return false;
+}
+
+void DBVHv2::removeObjects(DBVHNode *root, const std::vector<Object *> &objects) {
+    if (!root) return;
     // find object in tree by insertion
     // remove object and refit nodes going the tree back up
-    for (auto &object: *objects) {
-        if (root->maxDepthLeft == 0) return;
-        if (root->maxDepthRight == 0) {
-            if (root->leftLeaf->operator==(object)) {
-                root->maxDepthLeft = 0;
-                root->surfaceArea = 0;
-                root->leftLeaf = nullptr;
-                return;
-            }
-            continue;
+    for (const auto &object: objects) {
+        if (isEmpty(*root)) return;
+        if(!removeSpecialCases(root, *object)){
+            remove(root, *object);
         }
-        if (root->maxDepthLeft == 1) {
-            if (root->leftLeaf->operator==(object)) {
-                if (root->maxDepthRight == 1) {
-                    root->leftLeaf = root->rightLeaf;
-                    root->rightLeaf = nullptr;
-                    root->maxDepthRight = 0;
-                    root->boundingBox = root->leftLeaf->getBoundaries();
-                    root->surfaceArea = root->leftLeaf->getSurfaceArea();
-                } else {
-                    root->leftLeaf = nullptr;
-                    root->maxDepthLeft = 0;
-                    root->surfaceArea = 0;
-                    return;
-                }
-                continue;
-            }
-        }
-        if (root->maxDepthRight == 1) {
-            if (root->rightLeaf->operator==(object)) {
-                root->rightLeaf = nullptr;
-                root->maxDepthRight = 0;
-                root->boundingBox = root->leftLeaf->getBoundaries();
-                root->surfaceArea = root->leftLeaf->getSurfaceArea();
-                continue;
-            }
-        }
-        remove(root, object);
     }
 }
 
 bool DBVHv2::intersectFirst(DBVHNode *root, IntersectionInfo *intersectionInfo, Ray *ray) {
+    if (!root || isEmpty(*root)) return false;
     bool hit;
 
-    if (root == nullptr) return false;
-
-    if (root->maxDepthLeft == 0) {
-        return false;
+    if (isLastElement(*root)) {
+        hit = root->leftLeaf->intersectFirst(intersectionInfo, ray);
     } else {
-        if (root->maxDepthRight == 0) {
-            hit = root->leftLeaf->intersectFirst(intersectionInfo, ray);
-        } else {
-            hit = traverseFirst(root, intersectionInfo, ray);
-        }
+        hit = traverseFirst(root, intersectionInfo, ray);
     }
 
     return hit;
 }
 
 bool DBVHv2::intersectAny(DBVHNode *root, IntersectionInfo *intersectionInfo, Ray *ray) {
+    if (!root || isEmpty(*root)) return false;
     bool hit;
 
-    if (root == nullptr) return false;
-
-    if (root->maxDepthLeft == 0) {
-        return false;
+    if (isLastElement(*root)) {
+        hit = root->leftLeaf->intersectAny(intersectionInfo, ray);
     } else {
-        if (root->maxDepthRight == 0) {
-            hit = root->leftLeaf->intersectAny(intersectionInfo, ray);
-        } else {
-            hit = traverseAny(root, intersectionInfo, ray);
-        }
+        hit = traverseAny(root, intersectionInfo, ray);
     }
 
     return hit;
 }
 
 bool DBVHv2::intersectAll(DBVHNode *root, std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray) {
+    if (!root || isEmpty(*root)) return false;
     bool hit;
 
-    if (root == nullptr) return false;
-
-    if (root->maxDepthLeft == 0) {
-        return false;
+    if (isLastElement(*root)) {
+        hit = root->leftLeaf->intersectAll(intersectionInfo, ray);
     } else {
-        if (root->maxDepthRight == 0) {
-            hit = root->leftLeaf->intersectAll(intersectionInfo, ray);
-        } else {
-            hit = traverseALl(root, intersectionInfo, ray);
-        }
+        hit = traverseALl(root, intersectionInfo, ray);
     }
 
     return hit;
 }
 
 void DBVHv2::deleteTree(DBVHNode *root) {
-    if (root->maxDepthLeft == 1 && root->maxDepthRight == 1) {
+    if (isLastElementLeft(*root) && isLastElementRight(*root)) {
         delete root;
         return;
     }

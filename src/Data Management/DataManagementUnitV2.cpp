@@ -302,8 +302,8 @@ bool DataManagementUnitV2::removePipelineObject(PipelineId pipelineId, InstanceI
             auto pipeline = engineNode->requestPipelineFragment(pipelineId);
             auto geometry = pipeline->getGeometry();
             auto instance = engineNode->requestInstanceData(objectInstanceId);
-            std::vector<Object *> remove = {instance};
-            DBVHv2::removeObjects(geometry, &remove);
+            std::vector<Object *> remove{instance};
+            DBVHv2::removeObjects(geometry, remove);
             return engineNode->deleteInstanceDataFragment(objectInstanceId);
         } else {
             // TODO: delete instance on other nodes

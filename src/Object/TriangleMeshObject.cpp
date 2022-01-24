@@ -18,7 +18,7 @@ public:
         return nullptr;
     }
 
-    BoundingBox getBoundaries() override {
+    [[nodiscard]] BoundingBox getBoundaries() const override {
         Vector3D vertex1 = mesh->vertices[mesh->indices[pos]].position;
         Vector3D vertex2 = mesh->vertices[mesh->indices[pos + 1]].position;
         Vector3D vertex3 = mesh->vertices[mesh->indices[pos + 2]].position;
@@ -63,7 +63,7 @@ public:
         return {front, back};
     }
 
-    bool intersectFirst(IntersectionInfo *intersectionInfo, Ray *ray) override {
+    bool intersectFirst(IntersectionInfo *intersectionInfo, Ray *ray) const override {
         Vector3D vertex1 = mesh->vertices[mesh->indices[pos]].position;
         Vector3D vertex2 = mesh->vertices[mesh->indices[pos + 1]].position;
         Vector3D vertex3 = mesh->vertices[mesh->indices[pos + 2]].position;
@@ -165,11 +165,11 @@ public:
         return true;
     }
 
-    bool intersectAny(IntersectionInfo *intersectionInfo, Ray *ray) override {
+    bool intersectAny(IntersectionInfo *intersectionInfo, Ray *ray) const override {
         return intersectFirst(intersectionInfo, ray);
     }
 
-    bool intersectAll(std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray) override {
+    bool intersectAll(std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray) const override {
         auto *info = new IntersectionInfo();
         *info = {false, std::numeric_limits<double>::max(), ray->origin, ray->direction, 0, 0,
                  0, 0, 0};
@@ -178,17 +178,17 @@ public:
         return hit;
     }
 
-    double getSurfaceArea() override {
+    [[nodiscard]] double getSurfaceArea() const override {
         return getBoundaries().getSA();
     }
 
-    ObjectCapsule getCapsule() override {
+    [[nodiscard]] ObjectCapsule getCapsule() const override {
         ObjectCapsule capsule{-1, getBoundaries(), getSurfaceArea()};
         return capsule;
     }
 
-    bool operator==(Object *object) override {
-        auto *triangle = dynamic_cast<Triangle *>(object);
+    bool operator==(const Object &object) const override {
+        const auto *triangle = dynamic_cast<const Triangle *>(&object);
         if (triangle == nullptr) {
             return false;
         } else {
@@ -240,20 +240,20 @@ TriangleMeshObject::~TriangleMeshObject() {
     DBVHv2::deleteTree(structure);
 };
 
-BoundingBox TriangleMeshObject::getBoundaries() {
+BoundingBox TriangleMeshObject::getBoundaries() const {
     return structure->boundingBox;
 }
 
-bool TriangleMeshObject::intersectFirst(IntersectionInfo *intersectionInfo, Ray *ray) {
+bool TriangleMeshObject::intersectFirst(IntersectionInfo *intersectionInfo, Ray *ray) const {
     return DBVHv2::intersectFirst(structure, intersectionInfo, ray);
 
 }
 
-bool TriangleMeshObject::intersectAny(IntersectionInfo *intersectionInfo, Ray *ray) {
+bool TriangleMeshObject::intersectAny(IntersectionInfo *intersectionInfo, Ray *ray) const {
     return DBVHv2::intersectAny(structure, intersectionInfo, ray);
 }
 
-bool TriangleMeshObject::intersectAll(std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray) {
+bool TriangleMeshObject::intersectAll(std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray) const {
     return DBVHv2::intersectAll(structure, intersectionInfo, ray);
 }
 
@@ -262,16 +262,16 @@ Object *TriangleMeshObject::clone() {
     return new TriangleMeshObject(&vertices, &indices, &material);
 }
 
-double TriangleMeshObject::getSurfaceArea() {
+double TriangleMeshObject::getSurfaceArea() const {
     return structure->surfaceArea;
 }
 
-bool TriangleMeshObject::operator==(Object *object) {
+bool TriangleMeshObject::operator==(const Object &object) const {
     // TODO
     return false;
 }
 
-ObjectCapsule TriangleMeshObject::getCapsule() {
+ObjectCapsule TriangleMeshObject::getCapsule() const{
     ObjectCapsule capsule{-1, getBoundaries(), getSurfaceArea()};
     return capsule;
 }

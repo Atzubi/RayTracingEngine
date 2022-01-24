@@ -33,19 +33,19 @@ public:
 
     Object *clone() override;
 
-    BoundingBox getBoundaries() override;
+    [[nodiscard]] BoundingBox getBoundaries() const override;
 
-    bool intersectFirst(IntersectionInfo *intersectionInfo, Ray *ray) override;
+    bool intersectFirst(IntersectionInfo *intersectionInfo, Ray *ray) const override;
 
-    bool intersectAny(IntersectionInfo *intersectionInfo, Ray *ray) override;
+    bool intersectAny(IntersectionInfo *intersectionInfo, Ray *ray) const override;
 
-    bool intersectAll(std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray) override;
+    bool intersectAll(std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray) const override;
 
-    double getSurfaceArea() override;
+    [[nodiscard]] double getSurfaceArea() const override;
 
-    ObjectCapsule getCapsule() override;
+    [[nodiscard]] ObjectCapsule getCapsule() const override;
 
-    bool operator==(Object *object) override;
+    bool operator==(const Object &object) const override;
 };
 
 #endif //RAYTRACECORE_INSTANCE_H

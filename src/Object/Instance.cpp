@@ -186,14 +186,14 @@ void Instance::invalidateCache() {
 
 Instance::~Instance() = default;
 
-bool Instance::intersectFirst(IntersectionInfo *intersectionInfo, Ray *ray) {
+bool Instance::intersectFirst(IntersectionInfo *intersectionInfo, Ray *ray) const {
     Object *baseObject;
     if (objectCached) {
         baseObject = objectCache;
     } else {
         baseObject = engineNode->requestBaseData(baseObjectId);
-        objectCache = baseObject;
-        objectCached = true;
+        /*objectCache = baseObject;     temporarily removed cashing
+        objectCached = true;*/
     }
 
     Ray newRay = *ray;
@@ -332,7 +332,7 @@ bool Instance::intersectFirst(IntersectionInfo *intersectionInfo, Ray *ray) {
     return false;
 }
 
-bool Instance::intersectAny(IntersectionInfo *intersectionInfo, Ray *ray) {
+bool Instance::intersectAny(IntersectionInfo *intersectionInfo, Ray *ray) const {
     Object *baseObject;
     if (objectCached) {
         baseObject = objectCache;
@@ -472,7 +472,7 @@ bool Instance::intersectAny(IntersectionInfo *intersectionInfo, Ray *ray) {
     return hit;
 }
 
-bool Instance::intersectAll(std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray) {
+bool Instance::intersectAll(std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray) const {
     Object *baseObject;
     if (objectCached) {
         baseObject = objectCache;
@@ -611,7 +611,7 @@ bool Instance::intersectAll(std::vector<IntersectionInfo *> *intersectionInfo, R
     return hit;
 }
 
-BoundingBox Instance::getBoundaries() {
+BoundingBox Instance::getBoundaries() const {
     return boundingBox;
 }
 
@@ -619,12 +619,12 @@ Object *Instance::clone() {
     return nullptr;
 }
 
-double Instance::getSurfaceArea() {
+double Instance::getSurfaceArea() const {
     return cost + boundingBox.getSA(); // TODO: fix math
 }
 
-bool Instance::operator==(Object *object) {
-    auto obj = dynamic_cast<Instance *>(object);
+bool Instance::operator==(const Object &object) const {
+    const auto obj = dynamic_cast<const Instance *>(&object);
     if (obj == nullptr) return false;
     if (obj->baseObjectId.objectId == baseObjectId.objectId) {
         return obj->transform.elements[0][0] == transform.elements[0][0] &&
@@ -647,7 +647,7 @@ bool Instance::operator==(Object *object) {
     return false;
 }
 
-ObjectCapsule Instance::getCapsule() {
+ObjectCapsule Instance::getCapsule() const {
     ObjectCapsule capsule{-1, getBoundaries(), getSurfaceArea()};
     return capsule;
 }
