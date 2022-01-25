@@ -208,6 +208,10 @@ public:
         }
     }
 
+    bool operator!=(const Object &object) const override {
+        return !operator==(object);
+    }
+
     ~Triangle() override = default;
 };
 
@@ -269,6 +273,10 @@ double TriangleMeshObject::getSurfaceArea() const {
 bool TriangleMeshObject::operator==(const Object &object) const {
     // TODO
     return false;
+}
+
+bool TriangleMeshObject::operator!=(const Object &object) const {
+    return !operator==(object);
 }
 
 ObjectCapsule TriangleMeshObject::getCapsule() const{

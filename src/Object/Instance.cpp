@@ -647,6 +647,10 @@ bool Instance::operator==(const Object &object) const {
     return false;
 }
 
+bool Instance::operator!=(const Object &object) const {
+    return !operator==(object);
+}
+
 ObjectCapsule Instance::getCapsule() const {
     ObjectCapsule capsule{-1, getBoundaries(), getSurfaceArea()};
     return capsule;

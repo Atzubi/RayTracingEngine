@@ -136,6 +136,8 @@ public:
      * @return          True if they are equal, false otherwise.
      */
     virtual bool operator==(const Object &object) const = 0;
+
+    virtual bool operator!=(const Object &object) const = 0;
 };
 
 #endif //RAYTRACECORE_OBJECT_H

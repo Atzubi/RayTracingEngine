@@ -6,6 +6,22 @@
 #include <limits>
 #include "DBVHv2.h"
 
+bool isEmpty(const DBVHNode &root) {
+    return root.maxDepthLeft == 0;
+}
+
+bool isLastElement(const DBVHNode &root) {
+    return root.maxDepthRight == 0;
+}
+
+bool isLastElementLeft(const DBVHNode &root) {
+    return root.maxDepthLeft == 1;
+}
+
+bool isLastElementRight(const DBVHNode &root) {
+    return root.maxDepthRight == 1;
+}
+
 static void refit(BoundingBox *target, BoundingBox resizeBy) {
     target->minCorner.x = std::min(target->minCorner.x, resizeBy.minCorner.x);
     target->minCorner.y = std::min(target->minCorner.y, resizeBy.minCorner.y);
@@ -865,77 +881,100 @@ static void add(DBVHNode *currentNode, std::vector<Object *> *objects, uint8_t d
     optimizeSAH(node);
 }
 
-static void remove(DBVHNode *currentNode, const Object &object) {
-    if (contains(currentNode->boundingBox, object.getBoundaries())) {
-        if (currentNode->maxDepthLeft > 1) {
-            auto child = currentNode->leftChild;
-            if (contains(child->boundingBox, object.getBoundaries())) {
-                if (child->maxDepthLeft == 1) {
-                    auto grandChild = child->leftLeaf;
-                    if (grandChild->operator==(object)) {
-                        if (child->maxDepthRight == 1) {
-                            currentNode->leftLeaf = child->rightLeaf;
-                        } else {
-                            currentNode->leftChild = child->rightChild;
-                        }
-                        delete child;
-                        refit(currentNode);
-                        return;
-                    }
-                }
-                if (child->maxDepthRight == 1) {
-                    auto grandChild = child->rightLeaf;
-                    if (grandChild->operator==(object)) {
-                        if (child->maxDepthLeft == 1) {
-                            currentNode->leftLeaf = child->leftLeaf;
-                        } else {
-                            currentNode->leftChild = child->leftChild;
-                        }
-                        delete child;
-                        refit(currentNode);
-                        return;
-                    }
-                }
-            }
-            remove(currentNode->leftChild, object);
-        }
-        if (currentNode->maxDepthRight > 1) {
-            auto child = currentNode->rightChild;
-            if (contains(child->boundingBox, object.getBoundaries())) {
-                if (child->maxDepthLeft == 1) {
-                    auto grandChild = child->leftLeaf;
-                    if (grandChild->operator==(object)) {
-                        if (child->maxDepthRight == 1) {
-                            currentNode->rightLeaf = child->rightLeaf;
-                        } else {
-                            currentNode->rightChild = child->rightChild;
-                        }
-                        delete child;
-                        refit(currentNode);
-                        return;
-                    }
-                }
-                if (child->maxDepthRight == 1) {
-                    auto grandChild = child->rightLeaf;
-                    if (grandChild->operator==(object)) {
-                        if (child->maxDepthLeft == 1) {
-                            currentNode->rightLeaf = child->leftLeaf;
-                        } else {
-                            currentNode->rightChild = child->leftChild;
-                        }
-                        delete child;
-                        refit(currentNode);
-                        return;
-                    }
-                }
-            }
-            remove(currentNode->rightChild, object);
-        }
+static bool removeRightLeftGrandChild(DBVHNode *currentNode, DBVHNode *child, const Object &object) {
+    auto grandChild = child->leftLeaf;
+    if (*grandChild != object) return false;
 
-        refit(currentNode);
-
-        optimizeSAH(currentNode);
+    if (isLastElementRight(*child)) {
+        currentNode->rightLeaf = child->rightLeaf;
+    } else {
+        currentNode->rightChild = child->rightChild;
     }
+    delete child;
+    refit(currentNode);
+    return true;
+}
+
+static bool removeRightRightGrandChild(DBVHNode *currentNode, DBVHNode *child, const Object &object) {
+    auto grandChild = child->rightLeaf;
+    if (*grandChild != object) return false;
+
+    if (isLastElementLeft(*child)) {
+        currentNode->rightLeaf = child->leftLeaf;
+    } else {
+        currentNode->rightChild = child->leftChild;
+    }
+    delete child;
+    refit(currentNode);
+    return true;
+}
+
+static bool removeRightLeaf(DBVHNode *currentNode, const Object &object) {
+    if (isLastElementRight(*currentNode)) return true;
+    auto child = currentNode->rightChild;
+    if (!contains(child->boundingBox, object.getBoundaries())) return false;
+
+    if (isLastElementLeft(*child)) {
+        return removeRightLeftGrandChild(currentNode, child, object);
+    }
+    if (isLastElementRight(*child)) {
+        return removeRightRightGrandChild(currentNode, child, object);
+    }
+    return false;
+}
+
+static bool removeLeftLeftGrandChild(DBVHNode *currentNode, DBVHNode *child, const Object &object) {
+    auto grandChild = child->leftLeaf;
+    if (*grandChild != object) return false;
+
+    if (isLastElementRight(*child)) {
+        currentNode->leftLeaf = child->rightLeaf;
+    } else {
+        currentNode->leftChild = child->rightChild;
+    }
+    delete child;
+    refit(currentNode);
+    return true;
+}
+
+static bool removeLeftRightGrandChild(DBVHNode *currentNode, DBVHNode *child, const Object &object) {
+    auto grandChild = child->rightLeaf;
+    if (*grandChild != object) return false;
+
+    if (isLastElementLeft(*child)) {
+        currentNode->leftLeaf = child->leftLeaf;
+    } else {
+        currentNode->leftChild = child->leftChild;
+    }
+    delete child;
+    refit(currentNode);
+    return true;
+}
+
+static bool removeLeftLeaf(DBVHNode *currentNode, const Object &object) {
+    if (isLastElementLeft(*currentNode)) return true;
+    auto child = currentNode->leftChild;
+    if (!contains(child->boundingBox, object.getBoundaries())) return false;
+
+    if (isLastElementLeft(*child)) {
+        return removeLeftLeftGrandChild(currentNode, child, object);
+    }
+    if (isLastElementRight(*child)) {
+        return removeLeftRightGrandChild(currentNode, child, object);
+    }
+    return false;
+}
+
+static void remove(DBVHNode *currentNode, const Object &object) {
+    // find object in tree by insertion
+    // remove object and refit nodes going the tree back up
+    if (!contains(currentNode->boundingBox, object.getBoundaries())) return;
+    if (removeLeftLeaf(currentNode, object) || removeRightLeaf(currentNode, object)) return;
+    remove(currentNode->leftChild, object);
+    remove(currentNode->rightChild, object);
+
+    refit(currentNode);
+    optimizeSAH(currentNode);
 }
 
 static bool traverseALl(DBVHNode *root, std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray) {
@@ -1362,22 +1401,6 @@ void DBVHv2::addObjects(DBVHNode *root, std::vector<Object *> *objects) {
     add(root, objects, 1);
 }
 
-bool isEmpty(const DBVHNode &root) {
-    return root.maxDepthLeft == 0;
-}
-
-bool isLastElement(const DBVHNode &root) {
-    return root.maxDepthRight == 0;
-}
-
-bool isLastElementLeft(const DBVHNode &root) {
-    return root.maxDepthLeft == 1;
-}
-
-bool isLastElementRight(const DBVHNode &root){
-    return root.maxDepthRight == 1;
-}
-
 void removeLastChild(DBVHNode &root) {
     root.maxDepthLeft = 0;
     root.surfaceArea = 0;
@@ -1399,15 +1422,15 @@ void removeSecondToLastChildRight(DBVHNode &root) {
     root.surfaceArea = root.leftLeaf->getSurfaceArea();
 }
 
-void replaceRootWithChild(DBVHNode& root, const DBVHNode& child){
-    if(isLastElementLeft(child)){
+void replaceRootWithChild(DBVHNode &root, const DBVHNode &child) {
+    if (isLastElementLeft(child)) {
         root.leftLeaf = child.leftLeaf;
-    }else{
+    } else {
         root.leftChild = child.leftChild;
     }
-    if(isLastElementRight(child)){
+    if (isLastElementRight(child)) {
         root.rightLeaf = child.rightLeaf;
-    }else{
+    } else {
         root.rightChild = child.rightChild;
     }
 
@@ -1417,31 +1440,31 @@ void replaceRootWithChild(DBVHNode& root, const DBVHNode& child){
     root.surfaceArea = child.surfaceArea;
 }
 
-void replaceRootWithRightChild(DBVHNode &root){
+void replaceRootWithRightChild(DBVHNode &root) {
     replaceRootWithChild(root, *root.rightChild);
 }
 
-void replaceRootWithLeftChild(DBVHNode &root){
+void replaceRootWithLeftChild(DBVHNode &root) {
     replaceRootWithChild(root, *root.leftChild);
 }
 
-bool removeSpecialCases(DBVHNode *root, const Object& object){
+bool removeSpecialCases(DBVHNode *root, const Object &object) {
     if (isLastElement(*root)) {
         if (*root->leftLeaf == object) {
             removeLastChild(*root);
             return true;
         }
     } else if (isLastElementLeft(*root) && *root->leftLeaf == object) {
-        if(isLastElementRight(*root)) {
+        if (isLastElementRight(*root)) {
             removeSecondToLastChildLeft(*root);
-        }else{
+        } else {
             replaceRootWithRightChild(*root);
         }
         return true;
     } else if (isLastElementRight(*root) && *root->rightLeaf == object) {
-        if(isLastElementLeft(*root)){
+        if (isLastElementLeft(*root)) {
             removeSecondToLastChildRight(*root);
-        }else{
+        } else {
             replaceRootWithLeftChild(*root);
         }
         return true;
@@ -1451,11 +1474,10 @@ bool removeSpecialCases(DBVHNode *root, const Object& object){
 
 void DBVHv2::removeObjects(DBVHNode *root, const std::vector<Object *> &objects) {
     if (!root) return;
-    // find object in tree by insertion
-    // remove object and refit nodes going the tree back up
+
     for (const auto &object: objects) {
         if (isEmpty(*root)) return;
-        if(!removeSpecialCases(root, *object)){
+        if (!removeSpecialCases(root, *object)) {
             remove(root, *object);
         }
     }

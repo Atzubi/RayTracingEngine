@@ -46,6 +46,8 @@ public:
     [[nodiscard]] ObjectCapsule getCapsule() const override;
 
     bool operator==(const Object &object) const override;
+
+    bool operator!=(const Object &object) const override;
 };
 
 #endif //RAYTRACECORE_INSTANCE_H

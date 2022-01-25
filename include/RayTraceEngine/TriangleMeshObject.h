@@ -102,6 +102,8 @@ public:
      * @return          True if they are equal, false otherwise.
      */
     bool operator==(const Object &object) const override;
+
+    bool operator!=(const Object &object) const override;
 };
 
 #endif //RAYTRACECORE_TRIANGLEMESHOBJECT_H
