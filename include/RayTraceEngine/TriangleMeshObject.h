@@ -63,7 +63,7 @@ public:
      * @param ray               The ray that is used for the intersection calculation.
      * @return                  Returns true if there is an intersection, false otherwise.
      */
-    bool intersectFirst(IntersectionInfo *intersectionInfo, Ray *ray) const override;
+    bool intersectFirst(IntersectionInfo *intersectionInfo, Ray *ray) override;
 
     /**
      * Computes the first intersection of a ray with this object.
@@ -71,7 +71,7 @@ public:
      * @param ray               The ray that is used for the intersection calculation.
      * @return                  Returns true if there is an intersection, false otherwise.
      */
-    bool intersectAny(IntersectionInfo *intersectionInfo, Ray *ray) const override;
+    bool intersectAny(IntersectionInfo *intersectionInfo, Ray *ray) override;
 
     /**
      * Computes all intersections of a ray with this object.
@@ -80,7 +80,7 @@ public:
      * @param ray               The ray that is used for the intersection calculation.
      * @return                  Returns true if there is at least one intersection, false otherwise.
      */
-    bool intersectAll(std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray) const override;
+    bool intersectAll(std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray) override;
 
     /**
      * Makes a perfect clone of this object.

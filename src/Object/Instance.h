@@ -35,11 +35,11 @@ public:
 
     [[nodiscard]] BoundingBox getBoundaries() const override;
 
-    bool intersectFirst(IntersectionInfo *intersectionInfo, Ray *ray) const override;
+    bool intersectFirst(IntersectionInfo *intersectionInfo, Ray *ray) override;
 
-    bool intersectAny(IntersectionInfo *intersectionInfo, Ray *ray) const override;
+    bool intersectAny(IntersectionInfo *intersectionInfo, Ray *ray) override;
 
-    bool intersectAll(std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray) const override;
+    bool intersectAll(std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray) override;
 
     [[nodiscard]] double getSurfaceArea() const override;
 

@@ -63,7 +63,7 @@ public:
         return {front, back};
     }
 
-    bool intersectFirst(IntersectionInfo *intersectionInfo, Ray *ray) const override {
+    bool intersectFirst(IntersectionInfo *intersectionInfo, Ray *ray) override {
         Vector3D vertex1 = mesh->vertices[mesh->indices[pos]].position;
         Vector3D vertex2 = mesh->vertices[mesh->indices[pos + 1]].position;
         Vector3D vertex3 = mesh->vertices[mesh->indices[pos + 2]].position;
@@ -165,11 +165,11 @@ public:
         return true;
     }
 
-    bool intersectAny(IntersectionInfo *intersectionInfo, Ray *ray) const override {
+    bool intersectAny(IntersectionInfo *intersectionInfo, Ray *ray) override {
         return intersectFirst(intersectionInfo, ray);
     }
 
-    bool intersectAll(std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray) const override {
+    bool intersectAll(std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray) override {
         auto *info = new IntersectionInfo();
         *info = {false, std::numeric_limits<double>::max(), ray->origin, ray->direction, 0, 0,
                  0, 0, 0};
@@ -244,16 +244,16 @@ BoundingBox TriangleMeshObject::getBoundaries() const {
     return structure->boundingBox;
 }
 
-bool TriangleMeshObject::intersectFirst(IntersectionInfo *intersectionInfo, Ray *ray) const {
+bool TriangleMeshObject::intersectFirst(IntersectionInfo *intersectionInfo, Ray *ray) {
     return DBVHv2::intersectFirst(structure, intersectionInfo, ray);
 
 }
 
-bool TriangleMeshObject::intersectAny(IntersectionInfo *intersectionInfo, Ray *ray) const {
+bool TriangleMeshObject::intersectAny(IntersectionInfo *intersectionInfo, Ray *ray) {
     return DBVHv2::intersectAny(structure, intersectionInfo, ray);
 }
 
-bool TriangleMeshObject::intersectAll(std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray) const {
+bool TriangleMeshObject::intersectAll(std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray) {
     return DBVHv2::intersectAll(structure, intersectionInfo, ray);
 }
 

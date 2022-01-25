@@ -103,7 +103,7 @@ public:
      * @param ray               The ray that is used for the intersection calculation.
      * @return                  Returns true if there is an intersection, false otherwise.
      */
-    virtual bool intersectFirst(IntersectionInfo *intersectionInfo, Ray *ray) const = 0;
+    virtual bool intersectFirst(IntersectionInfo *intersectionInfo, Ray *ray) = 0;
 
     /**
      * Computes the first intersection of a ray with this object.
@@ -111,7 +111,7 @@ public:
      * @param ray               The ray that is used for the intersection calculation.
      * @return                  Returns true if there is an intersection, false otherwise.
      */
-    virtual bool intersectAny(IntersectionInfo *intersectionInfo, Ray *ray) const = 0;
+    virtual bool intersectAny(IntersectionInfo *intersectionInfo, Ray *ray) = 0;
 
     /**
      * Computes all intersections of a ray with this object.
@@ -120,7 +120,7 @@ public:
      * @param ray               The ray that is used for the intersection calculation.
      * @return                  Returns true if there is at least one intersection, false otherwise.
      */
-    virtual bool intersectAll(std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray) const = 0;
+    virtual bool intersectAll(std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray) = 0;
 
     /**
      * Computes the effective surface area of this object.

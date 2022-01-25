@@ -186,14 +186,14 @@ void Instance::invalidateCache() {
 
 Instance::~Instance() = default;
 
-bool Instance::intersectFirst(IntersectionInfo *intersectionInfo, Ray *ray) const {
+bool Instance::intersectFirst(IntersectionInfo *intersectionInfo, Ray *ray) {
     Object *baseObject;
     if (objectCached) {
         baseObject = objectCache;
     } else {
         baseObject = engineNode->requestBaseData(baseObjectId);
-        /*objectCache = baseObject;     temporarily removed cashing
-        objectCached = true;*/
+        objectCache = baseObject;
+        objectCached = true;
     }
 
     Ray newRay = *ray;
@@ -332,7 +332,7 @@ bool Instance::intersectFirst(IntersectionInfo *intersectionInfo, Ray *ray) cons
     return false;
 }
 
-bool Instance::intersectAny(IntersectionInfo *intersectionInfo, Ray *ray) const {
+bool Instance::intersectAny(IntersectionInfo *intersectionInfo, Ray *ray) {
     Object *baseObject;
     if (objectCached) {
         baseObject = objectCache;
@@ -472,7 +472,7 @@ bool Instance::intersectAny(IntersectionInfo *intersectionInfo, Ray *ray) const 
     return hit;
 }
 
-bool Instance::intersectAll(std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray) const {
+bool Instance::intersectAll(std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray) {
     Object *baseObject;
     if (objectCached) {
         baseObject = objectCache;
