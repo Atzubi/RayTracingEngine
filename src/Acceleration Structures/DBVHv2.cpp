@@ -6,12 +6,14 @@
 #include <limits>
 #include "DBVHv2.h"
 
+constexpr int numberOfSplittingPlanes = 9;
+
 bool isEmpty(const DBVHNode &root) {
     return root.maxDepthLeft == 0;
 }
 
 bool isLastElement(const DBVHNode &root) {
-    return root.maxDepthRight == 0;
+    return root.maxDepthRight == 0 && !isEmpty(root);
 }
 
 bool isLastElementLeft(const DBVHNode &root) {
@@ -168,33 +170,33 @@ static double evaluateBucket(BoundingBox *leftChildBox, BoundingBox *rightChildB
 }
 
 static void
-split(std::vector<Object *> *leftChild, std::vector<Object *> *rightChild, const std::vector<Object *> &objects,
+split(std::vector<Object *> &leftChild, std::vector<Object *> &rightChild, const std::vector<Object *> &objects,
       Vector3D splittingPlane) {
     if (splittingPlane.x != 0) {
         for (const auto &object: objects) {
             if ((object->getBoundaries().maxCorner.x + object->getBoundaries().minCorner.x) / 2 <
                 splittingPlane.x) {
-                leftChild->push_back(object);
+                leftChild.push_back(object);
             } else {
-                rightChild->push_back(object);
+                rightChild.push_back(object);
             }
         }
     } else if (splittingPlane.y != 0) {
         for (const auto &object: objects) {
             if ((object->getBoundaries().maxCorner.y + object->getBoundaries().minCorner.y) / 2 <
                 splittingPlane.y) {
-                leftChild->push_back(object);
+                leftChild.push_back(object);
             } else {
-                rightChild->push_back(object);
+                rightChild.push_back(object);
             }
         }
     } else {
         for (const auto &object: objects) {
             if ((object->getBoundaries().maxCorner.z + object->getBoundaries().minCorner.z) / 2 <
                 splittingPlane.z) {
-                leftChild->push_back(object);
+                leftChild.push_back(object);
             } else {
-                rightChild->push_back(object);
+                rightChild.push_back(object);
             }
         }
     }
@@ -565,56 +567,45 @@ bool optimizeSAH(DBVHNode *node) {
     }
 }
 
-static void add(DBVHNode *currentNode, const std::vector<Object *> &objects, uint8_t depth) {
-    // refit current node to objects
-    auto *node = currentNode;
-    refit(node->boundingBox, objects, 0);
+std::vector<Vector3D> createSplittingPlanes(const DBVHNode &node) {
+    std::vector<Vector3D> splittingPlanes(numberOfSplittingPlanes);
+    int splitsPerDimension = numberOfSplittingPlanes / 3 + 1;
 
-    // create split buckets
-    Vector3D splittingPlanes[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                   0};
-    uint8_t newParent[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+    for (int dim = 0; dim < 3; dim++) {
+        double split = (node.boundingBox.maxCorner[dim] - node.boundingBox.minCorner[dim]) / splitsPerDimension;
+        for (int plane = 0; plane < numberOfSplittingPlanes / 3; plane++) {
+            splittingPlanes[plane * (dim + 1)][dim] = node.boundingBox.minCorner[dim] + split * (plane + 1);
+        }
+    }
 
-    double x = (node->boundingBox.maxCorner.x - node->boundingBox.minCorner.x) / 4.0;
-    splittingPlanes[0].x = node->boundingBox.minCorner.x + x;
-    splittingPlanes[1].x = node->boundingBox.minCorner.x + x * 2.0;
-    splittingPlanes[2].x = node->boundingBox.minCorner.x + x * 3.0;
+    return splittingPlanes;
+}
 
-    double y = (node->boundingBox.maxCorner.y - node->boundingBox.minCorner.y) / 4.0;
-    splittingPlanes[3].y = node->boundingBox.minCorner.y + y;
-    splittingPlanes[4].y = node->boundingBox.minCorner.y + y * 2.0;
-    splittingPlanes[5].y = node->boundingBox.minCorner.y + y * 3.0;
+std::vector<double> evaluateSplittingPlanes(const DBVHNode &node, const std::vector<Object *> &objects,
+                                            const std::vector<Vector3D> &splittingPlanes,
+                                            std::vector<uint8_t> &newParent) {
+    std::vector<double> SAH(numberOfSplittingPlanes);
 
-    double z = (node->boundingBox.maxCorner.z - node->boundingBox.minCorner.z) / 4.0;
-    splittingPlanes[6].z = node->boundingBox.minCorner.z + z;
-    splittingPlanes[7].z = node->boundingBox.minCorner.z + z * 2.0;
-    splittingPlanes[8].z = node->boundingBox.minCorner.z + z * 3.0;
+    BoundingBox leftBox;
+    BoundingBox rightBox;
 
-    // evaluate split buckets
-    double SAH[9];
-    BoundingBox leftBox = {std::numeric_limits<double>::max(), std::numeric_limits<double>::max(),
-                           std::numeric_limits<double>::max(), -std::numeric_limits<double>::max(),
-                           -std::numeric_limits<double>::max(), -std::numeric_limits<double>::max()};
-    BoundingBox rightBox = {std::numeric_limits<double>::max(), std::numeric_limits<double>::max(),
-                            std::numeric_limits<double>::max(), -std::numeric_limits<double>::max(),
-                            -std::numeric_limits<double>::max(), -std::numeric_limits<double>::max()};
     double leftSA = 0, rightSA = 0;
 
-    if (node->maxDepthLeft != 0) {
-        if (node->maxDepthLeft > 1) {
-            leftBox = (node->leftChild)->boundingBox;
-            leftSA = (node->leftChild)->surfaceArea / leftBox.getSA();
+    if (node.maxDepthLeft != 0) {
+        if (node.maxDepthLeft > 1) {
+            leftBox = (node.leftChild)->boundingBox;
+            leftSA = (node.leftChild)->surfaceArea / leftBox.getSA();
         } else {
-            leftBox = (node->leftLeaf)->getBoundaries();
-            leftSA = (node->leftLeaf)->getSurfaceArea() / leftBox.getSA();
+            leftBox = (node.leftLeaf)->getBoundaries();
+            leftSA = (node.leftLeaf)->getSurfaceArea() / leftBox.getSA();
         }
-        if (node->maxDepthRight != 0) {
-            if (node->maxDepthRight > 1) {
-                rightBox = (node->rightChild)->boundingBox;
-                rightSA = (node->rightChild)->surfaceArea / rightBox.getSA();
+        if (node.maxDepthRight != 0) {
+            if (node.maxDepthRight > 1) {
+                rightBox = (node.rightChild)->boundingBox;
+                rightSA = (node.rightChild)->surfaceArea / rightBox.getSA();
             } else {
-                rightBox = (node->rightLeaf)->getBoundaries();
-                rightSA = (node->rightLeaf)->getSurfaceArea() / rightBox.getSA();
+                rightBox = (node.rightLeaf)->getBoundaries();
+                rightSA = (node.rightLeaf)->getSurfaceArea() / rightBox.getSA();
             }
             for (int i = 0; i < 9; i++) {
                 SAH[i] = evaluateBucket(&leftBox, &rightBox, leftSA, rightSA, objects, splittingPlanes[i],
@@ -631,10 +622,10 @@ static void add(DBVHNode *currentNode, const std::vector<Object *> &objects, uin
         }
     }
 
-    // choose best split bucket and split node accordingly
-    auto *leftObjects = new std::vector<Object *>();
-    auto *rightObjects = new std::vector<Object *>();
+    return SAH;
+}
 
+int getBestSplittingPlane(const std::vector<double> &SAH) {
     double bestSAH = std::numeric_limits<double>::max();
     int bestSplittingPlane = -1;
 
@@ -645,238 +636,293 @@ static void add(DBVHNode *currentNode, const std::vector<Object *> &objects, uin
         }
     }
 
-    if (bestSplittingPlane == -1) {
-        for (uint64_t i = 0; i < objects.size() / 2; i++) {
-            leftObjects->push_back(objects.at(i));
-        }
-        for (uint64_t i = objects.size() / 2; i < objects.size(); i++) {
-            rightObjects->push_back(objects.at(i));
-        }
-    } else {
-        switch (newParent[bestSplittingPlane]) {
-            case 0:
-                // default
-            case 1:
-                // existing boxes with correct order
-                split(leftObjects, rightObjects, objects, splittingPlanes[bestSplittingPlane]);
-                break;
-            case 2: {
-                // existing boxes with wrong order
-                split(leftObjects, rightObjects, objects, splittingPlanes[bestSplittingPlane]);
-                auto buffer = leftObjects;
-                leftObjects = rightObjects;
-                rightObjects = buffer;
-                break;
-            }
-            case 3: {
-                // existing box all new left
-                *leftObjects = objects;
-                break;
-            }
-            case 4: {
-                // existing box all new right
-                *rightObjects = objects;
-                break;
-            }
-            case 5: {
-                // new box split
-                auto *newNode = new DBVHNode();
-                if (node->maxDepthRight > 1) {
-                    newNode->rightChild = node->rightChild;
-                    newNode->maxDepthRight = node->maxDepthRight;
-                    refit(&newNode->boundingBox, node->rightChild->boundingBox);
-                } else {
-                    newNode->rightLeaf = node->rightLeaf;
-                    newNode->maxDepthRight = 1;
-                    refit(&newNode->boundingBox, node->rightLeaf->getBoundaries());
-                }
-                if (node->maxDepthLeft > 1) {
-                    newNode->leftChild = node->leftChild;
-                    newNode->maxDepthLeft = node->maxDepthLeft;
-                    refit(&newNode->boundingBox, node->leftChild->boundingBox);
-                } else {
-                    newNode->leftLeaf = node->leftLeaf;
-                    newNode->maxDepthLeft = 1;
-                    refit(&newNode->boundingBox, node->leftLeaf->getBoundaries());
-                }
-                newNode->surfaceArea = node->surfaceArea;
-                node->leftChild = newNode;
-                node->maxDepthLeft = std::max(newNode->maxDepthLeft, newNode->maxDepthRight) + 1;
-                node->rightChild = nullptr;
-                node->maxDepthRight = 0;
-                *rightObjects = objects;
-                break;
-            }
-            case 6: {
-                // new box correct order
-                split(leftObjects, rightObjects, objects, splittingPlanes[bestSplittingPlane]);
-                auto *newNode = new DBVHNode();
-                if (node->maxDepthRight > 1) {
-                    newNode->rightChild = node->rightChild;
-                    newNode->maxDepthRight = node->maxDepthRight;
-                    refit(&newNode->boundingBox, node->rightChild->boundingBox);
-                } else {
-                    newNode->rightLeaf = node->rightLeaf;
-                    newNode->maxDepthRight = 1;
-                    refit(&newNode->boundingBox, node->rightLeaf->getBoundaries());
-                }
-                if (node->maxDepthLeft > 1) {
-                    newNode->leftChild = node->leftChild;
-                    newNode->maxDepthLeft = node->maxDepthLeft;
-                    refit(&newNode->boundingBox, node->leftChild->boundingBox);
-                } else {
-                    newNode->leftLeaf = node->leftLeaf;
-                    newNode->maxDepthLeft = 1;
-                    refit(&newNode->boundingBox, node->leftLeaf->getBoundaries());
-                }
-                newNode->surfaceArea = node->surfaceArea;
-                node->leftChild = newNode;
-                node->maxDepthLeft = std::max(newNode->maxDepthLeft, newNode->maxDepthRight) + 1;
-                node->rightChild = nullptr;
-                node->maxDepthRight = 0;
-                break;
-            }
-            case 7: {
-                // new box wrong order
-                split(leftObjects, rightObjects, objects, splittingPlanes[bestSplittingPlane]);
-                auto buffer = leftObjects;
-                leftObjects = rightObjects;
-                rightObjects = buffer;
-                auto *newNode = new DBVHNode();
-                if (node->maxDepthRight > 1) {
-                    newNode->rightChild = node->rightChild;
-                    newNode->maxDepthRight = node->maxDepthRight;
-                    refit(&newNode->boundingBox, node->rightChild->boundingBox);
-                } else {
-                    newNode->rightLeaf = node->rightLeaf;
-                    newNode->maxDepthRight = 1;
-                    refit(&newNode->boundingBox, node->rightLeaf->getBoundaries());
-                }
-                if (node->maxDepthLeft > 1) {
-                    newNode->leftChild = node->leftChild;
-                    newNode->maxDepthLeft = node->maxDepthLeft;
-                    refit(&newNode->boundingBox, node->leftChild->boundingBox);
-                } else {
-                    newNode->leftLeaf = node->leftLeaf;
-                    newNode->maxDepthLeft = 1;
-                    refit(&newNode->boundingBox, node->leftLeaf->getBoundaries());
-                }
-                newNode->surfaceArea = node->surfaceArea;
-                node->leftChild = newNode;
-                node->maxDepthLeft = std::max(newNode->maxDepthLeft, newNode->maxDepthRight) + 1;
-                node->rightChild = nullptr;
-                node->maxDepthRight = 0;
-                break;
-            }
-            default:
-                std::cout << "wtf\n";
-                throw (std::exception());
-        }
-    }
+    return bestSplittingPlane;
+}
 
-    // pass objects to children
-    if (leftObjects->size() == 1) {
-        if (node->maxDepthLeft == 0) {
+void splitEven(const std::vector<Object *> &objects, std::vector<Object *> &left, std::vector<Object *> &right) {
+    left.reserve(objects.size() / 2);
+    right.reserve(objects.size() / 2);
+    for (uint64_t i = 0; i < objects.size() / 2; i++) {
+        left.push_back(objects.at(i));
+    }
+    for (uint64_t i = objects.size() / 2; i < objects.size(); i++) {
+        right.push_back(objects.at(i));
+    }
+}
+
+bool bestSplittingPlaneExists(int bestSplittingPlane) {
+    return bestSplittingPlane != -1;
+}
+
+void
+sortObjectsIntoBoxes(const int splitOperation, const Vector3D &splittingPlane, DBVHNode &node,
+                     const std::vector<Object *> &objects,
+                     std::vector<Object *> &leftObjects, std::vector<Object *> &rightObjects) {
+    switch (splitOperation) {
+        case 0:
+            // default
+        case 1:
+            // existing boxes with correct order
+            split(leftObjects, rightObjects, objects, splittingPlane);
+            break;
+        case 2: {
+            // existing boxes with wrong order
+            split(leftObjects, rightObjects, objects, splittingPlane);
+            auto buffer = leftObjects;
+            leftObjects = rightObjects;
+            rightObjects = buffer;
+            break;
+        }
+        case 3: {
+            // existing box all new left
+            leftObjects = objects;
+            break;
+        }
+        case 4: {
+            // existing box all new right
+            rightObjects = objects;
+            break;
+        }
+        case 5: {
+            // new box split
+            auto *newNode = new DBVHNode();
+            if (node.maxDepthRight > 1) {
+                newNode->rightChild = node.rightChild;
+                newNode->maxDepthRight = node.maxDepthRight;
+                refit(&newNode->boundingBox, node.rightChild->boundingBox);
+            } else {
+                newNode->rightLeaf = node.rightLeaf;
+                newNode->maxDepthRight = 1;
+                refit(&newNode->boundingBox, node.rightLeaf->getBoundaries());
+            }
+            if (node.maxDepthLeft > 1) {
+                newNode->leftChild = node.leftChild;
+                newNode->maxDepthLeft = node.maxDepthLeft;
+                refit(&newNode->boundingBox, node.leftChild->boundingBox);
+            } else {
+                newNode->leftLeaf = node.leftLeaf;
+                newNode->maxDepthLeft = 1;
+                refit(&newNode->boundingBox, node.leftLeaf->getBoundaries());
+            }
+            newNode->surfaceArea = node.surfaceArea;
+            node.leftChild = newNode;
+            node.maxDepthLeft = std::max(newNode->maxDepthLeft, newNode->maxDepthRight) + 1;
+            node.rightChild = nullptr;
+            node.maxDepthRight = 0;
+            rightObjects = objects;
+            break;
+        }
+        case 6: {
+            // new box correct order
+            split(leftObjects, rightObjects, objects, splittingPlane);
+            auto *newNode = new DBVHNode();
+            if (node.maxDepthRight > 1) {
+                newNode->rightChild = node.rightChild;
+                newNode->maxDepthRight = node.maxDepthRight;
+                refit(&newNode->boundingBox, node.rightChild->boundingBox);
+            } else {
+                newNode->rightLeaf = node.rightLeaf;
+                newNode->maxDepthRight = 1;
+                refit(&newNode->boundingBox, node.rightLeaf->getBoundaries());
+            }
+            if (node.maxDepthLeft > 1) {
+                newNode->leftChild = node.leftChild;
+                newNode->maxDepthLeft = node.maxDepthLeft;
+                refit(&newNode->boundingBox, node.leftChild->boundingBox);
+            } else {
+                newNode->leftLeaf = node.leftLeaf;
+                newNode->maxDepthLeft = 1;
+                refit(&newNode->boundingBox, node.leftLeaf->getBoundaries());
+            }
+            newNode->surfaceArea = node.surfaceArea;
+            node.leftChild = newNode;
+            node.maxDepthLeft = std::max(newNode->maxDepthLeft, newNode->maxDepthRight) + 1;
+            node.rightChild = nullptr;
+            node.maxDepthRight = 0;
+            break;
+        }
+        case 7: {
+            // new box wrong order
+            split(leftObjects, rightObjects, objects, splittingPlane);
+            auto buffer = leftObjects;
+            leftObjects = rightObjects;
+            rightObjects = buffer;
+            auto *newNode = new DBVHNode();
+            if (node.maxDepthRight > 1) {
+                newNode->rightChild = node.rightChild;
+                newNode->maxDepthRight = node.maxDepthRight;
+                refit(&newNode->boundingBox, node.rightChild->boundingBox);
+            } else {
+                newNode->rightLeaf = node.rightLeaf;
+                newNode->maxDepthRight = 1;
+                refit(&newNode->boundingBox, node.rightLeaf->getBoundaries());
+            }
+            if (node.maxDepthLeft > 1) {
+                newNode->leftChild = node.leftChild;
+                newNode->maxDepthLeft = node.maxDepthLeft;
+                refit(&newNode->boundingBox, node.leftChild->boundingBox);
+            } else {
+                newNode->leftLeaf = node.leftLeaf;
+                newNode->maxDepthLeft = 1;
+                refit(&newNode->boundingBox, node.leftLeaf->getBoundaries());
+            }
+            newNode->surfaceArea = node.surfaceArea;
+            node.leftChild = newNode;
+            node.maxDepthLeft = std::max(newNode->maxDepthLeft, newNode->maxDepthRight) + 1;
+            node.rightChild = nullptr;
+            node.maxDepthRight = 0;
+            break;
+        }
+        default:
+            std::cout << "wtf\n";
+            throw (std::exception());
+    }
+}
+
+bool passObjectsToLeftChild(DBVHNode &node, std::vector<Object*> &leftObjects){
+    if (leftObjects.size() == 1) {
+        if (node.maxDepthLeft == 0) {
             // create new child
-            node->leftLeaf = leftObjects->at(0);
-            node->maxDepthLeft = 1;
-        } else if (node->maxDepthLeft == 1) {
+            node.leftLeaf = leftObjects.at(0);
+            node.maxDepthLeft = 1;
+        } else if (node.maxDepthLeft == 1) {
             // create new parent for both children
-            auto buffer = node->leftLeaf;
+            auto buffer = node.leftLeaf;
             auto parent = new DBVHNode();
             parent->boundingBox = buffer->getBoundaries();
-            refit(parent->boundingBox, *leftObjects, 0);
+            refit(parent->boundingBox, leftObjects, 0);
             parent->leftLeaf = buffer;
-            parent->rightLeaf = leftObjects->at(0);
+            parent->rightLeaf = leftObjects.at(0);
             parent->maxDepthLeft = 1;
             parent->maxDepthRight = 1;
-            node->leftChild = parent;
-            node->maxDepthLeft = 2;
+            node.leftChild = parent;
+            node.maxDepthLeft = 2;
         } else {
-            add(node->leftChild, *leftObjects, depth + 1);
+            return false;
         }
-    } else if (!leftObjects->empty()) {
-        if (node->maxDepthLeft == 0) {
+    } else if (!leftObjects.empty()) {
+        if (node.maxDepthLeft == 0) {
             // create new child
             auto child = new DBVHNode();
-            node->leftChild = child;
-            node->maxDepthLeft = 2;
-            add(node->leftChild, *leftObjects, depth + 1);
-        } else if (node->maxDepthLeft == 1) {
+            node.leftChild = child;
+            node.maxDepthLeft = 2;
+            return false;
+        } else if (node.maxDepthLeft == 1) {
             // create new parent for both children
-            auto buffer = node->leftLeaf;
+            auto buffer = node.leftLeaf;
             auto parent = new DBVHNode();
             parent->leftLeaf = buffer;
             parent->boundingBox = buffer->getBoundaries();
             parent->surfaceArea = parent->boundingBox.getSA() * 2;
             parent->maxDepthLeft = 1;
-            node->leftChild = parent;
-            node->maxDepthLeft = 2;
-            add(node->leftChild, *leftObjects, depth + 1);
+            node.leftChild = parent;
+            node.maxDepthLeft = 2;
+            return false;
         } else {
-            add(node->leftChild, *leftObjects, depth + 1);
+            return false;
         }
     }
+    return true;
+}
 
-    if (rightObjects->size() == 1) {
-        if (node->maxDepthRight == 0) {
+bool passObjectsToRightChild(DBVHNode &node, const std::vector<Object*> &rightObjects){
+    if (rightObjects.size() == 1) {
+        if (node.maxDepthRight == 0) {
             // create new child
-            node->rightLeaf = rightObjects->at(0);
-            node->maxDepthRight = 1;
-        } else if (node->maxDepthRight == 1) {
+            node.rightLeaf = rightObjects.at(0);
+            node.maxDepthRight = 1;
+        } else if (node.maxDepthRight == 1) {
             // create new parent for both children
-            auto buffer = node->rightLeaf;
+            auto buffer = node.rightLeaf;
             auto parent = new DBVHNode();
             parent->boundingBox = buffer->getBoundaries();
-            refit(parent->boundingBox, *rightObjects, 0);
+            refit(parent->boundingBox, rightObjects, 0);
             parent->leftLeaf = buffer;
-            parent->rightLeaf = rightObjects->at(0);
+            parent->rightLeaf = rightObjects.at(0);
             parent->maxDepthLeft = 1;
             parent->maxDepthRight = 1;
-            node->rightChild = parent;
-            node->maxDepthRight = 2;
+            node.rightChild = parent;
+            node.maxDepthRight = 2;
         } else {
-            add(node->rightChild, *rightObjects, depth + 1);
+            return false;
         }
-    } else if (!rightObjects->empty()) {
-        if (node->maxDepthRight == 0) {
+    } else if (!rightObjects.empty()) {
+        if (node.maxDepthRight == 0) {
             // create new child
             auto child = new DBVHNode();
-            node->rightChild = child;
-            node->maxDepthRight = 2;
-            add(node->rightChild, *rightObjects, depth + 1);
-        } else if (node->maxDepthRight == 1) {
+            node.rightChild = child;
+            node.maxDepthRight = 2;
+            return false;
+        } else if (node.maxDepthRight == 1) {
             // create new parent for both children
-            auto buffer = node->rightLeaf;
+            auto buffer = node.rightLeaf;
             auto parent = new DBVHNode();
             parent->rightLeaf = buffer;
             parent->boundingBox = buffer->getBoundaries();
             parent->surfaceArea = parent->boundingBox.getSA() * 2;
             parent->maxDepthRight = 1;
-            node->rightChild = parent;
-            node->maxDepthRight = 2;
-            add(node->rightChild, *rightObjects, depth + 1);
+            node.rightChild = parent;
+            node.maxDepthRight = 2;
+            return false;
         } else {
-            add(node->rightChild, *rightObjects, depth + 1);
+            return false;
         }
     }
+    return true;
+}
 
-    delete leftObjects;
-    delete rightObjects;
+void setNodeSurfaceAreaAndDepth(DBVHNode &node){
+    node.surfaceArea = node.boundingBox.getSA();
+    if (node.maxDepthLeft > 1) {
+        node.surfaceArea += (node.leftChild)->surfaceArea;
+        node.maxDepthLeft = std::max(node.leftChild->maxDepthLeft, node.leftChild->maxDepthRight) + 1;
+    } else {
+        node.surfaceArea += (node.leftLeaf)->getSurfaceArea();
+    }
+    if (node.maxDepthRight > 1) {
+        node.surfaceArea += (node.rightChild)->surfaceArea;
+        node.maxDepthRight = std::max(node.rightChild->maxDepthLeft, node.rightChild->maxDepthRight) + 1;
+    } else {
+        node.surfaceArea += (node.rightLeaf)->getSurfaceArea();
+    }
+}
 
-    node->surfaceArea = node->boundingBox.getSA();
-    if (node->maxDepthLeft > 1) {
-        node->surfaceArea += (node->leftChild)->surfaceArea;
-        node->maxDepthLeft = std::max(node->leftChild->maxDepthLeft, node->leftChild->maxDepthRight) + 1;
+static void add(DBVHNode *currentNode, const std::vector<Object *> &objects, uint8_t depth) {
+    // refit current node to objects
+    auto *node = currentNode;
+    refit(node->boundingBox, objects, 0);
+
+    // create split buckets
+    auto splittingPlanes = createSplittingPlanes(*node);
+
+    std::vector<uint8_t> newParent(numberOfSplittingPlanes);
+
+    // evaluate split buckets
+    auto SAH = evaluateSplittingPlanes(*node, objects, splittingPlanes, newParent);
+
+    // choose best split bucket and split node accordingly
+    int bestSplittingPlane = getBestSplittingPlane(SAH);
+
+    std::vector<Object *> leftObjects;
+    std::vector<Object *> rightObjects;
+
+    if (!bestSplittingPlaneExists(bestSplittingPlane)) {
+        splitEven(objects, leftObjects, rightObjects);
     } else {
-        node->surfaceArea += (node->leftLeaf)->getSurfaceArea();
+        sortObjectsIntoBoxes(newParent[bestSplittingPlane], splittingPlanes[bestSplittingPlane], *node, objects,
+                             leftObjects, rightObjects);
     }
-    if (node->maxDepthRight > 1) {
-        node->surfaceArea += (node->rightChild)->surfaceArea;
-        node->maxDepthRight = std::max(node->rightChild->maxDepthLeft, node->rightChild->maxDepthRight) + 1;
-    } else {
-        node->surfaceArea += (node->rightLeaf)->getSurfaceArea();
+
+    // pass objects to children
+    if(!passObjectsToLeftChild(*node, leftObjects)){
+        add(node->leftChild, leftObjects, depth + 1);
     }
+    if(!passObjectsToRightChild(*node, rightObjects)){
+        add(node->rightChild, rightObjects, depth + 1);
+    }
+
+    // calculate surface area and tree depth going the tree back up
+    setNodeSurfaceAreaAndDepth(*node);
 
     // use tree rotations going the tree back up to optimize SAH
     optimizeSAH(node);
@@ -1391,7 +1437,7 @@ bool addFirstAndOnlyElement(DBVHNode *root, const std::vector<Object *> &objects
 
 bool addOntoSingleElement(DBVHNode *root, const std::vector<Object *> &objects) {
     if (!isLastElement(*root)) return false;
-    std::vector<Object *> newObjects = objects;     // TODO: make more efficient
+    std::vector<Object *> newObjects{objects};     // TODO: make more efficient
     newObjects.push_back(root->leftLeaf);
     root->maxDepthLeft = 0;
     add(root, newObjects, 1);

@@ -232,8 +232,9 @@ TriangleMeshObject::TriangleMeshObject(const std::vector<Vertex> *vertices, cons
         triangles.push_back(triangle);
     }
 
+
     auto *tree = new DBVHNode();
-    DBVHv2::addObjects(tree, &triangles);
+    DBVHv2::addObjects(tree, triangles);
     structure = tree;
 }
 
