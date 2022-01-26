@@ -871,20 +871,28 @@ bool passObjectsToRightChild(DBVHNode &node, const std::vector<Object *> &rightO
     return true;
 }
 
-void setNodeSurfaceAreaAndDepth(DBVHNode &node) {
-    node.surfaceArea = node.boundingBox.getSA();
-    if (node.maxDepthLeft > 1) {
+void checkLeftChildSurfaceAreaAndDepth(DBVHNode &node){
+    if (isLastElementLeft(node)) {
+        node.surfaceArea += (node.leftLeaf)->getSurfaceArea();
+    } else {
         node.surfaceArea += (node.leftChild)->surfaceArea;
         node.maxDepthLeft = std::max(node.leftChild->maxDepthLeft, node.leftChild->maxDepthRight) + 1;
-    } else {
-        node.surfaceArea += (node.leftLeaf)->getSurfaceArea();
     }
-    if (node.maxDepthRight > 1) {
+}
+
+void checkRightChildSurfaceAreaAndDepth(DBVHNode &node){
+    if (isLastElementRight(node)) {
+        node.surfaceArea += (node.rightLeaf)->getSurfaceArea();
+    } else {
         node.surfaceArea += (node.rightChild)->surfaceArea;
         node.maxDepthRight = std::max(node.rightChild->maxDepthLeft, node.rightChild->maxDepthRight) + 1;
-    } else {
-        node.surfaceArea += (node.rightLeaf)->getSurfaceArea();
     }
+}
+
+void setNodeSurfaceAreaAndDepth(DBVHNode &node) {
+    node.surfaceArea = node.boundingBox.getSA();
+    checkLeftChildSurfaceAreaAndDepth(node);
+    checkRightChildSurfaceAreaAndDepth(node);
 }
 
 static void add(DBVHNode *currentNode, const std::vector<Object *> &objects, const uint8_t depth) {
