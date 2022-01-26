@@ -607,17 +607,17 @@ std::vector<double> evaluateSplittingPlanes(const DBVHNode &node, const std::vec
                 rightBox = (node.rightLeaf)->getBoundaries();
                 rightSA = (node.rightLeaf)->getSurfaceArea() / rightBox.getSA();
             }
-            for (int i = 0; i < 9; i++) {
+            for (int i = 0; i < numberOfSplittingPlanes; i++) {
                 SAH[i] = evaluateBucket(&leftBox, &rightBox, leftSA, rightSA, objects, splittingPlanes[i],
                                         &(newParent[i]));
             }
         } else {
-            for (int i = 0; i < 9; i++) {
+            for (int i = 0; i < numberOfSplittingPlanes; i++) {
                 SAH[i] = evaluateBucket(nullptr, nullptr, 0, 0, objects, splittingPlanes[i], &(newParent[i]));
             }
         }
     } else {
-        for (int i = 0; i < 9; i++) {
+        for (int i = 0; i < numberOfSplittingPlanes; i++) {
             SAH[i] = evaluateBucket(nullptr, nullptr, 0, 0, objects, splittingPlanes[i], &(newParent[i]));
         }
     }
@@ -629,7 +629,7 @@ int getBestSplittingPlane(const std::vector<double> &SAH) {
     double bestSAH = std::numeric_limits<double>::max();
     int bestSplittingPlane = -1;
 
-    for (int i = 0; i < 9; i++) {
+    for (int i = 0; i < numberOfSplittingPlanes; i++) {
         if (SAH[i] < bestSAH) {
             bestSAH = SAH[i];
             bestSplittingPlane = i;
@@ -779,7 +779,7 @@ sortObjectsIntoBoxes(const int splitOperation, const Vector3D &splittingPlane, D
     }
 }
 
-bool passObjectsToLeftChild(DBVHNode &node, std::vector<Object *> &leftObjects) {
+bool passObjectsToLeftChild(DBVHNode &node, const std::vector<Object *> &leftObjects) {
     if (leftObjects.size() == 1) {
         if (node.maxDepthLeft == 0) {
             // create new child
@@ -887,7 +887,7 @@ void setNodeSurfaceAreaAndDepth(DBVHNode &node) {
     }
 }
 
-static void add(DBVHNode *currentNode, const std::vector<Object *> &objects, uint8_t depth) {
+static void add(DBVHNode *currentNode, const std::vector<Object *> &objects, const uint8_t depth) {
     // refit current node to objects
     auto *node = currentNode;
     refit(node->boundingBox, objects, 0);
