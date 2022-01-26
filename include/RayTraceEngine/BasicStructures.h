@@ -6,6 +6,7 @@
 #define RAYTRACECORE_BASICSTRUCTURES_H
 
 #include <iostream>
+#include <string>
 
 /**
  * Contains x, y and z coordinates representing a vector in 3 dimensions.
@@ -14,6 +15,20 @@ struct Vector3D {
     double x;
     double y;
     double z;
+
+    double operator [](int idx) const {
+        switch(idx){
+            case 0:
+                return x;
+            case 1:
+                return y;
+            case 2:
+                return z;
+            default:
+                std::string message = "Index " + std::to_string(idx) + " is out of range for Vector3D";
+                throw std::out_of_range(message);
+        }
+    }
 };
 
 /**
