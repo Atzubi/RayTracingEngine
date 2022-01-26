@@ -74,7 +74,7 @@ PipelineId DataManagementUnitV2::createPipeline(PipelineDescription *pipelineDes
 
     // build bvh on instances
     auto *root = new DBVHNode();
-    DBVHv2::addObjects(root, &instances);
+    DBVHv2::addObjects(root, instances);
 
     // get shader implementation from id
     std::vector<RayGeneratorShaderPackage> pipelineRayGeneratorShaders;
@@ -401,7 +401,7 @@ DataManagementUnitV2::bindGeometryToPipeline(PipelineId pipelineId, std::vector<
 
     pipelineToInstanceMap[pipelineId].insert(instanceIds.begin(), instanceIds.end());
 
-    DBVHv2::addObjects(geometry, &instances);
+    DBVHv2::addObjects(geometry, instances);
 
     return true;
 }

@@ -28,7 +28,7 @@ struct DBVHNode {
 
 class DBVHv2 {
 public:
-    static void addObjects(DBVHNode *root, std::vector<Object *> *objects);
+    static void addObjects(DBVHNode *root, const std::vector<Object *> &objects);
 
     static void removeObjects(DBVHNode *root, const std::vector<Object *> &objects);
 
