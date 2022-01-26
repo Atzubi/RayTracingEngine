@@ -16,8 +16,22 @@ struct Vector3D {
     double y;
     double z;
 
-    double operator [](int idx) const {
-        switch(idx){
+    double operator[](int idx) const {
+        switch (idx) {
+            case 0:
+                return x;
+            case 1:
+                return y;
+            case 2:
+                return z;
+            default:
+                std::string message = "Index " + std::to_string(idx) + " is out of range for Vector3D";
+                throw std::out_of_range(message);
+        }
+    }
+
+    double &operator[](int idx) {
+        switch (idx) {
             case 0:
                 return x;
             case 1:
@@ -39,7 +53,7 @@ struct Vector2D {
     double y;
 };
 
-struct GeneratorRay{
+struct GeneratorRay {
     Vector3D rayOrigin;
     Vector3D rayDirection;
 };
@@ -161,7 +175,7 @@ struct Matrix4x4 {
         return inverse;
     }
 
-    static Matrix4x4 getIdentity(){
+    static Matrix4x4 getIdentity() {
         Matrix4x4 identity{};
 
         identity.elements[0][0] = 1;
