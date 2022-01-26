@@ -20,9 +20,7 @@ struct DBVHNode {
         Object *rightLeaf;
     };
 
-    BoundingBox boundingBox{std::numeric_limits<double>::max(), std::numeric_limits<double>::max(),
-                            std::numeric_limits<double>::max(), -std::numeric_limits<double>::max(),
-                            -std::numeric_limits<double>::max(), -std::numeric_limits<double>::max()};
+    BoundingBox boundingBox;
     double surfaceArea{};
 };
 
