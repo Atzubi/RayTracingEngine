@@ -574,7 +574,7 @@ std::vector<Vector3D> createSplittingPlanes(const DBVHNode &node) {
     for (int dim = 0; dim < 3; dim++) {
         double split = (node.boundingBox.maxCorner[dim] - node.boundingBox.minCorner[dim]) / splitsPerDimension;
         for (int plane = 0; plane < numberOfSplittingPlanes / 3; plane++) {
-            splittingPlanes[plane * (dim + 1)][dim] = node.boundingBox.minCorner[dim] + split * (plane + 1);
+            splittingPlanes[3 * dim + plane][dim] = node.boundingBox.minCorner[dim] + split * (plane + 1);
         }
     }
 
@@ -779,7 +779,7 @@ sortObjectsIntoBoxes(const int splitOperation, const Vector3D &splittingPlane, D
     }
 }
 
-bool passObjectsToLeftChild(DBVHNode &node, std::vector<Object*> &leftObjects){
+bool passObjectsToLeftChild(DBVHNode &node, std::vector<Object *> &leftObjects) {
     if (leftObjects.size() == 1) {
         if (node.maxDepthLeft == 0) {
             // create new child
@@ -825,7 +825,7 @@ bool passObjectsToLeftChild(DBVHNode &node, std::vector<Object*> &leftObjects){
     return true;
 }
 
-bool passObjectsToRightChild(DBVHNode &node, const std::vector<Object*> &rightObjects){
+bool passObjectsToRightChild(DBVHNode &node, const std::vector<Object *> &rightObjects) {
     if (rightObjects.size() == 1) {
         if (node.maxDepthRight == 0) {
             // create new child
@@ -871,7 +871,7 @@ bool passObjectsToRightChild(DBVHNode &node, const std::vector<Object*> &rightOb
     return true;
 }
 
-void setNodeSurfaceAreaAndDepth(DBVHNode &node){
+void setNodeSurfaceAreaAndDepth(DBVHNode &node) {
     node.surfaceArea = node.boundingBox.getSA();
     if (node.maxDepthLeft > 1) {
         node.surfaceArea += (node.leftChild)->surfaceArea;
@@ -914,10 +914,10 @@ static void add(DBVHNode *currentNode, const std::vector<Object *> &objects, uin
     }
 
     // pass objects to children
-    if(!passObjectsToLeftChild(*node, leftObjects)){
+    if (!passObjectsToLeftChild(*node, leftObjects)) {
         add(node->leftChild, leftObjects, depth + 1);
     }
-    if(!passObjectsToRightChild(*node, rightObjects)){
+    if (!passObjectsToRightChild(*node, rightObjects)) {
         add(node->rightChild, rightObjects, depth + 1);
     }
 
@@ -1449,6 +1449,7 @@ void DBVHv2::addObjects(DBVHNode *root, const std::vector<Object *> &objects) {
         return;
 
     add(root, objects, 1);
+    std::cout << root->surfaceArea << std::endl;
 }
 
 void removeLastChild(DBVHNode &root) {
