@@ -24,6 +24,14 @@ bool isLastElementRight(const DBVHNode &root) {
     return root.maxDepthRight == 1;
 }
 
+bool isEmptyRight(const DBVHNode &root){
+    return root.maxDepthRight == 0;
+}
+
+bool isEmptyLeft(const DBVHNode &root){
+    return isEmpty(root);
+}
+
 static void refit(BoundingBox *target, BoundingBox resizeBy) {
     target->minCorner.x = std::min(target->minCorner.x, resizeBy.minCorner.x);
     target->minCorner.y = std::min(target->minCorner.y, resizeBy.minCorner.y);
@@ -779,94 +787,130 @@ sortObjectsIntoBoxes(const int splitOperation, const Vector3D &splittingPlane, D
     }
 }
 
-bool passObjectsToLeftChild(DBVHNode &node, const std::vector<Object *> &leftObjects) {
-    if (leftObjects.size() == 1) {
-        if (node.maxDepthLeft == 0) {
-            // create new child
-            node.leftLeaf = leftObjects.at(0);
-            node.maxDepthLeft = 1;
-        } else if (node.maxDepthLeft == 1) {
-            // create new parent for both children
-            auto buffer = node.leftLeaf;
-            auto parent = new DBVHNode();
-            parent->boundingBox = buffer->getBoundaries();
-            refit(parent->boundingBox, leftObjects, 0);
-            parent->leftLeaf = buffer;
-            parent->rightLeaf = leftObjects.at(0);
-            parent->maxDepthLeft = 1;
-            parent->maxDepthRight = 1;
-            node.leftChild = parent;
-            node.maxDepthLeft = 2;
-        } else {
-            return false;
-        }
-    } else if (!leftObjects.empty()) {
-        if (node.maxDepthLeft == 0) {
-            // create new child
-            auto child = new DBVHNode();
-            node.leftChild = child;
-            node.maxDepthLeft = 2;
-            return false;
-        } else if (node.maxDepthLeft == 1) {
-            // create new parent for both children
-            auto buffer = node.leftLeaf;
-            auto parent = new DBVHNode();
-            parent->leftLeaf = buffer;
-            parent->boundingBox = buffer->getBoundaries();
-            parent->surfaceArea = parent->boundingBox.getSA() * 2;
-            parent->maxDepthLeft = 1;
-            node.leftChild = parent;
-            node.maxDepthLeft = 2;
-            return false;
-        } else {
-            return false;
-        }
+void createLeftLeaf(DBVHNode &node, const std::vector<Object *> &leftObjects){
+    node.leftLeaf = leftObjects.at(0);
+    node.maxDepthLeft = 1;
+}
+
+void createLeftChild(DBVHNode &node){
+    auto child = new DBVHNode();
+    node.leftChild = child;
+    node.maxDepthLeft = 2;
+}
+
+void createNewParentForLeftLeafs(DBVHNode &node, const std::vector<Object *> &leftObjects){
+    auto buffer = node.leftLeaf;
+    auto parent = new DBVHNode();
+    parent->boundingBox = buffer->getBoundaries();
+    refit(parent->boundingBox, leftObjects, 0);
+    parent->leftLeaf = buffer;
+    parent->rightLeaf = leftObjects.at(0);
+    parent->maxDepthLeft = 1;
+    parent->maxDepthRight = 1;
+    node.leftChild = parent;
+    node.maxDepthLeft = 2;
+}
+
+void createNewParentForLeftChildren(DBVHNode &node){
+    auto buffer = node.leftLeaf;
+    auto parent = new DBVHNode();
+    parent->leftLeaf = buffer;
+    parent->boundingBox = buffer->getBoundaries();
+    parent->surfaceArea = parent->boundingBox.getSA() * 2;
+    parent->maxDepthLeft = 1;
+    node.leftChild = parent;
+    node.maxDepthLeft = 2;
+}
+
+bool insertSingleObjectLeft(DBVHNode &node, const std::vector<Object *> &rightObjects){
+    if (isEmptyRight(node)) {
+        createLeftLeaf(node, rightObjects);
+    } else if (isLastElementRight(node)) {
+        createNewParentForLeftLeafs(node, rightObjects);
+    } else {
+        return false;
     }
     return true;
 }
 
+void createChildNodeLeft(DBVHNode &node){
+    if (isEmptyRight(node)) {
+        createLeftChild(node);
+    } else if (isLastElementRight(node)) {
+        createNewParentForLeftChildren(node);
+    }
+}
+
+bool passObjectsToLeftChild(DBVHNode &node, const std::vector<Object *> &leftObjects) {
+    if (leftObjects.size() == 1) {
+        return insertSingleObjectLeft(node, leftObjects);
+    } else if (!leftObjects.empty()) {
+        createChildNodeLeft(node);
+        return false;
+    }
+    return true;
+}
+
+void createRightLeaf(DBVHNode &node, const std::vector<Object *> &rightObjects){
+    node.rightLeaf = rightObjects.at(0);
+    node.maxDepthRight = 1;
+}
+
+void createRightChild(DBVHNode &node){
+    auto child = new DBVHNode();
+    node.rightChild = child;
+    node.maxDepthRight = 2;
+}
+
+void createNewParentForRightLeafs(DBVHNode &node, const std::vector<Object *> &rightObjects){
+    auto buffer = node.rightLeaf;
+    auto parent = new DBVHNode();
+    parent->boundingBox = buffer->getBoundaries();
+    refit(parent->boundingBox, rightObjects, 0);
+    parent->leftLeaf = buffer;
+    parent->rightLeaf = rightObjects.at(0);
+    parent->maxDepthLeft = 1;
+    parent->maxDepthRight = 1;
+    node.rightChild = parent;
+    node.maxDepthRight = 2;
+}
+
+void createNewParentForRightChildren(DBVHNode &node){
+    auto buffer = node.rightLeaf;
+    auto parent = new DBVHNode();
+    parent->rightLeaf = buffer;
+    parent->boundingBox = buffer->getBoundaries();
+    parent->surfaceArea = parent->boundingBox.getSA() * 2;
+    parent->maxDepthRight = 1;
+    node.rightChild = parent;
+    node.maxDepthRight = 2;
+}
+
+bool insertSingleObjectRight(DBVHNode &node, const std::vector<Object *> &rightObjects){
+    if (isEmptyRight(node)) {
+        createRightLeaf(node, rightObjects);
+    } else if (isLastElementRight(node)) {
+        createNewParentForRightLeafs(node, rightObjects);
+    } else {
+        return false;
+    }
+    return true;
+}
+
+void createChildNodeRight(DBVHNode &node){
+    if (isEmptyRight(node)) {
+        createRightChild(node);
+    } else if (isLastElementRight(node)) {
+        createNewParentForRightChildren(node);
+    }
+}
+
 bool passObjectsToRightChild(DBVHNode &node, const std::vector<Object *> &rightObjects) {
     if (rightObjects.size() == 1) {
-        if (node.maxDepthRight == 0) {
-            // create new child
-            node.rightLeaf = rightObjects.at(0);
-            node.maxDepthRight = 1;
-        } else if (node.maxDepthRight == 1) {
-            // create new parent for both children
-            auto buffer = node.rightLeaf;
-            auto parent = new DBVHNode();
-            parent->boundingBox = buffer->getBoundaries();
-            refit(parent->boundingBox, rightObjects, 0);
-            parent->leftLeaf = buffer;
-            parent->rightLeaf = rightObjects.at(0);
-            parent->maxDepthLeft = 1;
-            parent->maxDepthRight = 1;
-            node.rightChild = parent;
-            node.maxDepthRight = 2;
-        } else {
-            return false;
-        }
+        return insertSingleObjectRight(node, rightObjects);
     } else if (!rightObjects.empty()) {
-        if (node.maxDepthRight == 0) {
-            // create new child
-            auto child = new DBVHNode();
-            node.rightChild = child;
-            node.maxDepthRight = 2;
-            return false;
-        } else if (node.maxDepthRight == 1) {
-            // create new parent for both children
-            auto buffer = node.rightLeaf;
-            auto parent = new DBVHNode();
-            parent->rightLeaf = buffer;
-            parent->boundingBox = buffer->getBoundaries();
-            parent->surfaceArea = parent->boundingBox.getSA() * 2;
-            parent->maxDepthRight = 1;
-            node.rightChild = parent;
-            node.maxDepthRight = 2;
-            return false;
-        } else {
-            return false;
-        }
+        createChildNodeRight(node);
+        return false;
     }
     return true;
 }
