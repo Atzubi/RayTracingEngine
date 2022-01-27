@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <string>
+#include <limits>
 
 /**
  * Contains x, y and z coordinates representing a vector in 3 dimensions.
