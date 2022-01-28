@@ -31,7 +31,7 @@ public:
 
     ~Instance() override;
 
-    Object *clone() override;
+    std::unique_ptr<Object> clone() override;
 
     [[nodiscard]] BoundingBox getBoundaries() const override;
 

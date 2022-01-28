@@ -8,16 +8,20 @@
 #include "RayTraceEngine/Object.h"
 
 struct DBVHNode {
-    uint8_t maxDepthLeft = 0;
+    DBVHNode();
+
+    ~DBVHNode();
+
+    uint8_t maxDepthLeft;
     union {
-        DBVHNode *leftChild{};
-        Object *leftLeaf;
+        std::shared_ptr<DBVHNode> leftChild;
+        Object *leftLeaf{};
     };
 
-    uint8_t maxDepthRight = 0;
+    uint8_t maxDepthRight;
     union {
-        DBVHNode *rightChild{};
-        Object *rightLeaf;
+        std::shared_ptr<DBVHNode> rightChild;
+        Object *rightLeaf{};
     };
 
     BoundingBox boundingBox;
@@ -26,17 +30,15 @@ struct DBVHNode {
 
 class DBVHv2 {
 public:
-    static void addObjects(DBVHNode *root, const std::vector<Object *> &objects);
+    static void addObjects(DBVHNode &root, const std::vector<Object *> &objects);
 
-    static void removeObjects(DBVHNode *root, const std::vector<Object *> &objects);
+    static void removeObjects(DBVHNode &root, const std::vector<Object *> &objects);
 
-    static bool intersectFirst(DBVHNode *root, IntersectionInfo *intersectionInfo, Ray *ray);
+    static bool intersectFirst(DBVHNode &root, IntersectionInfo *intersectionInfo, Ray *ray);
 
-    static bool intersectAny(DBVHNode *root, IntersectionInfo *intersectionInfo, Ray *ray);
+    static bool intersectAny(DBVHNode &root, IntersectionInfo *intersectionInfo, Ray *ray);
 
-    static bool intersectAll(DBVHNode *root, std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray);
-
-    static void deleteTree(DBVHNode *root);
+    static bool intersectAll(DBVHNode &root, std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray);
 };
 
 #endif //RAYTRACEENGINE_DBVHV2_H

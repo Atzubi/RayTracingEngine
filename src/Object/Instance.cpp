@@ -245,7 +245,7 @@ bool Instance::intersectFirst(IntersectionInfo *intersectionInfo, Ray *ray) {
     newRay.direction.z = newRay.direction.z - newRay.origin.z;
 
     double length = std::sqrt(newRay.direction.x * newRay.direction.x + newRay.direction.y * newRay.direction.y +
-                         newRay.direction.z * newRay.direction.z);
+                              newRay.direction.z * newRay.direction.z);
 
     newRay.direction.x /= length;
     newRay.direction.y /= length;
@@ -615,7 +615,7 @@ BoundingBox Instance::getBoundaries() const {
     return boundingBox;
 }
 
-Object *Instance::clone() {
+std::unique_ptr<Object> Instance::clone() {
     return nullptr;
 }
 

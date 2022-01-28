@@ -33,8 +33,8 @@ private:
     std::vector<uint64_t> indices;
     Material material;
 
-    std::vector<Object *> triangles;
-    DBVHNode *structure;
+    std::vector<std::shared_ptr<Object>> triangles;
+    std::shared_ptr<DBVHNode> structure;
 
 public:
     /**
@@ -86,7 +86,7 @@ public:
      * Makes a perfect clone of this object.
      * @return  Pointer to the new clone.
      */
-    Object *clone() override;
+    std::unique_ptr<Object> clone() override;
 
     /**
      * Computes the effective surface area of this object.

@@ -31,7 +31,7 @@ DataManagementUnitV2::~DataManagementUnitV2() {
 }
 
 PipelineId DataManagementUnitV2::createPipeline(PipelineDescription *pipelineDescription) {
-    std::vector<Object *> instances;
+    std::vector<Object*> instances;
     std::vector<InstanceId> instanceIds;
 
     // pull all objects required to create the pipeline
@@ -44,9 +44,9 @@ PipelineId DataManagementUnitV2::createPipeline(PipelineDescription *pipelineDes
                 auto capsule = ObjectCapsule{ObjectId{i.objectId}, buffer.boundingBox, buffer.cost};
 
                 // create instances of objects
-                auto *instance = new Instance(engineNode, &capsule);
+                auto instance = std::make_unique<Instance>(engineNode, &capsule);
                 instance->applyTransform(pipelineDescription->objectTransformations[c]);
-                instances.push_back(instance);
+                instances.push_back(instance.get());
 
                 // manage instance ids
                 auto instanceId = objectInstanceIds.extract(objectInstanceIds.begin()).value();
@@ -73,8 +73,8 @@ PipelineId DataManagementUnitV2::createPipeline(PipelineDescription *pipelineDes
     }
 
     // build bvh on instances
-    auto *root = new DBVHNode();
-    DBVHv2::addObjects(root, instances);
+    auto root = std::make_unique<DBVHNode>();
+    DBVHv2::addObjects(*root, instances);
 
     // get shader implementation from id
     std::vector<RayGeneratorShaderPackage> pipelineRayGeneratorShaders;
@@ -303,7 +303,7 @@ bool DataManagementUnitV2::removePipelineObject(PipelineId pipelineId, InstanceI
             auto geometry = pipeline->getGeometry();
             auto instance = engineNode->requestInstanceData(objectInstanceId);
             std::vector<Object *> remove{instance};
-            DBVHv2::removeObjects(geometry, remove);
+            DBVHv2::removeObjects(*geometry, remove);
             return engineNode->deleteInstanceDataFragment(objectInstanceId);
         } else {
             // TODO: delete instance on other nodes
@@ -362,7 +362,7 @@ DataManagementUnitV2::bindGeometryToPipeline(PipelineId pipelineId, std::vector<
 
     auto geometry = pipeline->getGeometry();
 
-    std::vector<Object *> instances;
+    std::vector<Object*> instances;
     std::vector<InstanceId> instanceIds;
 
     for (int i = 0; i < objectIDs->size(); i++) {
@@ -372,9 +372,9 @@ DataManagementUnitV2::bindGeometryToPipeline(PipelineId pipelineId, std::vector<
                 auto capsule = ObjectCapsule{ObjectId{i}, buffer.boundingBox, buffer.cost};
 
                 // create instances of objects
-                auto *instance = new Instance(engineNode, &capsule);
+                auto instance = std::make_unique<Instance>(engineNode, &capsule);
                 instance->applyTransform(&transforms->at(i));
-                instances.push_back(instance);
+                instances.push_back(instance.get());
 
                 // manage instance ids
                 auto instanceId = objectInstanceIds.extract(objectInstanceIds.begin()).value();
@@ -401,7 +401,7 @@ DataManagementUnitV2::bindGeometryToPipeline(PipelineId pipelineId, std::vector<
 
     pipelineToInstanceMap[pipelineId].insert(instanceIds.begin(), instanceIds.end());
 
-    DBVHv2::addObjects(geometry, instances);
+    DBVHv2::addObjects(*geometry, instances);
 
     return true;
 }
@@ -512,7 +512,8 @@ ObjectId DataManagementUnitV2::addObject(Object *object) {
     objectIdDeviceMap[buffer] = deviceId;
 
     // TODO: spread over nodes
-    engineNode->storeBaseDataFragments(object->clone(), buffer);
+    auto clone = object->clone();
+    engineNode->storeBaseDataFragments(clone, buffer);
 
     if (objectIds.empty()) {
         objectIds.insert(ObjectId{buffer.objectId + 1});
@@ -553,7 +554,8 @@ bool DataManagementUnitV2::removeObject(ObjectId id) {
 
 bool DataManagementUnitV2::updateObject(ObjectId id, Object *object) {
     if (engineNode->deleteBaseDataFragment(id)) return false;
-    engineNode->storeBaseDataFragments(object->clone(), id);
+    auto clone = object->clone();
+    engineNode->storeBaseDataFragments(clone, id);
     return true;
 }
 
@@ -764,13 +766,13 @@ DeviceId DataManagementUnitV2::getDeviceId() {
     return DeviceId{0};
 }
 
-Object *DataManagementUnitV2::getBaseDataFragment(ObjectId id) {
+std::unique_ptr<Object> DataManagementUnitV2::getBaseDataFragment(ObjectId id) {
     if (objectIdDeviceMap.count(id) == 0) return nullptr;
     // TODO: request object with id from other device
     return nullptr;
 }
 
-Instance *DataManagementUnitV2::getInstanceDataFragment(InstanceId id) {
+std::unique_ptr<Instance> DataManagementUnitV2::getInstanceDataFragment(InstanceId id) {
     if (objectInstanceIdDeviceMap.count(id) == 0) return nullptr;
     // TODO: request object with id from other device
     return nullptr;

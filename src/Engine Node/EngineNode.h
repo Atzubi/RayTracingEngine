@@ -24,37 +24,38 @@ class EngineNode {
 private:
     class MemoryBlock {
     private:
-        std::unordered_map<ObjectId, Object *> objects;
-        std::unordered_map<InstanceId, Instance *> objectInstances;
+        std::unordered_map<ObjectId, std::unique_ptr<Object>> objects;
+        std::unordered_map<InstanceId, std::unique_ptr<Instance>> objectInstances;
 
-        std::unordered_map<ObjectId, Object *> objectCache;
-        std::unordered_map<InstanceId, Instance *> objectInstanceCache;
+        std::unordered_map<ObjectId, std::unique_ptr<Object>> objectCache;
+        std::unordered_map<InstanceId, std::unique_ptr<Instance>> objectInstanceCache;
 
         std::unordered_map<ShaderResourceId, ShaderResource *> shaderResources;
 
     public:
         MemoryBlock();
+
         ~MemoryBlock();
 
-        void storeBaseDataFragments(Object *object, ObjectId id);
+        void storeBaseDataFragments(std::unique_ptr<Object> &object, ObjectId id);
 
         bool deleteBaseDataFragment(ObjectId id);
 
         Object *getBaseDataFragment(ObjectId id);
 
-        void storeInstanceDataFragments(Instance *instance, InstanceId id);
+        void storeInstanceDataFragments(std::unique_ptr<Instance> &instance, InstanceId id);
 
         bool deleteInstanceDataFragment(InstanceId id);
 
         Instance *getInstanceDataFragment(InstanceId id);
 
-        void cacheBaseData(Object *object, ObjectId id);
+        void cacheBaseData(std::unique_ptr<Object> &object, ObjectId id);
 
-        void cacheInstanceData(Instance *instance, InstanceId id);
+        void cacheInstanceData(std::unique_ptr<Instance> &instance, InstanceId id);
 
         void storeShaderResource(ShaderResource *shaderResource, ShaderResourceId id);
 
-        ShaderResource* getShaderResource(ShaderResourceId id);
+        ShaderResource *getShaderResource(ShaderResourceId id);
 
         bool deleteShaderResource(ShaderResourceId id);
     };
@@ -62,7 +63,7 @@ private:
     class PipelineBlock {
     private:
         std::unordered_map<PipelineId, PipelineImplement *> pipelines;
-        std::unordered_map<DBVHNode *, DBVHNode *> pipelineCache;
+        std::unordered_map<std::shared_ptr<DBVHNode>, std::shared_ptr<DBVHNode>> pipelineCache;
 
         std::unordered_map<HitShaderId, HitShader *> hitShaders;
         std::unordered_map<MissShaderId, MissShader *> missShaders;
@@ -72,6 +73,7 @@ private:
 
     public:
         PipelineBlock();
+
         ~PipelineBlock();
 
         void storePipelineFragments(PipelineImplement *pipeline, PipelineId id);
@@ -90,15 +92,15 @@ private:
 
         void addShader(MissShaderId id, MissShader *shader);
 
-        RayGeneratorShader* getShader(RayGeneratorShaderId id);
+        RayGeneratorShader *getShader(RayGeneratorShaderId id);
 
-        HitShader* getShader(HitShaderId id);
+        HitShader *getShader(HitShaderId id);
 
-        OcclusionShader* getShader(OcclusionShaderId id);
+        OcclusionShader *getShader(OcclusionShaderId id);
 
-        PierceShader* getShader(PierceShaderId id);
+        PierceShader *getShader(PierceShaderId id);
 
-        MissShader* getShader(MissShaderId id);
+        MissShader *getShader(MissShaderId id);
 
         bool deleteShader(RayGeneratorShaderId id);
 
@@ -125,23 +127,23 @@ public:
 
     ~EngineNode();
 
-    void storeBaseDataFragments(Object *object, ObjectId id);
+    void storeBaseDataFragments(std::unique_ptr<Object> &object, ObjectId id);
 
     bool deleteBaseDataFragment(ObjectId id);
 
-    void storeInstanceDataFragments(Instance *instance, InstanceId id);
+    void storeInstanceDataFragments(std::unique_ptr<Instance> &instance, InstanceId id);
 
     bool deleteInstanceDataFragment(InstanceId id);
 
-    void cacheBaseData(Object *object, ObjectId id);
+    void cacheBaseData(std::unique_ptr<Object> &, ObjectId id);
 
-    void cacheInstanceData(Instance *instance, InstanceId id);
+    void cacheInstanceData(std::unique_ptr<Instance> &instance, InstanceId id);
 
     void storeShaderResource(ShaderResource *shaderResource, ShaderResourceId id);
 
     bool deleteShaderResource(ShaderResourceId id);
 
-    ShaderResource* getShaderResource(ShaderResourceId id);
+    ShaderResource *getShaderResource(ShaderResourceId id);
 
     void storePipelineFragments(PipelineImplement *pipeline, PipelineId id);
 
@@ -163,15 +165,15 @@ public:
 
     void addShader(MissShaderId id, MissShader *shader);
 
-    RayGeneratorShader* getShader(RayGeneratorShaderId id);
+    RayGeneratorShader *getShader(RayGeneratorShaderId id);
 
-    HitShader* getShader(HitShaderId id);
+    HitShader *getShader(HitShaderId id);
 
-    OcclusionShader* getShader(OcclusionShaderId id);
+    OcclusionShader *getShader(OcclusionShaderId id);
 
-    PierceShader* getShader(PierceShaderId id);
+    PierceShader *getShader(PierceShaderId id);
 
-    MissShader* getShader(MissShaderId id);
+    MissShader *getShader(MissShaderId id);
 
     bool deleteShader(RayGeneratorShaderId id);
 

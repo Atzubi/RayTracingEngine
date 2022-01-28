@@ -25,7 +25,7 @@ PipelineImplement::PipelineImplement(EngineNode *engine, int width, int height, 
                                      std::vector<OcclusionShaderPackage> *occlusionShaders,
                                      std::vector<HitShaderPackage> *hitShaders,
                                      std::vector<PierceShaderPackage> *pierceShaders,
-                                     std::vector<MissShaderPackage> *missShaders, DBVHNode *geometry) {
+                                     std::vector<MissShaderPackage> *missShaders, std::unique_ptr<DBVHNode> &geometry) {
     this->engineNode = engine;
     this->pipelineInfo = new PipelineInfo();
     this->pipelineInfo->width = width;
@@ -50,7 +50,7 @@ PipelineImplement::PipelineImplement(EngineNode *engine, int width, int height, 
         this->missShaders[shader.id] = shader.missShader;
     }
 
-    this->geometry = geometry;
+    this->geometry = std::move(geometry);
     result = new Texture{"Render", width, height, new unsigned char[width * height * 3]};
 
     for (int i = 0; i < width * height * 3; i++) {
@@ -63,7 +63,6 @@ PipelineImplement::~PipelineImplement() {
     delete[] result->image;
     delete result;
     delete pipelineInfo;
-    DBVHv2::deleteTree(geometry);
 }
 
 void PipelineImplement::setResolution(int resolutionWidth, int resolutionHeight) {
@@ -78,7 +77,7 @@ void PipelineImplement::setCamera(Vector3D pos, Vector3D dir, Vector3D up) {
 }
 
 DBVHNode *PipelineImplement::getGeometry() {
-    return geometry;
+    return geometry.get();
 }
 
 Object *PipelineImplement::getGeometryAsObject() {
@@ -122,7 +121,7 @@ int PipelineImplement::run() {
                         ray.dirfrac.z = 1.0 / ray.direction.z;
 
                         std::vector<IntersectionInfo *> infos;
-                        DBVHv2::intersectAll(geometry, &infos, &ray);
+                        DBVHv2::intersectAll(*geometry, &infos, &ray);
 
                         RayGeneratorOutput newRays;
 
@@ -230,7 +229,7 @@ int PipelineImplement::run() {
 
                         IntersectionInfo info = {false, std::numeric_limits<double>::max(), ray.origin, ray.direction,
                                                  0, 0, 0, 0, 0};
-                        DBVHv2::intersectFirst(geometry, &info, &ray);
+                        DBVHv2::intersectFirst(*geometry, &info, &ray);
 
                         RayGeneratorOutput newRays;
 
@@ -306,7 +305,7 @@ int PipelineImplement::run() {
 
                         IntersectionInfo info = {false, std::numeric_limits<double>::max(), ray.origin, ray.direction,
                                                  0, 0, 0, 0, 0};
-                        DBVHv2::intersectAny(geometry, &info, &ray);
+                        DBVHv2::intersectAny(*geometry, &info, &ray);
 
                         RayGeneratorOutput newRays;
 

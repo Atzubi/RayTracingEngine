@@ -14,7 +14,7 @@ public:
 
     Triangle() = default;
 
-    Object *clone() override {
+    std::unique_ptr<Object> clone() override {
         return nullptr;
     }
 
@@ -225,46 +225,42 @@ TriangleMeshObject::TriangleMeshObject(const std::vector<Vertex> *vertices, cons
     this->indices = *indices;
     this->material = *material;
 
+    std::vector<Object *> objects;
     for (int i = 0; i < indices->size() / 3; i++) {
-        auto *triangle = new Triangle();
+        auto triangle = std::make_shared<Triangle>();
         triangle->mesh = this;
         triangle->pos = i * 3;
         triangles.push_back(triangle);
+        objects.push_back(triangle.get());
     }
 
 
-    auto *tree = new DBVHNode();
-    DBVHv2::addObjects(tree, triangles);
-    structure = tree;
+    structure = std::make_unique<DBVHNode>();
+    DBVHv2::addObjects(*structure, objects);
 }
 
-TriangleMeshObject::~TriangleMeshObject() {
-    for (auto t: triangles) {
-        delete t;
-    }
-    DBVHv2::deleteTree(structure);
-};
+TriangleMeshObject::~TriangleMeshObject() =default;
 
 BoundingBox TriangleMeshObject::getBoundaries() const {
     return structure->boundingBox;
 }
 
 bool TriangleMeshObject::intersectFirst(IntersectionInfo *intersectionInfo, Ray *ray) {
-    return DBVHv2::intersectFirst(structure, intersectionInfo, ray);
+    return DBVHv2::intersectFirst(*structure, intersectionInfo, ray);
 
 }
 
 bool TriangleMeshObject::intersectAny(IntersectionInfo *intersectionInfo, Ray *ray) {
-    return DBVHv2::intersectAny(structure, intersectionInfo, ray);
+    return DBVHv2::intersectAny(*structure, intersectionInfo, ray);
 }
 
 bool TriangleMeshObject::intersectAll(std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray) {
-    return DBVHv2::intersectAll(structure, intersectionInfo, ray);
+    return DBVHv2::intersectAll(*structure, intersectionInfo, ray);
 }
 
-Object *TriangleMeshObject::clone() {
+std::unique_ptr<Object> TriangleMeshObject::clone() {
     // TODO
-    return new TriangleMeshObject(&vertices, &indices, &material);
+    return std::make_unique<TriangleMeshObject>(&vertices, &indices, &material);
 }
 
 double TriangleMeshObject::getSurfaceArea() const {

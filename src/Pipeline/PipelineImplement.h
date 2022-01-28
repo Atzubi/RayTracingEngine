@@ -101,7 +101,7 @@ private:
     std::unordered_map<MissShaderId, MissShaderContainer> missShaders;
 
 
-    DBVHNode *geometry;
+    std::unique_ptr<DBVHNode> geometry;
 
     Texture *result;
 
@@ -111,7 +111,7 @@ public:
                       std::vector<OcclusionShaderPackage> *occlusionShaders,
                       std::vector<HitShaderPackage> *hitShaders,
                       std::vector<PierceShaderPackage> *pierceShaders, std::vector<MissShaderPackage> *missShaders,
-                      DBVHNode *geometry);
+                      std::unique_ptr<DBVHNode> &geometry);
 
     ~PipelineImplement();
 

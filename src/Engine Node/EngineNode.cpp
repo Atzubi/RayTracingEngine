@@ -3,6 +3,8 @@
 //
 
 #include "EngineNode.h"
+
+#include <utility>
 #include "Data Management/DataManagementUnitV2.h"
 #include "RayTraceEngine/Object.h"
 #include "Pipeline/PipelineImplement.h"
@@ -11,37 +13,24 @@
 
 EngineNode::MemoryBlock::MemoryBlock() = default;
 
-EngineNode::MemoryBlock::~MemoryBlock() {
-    for (auto o: objects) {
-        delete o.second;
-    }
-    for (auto o: objectInstances) {
-        delete o.second;
-    }
-    for (auto o: objectCache) {
-        delete o.second;
-    }
-    for (auto o: objectInstanceCache) {
-        delete o.second;
-    }
+EngineNode::MemoryBlock::~MemoryBlock() = default;
+
+void EngineNode::MemoryBlock::storeBaseDataFragments( std::unique_ptr<Object> &object, ObjectId id) {
+    objects[id] = std::move(object);
 }
 
-void EngineNode::MemoryBlock::storeBaseDataFragments(Object *object, ObjectId id) {
-    objects[id] = object;
+void EngineNode::MemoryBlock::storeInstanceDataFragments(std::unique_ptr<Instance> &instance, InstanceId id) {
+    objectInstances[id] = std::move(instance);
 }
 
-void EngineNode::MemoryBlock::storeInstanceDataFragments(Instance *instance, InstanceId id) {
-    objectInstances[id] = instance;
-}
-
-void EngineNode::MemoryBlock::cacheBaseData(Object *object, ObjectId id) {
+void EngineNode::MemoryBlock::cacheBaseData(std::unique_ptr<Object> &object, ObjectId id) {
     // TODO: implement cache eviction
-    objectCache[id] = object;
+    objectCache[id] = std::move(object);
 }
 
-void EngineNode::MemoryBlock::cacheInstanceData(Instance *instance, InstanceId id) {
+void EngineNode::MemoryBlock::cacheInstanceData(std::unique_ptr<Instance> &instance, InstanceId id) {
     // TODO: implement cache eviction
-    objectInstanceCache[id] = instance;
+    objectInstanceCache[id] = std::move(instance);
 }
 
 void EngineNode::MemoryBlock::storeShaderResource(ShaderResource *shaderResource, ShaderResourceId id) {
@@ -58,14 +47,12 @@ bool EngineNode::MemoryBlock::deleteShaderResource(ShaderResourceId id) {
 
 bool EngineNode::MemoryBlock::deleteBaseDataFragment(ObjectId id) {
     if (objects.count(id) == 0) return false;
-    delete objects[id];
     objects.erase(id);
     return true;
 }
 
 bool EngineNode::MemoryBlock::deleteInstanceDataFragment(InstanceId id) {
     if (objectInstances.count(id) == 0) return false;
-    delete objectInstances[id];
     objectInstances.erase(id);
     return true;
 }
@@ -78,11 +65,11 @@ Object *EngineNode::MemoryBlock::getBaseDataFragment(ObjectId id) {
             return nullptr;
         } else {
             // object was found in cache
-            return objectCache[id];
+            return objectCache[id].get();
         }
     } else {
         // object was found in node
-        return objects[id];
+        return objects[id].get();
     }
 }
 
@@ -94,11 +81,11 @@ Instance *EngineNode::MemoryBlock::getInstanceDataFragment(InstanceId id) {
             return nullptr;
         } else {
             // object was found in cache
-            return objectInstanceCache[id];
+            return objectInstanceCache[id].get();
         }
     } else {
         // object was found in node
-        return objectInstances[id];
+        return objectInstances[id].get();
     }
 }
 
@@ -248,19 +235,19 @@ EngineNode::~EngineNode() {
     delete pipelineBlock;
 }
 
-void EngineNode::storeBaseDataFragments(Object *object, ObjectId id) {
+void EngineNode::storeBaseDataFragments(std::unique_ptr<Object> &object, ObjectId id) {
     memoryBlock->storeBaseDataFragments(object, id);
 }
 
-void EngineNode::storeInstanceDataFragments(Instance *instance, InstanceId id) {
+void EngineNode::storeInstanceDataFragments(std::unique_ptr<Instance> &instance, InstanceId id) {
     memoryBlock->storeInstanceDataFragments(instance, id);
 }
 
-void EngineNode::cacheBaseData(Object *object, ObjectId id) {
+void EngineNode::cacheBaseData(std::unique_ptr<Object> &object, ObjectId id) {
     memoryBlock->cacheBaseData(object, id);
 }
 
-void EngineNode::cacheInstanceData(Instance *instance, InstanceId id) {
+void EngineNode::cacheInstanceData(std::unique_ptr<Instance> &instance, InstanceId id) {
     memoryBlock->cacheInstanceData(instance, id);
 }
 
@@ -284,8 +271,8 @@ bool EngineNode::deletePipelineFragment(PipelineId id) {
 Object *EngineNode::requestBaseData(ObjectId id) {
     auto fragment = memoryBlock->getBaseDataFragment(id);
     if (fragment == nullptr) {
-        fragment = dataManagementUnit->getBaseDataFragment(id);
-        memoryBlock->cacheBaseData(fragment, id);
+        auto sharedFragment = dataManagementUnit->getBaseDataFragment(id);
+        memoryBlock->cacheBaseData(sharedFragment, id);
     }
     return fragment;
 }
@@ -293,8 +280,8 @@ Object *EngineNode::requestBaseData(ObjectId id) {
 Instance *EngineNode::requestInstanceData(InstanceId id) {
     auto fragment = memoryBlock->getInstanceDataFragment(id);
     if (fragment == nullptr) {
-        fragment = dataManagementUnit->getInstanceDataFragment(id);
-        memoryBlock->cacheInstanceData(fragment, id);
+        auto sharedFragment = dataManagementUnit->getInstanceDataFragment(id);
+        memoryBlock->cacheInstanceData(sharedFragment, id);
     }
     return fragment;
 }

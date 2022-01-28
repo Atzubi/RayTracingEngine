@@ -245,9 +245,9 @@ public:
 
     int runAllPipelines();
 
-    Object *getBaseDataFragment(ObjectId id);
+    std::unique_ptr<Object> getBaseDataFragment(ObjectId id);
 
-    Instance *getInstanceDataFragment(InstanceId id);
+    std::unique_ptr<Instance> getInstanceDataFragment(InstanceId id);
 };
 
 #endif //RAYTRACEENGINE_DATAMANAGEMENTUNITV2_H
