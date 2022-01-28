@@ -227,11 +227,11 @@ static bool rayBoxIntersection(Vector3D *min, Vector3D *max, Ray *ray, double *d
     double t5 = (min->z - ray->origin.z) * ray->dirfrac.z;
     double t6 = (max->z - ray->origin.z) * ray->dirfrac.z;
 
-    double tmin = std::max(std::max(std::min(t1, t2), std::min(t3, t4)), std::min(t5, t6));
-    double tmax = std::min(std::min(std::max(t1, t2), std::max(t3, t4)), std::max(t5, t6));
+    double tMin = std::max(std::max(std::min(t1, t2), std::min(t3, t4)), std::min(t5, t6));
+    double tMax = std::min(std::min(std::max(t1, t2), std::max(t3, t4)), std::max(t5, t6));
 
-    *distance = tmin;
-    return tmax >= 0 && tmin <= tmax;
+    *distance = tMin;
+    return tMax >= 0 && tMin <= tMax;
 }
 
 static void refit(DBVHNode *node) {
