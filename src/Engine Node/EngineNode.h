@@ -63,7 +63,7 @@ private:
     class PipelineBlock {
     private:
         std::unordered_map<PipelineId, PipelineImplement *> pipelines;
-        std::unordered_map<std::shared_ptr<DBVHNode>, std::shared_ptr<DBVHNode>> pipelineCache;
+        std::unordered_map<DBVHNode *, DBVHNode *> pipelineCache;
 
         std::unordered_map<HitShaderId, HitShader *> hitShaders;
         std::unordered_map<MissShaderId, MissShader *> missShaders;

@@ -227,11 +227,11 @@ TriangleMeshObject::TriangleMeshObject(const std::vector<Vertex> *vertices, cons
 
     std::vector<Object *> objects;
     for (int i = 0; i < indices->size() / 3; i++) {
-        auto triangle = std::make_shared<Triangle>();
+        auto triangle = std::make_unique<Triangle>();
         triangle->mesh = this;
         triangle->pos = i * 3;
-        triangles.push_back(triangle);
         objects.push_back(triangle.get());
+        triangles.push_back(std::move(triangle));
     }
 
 

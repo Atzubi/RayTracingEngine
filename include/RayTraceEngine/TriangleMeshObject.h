@@ -33,8 +33,8 @@ private:
     std::vector<uint64_t> indices;
     Material material;
 
-    std::vector<std::shared_ptr<Object>> triangles;
-    std::shared_ptr<DBVHNode> structure;
+    std::vector<std::unique_ptr<Object>> triangles;
+    std::unique_ptr<DBVHNode> structure;
 
 public:
     /**
