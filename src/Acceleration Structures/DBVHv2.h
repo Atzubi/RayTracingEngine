@@ -6,21 +6,18 @@
 #define RAYTRACEENGINE_DBVHV2_H
 
 #include "RayTraceEngine/Object.h"
-#include <variant>
 
 struct DBVHNode {
-    DBVHNode();
+    uint8_t maxDepthLeft = 0;
+    std::unique_ptr<DBVHNode> leftChild;
+    Object *leftLeaf = nullptr;
 
-    ~DBVHNode();
-
-    uint8_t maxDepthLeft;
-    std::variant<std::unique_ptr<DBVHNode>, Object*> leftChild;
-
-    uint8_t maxDepthRight;
-    std::variant<std::unique_ptr<DBVHNode>, Object*> rightChild;
+    uint8_t maxDepthRight = 0;
+    std::unique_ptr<DBVHNode> rightChild;
+    Object *rightLeaf = nullptr;
 
     BoundingBox boundingBox;
-    double surfaceArea{};
+    double surfaceArea = 0;
 };
 
 class DBVHv2 {

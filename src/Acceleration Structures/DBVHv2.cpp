@@ -243,19 +243,19 @@ static void refit(DBVHNode &node) {
                         -std::numeric_limits<double>::max(),
                         -std::numeric_limits<double>::max()};
     if (node.maxDepthRight > 1) {
-        refit(node.boundingBox, std::get<std::unique_ptr<DBVHNode>>(node.rightChild)->boundingBox);
-        node.surfaceArea = std::get<std::unique_ptr<DBVHNode>>(node.rightChild)->surfaceArea;
+        refit(node.boundingBox, (node.rightChild)->boundingBox);
+        node.surfaceArea = (node.rightChild)->surfaceArea;
     } else {
-        refit(node.boundingBox, std::get<Object *>(node.rightChild)->getBoundaries());
-        node.surfaceArea = std::get<Object *>(node.rightChild)->getSurfaceArea();
+        refit(node.boundingBox, (node.rightLeaf)->getBoundaries());
+        node.surfaceArea = (node.rightLeaf)->getSurfaceArea();
     }
     if (node.maxDepthLeft > 1) {
-        refit(node.boundingBox, std::get<std::unique_ptr<DBVHNode>>(node.leftChild)->boundingBox);
-        node.surfaceArea += std::get<std::unique_ptr<DBVHNode>>(node.leftChild)->surfaceArea;
+        refit(node.boundingBox, (node.leftChild)->boundingBox);
+        node.surfaceArea += (node.leftChild)->surfaceArea;
         node.surfaceArea += node.boundingBox.getSA();
     } else {
-        refit(node.boundingBox, std::get<Object *>(node.rightChild)->getBoundaries());
-        node.surfaceArea += std::get<Object *>(node.rightChild)->getSurfaceArea();
+        refit(node.boundingBox, (node.leftLeaf)->getBoundaries());
+        node.surfaceArea += (node.leftLeaf)->getSurfaceArea();
         node.surfaceArea += node.boundingBox.getSA();
     }
 }
@@ -272,41 +272,41 @@ bool optimizeSAH(DBVHNode &node) {
     SAHs[0] = node.surfaceArea;
 
     if (node.maxDepthLeft > 1) {
-        auto &leftNode = std::get<std::unique_ptr<DBVHNode>>(node.leftChild);
+        auto leftNode = node.leftChild.get();
         leftBox = leftNode->boundingBox;
         leftSA = leftNode->surfaceArea;
         if (leftNode->maxDepthLeft > 1) {
-            leftLeftBox = std::get<std::unique_ptr<DBVHNode>>(leftNode->leftChild)->boundingBox;
-            leftLeftSA = std::get<std::unique_ptr<DBVHNode>>(leftNode->leftChild)->surfaceArea;
+            leftLeftBox = (leftNode->leftChild)->boundingBox;
+            leftLeftSA = (leftNode->leftChild)->surfaceArea;
         } else {
-            leftLeftBox = std::get<Object *>(leftNode->leftChild)->getBoundaries();
-            leftLeftSA = std::get<Object *>(leftNode->leftChild)->getSurfaceArea();
+            leftLeftBox = (leftNode->leftLeaf)->getBoundaries();
+            leftLeftSA = (leftNode->leftLeaf)->getSurfaceArea();
         }
         if (leftNode->maxDepthRight > 1) {
-            leftRightBox = std::get<std::unique_ptr<DBVHNode>>(leftNode->rightChild)->boundingBox;
-            leftRightSA = std::get<std::unique_ptr<DBVHNode>>(leftNode->rightChild)->surfaceArea;
+            leftRightBox = (leftNode->rightChild)->boundingBox;
+            leftRightSA = (leftNode->rightChild)->surfaceArea;
         } else {
-            leftRightBox = std::get<Object *>(leftNode->rightChild)->getBoundaries();
-            leftRightSA = std::get<Object *>(leftNode->rightChild)->getSurfaceArea();
+            leftRightBox = (leftNode->rightLeaf)->getBoundaries();
+            leftRightSA = (leftNode->rightLeaf)->getSurfaceArea();
         }
 
         if (node.maxDepthRight > 1) {
-            auto &rightNode = std::get<std::unique_ptr<DBVHNode>>(node.rightChild);
+            auto rightNode = node.rightChild.get();
             rightBox = rightNode->boundingBox;
             rightSA = rightNode->surfaceArea;
             if (rightNode->maxDepthLeft > 1) {
-                rightLeftBox = std::get<std::unique_ptr<DBVHNode>>(rightNode->leftChild)->boundingBox;
-                rightLeftSA = std::get<std::unique_ptr<DBVHNode>>(rightNode->leftChild)->surfaceArea;
+                rightLeftBox = (rightNode->leftChild)->boundingBox;
+                rightLeftSA = (rightNode->leftChild)->surfaceArea;
             } else {
-                rightLeftBox = std::get<Object *>(rightNode->leftChild)->getBoundaries();
-                rightLeftSA = std::get<Object *>(rightNode->leftChild)->getSurfaceArea();
+                rightLeftBox = (rightNode->leftLeaf)->getBoundaries();
+                rightLeftSA = (rightNode->leftLeaf)->getSurfaceArea();
             }
             if (rightNode->maxDepthRight > 1) {
-                rightRightBox = std::get<std::unique_ptr<DBVHNode>>(rightNode->rightChild)->boundingBox;
-                rightRightSA = std::get<std::unique_ptr<DBVHNode>>(rightNode->rightChild)->surfaceArea;
+                rightRightBox = (rightNode->rightChild)->boundingBox;
+                rightRightSA = (rightNode->rightChild)->surfaceArea;
             } else {
-                rightRightBox = std::get<Object *>(rightNode->rightChild)->getBoundaries();
-                rightRightSA = std::get<Object *>(rightNode->rightChild)->getSurfaceArea();
+                rightRightBox = (rightNode->rightLeaf)->getBoundaries();
+                rightRightSA = (rightNode->rightLeaf)->getSurfaceArea();
             }
 
             swapLeftLeftToRight = {std::min(rightBox.minCorner.x, leftRightBox.minCorner.x),
@@ -343,7 +343,7 @@ bool optimizeSAH(DBVHNode &node) {
             SAHs[4] = node.boundingBox.getSA() + rightRightSA + leftSA + rightLeftSA +
                       swapRightRightToLeft.getSA();
         } else {
-            auto rightNode = std::get<Object *>(node.rightChild);
+            auto rightNode = node.rightLeaf;
             rightBox = rightNode->getBoundaries();
             rightSA = rightNode->getSurfaceArea();
 
@@ -368,27 +368,27 @@ bool optimizeSAH(DBVHNode &node) {
             SAHs[4] = std::numeric_limits<double>::max();
         }
     } else {
-        auto leftNode = std::get<Object *>(node.leftChild);
+        auto leftNode = node.leftLeaf;
         leftBox = leftNode->getBoundaries();
         leftSA = leftNode->getSurfaceArea();
 
         if (node.maxDepthRight > 1) {
-            auto &rightNode = std::get<std::unique_ptr<DBVHNode>>(node.rightChild);
+            auto &rightNode = node.rightChild;
             rightBox = rightNode->boundingBox;
             rightSA = rightNode->surfaceArea;
             if (rightNode->maxDepthLeft > 1) {
-                rightLeftBox = std::get<std::unique_ptr<DBVHNode>>(rightNode->leftChild)->boundingBox;
-                rightLeftSA = std::get<std::unique_ptr<DBVHNode>>(rightNode->leftChild)->surfaceArea;
+                rightLeftBox = (rightNode->leftChild)->boundingBox;
+                rightLeftSA = (rightNode->leftChild)->surfaceArea;
             } else {
-                rightLeftBox = std::get<Object *>(rightNode->leftChild)->getBoundaries();
-                rightLeftSA = std::get<Object *>(rightNode->leftChild)->getSurfaceArea();
+                rightLeftBox = (rightNode->leftLeaf)->getBoundaries();
+                rightLeftSA = (rightNode->leftLeaf)->getSurfaceArea();
             }
             if (rightNode->maxDepthRight > 1) {
-                rightRightBox = std::get<std::unique_ptr<DBVHNode>>(rightNode->rightChild)->boundingBox;
-                rightRightSA = std::get<std::unique_ptr<DBVHNode>>(rightNode->rightChild)->surfaceArea;
+                rightRightBox = (rightNode->rightChild)->boundingBox;
+                rightRightSA = (rightNode->rightChild)->surfaceArea;
             } else {
-                rightRightBox = std::get<Object *>(rightNode->rightChild)->getBoundaries();
-                rightRightSA = std::get<Object *>(rightNode->rightChild)->getSurfaceArea();
+                rightRightBox = (rightNode->rightLeaf)->getBoundaries();
+                rightRightSA = (rightNode->rightLeaf)->getSurfaceArea();
             }
 
             swapRightLeftToLeft = {std::min(leftBox.minCorner.x, rightRightBox.minCorner.x),
@@ -432,188 +432,148 @@ bool optimizeSAH(DBVHNode &node) {
     switch (bestSAH) {
         case 1: {
             if (node.maxDepthRight > 1) {
-                auto buffer = std::get<std::unique_ptr<DBVHNode>>(std::move(node.rightChild));
-                if (std::get<std::unique_ptr<DBVHNode>>(node.leftChild)->maxDepthLeft > 1) {
-                    node.rightChild = std::get<std::unique_ptr<DBVHNode>>(
-                            std::move(std::get<std::unique_ptr<DBVHNode>>(node.leftChild)->leftChild));
-                    node.maxDepthRight = std::max(std::get<std::unique_ptr<DBVHNode>>(node.rightChild)->maxDepthLeft,
-                                                  std::get<std::unique_ptr<DBVHNode>>(node.rightChild)->maxDepthRight) +
-                                         1;
+                auto buffer = std::move(node.rightChild);
+                if (node.leftChild->maxDepthLeft > 1) {
+                    node.rightChild = std::move((node.leftChild)->leftChild);
+                    node.maxDepthRight = std::max(node.rightChild->maxDepthLeft, node.rightChild->maxDepthRight) + 1;
                 } else {
-                    node.rightChild = std::get<Object *>(
-                            std::get<std::unique_ptr<DBVHNode>>(node.leftChild)->leftChild);
+                    using namespace std;
+                    node.rightLeaf = (node.leftChild)->leftLeaf;
                     node.maxDepthRight = 1;
                 }
-                std::get<std::unique_ptr<DBVHNode>>(node.leftChild)->boundingBox = swapLeftLeftToRight;
-                std::get<std::unique_ptr<DBVHNode>>(node.leftChild)->maxDepthLeft =
-                        std::max(buffer->maxDepthLeft, buffer->maxDepthRight) + 1;
-                std::get<std::unique_ptr<DBVHNode>>(node.leftChild)->leftChild = std::move(buffer);
+                (node.leftChild)->boundingBox = swapLeftLeftToRight;
+                (node.leftChild)->leftChild.reset();
+
+                (node.leftChild)->maxDepthLeft = std::max(buffer->maxDepthLeft, buffer->maxDepthRight) + 1;
+                (node.leftChild)->leftChild = std::move(buffer);
+
 
                 node.surfaceArea = SAHs[1];
-                std::get<std::unique_ptr<DBVHNode>>(node.leftChild)->surfaceArea =
-                        rightSA + leftRightSA + swapLeftLeftToRight.getSA();
+                (node.leftChild)->surfaceArea = rightSA + leftRightSA + swapLeftLeftToRight.getSA();
                 return true;
             } else {
-                auto buffer = std::get<Object *>(node.rightChild);
-                if (std::get<std::unique_ptr<DBVHNode>>(node.leftChild)->maxDepthLeft > 1) {
-                    node.rightChild = std::get<std::unique_ptr<DBVHNode>>(
-                            std::move(std::get<std::unique_ptr<DBVHNode>>(node.leftChild)->leftChild));
-                    node.maxDepthRight = std::max(std::get<std::unique_ptr<DBVHNode>>(node.rightChild)->maxDepthLeft,
-                                                  std::get<std::unique_ptr<DBVHNode>>(node.rightChild)->maxDepthRight) +
-                                         1;
+                auto buffer = node.rightLeaf;
+                if (node.leftChild->maxDepthLeft > 1) {
+                    node.rightChild = std::move((node.leftChild)->leftChild);
+                    node.maxDepthRight = std::max(node.rightChild->maxDepthLeft, node.rightChild->maxDepthRight) + 1;
                 } else {
-                    node.rightChild = std::get<Object *>(
-                            std::get<std::unique_ptr<DBVHNode>>(node.leftChild)->leftChild);
+                    node.rightLeaf = (node.leftChild)->leftLeaf;
                     node.maxDepthRight = 1;
                 }
-                std::get<std::unique_ptr<DBVHNode>>(node.leftChild)->boundingBox = swapLeftLeftToRight;
-                std::get<std::unique_ptr<DBVHNode>>(node.leftChild)->leftChild = buffer;
-                std::get<std::unique_ptr<DBVHNode>>(node.leftChild)->maxDepthLeft = 1;
+                (node.leftChild)->boundingBox = swapLeftLeftToRight;
+                (node.leftChild)->leftLeaf = buffer;
+                (node.leftChild)->maxDepthLeft = 1;
 
                 node.surfaceArea = SAHs[1];
-                std::get<std::unique_ptr<DBVHNode>>(node.leftChild)->surfaceArea =
-                        rightSA + leftRightSA + swapLeftLeftToRight.getSA();
+                (node.leftChild)->surfaceArea = rightSA + leftRightSA + swapLeftLeftToRight.getSA();
                 return true;
             }
         }
-        case 2: {
-            if (node.maxDepthRight > 1) {
-                auto buffer = std::get<std::unique_ptr<DBVHNode>>(std::move(node.rightChild));
-                if (std::get<std::unique_ptr<DBVHNode>>(node.leftChild)->maxDepthRight > 1) {
-                    node.rightChild = std::get<std::unique_ptr<DBVHNode>>(
-                            std::move(std::get<std::unique_ptr<DBVHNode>>(node.leftChild)->rightChild));
-                    node.maxDepthRight = std::max(std::get<std::unique_ptr<DBVHNode>>(node.rightChild)->maxDepthLeft,
-                                                  std::get<std::unique_ptr<DBVHNode>>(node.rightChild)->maxDepthRight) +
-                                         1;
-                } else {
-                    node.rightChild = std::get<Object *>(
-                            std::get<std::unique_ptr<DBVHNode>>(node.leftChild)->rightChild);
-                    node.maxDepthRight = 1;
-                }
-                std::get<std::unique_ptr<DBVHNode>>(node.leftChild)->boundingBox = swapLeftRightToRight;
-                std::get<std::unique_ptr<DBVHNode>>(node.leftChild)->maxDepthRight =
-                        std::max(buffer->maxDepthLeft, buffer->maxDepthRight) + 1;
-                std::get<std::unique_ptr<DBVHNode>>(node.leftChild)->rightChild = std::move(buffer);
+            case 2: {
+                if (node.maxDepthRight > 1) {
+                    auto buffer = std::move(node.rightChild);
+                    if (node.leftChild->maxDepthRight > 1) {
+                        node.rightChild = std::move((node.leftChild)->rightChild);
+                        node.maxDepthRight = std::max(node.rightChild->maxDepthLeft, node.rightChild->maxDepthRight) + 1;
+                    } else {
+                        node.rightLeaf = (node.leftChild)->rightLeaf;
+                        node.maxDepthRight = 1;
+                    }
+                    (node.leftChild)->boundingBox = swapLeftRightToRight;
+                    (node.leftChild)->maxDepthRight = std::max(buffer->maxDepthLeft, buffer->maxDepthRight) + 1;
+                    (node.leftChild)->rightChild = std::move(buffer);
 
-                node.surfaceArea = SAHs[2];
-                std::get<std::unique_ptr<DBVHNode>>(node.leftChild)->surfaceArea =
-                        rightSA + leftLeftSA + swapLeftRightToRight.getSA();
-                return true;
-            } else {
-                auto buffer = std::get<Object *>(node.rightChild);
-                if (std::get<std::unique_ptr<DBVHNode>>(node.leftChild)->maxDepthRight > 1) {
-                    node.rightChild = std::get<std::unique_ptr<DBVHNode>>(
-                            std::move(std::get<std::unique_ptr<DBVHNode>>(node.leftChild)->rightChild));
-                    node.maxDepthRight = std::max(std::get<std::unique_ptr<DBVHNode>>(node.rightChild)->maxDepthLeft,
-                                                  std::get<std::unique_ptr<DBVHNode>>(node.rightChild)->maxDepthRight) +
-                                         1;
+                    node.surfaceArea = SAHs[2];
+                    (node.leftChild)->surfaceArea = rightSA + leftLeftSA + swapLeftRightToRight.getSA();
+                    return true;
                 } else {
-                    node.rightChild = std::get<Object *>(
-                            std::get<std::unique_ptr<DBVHNode>>(node.leftChild)->rightChild);
-                    node.maxDepthRight = 1;
-                }
-                std::get<std::unique_ptr<DBVHNode>>(node.leftChild)->boundingBox = swapLeftRightToRight;
-                std::get<std::unique_ptr<DBVHNode>>(node.leftChild)->rightChild = buffer;
-                std::get<std::unique_ptr<DBVHNode>>(node.leftChild)->maxDepthRight = 1;
+                    auto buffer = node.rightLeaf;
+                    if (node.leftChild->maxDepthRight > 1) {
+                        node.rightChild = std::move((node.leftChild)->rightChild);
+                        node.maxDepthRight = std::max(node.rightChild->maxDepthLeft, node.rightChild->maxDepthRight) + 1;
+                    } else {
+                        node.rightLeaf = (node.leftChild)->rightLeaf;
+                        node.maxDepthRight = 1;
+                    }
+                    (node.leftChild)->boundingBox = swapLeftRightToRight;
+                    (node.leftChild)->rightLeaf = buffer;
+                    (node.leftChild)->maxDepthRight = 1;
 
-                node.surfaceArea = SAHs[2];
-                std::get<std::unique_ptr<DBVHNode>>(node.leftChild)->surfaceArea =
-                        rightSA + leftLeftSA + swapLeftRightToRight.getSA();
-                return true;
+                    node.surfaceArea = SAHs[2];
+                    (node.leftChild)->surfaceArea = rightSA + leftLeftSA + swapLeftRightToRight.getSA();
+                    return true;
+                }
             }
-        }
-        case 3: {
-            if (node.maxDepthLeft > 1) {
-                auto buffer = std::get<std::unique_ptr<DBVHNode>>(std::move(node.leftChild));
-                if (std::get<std::unique_ptr<DBVHNode>>(node.rightChild)->maxDepthLeft > 1) {
-                    node.leftChild = std::get<std::unique_ptr<DBVHNode>>(
-                            std::move(std::get<std::unique_ptr<DBVHNode>>(node.rightChild)->leftChild));
-                    node.maxDepthLeft = std::max(std::get<std::unique_ptr<DBVHNode>>(node.leftChild)->maxDepthLeft,
-                                                 std::get<std::unique_ptr<DBVHNode>>(node.leftChild)->maxDepthRight) +
-                                        1;
-                } else {
-                    node.leftChild = std::get<Object *>(
-                            std::get<std::unique_ptr<DBVHNode>>(node.rightChild)->leftChild);
-                    node.maxDepthLeft = 1;
-                }
-                std::get<std::unique_ptr<DBVHNode>>(node.rightChild)->boundingBox = swapRightLeftToLeft;
-                std::get<std::unique_ptr<DBVHNode>>(node.rightChild)->maxDepthLeft =
-                        std::max(buffer->maxDepthLeft, buffer->maxDepthRight) + 1;
-                std::get<std::unique_ptr<DBVHNode>>(node.rightChild)->leftChild = std::move(buffer);
+            case 3: {
+                if (node.maxDepthLeft > 1) {
+                    auto buffer = std::move(node.leftChild);
+                    if (node.rightChild->maxDepthLeft > 1) {
+                        node.leftChild = std::move((node.rightChild)->leftChild);
+                        node.maxDepthLeft = std::max(node.leftChild->maxDepthLeft, node.leftChild->maxDepthRight) + 1;
+                    } else {
+                        node.leftLeaf = (node.rightChild)->leftLeaf;
+                        node.maxDepthLeft = 1;
+                    }
+                    (node.rightChild)->boundingBox = swapRightLeftToLeft;
+                    (node.rightChild)->maxDepthLeft = std::max(buffer->maxDepthLeft, buffer->maxDepthRight) + 1;
+                    (node.rightChild)->leftChild = std::move(buffer);
 
-                node.surfaceArea = SAHs[3];
-                std::get<std::unique_ptr<DBVHNode>>(node.rightChild)->surfaceArea =
-                        leftSA + rightRightSA + swapRightLeftToLeft.getSA();
-                return true;
-            } else {
-                auto buffer = std::get<Object *>(node.leftChild);
-                if (std::get<std::unique_ptr<DBVHNode>>(node.rightChild)->maxDepthLeft > 1) {
-                    node.leftChild = std::get<std::unique_ptr<DBVHNode>>(
-                            std::move(std::get<std::unique_ptr<DBVHNode>>(node.rightChild)->leftChild));
-                    node.maxDepthLeft = std::max(std::get<std::unique_ptr<DBVHNode>>(node.leftChild)->maxDepthLeft,
-                                                 std::get<std::unique_ptr<DBVHNode>>(node.leftChild)->maxDepthRight) +
-                                        1;
+                    node.surfaceArea = SAHs[3];
+                    (node.rightChild)->surfaceArea = leftSA + rightRightSA + swapRightLeftToLeft.getSA();
+                    return true;
                 } else {
-                    node.leftChild = std::get<Object *>(
-                            std::get<std::unique_ptr<DBVHNode>>(node.rightChild)->leftChild);
-                    node.maxDepthLeft = 1;
-                }
-                std::get<std::unique_ptr<DBVHNode>>(node.rightChild)->boundingBox = swapRightLeftToLeft;
-                std::get<std::unique_ptr<DBVHNode>>(node.rightChild)->leftChild = buffer;
-                std::get<std::unique_ptr<DBVHNode>>(node.rightChild)->maxDepthLeft = 1;
+                    auto buffer = node.leftLeaf;
+                    if (node.rightChild->maxDepthLeft > 1) {
+                        node.leftChild = std::move((node.rightChild)->leftChild);
+                        node.maxDepthLeft = std::max(node.leftChild->maxDepthLeft, node.leftChild->maxDepthRight) + 1;
+                    } else {
+                        node.leftLeaf = (node.rightChild)->leftLeaf;
+                        node.maxDepthLeft = 1;
+                    }
+                    (node.rightChild)->boundingBox = swapRightLeftToLeft;
+                    (node.rightChild)->leftLeaf = buffer;
+                    (node.rightChild)->maxDepthLeft = 1;
 
-                node.surfaceArea = SAHs[3];
-                std::get<std::unique_ptr<DBVHNode>>(node.rightChild)->surfaceArea =
-                        leftSA + rightRightSA + swapRightLeftToLeft.getSA();
-                return true;
+                    node.surfaceArea = SAHs[3];
+                    (node.rightChild)->surfaceArea = leftSA + rightRightSA + swapRightLeftToLeft.getSA();
+                    return true;
+                }
             }
-        }
-        case 4: {
-            if (node.maxDepthLeft > 1) {
-                auto buffer = std::get<std::unique_ptr<DBVHNode>>(std::move(node.leftChild));
-                if (std::get<std::unique_ptr<DBVHNode>>(node.rightChild)->maxDepthRight > 1) {
-                    node.leftChild = std::get<std::unique_ptr<DBVHNode>>(
-                            std::move(std::get<std::unique_ptr<DBVHNode>>(node.rightChild)->rightChild));
-                    node.maxDepthLeft = std::max(std::get<std::unique_ptr<DBVHNode>>(node.leftChild)->maxDepthLeft,
-                                                 std::get<std::unique_ptr<DBVHNode>>(node.leftChild)->maxDepthRight) +
-                                        1;
-                } else {
-                    node.leftChild = std::get<Object *>(
-                            std::get<std::unique_ptr<DBVHNode>>(node.rightChild)->rightChild);
-                    node.maxDepthLeft = 1;
-                }
-                std::get<std::unique_ptr<DBVHNode>>(node.rightChild)->boundingBox = swapRightRightToLeft;
-                std::get<std::unique_ptr<DBVHNode>>(node.rightChild)->maxDepthRight =
-                        std::max(buffer->maxDepthLeft, buffer->maxDepthRight) + 1;
-                std::get<std::unique_ptr<DBVHNode>>(node.rightChild)->rightChild = std::move(buffer);
+            case 4: {
+                if (node.maxDepthLeft > 1) {
+                    auto buffer = std::move(node.leftChild);
+                    if (node.rightChild->maxDepthRight > 1) {
+                        node.leftChild = std::move((node.rightChild)->rightChild);
+                        node.maxDepthLeft = std::max(node.leftChild->maxDepthLeft, node.leftChild->maxDepthRight) + 1;
+                    } else {
+                        node.leftLeaf = (node.rightChild)->rightLeaf;
+                        node.maxDepthLeft = 1;
+                    }
+                    (node.rightChild)->boundingBox = swapRightRightToLeft;
+                    (node.rightChild)->maxDepthRight = std::max(buffer->maxDepthLeft, buffer->maxDepthRight) + 1;
+                    (node.rightChild)->rightChild = std::move(buffer);
 
-                node.surfaceArea = SAHs[4];
-                std::get<std::unique_ptr<DBVHNode>>(node.rightChild)->surfaceArea =
-                        leftSA + rightLeftSA + swapRightRightToLeft.getSA();
-                return true;
-            } else {
-                auto buffer = std::get<Object *>(node.leftChild);
-                if (std::get<std::unique_ptr<DBVHNode>>(node.rightChild)->maxDepthRight > 1) {
-                    node.leftChild = std::get<std::unique_ptr<DBVHNode>>(
-                            std::move(std::get<std::unique_ptr<DBVHNode>>(node.rightChild)->rightChild));
-                    node.maxDepthLeft = std::max(std::get<std::unique_ptr<DBVHNode>>(node.leftChild)->maxDepthLeft,
-                                                 std::get<std::unique_ptr<DBVHNode>>(node.leftChild)->maxDepthRight) +
-                                        1;
+                    node.surfaceArea = SAHs[4];
+                    (node.rightChild)->surfaceArea = leftSA + rightLeftSA + swapRightRightToLeft.getSA();
+                    return true;
                 } else {
-                    node.leftChild = std::get<Object *>(
-                            std::get<std::unique_ptr<DBVHNode>>(node.rightChild)->rightChild);
-                    node.maxDepthLeft = 1;
-                }
-                std::get<std::unique_ptr<DBVHNode>>(node.rightChild)->boundingBox = swapRightRightToLeft;
-                std::get<std::unique_ptr<DBVHNode>>(node.rightChild)->rightChild = buffer;
-                std::get<std::unique_ptr<DBVHNode>>(node.rightChild)->maxDepthRight = 1;
+                    auto buffer = node.leftLeaf;
+                    if (node.rightChild->maxDepthRight > 1) {
+                        node.leftChild = std::move((node.rightChild)->rightChild);
+                        node.maxDepthLeft = std::max(node.leftChild->maxDepthLeft, node.leftChild->maxDepthRight) + 1;
+                    } else {
+                        node.leftLeaf = (node.rightChild)->rightLeaf;
+                        node.maxDepthLeft = 1;
+                    }
+                    (node.rightChild)->boundingBox = swapRightRightToLeft;
+                    (node.rightChild)->rightLeaf = buffer;
+                    (node.rightChild)->maxDepthRight = 1;
 
-                node.surfaceArea = SAHs[4];
-                std::get<std::unique_ptr<DBVHNode>>(node.rightChild)->surfaceArea =
-                        leftSA + rightLeftSA + swapRightRightToLeft.getSA();
-                return true;
+                    node.surfaceArea = SAHs[4];
+                    (node.rightChild)->surfaceArea = leftSA + rightLeftSA + swapRightRightToLeft.getSA();
+                    return true;
+                }
             }
-        }
         default:
             node.surfaceArea = SAHs[0];
             return false;
@@ -646,19 +606,19 @@ std::vector<double> evaluateSplittingPlanes(const DBVHNode &node, const std::vec
 
     if (node.maxDepthLeft != 0) {
         if (node.maxDepthLeft > 1) {
-            leftBox = std::get<std::unique_ptr<DBVHNode>>(node.leftChild)->boundingBox;
-            leftSA = std::get<std::unique_ptr<DBVHNode>>(node.leftChild)->surfaceArea / leftBox.getSA();
+            leftBox = (node.leftChild)->boundingBox;
+            leftSA = (node.leftChild)->surfaceArea / leftBox.getSA();
         } else {
-            leftBox = std::get<Object *>(node.leftChild)->getBoundaries();
-            leftSA = std::get<Object *>(node.leftChild)->getSurfaceArea() / leftBox.getSA();
+            leftBox = (node.leftLeaf)->getBoundaries();
+            leftSA = (node.leftLeaf)->getSurfaceArea() / leftBox.getSA();
         }
         if (node.maxDepthRight != 0) {
             if (node.maxDepthRight > 1) {
-                rightBox = std::get<std::unique_ptr<DBVHNode>>(node.rightChild)->boundingBox;
-                rightSA = std::get<std::unique_ptr<DBVHNode>>(node.rightChild)->surfaceArea / rightBox.getSA();
+                rightBox = (node.rightChild)->boundingBox;
+                rightSA = (node.rightChild)->surfaceArea / rightBox.getSA();
             } else {
-                rightBox = std::get<Object *>(node.rightChild)->getBoundaries();
-                rightSA = std::get<Object *>(node.rightChild)->getSurfaceArea() / rightBox.getSA();
+                rightBox = (node.rightLeaf)->getBoundaries();
+                rightSA = (node.rightLeaf)->getSurfaceArea() / rightBox.getSA();
             }
             for (int i = 0; i < numberOfSplittingPlanes; i++) {
                 SAH[i] = evaluateBucket(&leftBox, &rightBox, leftSA, rightSA, objects, splittingPlanes[i],
@@ -744,20 +704,20 @@ sortObjectsIntoBoxes(const int splitOperation, const Vector3D &splittingPlane, D
             if (node.maxDepthRight > 1) {
                 newNode->rightChild = std::move(node.rightChild);
                 newNode->maxDepthRight = node.maxDepthRight;
-                refit(newNode->boundingBox, std::get<std::unique_ptr<DBVHNode>>(newNode->rightChild)->boundingBox);
+                refit(newNode->boundingBox, newNode->rightChild->boundingBox);
             } else {
-                newNode->rightChild = std::get<Object *>(node.rightChild);
+                newNode->rightLeaf = node.rightLeaf;
                 newNode->maxDepthRight = 1;
-                refit(newNode->boundingBox, std::get<Object *>(newNode->rightChild)->getBoundaries());
+                refit(newNode->boundingBox, newNode->rightLeaf->getBoundaries());
             }
             if (node.maxDepthLeft > 1) {
                 newNode->leftChild = std::move(node.leftChild);
                 newNode->maxDepthLeft = node.maxDepthLeft;
-                refit(newNode->boundingBox, std::get<std::unique_ptr<DBVHNode>>(newNode->leftChild)->boundingBox);
+                refit(newNode->boundingBox, newNode->leftChild->boundingBox);
             } else {
-                newNode->leftChild = std::get<Object *>(node.leftChild);
+                newNode->leftLeaf = node.leftLeaf;
                 newNode->maxDepthLeft = 1;
-                refit(newNode->boundingBox, std::get<Object *>(newNode->leftChild)->getBoundaries());
+                refit(newNode->boundingBox, newNode->leftLeaf->getBoundaries());
             }
             newNode->surfaceArea = node.surfaceArea;
             node.maxDepthLeft = std::max(newNode->maxDepthLeft, newNode->maxDepthRight) + 1;
@@ -774,20 +734,20 @@ sortObjectsIntoBoxes(const int splitOperation, const Vector3D &splittingPlane, D
             if (node.maxDepthRight > 1) {
                 newNode->rightChild = std::move(node.rightChild);
                 newNode->maxDepthRight = node.maxDepthRight;
-                refit(newNode->boundingBox, std::get<std::unique_ptr<DBVHNode>>(newNode->rightChild)->boundingBox);
+                refit(newNode->boundingBox, newNode->rightChild->boundingBox);
             } else {
-                newNode->rightChild = std::get<Object *>(node.rightChild);
+                newNode->rightLeaf = node.rightLeaf;
                 newNode->maxDepthRight = 1;
-                refit(newNode->boundingBox, std::get<Object *>(newNode->rightChild)->getBoundaries());
+                refit(newNode->boundingBox, newNode->rightLeaf->getBoundaries());
             }
             if (node.maxDepthLeft > 1) {
                 newNode->leftChild = std::move(node.leftChild);
                 newNode->maxDepthLeft = node.maxDepthLeft;
-                refit(newNode->boundingBox, std::get<std::unique_ptr<DBVHNode>>(newNode->leftChild)->boundingBox);
+                refit(newNode->boundingBox, newNode->leftChild->boundingBox);
             } else {
-                newNode->leftChild = std::get<Object *>(node.leftChild);
+                newNode->leftLeaf = node.leftLeaf;
                 newNode->maxDepthLeft = 1;
-                refit(newNode->boundingBox, std::get<Object *>(newNode->leftChild)->getBoundaries());
+                refit(newNode->boundingBox, newNode->leftLeaf->getBoundaries());
             }
             newNode->surfaceArea = node.surfaceArea;
             node.maxDepthLeft = std::max(newNode->maxDepthLeft, newNode->maxDepthRight) + 1;
@@ -806,20 +766,20 @@ sortObjectsIntoBoxes(const int splitOperation, const Vector3D &splittingPlane, D
             if (node.maxDepthRight > 1) {
                 newNode->rightChild = std::move(node.rightChild);
                 newNode->maxDepthRight = node.maxDepthRight;
-                refit(newNode->boundingBox, std::get<std::unique_ptr<DBVHNode>>(newNode->rightChild)->boundingBox);
+                refit(newNode->boundingBox, newNode->rightChild->boundingBox);
             } else {
-                newNode->rightChild = std::get<Object *>(node.rightChild);
+                newNode->rightLeaf = node.rightLeaf;
                 newNode->maxDepthRight = 1;
-                refit(newNode->boundingBox, std::get<Object *>(newNode->rightChild)->getBoundaries());
+                refit(newNode->boundingBox, newNode->rightLeaf->getBoundaries());
             }
             if (node.maxDepthLeft > 1) {
                 newNode->leftChild = std::move(node.leftChild);
                 newNode->maxDepthLeft = node.maxDepthLeft;
-                refit(newNode->boundingBox, std::get<std::unique_ptr<DBVHNode>>(newNode->leftChild)->boundingBox);
+                refit(newNode->boundingBox, newNode->leftChild->boundingBox);
             } else {
-                newNode->leftChild = std::get<Object *>(node.leftChild);
+                newNode->leftLeaf = node.leftLeaf;
                 newNode->maxDepthLeft = 1;
-                refit(newNode->boundingBox, std::get<Object *>(newNode->leftChild)->getBoundaries());
+                refit(newNode->boundingBox, newNode->leftLeaf->getBoundaries());
             }
             newNode->surfaceArea = node.surfaceArea;
             node.maxDepthLeft = std::max(newNode->maxDepthLeft, newNode->maxDepthRight) + 1;
@@ -835,7 +795,7 @@ sortObjectsIntoBoxes(const int splitOperation, const Vector3D &splittingPlane, D
 }
 
 void createLeftLeaf(DBVHNode &node, const std::vector<Object *> &leftObjects) {
-    node.leftChild = leftObjects.at(0);
+    node.leftLeaf = leftObjects.at(0);
     node.maxDepthLeft = 1;
 }
 
@@ -847,12 +807,12 @@ void createLeftChild(DBVHNode &node) {
 
 void
 createNewParentForLeftLeafs(DBVHNode &node, const std::vector<Object *> &leftObjects) {
-    auto buffer = std::get<Object *>(node.leftChild);
+    auto buffer = node.leftLeaf;
     auto parent = std::make_unique<DBVHNode>();
     parent->boundingBox = buffer->getBoundaries();
     refit(parent->boundingBox, leftObjects, 0);
-    parent->leftChild = buffer;
-    parent->rightChild = leftObjects.at(0);
+    parent->leftLeaf = buffer;
+    parent->rightLeaf = leftObjects.at(0);
     parent->maxDepthLeft = 1;
     parent->maxDepthRight = 1;
     node.leftChild = std::move(parent);
@@ -860,9 +820,9 @@ createNewParentForLeftLeafs(DBVHNode &node, const std::vector<Object *> &leftObj
 }
 
 void createNewParentForLeftChildren(DBVHNode &node) {
-    auto buffer = std::get<Object *>(node.leftChild);
+    auto buffer = node.leftLeaf;
     auto parent = std::make_unique<DBVHNode>();
-    parent->leftChild = buffer;
+    parent->leftLeaf = buffer;
     parent->boundingBox = buffer->getBoundaries();
     parent->surfaceArea = parent->boundingBox.getSA() * 2;
     parent->maxDepthLeft = 1;
@@ -900,7 +860,7 @@ bool passObjectsToLeftChild(DBVHNode &node, const std::vector<Object *> &leftObj
 }
 
 void createRightLeaf(DBVHNode &node, const std::vector<Object *> &rightObjects) {
-    node.rightChild = rightObjects.at(0);
+    node.rightLeaf = rightObjects.at(0);
     node.maxDepthRight = 1;
 }
 
@@ -911,12 +871,12 @@ void createRightChild(DBVHNode &node) {
 }
 
 void createNewParentForRightLeafs(DBVHNode &node, const std::vector<Object *> &rightObjects) {
-    auto buffer = std::get<Object *>(node.rightChild);
+    auto buffer = node.rightLeaf;
     auto parent = std::make_unique<DBVHNode>();
     parent->boundingBox = buffer->getBoundaries();
     refit(parent->boundingBox, rightObjects, 0);
-    parent->leftChild = buffer;
-    parent->rightChild = rightObjects.at(0);
+    parent->leftLeaf = buffer;
+    parent->rightLeaf = rightObjects.at(0);
     parent->maxDepthLeft = 1;
     parent->maxDepthRight = 1;
     node.rightChild = std::move(parent);
@@ -924,9 +884,9 @@ void createNewParentForRightLeafs(DBVHNode &node, const std::vector<Object *> &r
 }
 
 void createNewParentForRightChildren(DBVHNode &node) {
-    auto buffer = std::get<Object *>(node.rightChild);
+    auto buffer = node.rightLeaf;
     auto parent = std::make_unique<DBVHNode>();
-    parent->rightChild = buffer;
+    parent->rightLeaf = buffer;
     parent->boundingBox = buffer->getBoundaries();
     parent->surfaceArea = parent->boundingBox.getSA() * 2;
     parent->maxDepthRight = 1;
@@ -967,21 +927,19 @@ passObjectsToRightChild(DBVHNode &node, const std::vector<Object *> &rightObject
 
 void checkLeftChildSurfaceAreaAndDepth(DBVHNode &node) {
     if (isLastElementLeft(node)) {
-        node.surfaceArea += std::get<Object *>(node.leftChild)->getSurfaceArea();
+        node.surfaceArea += (node.leftLeaf)->getSurfaceArea();
     } else {
-        node.surfaceArea += std::get<std::unique_ptr<DBVHNode>>(node.leftChild)->surfaceArea;
-        node.maxDepthLeft = std::max(std::get<std::unique_ptr<DBVHNode>>(node.leftChild)->maxDepthLeft,
-                                     std::get<std::unique_ptr<DBVHNode>>(node.leftChild)->maxDepthRight) + 1;
+        node.surfaceArea += (node.leftChild)->surfaceArea;
+        node.maxDepthLeft = std::max(node.leftChild->maxDepthLeft, node.leftChild->maxDepthRight) + 1;
     }
 }
 
 void checkRightChildSurfaceAreaAndDepth(DBVHNode &node) {
     if (isLastElementRight(node)) {
-        node.surfaceArea += std::get<Object *>(node.rightChild)->getSurfaceArea();
+        node.surfaceArea += (node.rightLeaf)->getSurfaceArea();
     } else {
-        node.surfaceArea += std::get<std::unique_ptr<DBVHNode>>(node.rightChild)->surfaceArea;
-        node.maxDepthRight = std::max(std::get<std::unique_ptr<DBVHNode>>(node.rightChild)->maxDepthLeft,
-                                      std::get<std::unique_ptr<DBVHNode>>(node.rightChild)->maxDepthRight) + 1;
+        node.surfaceArea += (node.rightChild)->surfaceArea;
+        node.maxDepthRight = std::max(node.rightChild->maxDepthLeft, node.rightChild->maxDepthRight) + 1;
     }
 }
 
@@ -1019,10 +977,10 @@ add(DBVHNode &currentNode, const std::vector<Object *> &objects, const uint8_t d
 
     // pass objects to children
     if (!passObjectsToLeftChild(currentNode, leftObjects)) {
-        add(*std::get<std::unique_ptr<DBVHNode>>(currentNode.leftChild), leftObjects, depth + 1);
+        add(*currentNode.leftChild, leftObjects, depth + 1);
     }
     if (!passObjectsToRightChild(currentNode, rightObjects)) {
-        add(*std::get<std::unique_ptr<DBVHNode>>(currentNode.rightChild), rightObjects, depth + 1);
+        add(*currentNode.rightChild, rightObjects, depth + 1);
     }
 
     // calculate surface area and tree depth going the tree back up
@@ -1034,11 +992,11 @@ add(DBVHNode &currentNode, const std::vector<Object *> &objects, const uint8_t d
 
 static bool removeRightLeftGrandChild(DBVHNode &currentNode, DBVHNode &child,
                                       const Object &object) {
-    auto grandChild = std::get<Object *>(child.leftChild);
+    auto grandChild = child.leftLeaf;
     if (*grandChild != object) return false;
 
     if (isLastElementRight(child)) {
-        currentNode.rightChild = std::get<Object *>(child.rightChild);
+        currentNode.rightLeaf = child.rightLeaf;
     } else {
         currentNode.rightChild = std::move(child.rightChild);
     }
@@ -1048,11 +1006,11 @@ static bool removeRightLeftGrandChild(DBVHNode &currentNode, DBVHNode &child,
 
 static bool removeRightRightGrandChild(DBVHNode &currentNode, DBVHNode &child,
                                        const Object &object) {
-    auto grandChild = std::get<Object *>(child.rightChild);
+    auto grandChild = child.rightLeaf;
     if (*grandChild != object) return false;
 
     if (isLastElementLeft(child)) {
-        currentNode.rightChild = std::get<Object *>(child.rightChild);
+        currentNode.rightLeaf = child.leftLeaf;
     } else {
         currentNode.rightChild = std::move(child.leftChild);
     }
@@ -1062,7 +1020,7 @@ static bool removeRightRightGrandChild(DBVHNode &currentNode, DBVHNode &child,
 
 static bool removeRightLeaf(DBVHNode &currentNode, const Object &object) {
     if (isLastElementRight(currentNode)) return true;
-    auto child = std::get<std::unique_ptr<DBVHNode>>(std::move(currentNode.rightChild));
+    auto child = std::move(currentNode.rightChild);
     if (!contains(child->boundingBox, object.getBoundaries())) return false;
 
     if (isLastElementLeft(*child)) {
@@ -1076,11 +1034,11 @@ static bool removeRightLeaf(DBVHNode &currentNode, const Object &object) {
 
 static bool removeLeftLeftGrandChild(DBVHNode &currentNode, DBVHNode &child,
                                      const Object &object) {
-    auto grandChild = std::get<Object *>(child.leftChild);
+    auto grandChild = child.leftLeaf;
     if (*grandChild != object) return false;
 
     if (isLastElementRight(child)) {
-        currentNode.leftChild = std::get<Object *>(child.rightChild);
+        currentNode.leftLeaf = child.rightLeaf;
     } else {
         currentNode.leftChild = std::move(child.rightChild);
     }
@@ -1090,11 +1048,11 @@ static bool removeLeftLeftGrandChild(DBVHNode &currentNode, DBVHNode &child,
 
 static bool removeLeftRightGrandChild(DBVHNode &currentNode, DBVHNode &child,
                                       const Object &object) {
-    auto grandChild = std::get<Object *>(child.rightChild);
+    auto grandChild = child.rightLeaf;
     if (*grandChild != object) return false;
 
     if (isLastElementLeft(child)) {
-        currentNode.leftChild = std::get<Object *>(child.leftChild);
+        currentNode.leftLeaf = child.leftLeaf;
     } else {
         currentNode.leftChild = std::move(child.leftChild);
     }
@@ -1104,7 +1062,7 @@ static bool removeLeftRightGrandChild(DBVHNode &currentNode, DBVHNode &child,
 
 static bool removeLeftLeaf(DBVHNode &currentNode, const Object &object) {
     if (isLastElementLeft(currentNode)) return true;
-    auto child = std::get<std::unique_ptr<DBVHNode>>(std::move(currentNode.leftChild));
+    auto child = std::move(currentNode.leftChild);
     if (!contains(child->boundingBox, object.getBoundaries())) return false;
 
     if (isLastElementLeft(*child)) {
@@ -1121,8 +1079,8 @@ static void remove(DBVHNode &currentNode, const Object &object) {
     // remove object and refit nodes going the tree back up
     if (!contains(currentNode.boundingBox, object.getBoundaries())) return;
     if (removeLeftLeaf(currentNode, object) || removeRightLeaf(currentNode, object)) return;
-    remove(*std::get<std::unique_ptr<DBVHNode>>(currentNode.leftChild), object);
-    remove(*std::get<std::unique_ptr<DBVHNode>>(currentNode.rightChild), object);
+    remove(*currentNode.leftChild, object);
+    remove(*currentNode.rightChild, object);
 
     refit(currentNode);
     optimizeSAH(currentNode);
@@ -1149,11 +1107,10 @@ static bool traverseALl(DBVHNode &root, std::vector<IntersectionInfo *> *interse
 
             if (node->maxDepthRight > 1) {
                 // TODO request child if missing
-                auto &rightChild = node->rightChild;
-                if (rayBoxIntersection(&(std::get<std::unique_ptr<DBVHNode>>(rightChild)->boundingBox.minCorner),
-                                       &(std::get<std::unique_ptr<DBVHNode>>(rightChild)->boundingBox.maxCorner), ray,
-                                       &distanceRight)) {
-                    stack[stackPointer++] = std::get<std::unique_ptr<DBVHNode>>(node->rightChild).get();
+                auto rightChild = node->rightChild.get();
+                if (rayBoxIntersection(&(rightChild->boundingBox.minCorner),
+                                       &(rightChild->boundingBox.maxCorner), ray, &distanceRight)) {
+                    stack[stackPointer++] = node->rightChild.get();
                 }
             } else {
                 // TODO request leaf if missing
@@ -1161,7 +1118,7 @@ static bool traverseALl(DBVHNode &root, std::vector<IntersectionInfo *> *interse
                 intersectionInformationBuffer->hit = false;
                 intersectionInformationBuffer->distance = std::numeric_limits<double>::max();
                 intersectionInformationBuffer->position = {0, 0, 0};
-                auto rightLeaf = std::get<Object *>(node->rightChild);
+                auto rightLeaf = node->rightLeaf;
                 rightLeaf->intersectFirst(intersectionInformationBuffer, ray);
                 if (intersectionInformationBuffer->hit) {
                     intersectionInfo->push_back(intersectionInformationBuffer);
@@ -1171,11 +1128,10 @@ static bool traverseALl(DBVHNode &root, std::vector<IntersectionInfo *> *interse
             }
             if (node->maxDepthLeft > 1) {
                 // TODO request child if missing
-                auto &leftChild = node->leftChild;
-                if (rayBoxIntersection(&(std::get<std::unique_ptr<DBVHNode>>(leftChild)->boundingBox.minCorner),
-                                       &(std::get<std::unique_ptr<DBVHNode>>(leftChild)->boundingBox.maxCorner), ray,
-                                       &distanceLeft)) {
-                    stack[stackPointer++] = std::get<std::unique_ptr<DBVHNode>>(node->leftChild).get();
+                auto leftChild = node->leftChild.get();
+                if (rayBoxIntersection(&(leftChild->boundingBox.minCorner),
+                                       &(leftChild->boundingBox.maxCorner), ray, &distanceLeft)) {
+                    stack[stackPointer++] = node->leftChild.get();
                 }
             } else {
                 // TODO request leaf if missing
@@ -1183,7 +1139,7 @@ static bool traverseALl(DBVHNode &root, std::vector<IntersectionInfo *> *interse
                 intersectionInformationBuffer->hit = false;
                 intersectionInformationBuffer->distance = std::numeric_limits<double>::max();
                 intersectionInformationBuffer->position = {0, 0, 0};
-                auto leftLeaf = std::get<Object *>(node->leftChild);
+                auto leftLeaf = node->leftLeaf;
                 leftLeaf->intersectFirst(intersectionInformationBuffer, ray);
                 if (intersectionInformationBuffer->hit) {
                     intersectionInfo->push_back(intersectionInformationBuffer);
@@ -1208,11 +1164,10 @@ static bool traverseALl(DBVHNode &root, std::vector<IntersectionInfo *> *interse
 
             if (node->maxDepthRight > 1) {
                 // TODO request child if missing
-                auto &rightChild = node->rightChild;
-                if (rayBoxIntersection(&(std::get<std::unique_ptr<DBVHNode>>(rightChild)->boundingBox.minCorner),
-                                       &(std::get<std::unique_ptr<DBVHNode>>(rightChild)->boundingBox.maxCorner), ray,
-                                       &distanceRight)) {
-                    stack[stackPointer++] = std::get<std::unique_ptr<DBVHNode>>(node->rightChild).get();
+                auto rightChild = node->rightChild.get();
+                if (rayBoxIntersection(&(rightChild->boundingBox.minCorner),
+                                       &(rightChild->boundingBox.maxCorner), ray, &distanceRight)) {
+                    stack[stackPointer++] = node->rightChild.get();
                 }
             } else {
                 // TODO request leaf if missing
@@ -1220,7 +1175,7 @@ static bool traverseALl(DBVHNode &root, std::vector<IntersectionInfo *> *interse
                 intersectionInformationBuffer->hit = false;
                 intersectionInformationBuffer->distance = std::numeric_limits<double>::max();
                 intersectionInformationBuffer->position = {0, 0, 0};
-                auto rightLeaf = std::get<Object *>(node->rightChild);
+                auto rightLeaf = node->rightLeaf;
                 rightLeaf->intersectFirst(intersectionInformationBuffer, ray);
                 if (intersectionInformationBuffer->hit) {
                     intersectionInfo->push_back(intersectionInformationBuffer);
@@ -1230,11 +1185,10 @@ static bool traverseALl(DBVHNode &root, std::vector<IntersectionInfo *> *interse
             }
             if (node->maxDepthLeft > 1) {
                 // TODO request child if missing
-                auto &leftChild = node->leftChild;
-                if (rayBoxIntersection(&(std::get<std::unique_ptr<DBVHNode>>(leftChild)->boundingBox.minCorner),
-                                       &(std::get<std::unique_ptr<DBVHNode>>(leftChild)->boundingBox.maxCorner), ray,
-                                       &distanceLeft)) {
-                    stack[stackPointer++] = std::get<std::unique_ptr<DBVHNode>>(node->leftChild).get();
+                auto leftChild = node->leftChild.get();
+                if (rayBoxIntersection(&(leftChild->boundingBox.minCorner),
+                                       &(leftChild->boundingBox.maxCorner), ray, &distanceLeft)) {
+                    stack[stackPointer++] = node->leftChild.get();
                 }
             } else {
                 // TODO request leaf if missing
@@ -1242,7 +1196,7 @@ static bool traverseALl(DBVHNode &root, std::vector<IntersectionInfo *> *interse
                 intersectionInformationBuffer->hit = false;
                 intersectionInformationBuffer->distance = std::numeric_limits<double>::max();
                 intersectionInformationBuffer->position = {0, 0, 0};
-                auto leftLeaf = std::get<Object *>(node->leftChild);
+                auto leftLeaf = node->leftLeaf;
                 leftLeaf->intersectFirst(intersectionInformationBuffer, ray);
                 if (intersectionInformationBuffer->hit) {
                     intersectionInfo->push_back(intersectionInformationBuffer);
@@ -1285,17 +1239,16 @@ static bool traverseFirst(DBVHNode &root, IntersectionInfo *intersectionInfo, Ra
 
             if (node->maxDepthRight > 1) {
                 // TODO request child if missing
-                auto &rightChild = node->rightChild;
-                right = rayBoxIntersection(&(std::get<std::unique_ptr<DBVHNode>>(rightChild)->boundingBox.minCorner),
-                                           &(std::get<std::unique_ptr<DBVHNode>>(rightChild)->boundingBox.maxCorner),
-                                           ray, &distanceRight);
+                auto rightChild = node->rightChild.get();
+                right = rayBoxIntersection(&(rightChild->boundingBox.minCorner),
+                                           &(rightChild->boundingBox.maxCorner), ray, &distanceRight);
             } else {
                 // TODO request leaf if missing
                 IntersectionInfo intersectionInformationBuffer{};
                 intersectionInformationBuffer.hit = false;
                 intersectionInformationBuffer.distance = std::numeric_limits<double>::max();
                 intersectionInformationBuffer.position = {0, 0, 0};
-                auto rightLeaf = std::get<Object *>(node->rightChild);
+                auto rightLeaf = node->rightLeaf;
                 rightLeaf->intersectFirst(&intersectionInformationBuffer, ray);
                 if (intersectionInformationBuffer.hit) {
                     if (intersectionInformationBuffer.distance < intersectionInfo->distance) {
@@ -1306,17 +1259,16 @@ static bool traverseFirst(DBVHNode &root, IntersectionInfo *intersectionInfo, Ra
             }
             if (node->maxDepthLeft > 1) {
                 // TODO request child if missing
-                auto &leftChild = node->leftChild;
-                left = rayBoxIntersection(&(std::get<std::unique_ptr<DBVHNode>>(leftChild)->boundingBox.minCorner),
-                                          &(std::get<std::unique_ptr<DBVHNode>>(leftChild)->boundingBox.maxCorner), ray,
-                                          &distanceLeft);
+                auto leftChild = node->leftChild.get();
+                left = rayBoxIntersection(&(leftChild->boundingBox.minCorner),
+                                          &(leftChild->boundingBox.maxCorner), ray, &distanceLeft);
             } else {
                 // TODO request leaf if missing
                 IntersectionInfo intersectionInformationBuffer{};
                 intersectionInformationBuffer.hit = false;
                 intersectionInformationBuffer.distance = std::numeric_limits<double>::max();
                 intersectionInformationBuffer.position = {0, 0, 0};
-                auto leftLeaf = std::get<Object *>(node->leftChild);
+                auto leftLeaf = node->leftLeaf;
                 leftLeaf->intersectFirst(&intersectionInformationBuffer, ray);
                 if (intersectionInformationBuffer.hit) {
                     if (intersectionInformationBuffer.distance < intersectionInfo->distance) {
@@ -1328,18 +1280,16 @@ static bool traverseFirst(DBVHNode &root, IntersectionInfo *intersectionInfo, Ra
 
             if (right && left) {
                 if (distanceRight < distanceLeft) {
-                    stack[stackPointer++] = {std::get<std::unique_ptr<DBVHNode>>(node->leftChild).get(), distanceLeft};
-                    stack[stackPointer++] = {std::get<std::unique_ptr<DBVHNode>>(node->rightChild).get(),
-                                             distanceRight};
+                    stack[stackPointer++] = {node->leftChild.get(), distanceLeft};
+                    stack[stackPointer++] = {node->rightChild.get(), distanceRight};
                 } else {
-                    stack[stackPointer++] = {std::get<std::unique_ptr<DBVHNode>>(node->rightChild).get(),
-                                             distanceRight};
-                    stack[stackPointer++] = {std::get<std::unique_ptr<DBVHNode>>(node->leftChild).get(), distanceLeft};
+                    stack[stackPointer++] = {node->rightChild.get(), distanceRight};
+                    stack[stackPointer++] = {node->leftChild.get(), distanceLeft};
                 }
             } else if (right) {
-                stack[stackPointer++] = {std::get<std::unique_ptr<DBVHNode>>(node->rightChild).get(), distanceRight};
+                stack[stackPointer++] = {node->rightChild.get(), distanceRight};
             } else if (left) {
-                stack[stackPointer++] = {std::get<std::unique_ptr<DBVHNode>>(node->leftChild).get(), distanceLeft};
+                stack[stackPointer++] = {node->leftChild.get(), distanceLeft};
             }
         }
 
@@ -1366,17 +1316,16 @@ static bool traverseFirst(DBVHNode &root, IntersectionInfo *intersectionInfo, Ra
 
             if (node->maxDepthRight > 1) {
                 // TODO request child if missing
-                auto &rightChild = node->rightChild;
-                right = rayBoxIntersection(&(std::get<std::unique_ptr<DBVHNode>>(rightChild)->boundingBox.minCorner),
-                                           &(std::get<std::unique_ptr<DBVHNode>>(rightChild)->boundingBox.maxCorner),
-                                           ray, &distanceRight);
+                auto rightChild = node->rightChild.get();
+                right = rayBoxIntersection(&(rightChild->boundingBox.minCorner),
+                                           &(rightChild->boundingBox.maxCorner), ray, &distanceRight);
             } else {
                 // TODO request leaf if missing
                 IntersectionInfo intersectionInformationBuffer{};
                 intersectionInformationBuffer.hit = false;
                 intersectionInformationBuffer.distance = std::numeric_limits<double>::max();
                 intersectionInformationBuffer.position = {0, 0, 0};
-                auto rightLeaf = std::get<Object *>(node->rightChild);
+                auto rightLeaf = node->rightLeaf;
                 rightLeaf->intersectFirst(&intersectionInformationBuffer, ray);
                 if (intersectionInformationBuffer.hit) {
                     if (intersectionInformationBuffer.distance < intersectionInfo->distance) {
@@ -1387,17 +1336,16 @@ static bool traverseFirst(DBVHNode &root, IntersectionInfo *intersectionInfo, Ra
             }
             if (node->maxDepthLeft > 1) {
                 // TODO request child if missing
-                auto &leftChild = node->leftChild;
-                left = rayBoxIntersection(&(std::get<std::unique_ptr<DBVHNode>>(leftChild)->boundingBox.minCorner),
-                                          &(std::get<std::unique_ptr<DBVHNode>>(leftChild)->boundingBox.maxCorner), ray,
-                                          &distanceLeft);
+                auto leftChild = node->leftChild.get();
+                left = rayBoxIntersection(&(leftChild->boundingBox.minCorner),
+                                          &(leftChild->boundingBox.maxCorner), ray, &distanceLeft);
             } else {
                 // TODO request leaf if missing
                 IntersectionInfo intersectionInformationBuffer{};
                 intersectionInformationBuffer.hit = false;
                 intersectionInformationBuffer.distance = std::numeric_limits<double>::max();
                 intersectionInformationBuffer.position = {0, 0, 0};
-                auto leftLeaf = std::get<Object *>(node->leftChild);
+                auto leftLeaf = node->leftLeaf;
                 leftLeaf->intersectFirst(&intersectionInformationBuffer, ray);
                 if (intersectionInformationBuffer.hit) {
                     if (intersectionInformationBuffer.distance < intersectionInfo->distance) {
@@ -1409,18 +1357,16 @@ static bool traverseFirst(DBVHNode &root, IntersectionInfo *intersectionInfo, Ra
 
             if (right && left) {
                 if (distanceRight < distanceLeft) {
-                    stack[stackPointer++] = {std::get<std::unique_ptr<DBVHNode>>(node->leftChild).get(), distanceLeft};
-                    stack[stackPointer++] = {std::get<std::unique_ptr<DBVHNode>>(node->rightChild).get(),
-                                             distanceRight};
+                    stack[stackPointer++] = {node->leftChild.get(), distanceLeft};
+                    stack[stackPointer++] = {node->rightChild.get(), distanceRight};
                 } else {
-                    stack[stackPointer++] = {std::get<std::unique_ptr<DBVHNode>>(node->rightChild).get(),
-                                             distanceRight};
-                    stack[stackPointer++] = {std::get<std::unique_ptr<DBVHNode>>(node->leftChild).get(), distanceLeft};
+                    stack[stackPointer++] = {node->rightChild.get(), distanceRight};
+                    stack[stackPointer++] = {node->leftChild.get(), distanceLeft};
                 }
             } else if (right) {
-                stack[stackPointer++] = {std::get<std::unique_ptr<DBVHNode>>(node->rightChild).get(), distanceRight};
+                stack[stackPointer++] = {node->rightChild.get(), distanceRight};
             } else if (left) {
-                stack[stackPointer++] = {std::get<std::unique_ptr<DBVHNode>>(node->leftChild).get(), distanceLeft};
+                stack[stackPointer++] = {node->leftChild.get(), distanceLeft};
             }
         }
 
@@ -1445,11 +1391,10 @@ static bool traverseAny(DBVHNode &root, IntersectionInfo *intersectionInfo, Ray 
 
             if (node->maxDepthRight > 1) {
                 // TODO request child if missing
-                auto &rightChild = node->rightChild;
-                if (rayBoxIntersection(&(std::get<std::unique_ptr<DBVHNode>>(rightChild)->boundingBox.minCorner),
-                                       &(std::get<std::unique_ptr<DBVHNode>>(rightChild)->boundingBox.maxCorner), ray,
-                                       &distanceRight)) {
-                    stack[stackPointer++] = std::get<std::unique_ptr<DBVHNode>>(node->rightChild).get();
+                auto rightChild = node->rightChild.get();
+                if (rayBoxIntersection(&(rightChild->boundingBox.minCorner),
+                                       &(rightChild->boundingBox.maxCorner), ray, &distanceRight)) {
+                    stack[stackPointer++] = node->rightChild.get();
                 }
             } else {
                 // TODO request leaf if missing
@@ -1457,7 +1402,7 @@ static bool traverseAny(DBVHNode &root, IntersectionInfo *intersectionInfo, Ray 
                 intersectionInformationBuffer.hit = false;
                 intersectionInformationBuffer.distance = std::numeric_limits<double>::max();
                 intersectionInformationBuffer.position = {0, 0, 0};
-                auto rightLeaf = std::get<Object *>(node->rightChild);
+                auto rightLeaf = node->rightLeaf;
                 rightLeaf->intersectAny(&intersectionInformationBuffer, ray);
                 if (intersectionInformationBuffer.hit) {
                     *intersectionInfo = intersectionInformationBuffer;
@@ -1466,11 +1411,10 @@ static bool traverseAny(DBVHNode &root, IntersectionInfo *intersectionInfo, Ray 
             }
             if (node->maxDepthLeft > 1) {
                 // TODO request child if missing
-                auto &leftChild = node->leftChild;
-                if (rayBoxIntersection(&(std::get<std::unique_ptr<DBVHNode>>(leftChild)->boundingBox.minCorner),
-                                       &(std::get<std::unique_ptr<DBVHNode>>(leftChild)->boundingBox.maxCorner), ray,
-                                       &distanceLeft)) {
-                    stack[stackPointer++] = std::get<std::unique_ptr<DBVHNode>>(node->leftChild).get();
+                auto leftChild = node->leftChild.get();
+                if (rayBoxIntersection(&(leftChild->boundingBox.minCorner),
+                                       &(leftChild->boundingBox.maxCorner), ray, &distanceLeft)) {
+                    stack[stackPointer++] = node->leftChild.get();
                 }
             } else {
                 // TODO request leaf if missing
@@ -1478,7 +1422,7 @@ static bool traverseAny(DBVHNode &root, IntersectionInfo *intersectionInfo, Ray 
                 intersectionInformationBuffer.hit = false;
                 intersectionInformationBuffer.distance = std::numeric_limits<double>::max();
                 intersectionInformationBuffer.position = {0, 0, 0};
-                auto leftLeaf = std::get<Object *>(node->leftChild);
+                auto leftLeaf = node->leftLeaf;
                 leftLeaf->intersectAny(&intersectionInformationBuffer, ray);
                 if (intersectionInformationBuffer.hit) {
                     *intersectionInfo = intersectionInformationBuffer;
@@ -1502,11 +1446,10 @@ static bool traverseAny(DBVHNode &root, IntersectionInfo *intersectionInfo, Ray 
 
             if (node->maxDepthRight > 1) {
                 // TODO request child if missing
-                auto &rightChild = node->rightChild;
-                if (rayBoxIntersection(&(std::get<std::unique_ptr<DBVHNode>>(rightChild)->boundingBox.minCorner),
-                                       &(std::get<std::unique_ptr<DBVHNode>>(rightChild)->boundingBox.maxCorner), ray,
-                                       &distanceRight)) {
-                    stack[stackPointer++] = std::get<std::unique_ptr<DBVHNode>>(node->rightChild).get();
+                auto rightChild = node->rightChild.get();
+                if (rayBoxIntersection(&(rightChild->boundingBox.minCorner),
+                                       &(rightChild->boundingBox.maxCorner), ray, &distanceRight)) {
+                    stack[stackPointer++] = node->rightChild.get();
                 }
             } else {
                 // TODO request leaf if missing
@@ -1514,7 +1457,7 @@ static bool traverseAny(DBVHNode &root, IntersectionInfo *intersectionInfo, Ray 
                 intersectionInformationBuffer.hit = false;
                 intersectionInformationBuffer.distance = std::numeric_limits<double>::max();
                 intersectionInformationBuffer.position = {0, 0, 0};
-                auto rightLeaf = std::get<Object *>(node->rightChild);
+                auto rightLeaf = node->rightLeaf;
                 rightLeaf->intersectAny(&intersectionInformationBuffer, ray);
                 if (intersectionInformationBuffer.hit) {
                     *intersectionInfo = intersectionInformationBuffer;
@@ -1523,11 +1466,10 @@ static bool traverseAny(DBVHNode &root, IntersectionInfo *intersectionInfo, Ray 
             }
             if (node->maxDepthLeft > 1) {
                 // TODO request child if missing
-                auto &leftChild = node->leftChild;
-                if (rayBoxIntersection(&(std::get<std::unique_ptr<DBVHNode>>(leftChild)->boundingBox.minCorner),
-                                       &(std::get<std::unique_ptr<DBVHNode>>(leftChild)->boundingBox.maxCorner), ray,
-                                       &distanceLeft)) {
-                    stack[stackPointer++] = std::get<std::unique_ptr<DBVHNode>>(node->leftChild).get();
+                auto leftChild = node->leftChild.get();
+                if (rayBoxIntersection(&(leftChild->boundingBox.minCorner),
+                                       &(leftChild->boundingBox.maxCorner), ray, &distanceLeft)) {
+                    stack[stackPointer++] = node->leftChild.get();
                 }
             } else {
                 // TODO request leaf if missing
@@ -1535,7 +1477,7 @@ static bool traverseAny(DBVHNode &root, IntersectionInfo *intersectionInfo, Ray 
                 intersectionInformationBuffer.hit = false;
                 intersectionInformationBuffer.distance = std::numeric_limits<double>::max();
                 intersectionInformationBuffer.position = {0, 0, 0};
-                auto leftLeaf = std::get<Object *>(node->leftChild);
+                auto leftLeaf = node->leftLeaf;
                 leftLeaf->intersectAny(&intersectionInformationBuffer, ray);
                 if (intersectionInformationBuffer.hit) {
                     *intersectionInfo = intersectionInformationBuffer;
@@ -1551,7 +1493,7 @@ static bool traverseAny(DBVHNode &root, IntersectionInfo *intersectionInfo, Ray 
 bool addFirstAndOnlyElement(DBVHNode &root, const std::vector<Object *> &objects) {
     if (!isEmpty(root) || objects.size() != 1) return false;
     refit(root.boundingBox, objects, 0);
-    root.leftChild = objects.back();
+    root.leftLeaf = objects.back();
     root.maxDepthLeft = 1;
     return true;
 }
@@ -1559,7 +1501,7 @@ bool addFirstAndOnlyElement(DBVHNode &root, const std::vector<Object *> &objects
 bool addOntoSingleElement(DBVHNode &root, const std::vector<Object *> &objects) {
     if (!isLastElement(root)) return false;
     std::vector<Object *> newObjects{objects};     // TODO: make more efficient
-    newObjects.push_back(std::get<Object *>(root.leftChild));
+    newObjects.push_back(root.leftLeaf);
     root.maxDepthLeft = 0;
     add(root, newObjects, 1);
     return true;
@@ -1575,32 +1517,32 @@ void DBVHv2::addObjects(DBVHNode &root, const std::vector<Object *> &objects) {
 void removeLastChild(DBVHNode &root) {
     root.maxDepthLeft = 0;
     root.surfaceArea = 0;
-    root.leftChild = nullptr;
+    root.leftLeaf = nullptr;
 }
 
 void removeSecondToLastChildLeft(DBVHNode &root) {
-    root.leftChild = std::get<Object *>(root.rightChild);
-    root.rightChild = nullptr;
+    root.leftLeaf = root.rightLeaf;
+    root.rightLeaf = nullptr;
     root.maxDepthRight = 0;
-    root.boundingBox = std::get<Object *>(root.leftChild)->getBoundaries();
-    root.surfaceArea = std::get<Object *>(root.leftChild)->getSurfaceArea();
+    root.boundingBox = root.leftLeaf->getBoundaries();
+    root.surfaceArea = root.leftLeaf->getSurfaceArea();
 }
 
 void removeSecondToLastChildRight(DBVHNode &root) {
-    root.rightChild = nullptr;
+    root.rightLeaf = nullptr;
     root.maxDepthRight = 0;
-    root.boundingBox = std::get<Object *>(root.leftChild)->getBoundaries();
-    root.surfaceArea = std::get<Object *>(root.leftChild)->getSurfaceArea();
+    root.boundingBox = root.leftLeaf->getBoundaries();
+    root.surfaceArea = root.leftLeaf->getSurfaceArea();
 }
 
 void replaceRootWithChild(DBVHNode &root, DBVHNode &child) {
     if (isLastElementLeft(child)) {
-        root.leftChild = std::get<Object *>(child.leftChild);
+        root.leftLeaf = child.leftLeaf;
     } else {
         root.leftChild = std::move(child.leftChild);
     }
     if (isLastElementRight(child)) {
-        root.rightChild = std::get<Object *>(child.rightChild);
+        root.rightLeaf = child.rightLeaf;
     } else {
         root.rightChild = std::move(child.rightChild);
     }
@@ -1612,27 +1554,27 @@ void replaceRootWithChild(DBVHNode &root, DBVHNode &child) {
 }
 
 void replaceRootWithRightChild(DBVHNode &root) {
-    replaceRootWithChild(root, *std::get<std::unique_ptr<DBVHNode>>(root.rightChild));
+    replaceRootWithChild(root, *root.rightChild);
 }
 
 void replaceRootWithLeftChild(DBVHNode &root) {
-    replaceRootWithChild(root, *std::get<std::unique_ptr<DBVHNode>>(root.leftChild));
+    replaceRootWithChild(root, *root.leftChild);
 }
 
 bool removeSpecialCases(DBVHNode &root, const Object &object) {
     if (isLastElement(root)) {
-        if (*std::get<Object *>(root.leftChild) == object) {
+        if (*root.leftLeaf == object) {
             removeLastChild(root);
             return true;
         }
-    } else if (isLastElementLeft(root) && *std::get<Object *>(root.leftChild) == object) {
+    } else if (isLastElementLeft(root) && *root.leftLeaf == object) {
         if (isLastElementRight(root)) {
             removeSecondToLastChildLeft(root);
         } else {
             replaceRootWithRightChild(root);
         }
         return true;
-    } else if (isLastElementRight(root) && *std::get<Object *>(root.rightChild) == object) {
+    } else if (isLastElementRight(root) && *root.rightLeaf == object) {
         if (isLastElementLeft(root)) {
             removeSecondToLastChildRight(root);
         } else {
@@ -1657,7 +1599,7 @@ bool DBVHv2::intersectFirst(DBVHNode &root, IntersectionInfo *intersectionInfo, 
     bool hit;
 
     if (isLastElement(root)) {
-        hit = std::get<Object *>(root.leftChild)->intersectFirst(intersectionInfo, ray);
+        hit = root.leftLeaf->intersectFirst(intersectionInfo, ray);
     } else {
         hit = traverseFirst(root, intersectionInfo, ray);
     }
@@ -1670,7 +1612,7 @@ bool DBVHv2::intersectAny(DBVHNode &root, IntersectionInfo *intersectionInfo, Ra
     bool hit;
 
     if (isLastElement(root)) {
-        hit = std::get<Object *>(root.leftChild)->intersectAny(intersectionInfo, ray);
+        hit = root.leftLeaf->intersectAny(intersectionInfo, ray);
     } else {
         hit = traverseAny(root, intersectionInfo, ray);
     }
@@ -1683,18 +1625,10 @@ bool DBVHv2::intersectAll(DBVHNode &root, std::vector<IntersectionInfo *> *inter
     bool hit;
 
     if (isLastElement(root)) {
-        hit = std::get<Object *>(root.leftChild)->intersectAll(intersectionInfo, ray);
+        hit = root.leftLeaf->intersectAll(intersectionInfo, ray);
     } else {
         hit = traverseALl(root, intersectionInfo, ray);
     }
 
     return hit;
-}
-
-DBVHNode::DBVHNode() : maxDepthLeft(0), maxDepthRight(0), leftChild(), rightChild() {
-
-}
-
-DBVHNode::~DBVHNode() {
-
 }
