@@ -24,6 +24,14 @@ bool isLeafRight(const DBVHNode &root) {
     return root.maxDepthRight == 1;
 }
 
+bool isNodeLeft(const DBVHNode &root){
+    return root.maxDepthLeft > 1;
+}
+
+bool isNodeRight(const DBVHNode &root){
+    return root.maxDepthRight > 1;
+}
+
 bool isEmptyRight(const DBVHNode &root) {
     return root.maxDepthRight == 0;
 }
@@ -242,14 +250,14 @@ static void refit(DBVHNode &node) {
                         -std::numeric_limits<double>::max(),
                         -std::numeric_limits<double>::max(),
                         -std::numeric_limits<double>::max()};
-    if (node.maxDepthRight > 1) {
+    if (isNodeRight(node)) {
         refit(node.boundingBox, (node.rightChild)->boundingBox);
         node.surfaceArea = (node.rightChild)->surfaceArea;
     } else {
         refit(node.boundingBox, (node.rightLeaf)->getBoundaries());
         node.surfaceArea = (node.rightLeaf)->getSurfaceArea();
     }
-    if (node.maxDepthLeft > 1) {
+    if (isNodeLeft(node)) {
         refit(node.boundingBox, (node.leftChild)->boundingBox);
         node.surfaceArea += (node.leftChild)->surfaceArea;
         node.surfaceArea += node.boundingBox.getSA();
@@ -271,18 +279,18 @@ bool optimizeSAH(DBVHNode &node) {
 
     SAHs[0] = node.surfaceArea;
 
-    if (node.maxDepthLeft > 1) {
+    if (isNodeLeft(node)) {
         auto leftNode = node.leftChild.get();
         leftBox = leftNode->boundingBox;
         leftSA = leftNode->surfaceArea;
-        if (leftNode->maxDepthLeft > 1) {
+        if (isNodeLeft(*leftNode)) {
             leftLeftBox = (leftNode->leftChild)->boundingBox;
             leftLeftSA = (leftNode->leftChild)->surfaceArea;
         } else {
             leftLeftBox = (leftNode->leftLeaf)->getBoundaries();
             leftLeftSA = (leftNode->leftLeaf)->getSurfaceArea();
         }
-        if (leftNode->maxDepthRight > 1) {
+        if (isNodeRight(*leftNode)) {
             leftRightBox = (leftNode->rightChild)->boundingBox;
             leftRightSA = (leftNode->rightChild)->surfaceArea;
         } else {
@@ -290,18 +298,18 @@ bool optimizeSAH(DBVHNode &node) {
             leftRightSA = (leftNode->rightLeaf)->getSurfaceArea();
         }
 
-        if (node.maxDepthRight > 1) {
+        if (isNodeRight(node)) {
             auto rightNode = node.rightChild.get();
             rightBox = rightNode->boundingBox;
             rightSA = rightNode->surfaceArea;
-            if (rightNode->maxDepthLeft > 1) {
+            if (isNodeLeft(*rightNode)) {
                 rightLeftBox = (rightNode->leftChild)->boundingBox;
                 rightLeftSA = (rightNode->leftChild)->surfaceArea;
             } else {
                 rightLeftBox = (rightNode->leftLeaf)->getBoundaries();
                 rightLeftSA = (rightNode->leftLeaf)->getSurfaceArea();
             }
-            if (rightNode->maxDepthRight > 1) {
+            if (isNodeRight(*rightNode)) {
                 rightRightBox = (rightNode->rightChild)->boundingBox;
                 rightRightSA = (rightNode->rightChild)->surfaceArea;
             } else {
@@ -372,18 +380,18 @@ bool optimizeSAH(DBVHNode &node) {
         leftBox = leftNode->getBoundaries();
         leftSA = leftNode->getSurfaceArea();
 
-        if (node.maxDepthRight > 1) {
+        if (isNodeRight(node)) {
             auto &rightNode = node.rightChild;
             rightBox = rightNode->boundingBox;
             rightSA = rightNode->surfaceArea;
-            if (rightNode->maxDepthLeft > 1) {
+            if (isNodeLeft(*rightNode)) {
                 rightLeftBox = (rightNode->leftChild)->boundingBox;
                 rightLeftSA = (rightNode->leftChild)->surfaceArea;
             } else {
                 rightLeftBox = (rightNode->leftLeaf)->getBoundaries();
                 rightLeftSA = (rightNode->leftLeaf)->getSurfaceArea();
             }
-            if (rightNode->maxDepthRight > 1) {
+            if (isNodeRight(*rightNode)) {
                 rightRightBox = (rightNode->rightChild)->boundingBox;
                 rightRightSA = (rightNode->rightChild)->surfaceArea;
             } else {
@@ -431,9 +439,9 @@ bool optimizeSAH(DBVHNode &node) {
 
     switch (bestSAH) {
         case 1: {
-            if (node.maxDepthRight > 1) {
+            if (isNodeRight(node)) {
                 auto buffer = std::move(node.rightChild);
-                if (node.leftChild->maxDepthLeft > 1) {
+                if (isNodeLeft(*node.leftChild)) {
                     node.rightChild = std::move((node.leftChild)->leftChild);
                     node.maxDepthRight = std::max(node.rightChild->maxDepthLeft, node.rightChild->maxDepthRight) + 1;
                 } else {
@@ -453,7 +461,7 @@ bool optimizeSAH(DBVHNode &node) {
                 return true;
             } else {
                 auto buffer = node.rightLeaf;
-                if (node.leftChild->maxDepthLeft > 1) {
+                if (isNodeLeft(*node.leftChild)) {
                     node.rightChild = std::move((node.leftChild)->leftChild);
                     node.maxDepthRight = std::max(node.rightChild->maxDepthLeft, node.rightChild->maxDepthRight) + 1;
                 } else {
@@ -470,9 +478,9 @@ bool optimizeSAH(DBVHNode &node) {
             }
         }
         case 2: {
-            if (node.maxDepthRight > 1) {
+            if (isNodeRight(node)) {
                 auto buffer = std::move(node.rightChild);
-                if (node.leftChild->maxDepthRight > 1) {
+                if (isNodeRight(*node.leftChild)) {
                     node.rightChild = std::move((node.leftChild)->rightChild);
                     node.maxDepthRight = std::max(node.rightChild->maxDepthLeft, node.rightChild->maxDepthRight) + 1;
                 } else {
@@ -488,7 +496,7 @@ bool optimizeSAH(DBVHNode &node) {
                 return true;
             } else {
                 auto buffer = node.rightLeaf;
-                if (node.leftChild->maxDepthRight > 1) {
+                if (isNodeRight(*node.leftChild)) {
                     node.rightChild = std::move((node.leftChild)->rightChild);
                     node.maxDepthRight = std::max(node.rightChild->maxDepthLeft, node.rightChild->maxDepthRight) + 1;
                 } else {
@@ -505,9 +513,9 @@ bool optimizeSAH(DBVHNode &node) {
             }
         }
         case 3: {
-            if (node.maxDepthLeft > 1) {
+            if (isNodeLeft(node)) {
                 auto buffer = std::move(node.leftChild);
-                if (node.rightChild->maxDepthLeft > 1) {
+                if (isNodeLeft(*node.rightChild)) {
                     node.leftChild = std::move((node.rightChild)->leftChild);
                     node.maxDepthLeft = std::max(node.leftChild->maxDepthLeft, node.leftChild->maxDepthRight) + 1;
                 } else {
@@ -523,7 +531,7 @@ bool optimizeSAH(DBVHNode &node) {
                 return true;
             } else {
                 auto buffer = node.leftLeaf;
-                if (node.rightChild->maxDepthLeft > 1) {
+                if (isNodeLeft(*node.rightChild)) {
                     node.leftChild = std::move((node.rightChild)->leftChild);
                     node.maxDepthLeft = std::max(node.leftChild->maxDepthLeft, node.leftChild->maxDepthRight) + 1;
                 } else {
@@ -540,9 +548,9 @@ bool optimizeSAH(DBVHNode &node) {
             }
         }
         case 4: {
-            if (node.maxDepthLeft > 1) {
+            if (isNodeLeft(node)) {
                 auto buffer = std::move(node.leftChild);
-                if (node.rightChild->maxDepthRight > 1) {
+                if (isNodeRight(*node.rightChild)) {
                     node.leftChild = std::move((node.rightChild)->rightChild);
                     node.maxDepthLeft = std::max(node.leftChild->maxDepthLeft, node.leftChild->maxDepthRight) + 1;
                 } else {
@@ -558,7 +566,7 @@ bool optimizeSAH(DBVHNode &node) {
                 return true;
             } else {
                 auto buffer = node.leftLeaf;
-                if (node.rightChild->maxDepthRight > 1) {
+                if (isNodeRight(*node.rightChild)) {
                     node.leftChild = std::move((node.rightChild)->rightChild);
                     node.maxDepthLeft = std::max(node.leftChild->maxDepthLeft, node.leftChild->maxDepthRight) + 1;
                 } else {
@@ -605,7 +613,7 @@ std::vector<double> evaluateSplittingPlanes(const DBVHNode &node, const std::vec
     double leftSA = 0, rightSA = 0;
 
     if (node.maxDepthLeft != 0) {
-        if (node.maxDepthLeft > 1) {
+        if (isNodeLeft(node)) {
             leftBox = (node.leftChild)->boundingBox;
             leftSA = (node.leftChild)->surfaceArea / leftBox.getSA();
         } else {
@@ -613,7 +621,7 @@ std::vector<double> evaluateSplittingPlanes(const DBVHNode &node, const std::vec
             leftSA = (node.leftLeaf)->getSurfaceArea() / leftBox.getSA();
         }
         if (node.maxDepthRight != 0) {
-            if (node.maxDepthRight > 1) {
+            if (isNodeRight(node)) {
                 rightBox = (node.rightChild)->boundingBox;
                 rightSA = (node.rightChild)->surfaceArea / rightBox.getSA();
             } else {
@@ -701,7 +709,7 @@ sortObjectsIntoBoxes(const int splitOperation, const Vector3D &splittingPlane, D
         case 5: {
             // new box split
             auto newNode = std::make_unique<DBVHNode>();
-            if (node.maxDepthRight > 1) {
+            if (isNodeRight(node)) {
                 newNode->rightChild = std::move(node.rightChild);
                 newNode->maxDepthRight = node.maxDepthRight;
                 refit(newNode->boundingBox, newNode->rightChild->boundingBox);
@@ -710,7 +718,7 @@ sortObjectsIntoBoxes(const int splitOperation, const Vector3D &splittingPlane, D
                 newNode->maxDepthRight = 1;
                 refit(newNode->boundingBox, newNode->rightLeaf->getBoundaries());
             }
-            if (node.maxDepthLeft > 1) {
+            if (isNodeLeft(node)) {
                 newNode->leftChild = std::move(node.leftChild);
                 newNode->maxDepthLeft = node.maxDepthLeft;
                 refit(newNode->boundingBox, newNode->leftChild->boundingBox);
@@ -731,7 +739,7 @@ sortObjectsIntoBoxes(const int splitOperation, const Vector3D &splittingPlane, D
             // new box correct order
             split(leftObjects, rightObjects, objects, splittingPlane);
             auto newNode = std::make_unique<DBVHNode>();
-            if (node.maxDepthRight > 1) {
+            if (isNodeRight(node)) {
                 newNode->rightChild = std::move(node.rightChild);
                 newNode->maxDepthRight = node.maxDepthRight;
                 refit(newNode->boundingBox, newNode->rightChild->boundingBox);
@@ -740,7 +748,7 @@ sortObjectsIntoBoxes(const int splitOperation, const Vector3D &splittingPlane, D
                 newNode->maxDepthRight = 1;
                 refit(newNode->boundingBox, newNode->rightLeaf->getBoundaries());
             }
-            if (node.maxDepthLeft > 1) {
+            if (isNodeLeft(node)) {
                 newNode->leftChild = std::move(node.leftChild);
                 newNode->maxDepthLeft = node.maxDepthLeft;
                 refit(newNode->boundingBox, newNode->leftChild->boundingBox);
@@ -763,7 +771,7 @@ sortObjectsIntoBoxes(const int splitOperation, const Vector3D &splittingPlane, D
             leftObjects = rightObjects;
             rightObjects = buffer;
             auto newNode = std::make_unique<DBVHNode>();
-            if (node.maxDepthRight > 1) {
+            if (isNodeRight(node)) {
                 newNode->rightChild = std::move(node.rightChild);
                 newNode->maxDepthRight = node.maxDepthRight;
                 refit(newNode->boundingBox, newNode->rightChild->boundingBox);
@@ -772,7 +780,7 @@ sortObjectsIntoBoxes(const int splitOperation, const Vector3D &splittingPlane, D
                 newNode->maxDepthRight = 1;
                 refit(newNode->boundingBox, newNode->rightLeaf->getBoundaries());
             }
-            if (node.maxDepthLeft > 1) {
+            if (isNodeLeft(node)) {
                 newNode->leftChild = std::move(node.leftChild);
                 newNode->maxDepthLeft = node.maxDepthLeft;
                 refit(newNode->boundingBox, newNode->leftChild->boundingBox);
@@ -1105,7 +1113,7 @@ static bool traverseALl(DBVHNode &root, std::vector<IntersectionInfo *> *interse
             double distanceRight = 0;
             double distanceLeft = 0;
 
-            if (node->maxDepthRight > 1) {
+            if (isNodeRight(*node)) {
                 // TODO request child if missing
                 auto rightChild = node->rightChild.get();
                 if (rayBoxIntersection(&(rightChild->boundingBox.minCorner),
@@ -1126,7 +1134,7 @@ static bool traverseALl(DBVHNode &root, std::vector<IntersectionInfo *> *interse
                     delete intersectionInformationBuffer;
                 }
             }
-            if (node->maxDepthLeft > 1) {
+            if (isNodeLeft(*node)) {
                 // TODO request child if missing
                 auto leftChild = node->leftChild.get();
                 if (rayBoxIntersection(&(leftChild->boundingBox.minCorner),
@@ -1162,7 +1170,7 @@ static bool traverseALl(DBVHNode &root, std::vector<IntersectionInfo *> *interse
             double distanceRight = 0;
             double distanceLeft = 0;
 
-            if (node->maxDepthRight > 1) {
+            if (isNodeRight(*node)) {
                 // TODO request child if missing
                 auto rightChild = node->rightChild.get();
                 if (rayBoxIntersection(&(rightChild->boundingBox.minCorner),
@@ -1183,7 +1191,7 @@ static bool traverseALl(DBVHNode &root, std::vector<IntersectionInfo *> *interse
                     delete intersectionInformationBuffer;
                 }
             }
-            if (node->maxDepthLeft > 1) {
+            if (isNodeLeft(*node)) {
                 // TODO request child if missing
                 auto leftChild = node->leftChild.get();
                 if (rayBoxIntersection(&(leftChild->boundingBox.minCorner),
@@ -1237,7 +1245,7 @@ static bool traverseFirst(DBVHNode &root, IntersectionInfo *intersectionInfo, Ra
             bool right = false;
             bool left = false;
 
-            if (node->maxDepthRight > 1) {
+            if (isNodeRight(*node)) {
                 // TODO request child if missing
                 auto rightChild = node->rightChild.get();
                 right = rayBoxIntersection(&(rightChild->boundingBox.minCorner),
@@ -1257,7 +1265,7 @@ static bool traverseFirst(DBVHNode &root, IntersectionInfo *intersectionInfo, Ra
                     }
                 }
             }
-            if (node->maxDepthLeft > 1) {
+            if (isNodeLeft(*node)) {
                 // TODO request child if missing
                 auto leftChild = node->leftChild.get();
                 left = rayBoxIntersection(&(leftChild->boundingBox.minCorner),
@@ -1314,7 +1322,7 @@ static bool traverseFirst(DBVHNode &root, IntersectionInfo *intersectionInfo, Ra
             bool right = false;
             bool left = false;
 
-            if (node->maxDepthRight > 1) {
+            if (isNodeRight(*node)) {
                 // TODO request child if missing
                 auto rightChild = node->rightChild.get();
                 right = rayBoxIntersection(&(rightChild->boundingBox.minCorner),
@@ -1334,7 +1342,7 @@ static bool traverseFirst(DBVHNode &root, IntersectionInfo *intersectionInfo, Ra
                     }
                 }
             }
-            if (node->maxDepthLeft > 1) {
+            if (isNodeLeft(*node)) {
                 // TODO request child if missing
                 auto leftChild = node->leftChild.get();
                 left = rayBoxIntersection(&(leftChild->boundingBox.minCorner),
@@ -1389,7 +1397,7 @@ static bool traverseAny(DBVHNode &root, IntersectionInfo *intersectionInfo, Ray 
             double distanceRight = 0;
             double distanceLeft = 0;
 
-            if (node->maxDepthRight > 1) {
+            if (isNodeRight(*node)) {
                 // TODO request child if missing
                 auto rightChild = node->rightChild.get();
                 if (rayBoxIntersection(&(rightChild->boundingBox.minCorner),
@@ -1409,7 +1417,7 @@ static bool traverseAny(DBVHNode &root, IntersectionInfo *intersectionInfo, Ray 
                     return true;
                 }
             }
-            if (node->maxDepthLeft > 1) {
+            if (isNodeLeft(*node)) {
                 // TODO request child if missing
                 auto leftChild = node->leftChild.get();
                 if (rayBoxIntersection(&(leftChild->boundingBox.minCorner),
@@ -1444,7 +1452,7 @@ static bool traverseAny(DBVHNode &root, IntersectionInfo *intersectionInfo, Ray 
             double distanceRight = 0;
             double distanceLeft = 0;
 
-            if (node->maxDepthRight > 1) {
+            if (isNodeRight(*node)) {
                 // TODO request child if missing
                 auto rightChild = node->rightChild.get();
                 if (rayBoxIntersection(&(rightChild->boundingBox.minCorner),
@@ -1464,7 +1472,7 @@ static bool traverseAny(DBVHNode &root, IntersectionInfo *intersectionInfo, Ray 
                     return true;
                 }
             }
-            if (node->maxDepthLeft > 1) {
+            if (isNodeLeft(*node)) {
                 // TODO request child if missing
                 auto leftChild = node->leftChild.get();
                 if (rayBoxIntersection(&(leftChild->boundingBox.minCorner),
