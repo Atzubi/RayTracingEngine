@@ -24,11 +24,11 @@ bool isLeafRight(const DBVHNode &root) {
     return root.maxDepthRight == 1;
 }
 
-bool isNodeLeft(const DBVHNode &root){
+bool isNodeLeft(const DBVHNode &root) {
     return root.maxDepthLeft > 1;
 }
 
-bool isNodeRight(const DBVHNode &root){
+bool isNodeRight(const DBVHNode &root) {
     return root.maxDepthRight > 1;
 }
 
@@ -39,6 +39,10 @@ bool isEmptyRight(const DBVHNode &root) {
 bool isEmptyLeft(const DBVHNode &root) {
     return isEmpty(root);
 }
+
+enum SplitOperation {
+    Default, DefaultWrongOrder, AllNewLeft, AllNewRight, SplitOldNew, DefaultOldLeft, DefaultWrongOrderOldLeft
+};
 
 static void refit(BoundingBox &target, BoundingBox resizeBy) {
     target.minCorner.x = std::min(target.minCorner.x, resizeBy.minCorner.x);
@@ -75,7 +79,7 @@ static void refit(BoundingBox &aabb, const std::vector<Object *> &objects, doubl
 
 static double evaluateBucket(BoundingBox *leftChildBox, BoundingBox *rightChildBox, double leftSAH, double rightSAH,
                              const std::vector<Object *> &objects, Vector3D splittingPlane,
-                             uint8_t *newParent) {
+                             SplitOperation *newParent) {
     // initialize both bucket boxes
     BoundingBox aabbLeft = {std::numeric_limits<double>::max(), std::numeric_limits<double>::max(),
                             std::numeric_limits<double>::max(), -std::numeric_limits<double>::max(),
@@ -143,7 +147,7 @@ static double evaluateBucket(BoundingBox *leftChildBox, BoundingBox *rightChildB
 
         double SAHs[7];
         double SAH = std::numeric_limits<double>::max();
-        int bestSAH = 0;
+        SplitOperation bestSAH = Default;
 
         refit(newLeftNewRight, newRight);
         refit(oldLeftNewLeft, newLeft);
@@ -156,29 +160,30 @@ static double evaluateBucket(BoundingBox *leftChildBox, BoundingBox *rightChildB
         refit(oldLeftOldRightNewRight, oldRightNewRight);
         refit(oldRightNewLeftNewRight, newLeftNewRight);
 
-        SAHs[0] = oldLeftNewLeft.getSA() * (leftCount + leftSAH) +
-                  oldRightNewRight.getSA() * (rightCount + rightSAH);
-        SAHs[1] = oldLeftNewRight.getSA() * (rightCount + leftSAH) +
-                  oldRightNewLeft.getSA() * (leftCount + rightSAH);
-        SAHs[2] = oldLeft.getSA() * leftSAH +
-                  oldRightNewLeftNewRight.getSA() * (leftCount + rightCount + rightSAH);
-        SAHs[3] = oldLeftNewLeftNewRight.getSA() * (leftCount + rightCount + leftSAH) +
-                  oldRight.getSA() * rightSAH;
-        SAHs[4] = oldLeftOldRight.getSA() * (leftSAH + rightSAH) +
-                  newLeftNewRight.getSA() * (leftCount + rightCount);
-        SAHs[5] = oldLeftOldRightNewLeft.getSA() * (leftCount + leftSAH + rightSAH) +
-                  newRight.getSA() * rightCount;
-        SAHs[6] = oldLeftOldRightNewRight.getSA() * (rightCount + leftSAH + rightSAH) +
-                  newLeft.getSA() * leftCount;
+        SAHs[Default] = oldLeftNewLeft.getSA() * (leftCount + leftSAH) +
+                        oldRightNewRight.getSA() * (rightCount + rightSAH);
+        SAHs[DefaultWrongOrder] = oldLeftNewRight.getSA() * (rightCount + leftSAH) +
+                                  oldRightNewLeft.getSA() * (leftCount + rightSAH);
+        SAHs[AllNewLeft] = oldLeft.getSA() * leftSAH +
+                           oldRightNewLeftNewRight.getSA() * (leftCount + rightCount + rightSAH);
+        SAHs[AllNewRight] = oldLeftNewLeftNewRight.getSA() * (leftCount + rightCount + leftSAH) +
+                            oldRight.getSA() * rightSAH;
+        SAHs[SplitOldNew] = oldLeftOldRight.getSA() * (leftSAH + rightSAH) +
+                            newLeftNewRight.getSA() * (leftCount + rightCount);
+        SAHs[DefaultOldLeft] = oldLeftOldRightNewLeft.getSA() * (leftCount + leftSAH + rightSAH) +
+                               newRight.getSA() * rightCount;
+        SAHs[DefaultWrongOrderOldLeft] = oldLeftOldRightNewRight.getSA() * (rightCount + leftSAH + rightSAH) +
+                                         newLeft.getSA() * leftCount;
+
 
         for (int i = 0; i < 7; i++) {
             if (SAHs[i] < SAH) {
                 SAH = SAHs[i];
-                bestSAH = i;
+                bestSAH = static_cast<SplitOperation>(i);
             }
         }
 
-        *newParent = bestSAH + 1;
+        *newParent = bestSAH;
         return SAHs[bestSAH];
     } else {
         // return the combined surface area of both boxes
@@ -604,7 +609,7 @@ std::vector<Vector3D> createSplittingPlanes(DBVHNode &node) {
 
 std::vector<double> evaluateSplittingPlanes(const DBVHNode &node, const std::vector<Object *> &objects,
                                             const std::vector<Vector3D> &splittingPlanes,
-                                            std::vector<uint8_t> &newParent) {
+                                            std::vector<SplitOperation> &newParent) {
     std::vector<double> SAH(numberOfSplittingPlanes);
 
     BoundingBox leftBox;
@@ -676,129 +681,84 @@ bool bestSplittingPlaneExists(int bestSplittingPlane) {
     return bestSplittingPlane != -1;
 }
 
+void switchBoxOrder(std::vector<Object *> &leftObjects, std::vector<Object *> &rightObjects) {
+    auto buffer = leftObjects;
+    leftObjects = rightObjects;
+    rightObjects = buffer;
+}
+
+std::unique_ptr<DBVHNode> moveToNewNode(DBVHNode &node) {
+    auto newNode = std::make_unique<DBVHNode>();
+    if (isNodeRight(node)) {
+        newNode->rightChild = std::move(node.rightChild);
+        newNode->maxDepthRight = node.maxDepthRight;
+        refit(newNode->boundingBox, newNode->rightChild->boundingBox);
+    } else {
+        newNode->rightLeaf = node.rightLeaf;
+        newNode->maxDepthRight = 1;
+        refit(newNode->boundingBox, newNode->rightLeaf->getBoundaries());
+    }
+    if (isNodeLeft(node)) {
+        newNode->leftChild = std::move(node.leftChild);
+        newNode->maxDepthLeft = node.maxDepthLeft;
+        refit(newNode->boundingBox, newNode->leftChild->boundingBox);
+    } else {
+        newNode->leftLeaf = node.leftLeaf;
+        newNode->maxDepthLeft = 1;
+        refit(newNode->boundingBox, newNode->leftLeaf->getBoundaries());
+    }
+    newNode->surfaceArea = node.surfaceArea;
+    return newNode;
+}
+
+void moveParentToNewParentsLeftChild(DBVHNode( &node)) {
+    auto newNode = moveToNewNode(node);
+    node.maxDepthLeft = std::max(newNode->maxDepthLeft, newNode->maxDepthRight) + 1;
+    node.leftChild = std::move(newNode);
+    node.rightChild = nullptr;
+    node.maxDepthRight = 0;
+}
+
 void
-sortObjectsIntoBoxes(const int splitOperation, const Vector3D &splittingPlane, DBVHNode &node,
+sortObjectsIntoBoxes(const SplitOperation splitOperation, const Vector3D &splittingPlane, DBVHNode &node,
                      const std::vector<Object *> &objects,
                      std::vector<Object *> &leftObjects,
                      std::vector<Object *> &rightObjects) {
     switch (splitOperation) {
-        case 0:
-            // default
-        case 1:
-            // existing boxes with correct order
+        case Default:
             split(leftObjects, rightObjects, objects, splittingPlane);
             break;
-        case 2: {
-            // existing boxes with wrong order
+        case DefaultWrongOrder: {
             split(leftObjects, rightObjects, objects, splittingPlane);
-            auto buffer = leftObjects;
-            leftObjects = rightObjects;
-            rightObjects = buffer;
+            switchBoxOrder(leftObjects, rightObjects);
             break;
         }
-        case 3: {
-            // existing box all new left
+        case AllNewLeft: {
             leftObjects = objects;
             break;
         }
-        case 4: {
-            // existing box all new right
+        case AllNewRight: {
             rightObjects = objects;
             break;
         }
-        case 5: {
-            // new box split
-            auto newNode = std::make_unique<DBVHNode>();
-            if (isNodeRight(node)) {
-                newNode->rightChild = std::move(node.rightChild);
-                newNode->maxDepthRight = node.maxDepthRight;
-                refit(newNode->boundingBox, newNode->rightChild->boundingBox);
-            } else {
-                newNode->rightLeaf = node.rightLeaf;
-                newNode->maxDepthRight = 1;
-                refit(newNode->boundingBox, newNode->rightLeaf->getBoundaries());
-            }
-            if (isNodeLeft(node)) {
-                newNode->leftChild = std::move(node.leftChild);
-                newNode->maxDepthLeft = node.maxDepthLeft;
-                refit(newNode->boundingBox, newNode->leftChild->boundingBox);
-            } else {
-                newNode->leftLeaf = node.leftLeaf;
-                newNode->maxDepthLeft = 1;
-                refit(newNode->boundingBox, newNode->leftLeaf->getBoundaries());
-            }
-            newNode->surfaceArea = node.surfaceArea;
-            node.maxDepthLeft = std::max(newNode->maxDepthLeft, newNode->maxDepthRight) + 1;
-            node.leftChild = std::move(newNode);
-            node.rightChild = nullptr;
-            node.maxDepthRight = 0;
+        case SplitOldNew: {
+            moveParentToNewParentsLeftChild(node);
             rightObjects = objects;
             break;
         }
-        case 6: {
-            // new box correct order
+        case DefaultOldLeft: {
             split(leftObjects, rightObjects, objects, splittingPlane);
-            auto newNode = std::make_unique<DBVHNode>();
-            if (isNodeRight(node)) {
-                newNode->rightChild = std::move(node.rightChild);
-                newNode->maxDepthRight = node.maxDepthRight;
-                refit(newNode->boundingBox, newNode->rightChild->boundingBox);
-            } else {
-                newNode->rightLeaf = node.rightLeaf;
-                newNode->maxDepthRight = 1;
-                refit(newNode->boundingBox, newNode->rightLeaf->getBoundaries());
-            }
-            if (isNodeLeft(node)) {
-                newNode->leftChild = std::move(node.leftChild);
-                newNode->maxDepthLeft = node.maxDepthLeft;
-                refit(newNode->boundingBox, newNode->leftChild->boundingBox);
-            } else {
-                newNode->leftLeaf = node.leftLeaf;
-                newNode->maxDepthLeft = 1;
-                refit(newNode->boundingBox, newNode->leftLeaf->getBoundaries());
-            }
-            newNode->surfaceArea = node.surfaceArea;
-            node.maxDepthLeft = std::max(newNode->maxDepthLeft, newNode->maxDepthRight) + 1;
-            node.leftChild = std::move(newNode);
-            node.rightChild = nullptr;
-            node.maxDepthRight = 0;
+            moveParentToNewParentsLeftChild(node);
             break;
         }
-        case 7: {
-            // new box wrong order
+        case DefaultWrongOrderOldLeft: {
             split(leftObjects, rightObjects, objects, splittingPlane);
-            auto buffer = leftObjects;
-            leftObjects = rightObjects;
-            rightObjects = buffer;
-            auto newNode = std::make_unique<DBVHNode>();
-            if (isNodeRight(node)) {
-                newNode->rightChild = std::move(node.rightChild);
-                newNode->maxDepthRight = node.maxDepthRight;
-                refit(newNode->boundingBox, newNode->rightChild->boundingBox);
-            } else {
-                newNode->rightLeaf = node.rightLeaf;
-                newNode->maxDepthRight = 1;
-                refit(newNode->boundingBox, newNode->rightLeaf->getBoundaries());
-            }
-            if (isNodeLeft(node)) {
-                newNode->leftChild = std::move(node.leftChild);
-                newNode->maxDepthLeft = node.maxDepthLeft;
-                refit(newNode->boundingBox, newNode->leftChild->boundingBox);
-            } else {
-                newNode->leftLeaf = node.leftLeaf;
-                newNode->maxDepthLeft = 1;
-                refit(newNode->boundingBox, newNode->leftLeaf->getBoundaries());
-            }
-            newNode->surfaceArea = node.surfaceArea;
-            node.maxDepthLeft = std::max(newNode->maxDepthLeft, newNode->maxDepthRight) + 1;
-            node.leftChild = std::move(newNode);
-            node.rightChild = nullptr;
-            node.maxDepthRight = 0;
+            switchBoxOrder(leftObjects, rightObjects);
+            moveParentToNewParentsLeftChild(node);
             break;
         }
         default:
-            std::cout << "wtf\n";
-            throw (std::exception());
+            throw (std::exception("Undefined split operation!"));
     }
 }
 
@@ -965,7 +925,7 @@ add(DBVHNode &currentNode, const std::vector<Object *> &objects, const uint8_t d
     // create split buckets
     auto splittingPlanes = createSplittingPlanes(currentNode);
 
-    std::vector<uint8_t> newParent(numberOfSplittingPlanes);
+    std::vector<SplitOperation> newParent(numberOfSplittingPlanes);
 
     // evaluate split buckets
     auto SAH = evaluateSplittingPlanes(currentNode, objects, splittingPlanes, newParent);
