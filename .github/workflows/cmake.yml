@@ -2,7 +2,7 @@ name: CMake
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, cleanup ]
   pull_request:
     branches: [ master ]
   workflow_dispatch:
