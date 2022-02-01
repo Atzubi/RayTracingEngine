@@ -730,7 +730,7 @@ sortObjectsIntoBoxes(const SplitOperation splitOperation, const Vector3D &splitt
             break;
         }
         default:
-            throw (std::exception());
+            throw (std::out_of_range("Undefined split operation!"));
     }
 }
 
