@@ -249,28 +249,26 @@ static bool rayBoxIntersection(Vector3D *min, Vector3D *max, Ray *ray, double *d
 }
 
 static void refit(DBVHNode &node) {
-    node.boundingBox = {std::numeric_limits<double>::max(),
-                        std::numeric_limits<double>::max(),
-                        std::numeric_limits<double>::max(),
-                        -std::numeric_limits<double>::max(),
-                        -std::numeric_limits<double>::max(),
-                        -std::numeric_limits<double>::max()};
+    node.boundingBox = BoundingBox();
     if (isNodeRight(node)) {
         refit(node.boundingBox, (node.rightChild)->boundingBox);
         node.surfaceArea = (node.rightChild)->surfaceArea;
+        node.maxDepthRight = std::max(node.rightChild->maxDepthRight, node.rightChild->maxDepthLeft) + 1;
     } else {
         refit(node.boundingBox, (node.rightLeaf)->getBoundaries());
         node.surfaceArea = (node.rightLeaf)->getSurfaceArea();
+        node.maxDepthRight = 1;
     }
     if (isNodeLeft(node)) {
         refit(node.boundingBox, (node.leftChild)->boundingBox);
         node.surfaceArea += (node.leftChild)->surfaceArea;
-        node.surfaceArea += node.boundingBox.getSA();
+        node.maxDepthLeft = std::max(node.leftChild->maxDepthRight, node.leftChild->maxDepthLeft) + 1;
     } else {
         refit(node.boundingBox, (node.leftLeaf)->getBoundaries());
         node.surfaceArea += (node.leftLeaf)->getSurfaceArea();
-        node.surfaceArea += node.boundingBox.getSA();
+        node.maxDepthLeft = 1;
     }
+    node.surfaceArea += node.boundingBox.getSA();
 }
 
 bool optimizeSAH(DBVHNode &node) {
