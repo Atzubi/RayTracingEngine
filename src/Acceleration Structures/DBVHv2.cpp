@@ -77,136 +77,130 @@ static void refit(BoundingBox &aabb, const std::vector<Object *> &objects, doubl
     }
 }
 
-static double evaluateBucket(const DBVHNode &node, const std::vector<Object *> &objects, Vector3D splittingPlane,
-                             SplitOperation *newParent) {
-
-    // initialize both bucket boxes
-    BoundingBox aabbLeft = {std::numeric_limits<double>::max(), std::numeric_limits<double>::max(),
-                            std::numeric_limits<double>::max(), -std::numeric_limits<double>::max(),
-                            -std::numeric_limits<double>::max(), -std::numeric_limits<double>::max()};
-    BoundingBox aabbRight = {std::numeric_limits<double>::max(), std::numeric_limits<double>::max(),
-                             std::numeric_limits<double>::max(), -std::numeric_limits<double>::max(),
-                             -std::numeric_limits<double>::max(), -std::numeric_limits<double>::max()};
-
-    double leftCount = 0;
-    double rightCount = 0;
-
-    // sort all objects into their bucket, then update the buckets bounding box
-    if (splittingPlane.x != 0) {
+static void
+sortObjectsIntoBuckets(const std::vector<Object *> &objects, const Vector3D &splittingPlane, BoundingBox &aabbLeft,
+                       BoundingBox &aabbRight, double &objectCostLeft, double &objectCostRight) {
+    for (int i = 0; i < 3; i++) {
+        if (splittingPlane[i] == 0) continue;
         for (const auto &object: objects) {
-            if ((object->getBoundaries().maxCorner.x + object->getBoundaries().minCorner.x) / 2 <
-                splittingPlane.x) {
+            if ((object->getBoundaries().maxCorner[i] + object->getBoundaries().minCorner[i]) / 2 <
+                splittingPlane[i]) {
                 refit(aabbLeft, *object);
-                leftCount += 1;
+                objectCostLeft += object->getSurfaceArea();
             } else {
                 refit(aabbRight, *object);
-                rightCount += 1;
-            }
-        }
-    } else if (splittingPlane.y != 0) {
-        for (const auto &object: objects) {
-            if ((object->getBoundaries().maxCorner.y + object->getBoundaries().minCorner.y) / 2 <
-                splittingPlane.y) {
-                refit(aabbLeft, *object);
-                leftCount += 1;
-            } else {
-                refit(aabbRight, *object);
-                rightCount += 1;
-            }
-        }
-    } else {
-        for (const auto &object: objects) {
-            if ((object->getBoundaries().maxCorner.z + object->getBoundaries().minCorner.z) / 2 <
-                splittingPlane.z) {
-                refit(aabbLeft, *object);
-                leftCount += 1;
-            } else {
-                refit(aabbRight, *object);
-                rightCount += 1;
+                objectCostRight += object->getSurfaceArea();
             }
         }
     }
+}
+
+static double computeSAH(BoundingBox &aabbLeft, BoundingBox &aabbRight, double objectCostLeft, double objectCostRight) {
+    BoundingBox combined;
+    refit(combined, aabbLeft);
+    refit(combined, aabbRight);
+
+    double pLeft = aabbLeft.getSA() / combined.getSA();
+    double pRight = aabbRight.getSA() / combined.getSA();
+
+    return pLeft * objectCostLeft + pRight * objectCostRight;
+}
+
+static double computeSAHWithNewParent(const DBVHNode &node, const BoundingBox &aabbLeft, const BoundingBox &aabbRight,
+                                      double objectCostLeft, double objectCostRight, SplitOperation &newParent) {
+    BoundingBox leftChildBox;
+    BoundingBox rightChildBox;
+
+    double pLeft = 0;
+    double pRight = 0;
+
+    if (isNodeLeft(node)) {
+        leftChildBox = (node.leftChild)->boundingBox;
+        pLeft = (node.leftChild)->surfaceArea / leftChildBox.getSA();
+    } else {
+        leftChildBox = (node.leftLeaf)->getBoundaries();
+        pLeft = (node.leftLeaf)->getSurfaceArea() / leftChildBox.getSA();
+    }
+    if (isNodeRight(node)) {
+        rightChildBox = (node.rightChild)->boundingBox;
+        pRight = (node.rightChild)->surfaceArea / rightChildBox.getSA();
+    } else {
+        rightChildBox = (node.rightLeaf)->getBoundaries();
+        pRight = (node.rightLeaf)->getSurfaceArea() / rightChildBox.getSA();
+    }
+
+    BoundingBox oldLeft = leftChildBox;
+    BoundingBox oldLeftNewLeft = leftChildBox;
+    BoundingBox oldLeftNewRight = leftChildBox;
+    BoundingBox oldLeftNewLeftNewRight = leftChildBox;
+    BoundingBox oldLeftOldRight = leftChildBox;
+    BoundingBox oldLeftOldRightNewLeft = leftChildBox;
+    BoundingBox oldLeftOldRightNewRight = leftChildBox;
+    BoundingBox oldRightNewLeftNewRight = rightChildBox;
+    BoundingBox oldRightNewRight = rightChildBox;
+    BoundingBox oldRightNewLeft = rightChildBox;
+    BoundingBox oldRight = rightChildBox;
+    BoundingBox newLeftNewRight = aabbLeft;
+    BoundingBox newRight = aabbRight;
+    BoundingBox newLeft = aabbLeft;
+
+    double SAHs[7];
+    double SAH = std::numeric_limits<double>::max();
+    SplitOperation bestSAH = Default;
+
+    refit(newLeftNewRight, newRight);
+    refit(oldLeftNewLeft, newLeft);
+    refit(oldLeftNewRight, newRight);
+    refit(oldLeftNewLeftNewRight, newLeftNewRight);
+    refit(oldLeftOldRight, oldRight);
+    refit(oldRightNewLeft, newLeft);
+    refit(oldRightNewRight, newRight);
+    refit(oldLeftOldRightNewLeft, oldRightNewLeft);
+    refit(oldLeftOldRightNewRight, oldRightNewRight);
+    refit(oldRightNewLeftNewRight, newLeftNewRight);
+
+    SAHs[Default] = oldLeftNewLeft.getSA() * (objectCostLeft + pLeft) +
+                    oldRightNewRight.getSA() * (objectCostRight + pRight);
+    SAHs[DefaultWrongOrder] = oldLeftNewRight.getSA() * (objectCostRight + pLeft) +
+                              oldRightNewLeft.getSA() * (objectCostLeft + pRight);
+    SAHs[AllNewLeft] = oldLeft.getSA() * pLeft +
+                       oldRightNewLeftNewRight.getSA() * (objectCostLeft + objectCostRight + pRight);
+    SAHs[AllNewRight] = oldLeftNewLeftNewRight.getSA() * (objectCostLeft + objectCostRight + pLeft) +
+                        oldRight.getSA() * pRight;
+    SAHs[SplitOldNew] = oldLeftOldRight.getSA() * (pLeft + pRight) +
+                        newLeftNewRight.getSA() * (objectCostLeft + objectCostRight);
+    SAHs[DefaultOldLeft] = oldLeftOldRightNewLeft.getSA() * (objectCostLeft + pLeft + pRight) +
+                           newRight.getSA() * objectCostRight;
+    SAHs[DefaultWrongOrderOldLeft] = oldLeftOldRightNewRight.getSA() * (objectCostRight + pLeft + pRight) +
+                                     newLeft.getSA() * objectCostLeft;
+
+
+    for (int i = 0; i < 7; i++) {
+        if (SAHs[i] < SAH) {
+            SAH = SAHs[i];
+            bestSAH = static_cast<SplitOperation>(i);
+        }
+    }
+
+    newParent = bestSAH;
+    return SAHs[bestSAH];
+}
+
+static double evaluateBucket(const DBVHNode &node, const std::vector<Object *> &objects, const Vector3D &splittingPlane,
+                             SplitOperation &newParent) {
+    BoundingBox aabbLeft;
+    BoundingBox aabbRight;
+
+    double objectCostLeft = 0;
+    double objectCostRight = 0;
+
+    sortObjectsIntoBuckets(objects, splittingPlane, aabbLeft, aabbRight, objectCostLeft, objectCostRight);
 
     if (!isEmptyLeft(node) && !isEmptyRight(node)) {
-        BoundingBox leftChildBox;
-        BoundingBox rightChildBox;
-
-        double pLeft = 0;
-        double pRight = 0;
-
-        if (isNodeLeft(node)) {
-            leftChildBox = (node.leftChild)->boundingBox;
-            pLeft = (node.leftChild)->surfaceArea / leftChildBox.getSA();
-        } else {
-            leftChildBox = (node.leftLeaf)->getBoundaries();
-            pLeft = (node.leftLeaf)->getSurfaceArea() / leftChildBox.getSA();
-        }
-        if (isNodeRight(node)) {
-            rightChildBox = (node.rightChild)->boundingBox;
-            pRight = (node.rightChild)->surfaceArea / rightChildBox.getSA();
-        } else {
-            rightChildBox = (node.rightLeaf)->getBoundaries();
-            pRight = (node.rightLeaf)->getSurfaceArea() / rightChildBox.getSA();
-        }
-
-        BoundingBox oldLeft = leftChildBox;
-        BoundingBox oldLeftNewLeft = leftChildBox;
-        BoundingBox oldLeftNewRight = leftChildBox;
-        BoundingBox oldLeftNewLeftNewRight = leftChildBox;
-        BoundingBox oldLeftOldRight = leftChildBox;
-        BoundingBox oldLeftOldRightNewLeft = leftChildBox;
-        BoundingBox oldLeftOldRightNewRight = leftChildBox;
-        BoundingBox oldRightNewLeftNewRight = rightChildBox;
-        BoundingBox oldRightNewRight = rightChildBox;
-        BoundingBox oldRightNewLeft = rightChildBox;
-        BoundingBox oldRight = rightChildBox;
-        BoundingBox newLeftNewRight = aabbLeft;
-        BoundingBox newRight = aabbRight;
-        BoundingBox newLeft = aabbLeft;
-
-        double SAHs[7];
-        double SAH = std::numeric_limits<double>::max();
-        SplitOperation bestSAH = Default;
-
-        refit(newLeftNewRight, newRight);
-        refit(oldLeftNewLeft, newLeft);
-        refit(oldLeftNewRight, newRight);
-        refit(oldLeftNewLeftNewRight, newLeftNewRight);
-        refit(oldLeftOldRight, oldRight);
-        refit(oldRightNewLeft, newLeft);
-        refit(oldRightNewRight, newRight);
-        refit(oldLeftOldRightNewLeft, oldRightNewLeft);
-        refit(oldLeftOldRightNewRight, oldRightNewRight);
-        refit(oldRightNewLeftNewRight, newLeftNewRight);
-
-        SAHs[Default] = oldLeftNewLeft.getSA() * (leftCount + pLeft) +
-                        oldRightNewRight.getSA() * (rightCount + pRight);
-        SAHs[DefaultWrongOrder] = oldLeftNewRight.getSA() * (rightCount + pLeft) +
-                                  oldRightNewLeft.getSA() * (leftCount + pRight);
-        SAHs[AllNewLeft] = oldLeft.getSA() * pLeft +
-                           oldRightNewLeftNewRight.getSA() * (leftCount + rightCount + pRight);
-        SAHs[AllNewRight] = oldLeftNewLeftNewRight.getSA() * (leftCount + rightCount + pLeft) +
-                            oldRight.getSA() * pRight;
-        SAHs[SplitOldNew] = oldLeftOldRight.getSA() * (pLeft + pRight) +
-                            newLeftNewRight.getSA() * (leftCount + rightCount);
-        SAHs[DefaultOldLeft] = oldLeftOldRightNewLeft.getSA() * (leftCount + pLeft + pRight) +
-                               newRight.getSA() * rightCount;
-        SAHs[DefaultWrongOrderOldLeft] = oldLeftOldRightNewRight.getSA() * (rightCount + pLeft + pRight) +
-                                         newLeft.getSA() * leftCount;
-
-
-        for (int i = 0; i < 7; i++) {
-            if (SAHs[i] < SAH) {
-                SAH = SAHs[i];
-                bestSAH = static_cast<SplitOperation>(i);
-            }
-        }
-
-        *newParent = bestSAH;
-        return SAHs[bestSAH];
+        return computeSAHWithNewParent(node, aabbLeft, aabbRight, objectCostLeft, objectCostRight, newParent);
     } else {
-        // return the combined surface area of both boxes
-        return aabbLeft.getSA() * leftCount + aabbRight.getSA() * rightCount;
+        return computeSAH(aabbLeft, aabbRight, objectCostLeft, objectCostRight);
+
     }
 }
 
@@ -630,7 +624,7 @@ std::vector<double> evaluateSplittingPlanes(const DBVHNode &node, const std::vec
     std::vector<double> SAH(numberOfSplittingPlanes);
 
     for (int i = 0; i < numberOfSplittingPlanes; i++) {
-        SAH[i] = evaluateBucket(node, objects, splittingPlanes[i], &(newParent[i]));
+        SAH[i] = evaluateBucket(node, objects, splittingPlanes[i], newParent[i]);
     }
 
     return SAH;
