@@ -77,9 +77,9 @@ static void refit(BoundingBox &aabb, const std::vector<Object *> &objects, doubl
     }
 }
 
-static double evaluateBucket(BoundingBox *leftChildBox, BoundingBox *rightChildBox, double leftSAH, double rightSAH,
-                             const std::vector<Object *> &objects, Vector3D splittingPlane,
+static double evaluateBucket(const DBVHNode &node, const std::vector<Object *> &objects, Vector3D splittingPlane,
                              SplitOperation *newParent) {
+
     // initialize both bucket boxes
     BoundingBox aabbLeft = {std::numeric_limits<double>::max(), std::numeric_limits<double>::max(),
                             std::numeric_limits<double>::max(), -std::numeric_limits<double>::max(),
@@ -87,8 +87,6 @@ static double evaluateBucket(BoundingBox *leftChildBox, BoundingBox *rightChildB
     BoundingBox aabbRight = {std::numeric_limits<double>::max(), std::numeric_limits<double>::max(),
                              std::numeric_limits<double>::max(), -std::numeric_limits<double>::max(),
                              -std::numeric_limits<double>::max(), -std::numeric_limits<double>::max()};
-    /*BoundingBox aabbLeft = *leftChildBox;
-    BoundingBox aabbRight = *rightChildBox;*/
 
     double leftCount = 0;
     double rightCount = 0;
@@ -129,18 +127,39 @@ static double evaluateBucket(BoundingBox *leftChildBox, BoundingBox *rightChildB
         }
     }
 
-    if (leftChildBox != nullptr && rightChildBox != nullptr) {
-        BoundingBox oldLeft = *leftChildBox;
-        BoundingBox oldLeftNewLeft = *leftChildBox;
-        BoundingBox oldLeftNewRight = *leftChildBox;
-        BoundingBox oldLeftNewLeftNewRight = *leftChildBox;
-        BoundingBox oldLeftOldRight = *leftChildBox;
-        BoundingBox oldLeftOldRightNewLeft = *leftChildBox;
-        BoundingBox oldLeftOldRightNewRight = *leftChildBox;
-        BoundingBox oldRightNewLeftNewRight = *rightChildBox;
-        BoundingBox oldRightNewRight = *rightChildBox;
-        BoundingBox oldRightNewLeft = *rightChildBox;
-        BoundingBox oldRight = *rightChildBox;
+    if (!isEmptyLeft(node) && !isEmptyRight(node)) {
+        BoundingBox leftChildBox;
+        BoundingBox rightChildBox;
+
+        double pLeft = 0;
+        double pRight = 0;
+
+        if (isNodeLeft(node)) {
+            leftChildBox = (node.leftChild)->boundingBox;
+            pLeft = (node.leftChild)->surfaceArea / leftChildBox.getSA();
+        } else {
+            leftChildBox = (node.leftLeaf)->getBoundaries();
+            pLeft = (node.leftLeaf)->getSurfaceArea() / leftChildBox.getSA();
+        }
+        if (isNodeRight(node)) {
+            rightChildBox = (node.rightChild)->boundingBox;
+            pRight = (node.rightChild)->surfaceArea / rightChildBox.getSA();
+        } else {
+            rightChildBox = (node.rightLeaf)->getBoundaries();
+            pRight = (node.rightLeaf)->getSurfaceArea() / rightChildBox.getSA();
+        }
+
+        BoundingBox oldLeft = leftChildBox;
+        BoundingBox oldLeftNewLeft = leftChildBox;
+        BoundingBox oldLeftNewRight = leftChildBox;
+        BoundingBox oldLeftNewLeftNewRight = leftChildBox;
+        BoundingBox oldLeftOldRight = leftChildBox;
+        BoundingBox oldLeftOldRightNewLeft = leftChildBox;
+        BoundingBox oldLeftOldRightNewRight = leftChildBox;
+        BoundingBox oldRightNewLeftNewRight = rightChildBox;
+        BoundingBox oldRightNewRight = rightChildBox;
+        BoundingBox oldRightNewLeft = rightChildBox;
+        BoundingBox oldRight = rightChildBox;
         BoundingBox newLeftNewRight = aabbLeft;
         BoundingBox newRight = aabbRight;
         BoundingBox newLeft = aabbLeft;
@@ -160,19 +179,19 @@ static double evaluateBucket(BoundingBox *leftChildBox, BoundingBox *rightChildB
         refit(oldLeftOldRightNewRight, oldRightNewRight);
         refit(oldRightNewLeftNewRight, newLeftNewRight);
 
-        SAHs[Default] = oldLeftNewLeft.getSA() * (leftCount + leftSAH) +
-                        oldRightNewRight.getSA() * (rightCount + rightSAH);
-        SAHs[DefaultWrongOrder] = oldLeftNewRight.getSA() * (rightCount + leftSAH) +
-                                  oldRightNewLeft.getSA() * (leftCount + rightSAH);
-        SAHs[AllNewLeft] = oldLeft.getSA() * leftSAH +
-                           oldRightNewLeftNewRight.getSA() * (leftCount + rightCount + rightSAH);
-        SAHs[AllNewRight] = oldLeftNewLeftNewRight.getSA() * (leftCount + rightCount + leftSAH) +
-                            oldRight.getSA() * rightSAH;
-        SAHs[SplitOldNew] = oldLeftOldRight.getSA() * (leftSAH + rightSAH) +
+        SAHs[Default] = oldLeftNewLeft.getSA() * (leftCount + pLeft) +
+                        oldRightNewRight.getSA() * (rightCount + pRight);
+        SAHs[DefaultWrongOrder] = oldLeftNewRight.getSA() * (rightCount + pLeft) +
+                                  oldRightNewLeft.getSA() * (leftCount + pRight);
+        SAHs[AllNewLeft] = oldLeft.getSA() * pLeft +
+                           oldRightNewLeftNewRight.getSA() * (leftCount + rightCount + pRight);
+        SAHs[AllNewRight] = oldLeftNewLeftNewRight.getSA() * (leftCount + rightCount + pLeft) +
+                            oldRight.getSA() * pRight;
+        SAHs[SplitOldNew] = oldLeftOldRight.getSA() * (pLeft + pRight) +
                             newLeftNewRight.getSA() * (leftCount + rightCount);
-        SAHs[DefaultOldLeft] = oldLeftOldRightNewLeft.getSA() * (leftCount + leftSAH + rightSAH) +
+        SAHs[DefaultOldLeft] = oldLeftOldRightNewLeft.getSA() * (leftCount + pLeft + pRight) +
                                newRight.getSA() * rightCount;
-        SAHs[DefaultWrongOrderOldLeft] = oldLeftOldRightNewRight.getSA() * (rightCount + leftSAH + rightSAH) +
+        SAHs[DefaultWrongOrderOldLeft] = oldLeftOldRightNewRight.getSA() * (rightCount + pLeft + pRight) +
                                          newLeft.getSA() * leftCount;
 
 
@@ -610,40 +629,8 @@ std::vector<double> evaluateSplittingPlanes(const DBVHNode &node, const std::vec
                                             std::vector<SplitOperation> &newParent) {
     std::vector<double> SAH(numberOfSplittingPlanes);
 
-    BoundingBox leftBox;
-    BoundingBox rightBox;
-
-    double leftSA = 0, rightSA = 0;
-
-    if (node.maxDepthLeft != 0) {
-        if (isNodeLeft(node)) {
-            leftBox = (node.leftChild)->boundingBox;
-            leftSA = (node.leftChild)->surfaceArea / leftBox.getSA();
-        } else {
-            leftBox = (node.leftLeaf)->getBoundaries();
-            leftSA = (node.leftLeaf)->getSurfaceArea() / leftBox.getSA();
-        }
-        if (node.maxDepthRight != 0) {
-            if (isNodeRight(node)) {
-                rightBox = (node.rightChild)->boundingBox;
-                rightSA = (node.rightChild)->surfaceArea / rightBox.getSA();
-            } else {
-                rightBox = (node.rightLeaf)->getBoundaries();
-                rightSA = (node.rightLeaf)->getSurfaceArea() / rightBox.getSA();
-            }
-            for (int i = 0; i < numberOfSplittingPlanes; i++) {
-                SAH[i] = evaluateBucket(&leftBox, &rightBox, leftSA, rightSA, objects, splittingPlanes[i],
-                                        &(newParent[i]));
-            }
-        } else {
-            for (int i = 0; i < numberOfSplittingPlanes; i++) {
-                SAH[i] = evaluateBucket(nullptr, nullptr, 0, 0, objects, splittingPlanes[i], &(newParent[i]));
-            }
-        }
-    } else {
-        for (int i = 0; i < numberOfSplittingPlanes; i++) {
-            SAH[i] = evaluateBucket(nullptr, nullptr, 0, 0, objects, splittingPlanes[i], &(newParent[i]));
-        }
+    for (int i = 0; i < numberOfSplittingPlanes; i++) {
+        SAH[i] = evaluateBucket(node, objects, splittingPlanes[i], &(newParent[i]));
     }
 
     return SAH;
@@ -685,27 +672,20 @@ void switchBoxOrder(std::vector<Object *> &leftObjects, std::vector<Object *> &r
     rightObjects = buffer;
 }
 
+
 std::unique_ptr<DBVHNode> moveToNewNode(DBVHNode &node) {
     auto newNode = std::make_unique<DBVHNode>();
     if (isNodeRight(node)) {
         newNode->rightChild = std::move(node.rightChild);
-        newNode->maxDepthRight = node.maxDepthRight;
-        refit(newNode->boundingBox, newNode->rightChild->boundingBox);
     } else {
         newNode->rightLeaf = node.rightLeaf;
-        newNode->maxDepthRight = 1;
-        refit(newNode->boundingBox, newNode->rightLeaf->getBoundaries());
     }
     if (isNodeLeft(node)) {
         newNode->leftChild = std::move(node.leftChild);
-        newNode->maxDepthLeft = node.maxDepthLeft;
-        refit(newNode->boundingBox, newNode->leftChild->boundingBox);
     } else {
         newNode->leftLeaf = node.leftLeaf;
-        newNode->maxDepthLeft = 1;
-        refit(newNode->boundingBox, newNode->leftLeaf->getBoundaries());
     }
-    newNode->surfaceArea = node.surfaceArea;
+    refit(*newNode);
     return newNode;
 }
 
