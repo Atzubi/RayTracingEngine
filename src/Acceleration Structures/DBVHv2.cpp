@@ -666,7 +666,7 @@ int getBestSplittingPlane(const std::vector<double> &SAH) {
 void splitEven(const std::vector<Object *> &objects, std::vector<Object *> &left,
                std::vector<Object *> &right) {
     left.reserve(objects.size() / 2);
-    right.reserve(objects.size() / 2);
+    right.reserve((objects.size() + 1) / 2);
     for (uint64_t i = 0; i < objects.size() / 2; i++) {
         left.push_back(objects.at(i));
     }
