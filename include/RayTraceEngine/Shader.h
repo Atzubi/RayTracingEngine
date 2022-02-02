@@ -103,7 +103,7 @@ struct MissShaderInput {
  * intersectionInfo:    Vector of intersection information containers, one for each intersection.
  */
 struct PierceShaderInput {
-    std::vector<IntersectionInfo *> intersectionInfo;
+    std::vector<IntersectionInfo> intersectionInfo;
 };
 
 /**

@@ -63,7 +63,7 @@ public:
         return {front, back};
     }
 
-    bool intersectFirst(IntersectionInfo *intersectionInfo, Ray *ray) override {
+    bool intersectFirst(IntersectionInfo &intersectionInfo, const Ray &ray) override {
         Vector3D vertex1 = mesh->vertices[mesh->indices[pos]].position;
         Vector3D vertex2 = mesh->vertices[mesh->indices[pos + 1]].position;
         Vector3D vertex3 = mesh->vertices[mesh->indices[pos + 2]].position;
@@ -79,29 +79,29 @@ public:
         e2.y = vertex3.y - vertex1.y;
         e2.z = vertex3.z - vertex1.z;
 
-        pvec.x = ray->direction.y * e2.z - ray->direction.z * e2.y;
-        pvec.y = ray->direction.z * e2.x - ray->direction.x * e2.z;
-        pvec.z = ray->direction.x * e2.y - ray->direction.y * e2.x;
+        pvec.x = ray.direction.y * e2.z - ray.direction.z * e2.y;
+        pvec.y = ray.direction.z * e2.x - ray.direction.x * e2.z;
+        pvec.z = ray.direction.x * e2.y - ray.direction.y * e2.x;
 
         //NORMALIZE(pvec);
         double_t det = pvec.x * e1.x + pvec.y * e1.y + pvec.z * e1.z;
 
         if (det < epsilon && det > -epsilon) {
-            intersectionInfo->hit = false;
+            intersectionInfo.hit = false;
             return false;
         }
 
         double_t invDet = 1.0f / det;
 
-        tvec.x = ray->origin.x - vertex1.x;
-        tvec.y = ray->origin.y - vertex1.y;
-        tvec.z = ray->origin.z - vertex1.z;
+        tvec.x = ray.origin.x - vertex1.x;
+        tvec.y = ray.origin.y - vertex1.y;
+        tvec.z = ray.origin.z - vertex1.z;
 
         // NORMALIZE(tvec);
         double_t u = invDet * (tvec.x * pvec.x + tvec.y * pvec.y + tvec.z * pvec.z);
 
         if (u < 0.0f || u > 1.0f) {
-            intersectionInfo->hit = false;
+            intersectionInfo.hit = false;
             return false;
         }
 
@@ -111,70 +111,69 @@ public:
 
         // NORMALIZE(qvec);
         double_t v =
-                invDet * (qvec.x * ray->direction.x + qvec.y * ray->direction.y + qvec.z * ray->direction.z);
+                invDet * (qvec.x * ray.direction.x + qvec.y * ray.direction.y + qvec.z * ray.direction.z);
 
         if (v < 0.0f || u + v > 1.0f) {
-            intersectionInfo->hit = false;
+            intersectionInfo.hit = false;
             return false;
         }
 
         double t = invDet * (e2.x * qvec.x + e2.y * qvec.y + e2.z * qvec.z);
 
         if (t <= epsilon) {
-            intersectionInfo->hit = false;
+            intersectionInfo.hit = false;
             return false;
         }
 
         double_t w = 1 - u - v;
 
-        intersectionInfo->position.x = ray->origin.x + ray->direction.x * t;
-        intersectionInfo->position.y = ray->origin.y + ray->direction.y * t;
-        intersectionInfo->position.z = ray->origin.z + ray->direction.z * t;
+        intersectionInfo.position.x = ray.origin.x + ray.direction.x * t;
+        intersectionInfo.position.y = ray.origin.y + ray.direction.y * t;
+        intersectionInfo.position.z = ray.origin.z + ray.direction.z * t;
 
-        intersectionInfo->distance = sqrt(
-                (ray->origin.x - intersectionInfo->position.x) * (ray->origin.x - intersectionInfo->position.x) +
-                (ray->origin.y - intersectionInfo->position.y) * (ray->origin.y - intersectionInfo->position.y) +
-                (ray->origin.z - intersectionInfo->position.z) * (ray->origin.z - intersectionInfo->position.z));
+        intersectionInfo.distance = sqrt(
+                (ray.origin.x - intersectionInfo.position.x) * (ray.origin.x - intersectionInfo.position.x) +
+                (ray.origin.y - intersectionInfo.position.y) * (ray.origin.y - intersectionInfo.position.y) +
+                (ray.origin.z - intersectionInfo.position.z) * (ray.origin.z - intersectionInfo.position.z));
 
         Vector3D normal1 = mesh->vertices[mesh->indices[pos]].normal;
         Vector3D normal2 = mesh->vertices[mesh->indices[pos + 1]].normal;
         Vector3D normal3 = mesh->vertices[mesh->indices[pos + 2]].normal;
 
-        intersectionInfo->normal.x = w * normal1.x + u * normal2.x + v * normal3.x;
-        intersectionInfo->normal.y = w * normal1.y + u * normal2.y + v * normal3.y;
-        intersectionInfo->normal.z = w * normal1.z + u * normal2.z + v * normal3.z;
+        intersectionInfo.normal.x = w * normal1.x + u * normal2.x + v * normal3.x;
+        intersectionInfo.normal.y = w * normal1.y + u * normal2.y + v * normal3.y;
+        intersectionInfo.normal.z = w * normal1.z + u * normal2.z + v * normal3.z;
 
-        double_t length = sqrt(intersectionInfo->normal.x * intersectionInfo->normal.x +
-                               intersectionInfo->normal.y * intersectionInfo->normal.y +
-                               intersectionInfo->normal.z * intersectionInfo->normal.z);
+        double_t length = sqrt(intersectionInfo.normal.x * intersectionInfo.normal.x +
+                               intersectionInfo.normal.y * intersectionInfo.normal.y +
+                               intersectionInfo.normal.z * intersectionInfo.normal.z);
 
-        intersectionInfo->normal.x /= length;
-        intersectionInfo->normal.y /= length;
-        intersectionInfo->normal.z /= length;
+        intersectionInfo.normal.x /= length;
+        intersectionInfo.normal.y /= length;
+        intersectionInfo.normal.z /= length;
 
         Vector2D texture1 = mesh->vertices[mesh->indices[pos]].texture;
         Vector2D texture2 = mesh->vertices[mesh->indices[pos + 1]].texture;
         Vector2D texture3 = mesh->vertices[mesh->indices[pos + 2]].texture;
 
-        intersectionInfo->texture.x = w * texture1.x + u * texture2.x + v * texture3.x;
-        intersectionInfo->texture.y = w * texture1.y + u * texture2.y + v * texture3.y;
+        intersectionInfo.texture.x = w * texture1.x + u * texture2.x + v * texture3.x;
+        intersectionInfo.texture.y = w * texture1.y + u * texture2.y + v * texture3.y;
 
-        intersectionInfo->material = &mesh->material;
+        intersectionInfo.material = &mesh->material;
 
-        intersectionInfo->hit = true;
+        intersectionInfo.hit = true;
         return true;
     }
 
-    bool intersectAny(IntersectionInfo *intersectionInfo, Ray *ray) override {
+    bool intersectAny(IntersectionInfo &intersectionInfo, const Ray &ray) override {
         return intersectFirst(intersectionInfo, ray);
     }
 
-    bool intersectAll(std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray) override {
-        auto *info = new IntersectionInfo();
-        *info = {false, std::numeric_limits<double>::max(), ray->origin, ray->direction, 0, 0,
-                 0, 0, 0};
+    bool intersectAll(std::vector<IntersectionInfo> &intersectionInfo, const Ray &ray) override {
+        IntersectionInfo info{false, std::numeric_limits<double>::max(), ray.origin, ray.direction, 0, 0,
+                              0, 0, 0};
         bool hit = intersectFirst(info, ray);
-        intersectionInfo->push_back(info);
+        intersectionInfo.push_back(info);
         return hit;
     }
 
@@ -239,22 +238,22 @@ TriangleMeshObject::TriangleMeshObject(const std::vector<Vertex> *vertices, cons
     DBVHv2::addObjects(*structure, objects);
 }
 
-TriangleMeshObject::~TriangleMeshObject() =default;
+TriangleMeshObject::~TriangleMeshObject() = default;
 
 BoundingBox TriangleMeshObject::getBoundaries() const {
     return structure->boundingBox;
 }
 
-bool TriangleMeshObject::intersectFirst(IntersectionInfo *intersectionInfo, Ray *ray) {
+bool TriangleMeshObject::intersectFirst(IntersectionInfo &intersectionInfo, const Ray &ray) {
     return DBVHv2::intersectFirst(*structure, intersectionInfo, ray);
 
 }
 
-bool TriangleMeshObject::intersectAny(IntersectionInfo *intersectionInfo, Ray *ray) {
+bool TriangleMeshObject::intersectAny(IntersectionInfo &intersectionInfo, const Ray &ray) {
     return DBVHv2::intersectAny(*structure, intersectionInfo, ray);
 }
 
-bool TriangleMeshObject::intersectAll(std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray) {
+bool TriangleMeshObject::intersectAll(std::vector<IntersectionInfo> &intersectionInfo, const Ray &ray) {
     return DBVHv2::intersectAll(*structure, intersectionInfo, ray);
 }
 
@@ -276,7 +275,7 @@ bool TriangleMeshObject::operator!=(const Object &object) const {
     return !operator==(object);
 }
 
-ObjectCapsule TriangleMeshObject::getCapsule() const{
+ObjectCapsule TriangleMeshObject::getCapsule() const {
     ObjectCapsule capsule{-1, getBoundaries(), getSurfaceArea()};
     return capsule;
 }

@@ -26,11 +26,11 @@ public:
 
     static void removeObjects(DBVHNode &root, const std::vector<Object *> &objects);
 
-    static bool intersectFirst(DBVHNode &root, IntersectionInfo *intersectionInfo, Ray *ray);
+    static bool intersectFirst(const DBVHNode &root, IntersectionInfo &intersectionInfo, const Ray &ray);
 
-    static bool intersectAny(DBVHNode &root, IntersectionInfo *intersectionInfo, Ray *ray);
+    static bool intersectAny(const DBVHNode &root, IntersectionInfo &intersectionInfo, const Ray &ray);
 
-    static bool intersectAll(DBVHNode &root, std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray);
+    static bool intersectAll(const DBVHNode &root, std::vector<IntersectionInfo> &intersectionInfo, const Ray &ray);
 };
 
 #endif //RAYTRACEENGINE_DBVHV2_H

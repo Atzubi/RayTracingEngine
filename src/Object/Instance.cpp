@@ -186,7 +186,7 @@ void Instance::invalidateCache() {
 
 Instance::~Instance() = default;
 
-bool Instance::intersectFirst(IntersectionInfo *intersectionInfo, Ray *ray) {
+bool Instance::intersectFirst(IntersectionInfo &intersectionInfo, const Ray &ray) {
     Object *baseObject;
     if (objectCached) {
         baseObject = objectCache;
@@ -196,7 +196,7 @@ bool Instance::intersectFirst(IntersectionInfo *intersectionInfo, Ray *ray) {
         objectCached = true;
     }
 
-    Ray newRay = *ray;
+    Ray newRay = ray;
 
     BoundingBox originalAABB = baseObject->getBoundaries();
 
@@ -263,7 +263,7 @@ bool Instance::intersectFirst(IntersectionInfo *intersectionInfo, Ray *ray) {
     intersectionInformationBuffer.hit = false;
     intersectionInformationBuffer.distance = std::numeric_limits<double>::max();
     intersectionInformationBuffer.position = {0, 0, 0};
-    bool hit = baseObject->intersectFirst(&intersectionInformationBuffer, &newRay);
+    bool hit = baseObject->intersectFirst(intersectionInformationBuffer, newRay);
 
     if (hit) {
         Vector3D pos = intersectionInformationBuffer.position;
@@ -315,24 +315,24 @@ bool Instance::intersectFirst(IntersectionInfo *intersectionInfo, Ray *ray) {
 
         intersectionInformationBuffer.
                 distance = sqrt(
-                (ray->origin.x - intersectionInformationBuffer.position.x) *
-                (ray->origin.x - intersectionInformationBuffer.position.x) +
-                (ray->origin.y - intersectionInformationBuffer.position.y) *
-                (ray->origin.y - intersectionInformationBuffer.position.y) +
-                (ray->origin.z - intersectionInformationBuffer.position.z) *
-                (ray->origin.z - intersectionInformationBuffer.position.z));
+                (ray.origin.x - intersectionInformationBuffer.position.x) *
+                (ray.origin.x - intersectionInformationBuffer.position.x) +
+                (ray.origin.y - intersectionInformationBuffer.position.y) *
+                (ray.origin.y - intersectionInformationBuffer.position.y) +
+                (ray.origin.z - intersectionInformationBuffer.position.z) *
+                (ray.origin.z - intersectionInformationBuffer.position.z));
     }
 
     if (intersectionInformationBuffer.hit) {
-        if (intersectionInformationBuffer.distance < intersectionInfo->distance) {
-            *intersectionInfo = intersectionInformationBuffer;
+        if (intersectionInformationBuffer.distance < intersectionInfo.distance) {
+            intersectionInfo = intersectionInformationBuffer;
             return true;
         }
     }
     return false;
 }
 
-bool Instance::intersectAny(IntersectionInfo *intersectionInfo, Ray *ray) {
+bool Instance::intersectAny(IntersectionInfo &intersectionInfo, const Ray &ray) {
     Object *baseObject;
     if (objectCached) {
         baseObject = objectCache;
@@ -340,7 +340,7 @@ bool Instance::intersectAny(IntersectionInfo *intersectionInfo, Ray *ray) {
         baseObject = engineNode->requestBaseData(baseObjectId);
     }
 
-    Ray newRay = *ray;
+    Ray newRay = ray;
 
     BoundingBox originalAABB = baseObject->getBoundaries();
 
@@ -407,7 +407,7 @@ bool Instance::intersectAny(IntersectionInfo *intersectionInfo, Ray *ray) {
     intersectionInformationBuffer.hit = false;
     intersectionInformationBuffer.distance = std::numeric_limits<double>::max();
     intersectionInformationBuffer.position = {0, 0, 0};
-    bool hit = baseObject->intersectAny(&intersectionInformationBuffer, &newRay);
+    bool hit = baseObject->intersectAny(intersectionInformationBuffer, newRay);
 
     if (hit) {
         Vector3D pos = intersectionInformationBuffer.position;
@@ -459,20 +459,20 @@ bool Instance::intersectAny(IntersectionInfo *intersectionInfo, Ray *ray) {
 
         intersectionInformationBuffer.
                 distance = sqrt(
-                (ray->origin.x - intersectionInformationBuffer.position.x) *
-                (ray->origin.x - intersectionInformationBuffer.position.x) +
-                (ray->origin.y - intersectionInformationBuffer.position.y) *
-                (ray->origin.y - intersectionInformationBuffer.position.y) +
-                (ray->origin.z - intersectionInformationBuffer.position.z) *
-                (ray->origin.z - intersectionInformationBuffer.position.z));
+                (ray.origin.x - intersectionInformationBuffer.position.x) *
+                (ray.origin.x - intersectionInformationBuffer.position.x) +
+                (ray.origin.y - intersectionInformationBuffer.position.y) *
+                (ray.origin.y - intersectionInformationBuffer.position.y) +
+                (ray.origin.z - intersectionInformationBuffer.position.z) *
+                (ray.origin.z - intersectionInformationBuffer.position.z));
 
-        *intersectionInfo = intersectionInformationBuffer;
+        intersectionInfo = intersectionInformationBuffer;
     }
 
     return hit;
 }
 
-bool Instance::intersectAll(std::vector<IntersectionInfo *> *intersectionInfo, Ray *ray) {
+bool Instance::intersectAll(std::vector<IntersectionInfo> &intersectionInfo, const Ray &ray) {
     Object *baseObject;
     if (objectCached) {
         baseObject = objectCache;
@@ -480,7 +480,7 @@ bool Instance::intersectAll(std::vector<IntersectionInfo *> *intersectionInfo, R
         baseObject = engineNode->requestBaseData(baseObjectId);
     }
 
-    Ray newRay = *ray;
+    Ray newRay = ray;
 
     BoundingBox originalAABB = baseObject->getBoundaries();
 
@@ -543,68 +543,68 @@ bool Instance::intersectAll(std::vector<IntersectionInfo *> *intersectionInfo, R
     newRay.origin.y += originalMid.y;
     newRay.origin.z += originalMid.z;
 
-    std::vector<IntersectionInfo *> intersectionInformationBuffers;
-    bool hit = baseObject->intersectAll(&intersectionInformationBuffers, &newRay);
+    std::vector<IntersectionInfo> intersectionInformationBuffers;
+    bool hit = baseObject->intersectAll(intersectionInformationBuffers, newRay);
 
     if (hit) {
         for (auto intersectionInformationBuffer: intersectionInformationBuffers) {
-            Vector3D pos = intersectionInformationBuffer->position;
+            Vector3D pos = intersectionInformationBuffer.position;
 
-            intersectionInformationBuffer->position.x = transform.elements[0][0] * pos.x +
+            intersectionInformationBuffer.position.x = transform.elements[0][0] * pos.x +
                                                         transform.elements[0][1] * pos.y +
                                                         transform.elements[0][2] * pos.z +
                                                         transform.elements[0][3];
-            intersectionInformationBuffer->position.y = transform.elements[1][0] * pos.x +
+            intersectionInformationBuffer.position.y = transform.elements[1][0] * pos.x +
                                                         transform.elements[1][1] * pos.y +
                                                         transform.elements[1][2] * pos.z +
                                                         transform.elements[1][3];
-            intersectionInformationBuffer->position.z = transform.elements[2][0] * pos.x +
+            intersectionInformationBuffer.position.z = transform.elements[2][0] * pos.x +
                                                         transform.elements[2][1] * pos.y +
                                                         transform.elements[2][2] * pos.z +
                                                         transform.elements[2][3];
 
-            Vector3D normal = {intersectionInformationBuffer->normal.x + pos.x,
-                               intersectionInformationBuffer->normal.y + pos.y,
-                               intersectionInformationBuffer->normal.z + pos.z};
+            Vector3D normal = {intersectionInformationBuffer.normal.x + pos.x,
+                               intersectionInformationBuffer.normal.y + pos.y,
+                               intersectionInformationBuffer.normal.z + pos.z};
 
-            intersectionInformationBuffer->normal.x = transform.elements[0][0] * normal.x +
+            intersectionInformationBuffer.normal.x = transform.elements[0][0] * normal.x +
                                                       transform.elements[0][1] * normal.y +
                                                       transform.elements[0][2] * normal.z +
                                                       transform.elements[0][3];
-            intersectionInformationBuffer->normal.y = transform.elements[1][0] * normal.x +
+            intersectionInformationBuffer.normal.y = transform.elements[1][0] * normal.x +
                                                       transform.elements[1][1] * normal.y +
                                                       transform.elements[1][2] * normal.z +
                                                       transform.elements[1][3];
-            intersectionInformationBuffer->normal.z = transform.elements[2][0] * normal.x +
+            intersectionInformationBuffer.normal.z = transform.elements[2][0] * normal.x +
                                                       transform.elements[2][1] * normal.y +
                                                       transform.elements[2][2] * normal.z +
                                                       transform.elements[2][3];
 
-            intersectionInformationBuffer->normal.x =
-                    intersectionInformationBuffer->normal.x - intersectionInformationBuffer->position.x;
-            intersectionInformationBuffer->normal.y =
-                    intersectionInformationBuffer->normal.y - intersectionInformationBuffer->position.y;
-            intersectionInformationBuffer->normal.z =
-                    intersectionInformationBuffer->normal.z - intersectionInformationBuffer->position.z;
+            intersectionInformationBuffer.normal.x =
+                    intersectionInformationBuffer.normal.x - intersectionInformationBuffer.position.x;
+            intersectionInformationBuffer.normal.y =
+                    intersectionInformationBuffer.normal.y - intersectionInformationBuffer.position.y;
+            intersectionInformationBuffer.normal.z =
+                    intersectionInformationBuffer.normal.z - intersectionInformationBuffer.position.z;
 
-            length = sqrt(intersectionInformationBuffer->normal.x * intersectionInformationBuffer->normal.x +
-                          intersectionInformationBuffer->normal.y * intersectionInformationBuffer->normal.y +
-                          intersectionInformationBuffer->normal.z * intersectionInformationBuffer->normal.z);
+            length = sqrt(intersectionInformationBuffer.normal.x * intersectionInformationBuffer.normal.x +
+                          intersectionInformationBuffer.normal.y * intersectionInformationBuffer.normal.y +
+                          intersectionInformationBuffer.normal.z * intersectionInformationBuffer.normal.z);
 
-            intersectionInformationBuffer->normal.x /= length;
-            intersectionInformationBuffer->normal.y /= length;
-            intersectionInformationBuffer->normal.z /= length;
+            intersectionInformationBuffer.normal.x /= length;
+            intersectionInformationBuffer.normal.y /= length;
+            intersectionInformationBuffer.normal.z /= length;
 
-            intersectionInformationBuffer->
+            intersectionInformationBuffer.
                     distance = sqrt(
-                    (ray->origin.x - intersectionInformationBuffer->position.x) *
-                    (ray->origin.x - intersectionInformationBuffer->position.x) +
-                    (ray->origin.y - intersectionInformationBuffer->position.y) *
-                    (ray->origin.y - intersectionInformationBuffer->position.y) +
-                    (ray->origin.z - intersectionInformationBuffer->position.z) *
-                    (ray->origin.z - intersectionInformationBuffer->position.z));
+                    (ray.origin.x - intersectionInformationBuffer.position.x) *
+                    (ray.origin.x - intersectionInformationBuffer.position.x) +
+                    (ray.origin.y - intersectionInformationBuffer.position.y) *
+                    (ray.origin.y - intersectionInformationBuffer.position.y) +
+                    (ray.origin.z - intersectionInformationBuffer.position.z) *
+                    (ray.origin.z - intersectionInformationBuffer.position.z));
 
-            intersectionInfo->push_back(intersectionInformationBuffer);
+            intersectionInfo.push_back(intersectionInformationBuffer);
         }
     }
 
