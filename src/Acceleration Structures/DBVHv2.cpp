@@ -1158,164 +1158,99 @@ struct TraversalContainer {
     double distance;
 };
 
+static bool intersectLeaf(const Ray &ray, IntersectionInfo &intersectionInfo, Object &leaf) {
+    IntersectionInfo intersectionInformationBuffer{};
+    intersectionInformationBuffer.hit = false;
+    intersectionInformationBuffer.distance = std::numeric_limits<double>::max();
+    intersectionInformationBuffer.position = {0, 0, 0};
+    leaf.intersectFirst(intersectionInformationBuffer, ray);
+    if (intersectionInformationBuffer.hit) {
+        if (intersectionInformationBuffer.distance < intersectionInfo.distance) {
+            intersectionInfo = intersectionInformationBuffer;
+            return true;
+        }
+    }
+    return false;
+}
+
+static bool
+getChildrenIntersections(const Ray &ray, const DBVHNode &node, IntersectionInfo &intersectionInfo,
+                         double &distanceRight, double &distanceLeft, bool &right, bool &left) {
+    bool hit = false;
+    if (isNodeRight(node)) {
+        // TODO request child if missing
+        auto rightChild = node.rightChild.get();
+        right = rayBoxIntersection(rightChild->boundingBox.minCorner, rightChild->boundingBox.maxCorner, ray,
+                                   distanceRight);
+    } else {
+        // TODO request leaf if missing
+        hit = intersectLeaf(ray, intersectionInfo, *node.rightLeaf);
+    }
+    if (isNodeLeft(node)) {
+        // TODO request child if missing
+        auto leftChild = node.leftChild.get();
+        left = rayBoxIntersection(leftChild->boundingBox.minCorner, leftChild->boundingBox.maxCorner, ray,
+                                  distanceLeft);
+    } else {
+        // TODO request leaf if missing
+        hit = intersectLeaf(ray, intersectionInfo, *node.leftLeaf);
+    }
+    return hit;
+}
+
+static void
+pushIntersectionsOnStack(const DBVHNode &node, double distanceRight, double distanceLeft, bool right, bool left,
+                         TraversalContainer *stack, uint64_t &stackPointer) {
+    if (right && left) {
+        if (distanceRight < distanceLeft) {
+            stack[stackPointer++] = {node.leftChild.get(), distanceLeft};
+            stack[stackPointer++] = {node.rightChild.get(), distanceRight};
+        } else {
+            stack[stackPointer++] = {node.rightChild.get(), distanceRight};
+            stack[stackPointer++] = {node.leftChild.get(), distanceLeft};
+        }
+    } else if (right) {
+        stack[stackPointer++] = {node.rightChild.get(), distanceRight};
+    } else if (left) {
+        stack[stackPointer++] = {node.leftChild.get(), distanceLeft};
+    }
+}
+
+static bool
+processTraversalStack(IntersectionInfo &intersectionInfo, const Ray &ray, TraversalContainer *stack,
+                      uint64_t stackPointer) {
+    bool hit;
+    while (stackPointer != 0) {
+        stackPointer--;
+        if (stack[stackPointer].distance < intersectionInfo.distance) {
+            auto node = stack[stackPointer].node;
+
+            double distanceRight = 0;
+            double distanceLeft = 0;
+            bool right = false;
+            bool left = false;
+
+            hit = getChildrenIntersections(ray, *node, intersectionInfo, distanceRight, distanceLeft, right, left);
+
+            pushIntersectionsOnStack(*node, distanceRight, distanceLeft, right, left, stack, stackPointer);
+        }
+    }
+    return hit;
+}
 
 static bool traverseFirst(const DBVHNode &root, IntersectionInfo &intersectionInfo, const Ray &ray) {
+    TraversalContainer s[64];
+    TraversalContainer *stack;
     if (root.maxDepthRight >= 64 || root.maxDepthLeft >= 64) {
-        bool hit = false;
-
-        std::vector<TraversalContainer> stack(root.maxDepthRight > root.maxDepthLeft ? root.maxDepthRight + 1
-                                                                                     : root.maxDepthLeft + 1);
-        uint64_t stackPointer = 1;
-        stack[0] = {&root, 0};
-
-        while (stackPointer != 0) {
-            if (stack[stackPointer - 1].distance >= intersectionInfo.distance) {
-                stackPointer--;
-                continue;
-            }
-            auto node = stack[stackPointer - 1].node;
-            stackPointer--;
-
-            double distanceRight = 0;
-            double distanceLeft = 0;
-            bool right = false;
-            bool left = false;
-
-            if (isNodeRight(*node)) {
-                // TODO request child if missing
-                auto rightChild = node->rightChild.get();
-                right = rayBoxIntersection(rightChild->boundingBox.minCorner, rightChild->boundingBox.maxCorner, ray,
-                                           distanceRight);
-            } else {
-                // TODO request leaf if missing
-                IntersectionInfo intersectionInformationBuffer{};
-                intersectionInformationBuffer.hit = false;
-                intersectionInformationBuffer.distance = std::numeric_limits<double>::max();
-                intersectionInformationBuffer.position = {0, 0, 0};
-                auto rightLeaf = node->rightLeaf;
-                rightLeaf->intersectFirst(intersectionInformationBuffer, ray);
-                if (intersectionInformationBuffer.hit) {
-                    if (intersectionInformationBuffer.distance < intersectionInfo.distance) {
-                        intersectionInfo = intersectionInformationBuffer;
-                        hit = true;
-                    }
-                }
-            }
-            if (isNodeLeft(*node)) {
-                // TODO request child if missing
-                auto leftChild = node->leftChild.get();
-                left = rayBoxIntersection(leftChild->boundingBox.minCorner, leftChild->boundingBox.maxCorner, ray,
-                                          distanceLeft);
-            } else {
-                // TODO request leaf if missing
-                IntersectionInfo intersectionInformationBuffer{};
-                intersectionInformationBuffer.hit = false;
-                intersectionInformationBuffer.distance = std::numeric_limits<double>::max();
-                intersectionInformationBuffer.position = {0, 0, 0};
-                auto leftLeaf = node->leftLeaf;
-                leftLeaf->intersectFirst(intersectionInformationBuffer, ray);
-                if (intersectionInformationBuffer.hit) {
-                    if (intersectionInformationBuffer.distance < intersectionInfo.distance) {
-                        intersectionInfo = intersectionInformationBuffer;
-                        hit = true;
-                    }
-                }
-            }
-
-            if (right && left) {
-                if (distanceRight < distanceLeft) {
-                    stack[stackPointer++] = {node->leftChild.get(), distanceLeft};
-                    stack[stackPointer++] = {node->rightChild.get(), distanceRight};
-                } else {
-                    stack[stackPointer++] = {node->rightChild.get(), distanceRight};
-                    stack[stackPointer++] = {node->leftChild.get(), distanceLeft};
-                }
-            } else if (right) {
-                stack[stackPointer++] = {node->rightChild.get(), distanceRight};
-            } else if (left) {
-                stack[stackPointer++] = {node->leftChild.get(), distanceLeft};
-            }
-        }
-
-        return hit;
+        stack = std::vector<TraversalContainer>(
+                root.maxDepthRight > root.maxDepthLeft ? root.maxDepthRight + 1 : root.maxDepthLeft + 1).data();
     } else {
-        bool hit = false;
-
-        TraversalContainer stack[64];
-        uint64_t stackPointer = 1;
-        stack[0] = {&root, 0};
-
-        while (stackPointer != 0) {
-            if (stack[stackPointer - 1].distance >= intersectionInfo.distance) {
-                stackPointer--;
-                continue;
-            }
-            auto node = stack[stackPointer - 1].node;
-            stackPointer--;
-
-            double distanceRight = 0;
-            double distanceLeft = 0;
-            bool right = false;
-            bool left = false;
-
-            if (isNodeRight(*node)) {
-                // TODO request child if missing
-                auto rightChild = node->rightChild.get();
-                right = rayBoxIntersection(rightChild->boundingBox.minCorner, rightChild->boundingBox.maxCorner, ray,
-                                           distanceRight);
-            } else {
-                // TODO request leaf if missing
-                IntersectionInfo intersectionInformationBuffer{};
-                intersectionInformationBuffer.hit = false;
-                intersectionInformationBuffer.distance = std::numeric_limits<double>::max();
-                intersectionInformationBuffer.position = {0, 0, 0};
-                auto rightLeaf = node->rightLeaf;
-                rightLeaf->intersectFirst(intersectionInformationBuffer, ray);
-                if (intersectionInformationBuffer.hit) {
-                    if (intersectionInformationBuffer.distance < intersectionInfo.distance) {
-                        intersectionInfo = intersectionInformationBuffer;
-                        hit = true;
-                    }
-                }
-            }
-            if (isNodeLeft(*node)) {
-                // TODO request child if missing
-                auto leftChild = node->leftChild.get();
-                left = rayBoxIntersection(leftChild->boundingBox.minCorner, leftChild->boundingBox.maxCorner, ray,
-                                          distanceLeft);
-            } else {
-                // TODO request leaf if missing
-                IntersectionInfo intersectionInformationBuffer{};
-                intersectionInformationBuffer.hit = false;
-                intersectionInformationBuffer.distance = std::numeric_limits<double>::max();
-                intersectionInformationBuffer.position = {0, 0, 0};
-                auto leftLeaf = node->leftLeaf;
-                leftLeaf->intersectFirst(intersectionInformationBuffer, ray);
-                if (intersectionInformationBuffer.hit) {
-                    if (intersectionInformationBuffer.distance < intersectionInfo.distance) {
-                        intersectionInfo = intersectionInformationBuffer;
-                        hit = true;
-                    }
-                }
-            }
-
-            if (right && left) {
-                if (distanceRight < distanceLeft) {
-                    stack[stackPointer++] = {node->leftChild.get(), distanceLeft};
-                    stack[stackPointer++] = {node->rightChild.get(), distanceRight};
-                } else {
-                    stack[stackPointer++] = {node->rightChild.get(), distanceRight};
-                    stack[stackPointer++] = {node->leftChild.get(), distanceLeft};
-                }
-            } else if (right) {
-                stack[stackPointer++] = {node->rightChild.get(), distanceRight};
-            } else if (left) {
-                stack[stackPointer++] = {node->leftChild.get(), distanceLeft};
-            }
-        }
-
-        return hit;
+        stack = s;
     }
+
+    uint64_t stackPointer = 1;
+    stack[0] = {&root, 0};
+    return processTraversalStack(intersectionInfo, ray, stack, stackPointer);
 }
 
 static bool traverseAny(const DBVHNode &root, IntersectionInfo &intersectionInfo, const Ray &ray) {
@@ -1357,7 +1292,7 @@ static bool traverseAny(const DBVHNode &root, IntersectionInfo &intersectionInfo
                 // TODO request child if missing
                 auto leftChild = node->leftChild.get();
                 if (rayBoxIntersection((leftChild->boundingBox.minCorner),
-                                      (leftChild->boundingBox.maxCorner), ray, distanceLeft)) {
+                                       (leftChild->boundingBox.maxCorner), ray, distanceLeft)) {
                     stack[stackPointer++] = node->leftChild.get();
                 }
             } else {
