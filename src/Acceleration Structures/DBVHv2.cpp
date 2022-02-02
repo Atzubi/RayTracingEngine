@@ -1239,18 +1239,18 @@ processTraversalStack(IntersectionInfo &intersectionInfo, const Ray &ray, Traver
 }
 
 static bool traverseFirst(const DBVHNode &root, IntersectionInfo &intersectionInfo, const Ray &ray) {
-    TraversalContainer s[64];
-    TraversalContainer *stack;
     if (root.maxDepthRight >= 64 || root.maxDepthLeft >= 64) {
-        stack = std::vector<TraversalContainer>(
-                root.maxDepthRight > root.maxDepthLeft ? root.maxDepthRight + 1 : root.maxDepthLeft + 1).data();
+        std::vector<TraversalContainer> stack(
+                root.maxDepthRight > root.maxDepthLeft ? root.maxDepthRight + 1 : root.maxDepthLeft + 1);
+        uint64_t stackPointer = 1;
+        stack[0] = {&root, 0};
+        return processTraversalStack(intersectionInfo, ray, stack.data(), stackPointer);
     } else {
-        stack = s;
+        TraversalContainer stack[64];
+        uint64_t stackPointer = 1;
+        stack[0] = {&root, 0};
+        return processTraversalStack(intersectionInfo, ray, stack, stackPointer);
     }
-
-    uint64_t stackPointer = 1;
-    stack[0] = {&root, 0};
-    return processTraversalStack(intersectionInfo, ray, stack, stackPointer);
 }
 
 static bool traverseAny(const DBVHNode &root, IntersectionInfo &intersectionInfo, const Ray &ray) {
