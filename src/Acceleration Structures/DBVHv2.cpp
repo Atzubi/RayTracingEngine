@@ -1162,8 +1162,8 @@ static bool traverseALl(DBVHNode &root, std::vector<IntersectionInfo *> *interse
 }
 
 struct TraversalContainer {
-    DBVHNode *node{};
-    double distance{};
+    DBVHNode *node;
+    double distance;
 };
 
 static bool traverseFirst(DBVHNode &root, IntersectionInfo *intersectionInfo, Ray *ray) {
@@ -1463,6 +1463,8 @@ void DBVHv2::addObjects(DBVHNode &root, const std::vector<Object *> &objects) {
         return;
 
     add(root, objects, 1);
+
+    std::cout << root.surfaceArea << std::endl;
 }
 
 void removeLastChild(DBVHNode &root) {
