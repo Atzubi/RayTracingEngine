@@ -106,14 +106,11 @@ static double computeSAH(BoundingBox &aabbLeft, BoundingBox &aabbRight, double o
     return pLeft * objectCostLeft + pRight * objectCostRight;
 }
 
-static double computeSAHWithNewParent(const DBVHNode &node, const BoundingBox &aabbLeft, const BoundingBox &aabbRight,
-                                      double objectCostLeft, double objectCostRight, SplitOperation &newParent) {
-    BoundingBox leftChildBox;
-    BoundingBox rightChildBox;
-
-    double pLeft = 0;
-    double pRight = 0;
-
+static void
+setBoxesAndHitProbability(const DBVHNode &node, BoundingBox &leftChildBox, BoundingBox &rightChildBox, double &pLeft,
+                          double &pRight) {
+    pLeft= 0;
+    pRight= 0;
     if (isNodeLeft(node)) {
         leftChildBox = (node.leftChild)->boundingBox;
         pLeft = (node.leftChild)->surfaceArea / leftChildBox.getSA();
@@ -128,6 +125,27 @@ static double computeSAHWithNewParent(const DBVHNode &node, const BoundingBox &a
         rightChildBox = (node.rightLeaf)->getBoundaries();
         pRight = (node.rightLeaf)->getSurfaceArea() / rightChildBox.getSA();
     }
+}
+
+static SplitOperation getBestSplitOperation(const double *SAHs) {
+    double SAH = std::numeric_limits<double>::max();
+    SplitOperation bestSAH = Default;
+    for (int i = 0; i < 7; i++) {
+        if (SAHs[i] < SAH) {
+            SAH = SAHs[i];
+            bestSAH = static_cast<SplitOperation>(i);
+        }
+    }
+    return bestSAH;
+}
+
+static double computeSAHWithNewParent(const DBVHNode &node, const BoundingBox &aabbLeft, const BoundingBox &aabbRight,
+                                      double objectCostLeft, double objectCostRight, SplitOperation &newParent) {
+    BoundingBox leftChildBox;
+    BoundingBox rightChildBox;
+    double pLeft;
+    double pRight;
+    setBoxesAndHitProbability(node, leftChildBox, rightChildBox, pLeft, pRight);
 
     BoundingBox oldLeft = leftChildBox;
     BoundingBox oldLeftNewLeft = leftChildBox;
@@ -144,10 +162,6 @@ static double computeSAHWithNewParent(const DBVHNode &node, const BoundingBox &a
     BoundingBox newRight = aabbRight;
     BoundingBox newLeft = aabbLeft;
 
-    double SAHs[7];
-    double SAH = std::numeric_limits<double>::max();
-    SplitOperation bestSAH = Default;
-
     refit(newLeftNewRight, newRight);
     refit(oldLeftNewLeft, newLeft);
     refit(oldLeftNewRight, newRight);
@@ -158,6 +172,8 @@ static double computeSAHWithNewParent(const DBVHNode &node, const BoundingBox &a
     refit(oldLeftOldRightNewLeft, oldRightNewLeft);
     refit(oldLeftOldRightNewRight, oldRightNewRight);
     refit(oldRightNewLeftNewRight, newLeftNewRight);
+
+    double SAHs[7];
 
     SAHs[Default] = oldLeftNewLeft.getSA() * (objectCostLeft + pLeft) +
                     oldRightNewRight.getSA() * (objectCostRight + pRight);
@@ -175,12 +191,7 @@ static double computeSAHWithNewParent(const DBVHNode &node, const BoundingBox &a
                                      newLeft.getSA() * objectCostLeft;
 
 
-    for (int i = 0; i < 7; i++) {
-        if (SAHs[i] < SAH) {
-            SAH = SAHs[i];
-            bestSAH = static_cast<SplitOperation>(i);
-        }
-    }
+    SplitOperation bestSAH = getBestSplitOperation(SAHs);
 
     newParent = bestSAH;
     return SAHs[bestSAH];
