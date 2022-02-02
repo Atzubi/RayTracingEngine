@@ -1158,7 +1158,7 @@ struct TraversalContainer {
     double distance;
 };
 
-static bool intersectLeaf(const Ray &ray, IntersectionInfo &intersectionInfo, Object &leaf) {
+static void intersectLeaf(const Ray &ray, IntersectionInfo &intersectionInfo, Object &leaf, bool &hit) {
     IntersectionInfo intersectionInformationBuffer{};
     intersectionInformationBuffer.hit = false;
     intersectionInformationBuffer.distance = std::numeric_limits<double>::max();
@@ -1167,16 +1167,14 @@ static bool intersectLeaf(const Ray &ray, IntersectionInfo &intersectionInfo, Ob
     if (intersectionInformationBuffer.hit) {
         if (intersectionInformationBuffer.distance < intersectionInfo.distance) {
             intersectionInfo = intersectionInformationBuffer;
-            return true;
+            hit = true;
         }
     }
-    return false;
 }
 
-static bool
+static void
 getChildrenIntersections(const Ray &ray, const DBVHNode &node, IntersectionInfo &intersectionInfo,
-                         double &distanceRight, double &distanceLeft, bool &right, bool &left) {
-    bool hit = false;
+                         double &distanceRight, double &distanceLeft, bool &right, bool &left, bool &hit) {
     if (isNodeRight(node)) {
         // TODO request child if missing
         auto rightChild = node.rightChild.get();
@@ -1184,7 +1182,7 @@ getChildrenIntersections(const Ray &ray, const DBVHNode &node, IntersectionInfo 
                                    distanceRight);
     } else {
         // TODO request leaf if missing
-        hit = intersectLeaf(ray, intersectionInfo, *node.rightLeaf);
+        intersectLeaf(ray, intersectionInfo, *node.rightLeaf, hit);
     }
     if (isNodeLeft(node)) {
         // TODO request child if missing
@@ -1193,9 +1191,8 @@ getChildrenIntersections(const Ray &ray, const DBVHNode &node, IntersectionInfo 
                                   distanceLeft);
     } else {
         // TODO request leaf if missing
-        hit = intersectLeaf(ray, intersectionInfo, *node.leftLeaf);
+        intersectLeaf(ray, intersectionInfo, *node.leftLeaf, hit);
     }
-    return hit;
 }
 
 static void
@@ -1219,7 +1216,7 @@ pushIntersectionsOnStack(const DBVHNode &node, double distanceRight, double dist
 static bool
 processTraversalStack(IntersectionInfo &intersectionInfo, const Ray &ray, TraversalContainer *stack,
                       uint64_t stackPointer) {
-    bool hit;
+    bool hit = false;
     while (stackPointer != 0) {
         stackPointer--;
         if (stack[stackPointer].distance < intersectionInfo.distance) {
@@ -1230,7 +1227,7 @@ processTraversalStack(IntersectionInfo &intersectionInfo, const Ray &ray, Traver
             bool right = false;
             bool left = false;
 
-            hit = getChildrenIntersections(ray, *node, intersectionInfo, distanceRight, distanceLeft, right, left);
+            getChildrenIntersections(ray, *node, intersectionInfo, distanceRight, distanceLeft, right, left, hit);
 
             pushIntersectionsOnStack(*node, distanceRight, distanceLeft, right, left, stack, stackPointer);
         }
