@@ -118,22 +118,7 @@ int main() {
     for (int i = 0; i < objectIDs.size(); i++) {
         // identity matrix, no transformation
         auto *transform = new Matrix4x4();
-        transform->elements[0][0] = 1;
-        transform->elements[0][1] = 0;
-        transform->elements[0][2] = 0;
-        transform->elements[0][3] = 0;
-        transform->elements[1][0] = 0;
-        transform->elements[1][1] = 1;
-        transform->elements[1][2] = 0;
-        transform->elements[1][3] = 0;
-        transform->elements[2][0] = 0;
-        transform->elements[2][1] = 0;
-        transform->elements[2][2] = 1;
-        transform->elements[2][3] = 0;
-        transform->elements[3][0] = 0;
-        transform->elements[3][1] = 0;
-        transform->elements[3][2] = 0;
-        transform->elements[3][3] = 1;
+        *transform = Matrix4x4::getIdentity();
 
         transforms.push_back(transform);
     }
