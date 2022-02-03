@@ -230,33 +230,14 @@ namespace {
     }
 
     void split(std::vector<Object *> &leftChild, std::vector<Object *> &rightChild,
-               const std::vector<Object *> &objects, Vector3D splittingPlane) {
-        if (splittingPlane.x != 0) {
-            for (const auto &object: objects) {
-                if ((object->getBoundaries().maxCorner.x + object->getBoundaries().minCorner.x) / 2 <
-                    splittingPlane.x) {
-                    leftChild.push_back(object);
-                } else {
-                    rightChild.push_back(object);
-                }
-            }
-        } else if (splittingPlane.y != 0) {
-            for (const auto &object: objects) {
-                if ((object->getBoundaries().maxCorner.y + object->getBoundaries().minCorner.y) / 2 <
-                    splittingPlane.y) {
-                    leftChild.push_back(object);
-                } else {
-                    rightChild.push_back(object);
-                }
-            }
-        } else {
-            for (const auto &object: objects) {
-                if ((object->getBoundaries().maxCorner.z + object->getBoundaries().minCorner.z) / 2 <
-                    splittingPlane.z) {
-                    leftChild.push_back(object);
-                } else {
-                    rightChild.push_back(object);
-                }
+               const std::vector<Object *> &objects, const Vector3D &splittingPlane) {
+        int currentSplittingPlane = getCurrentSplittingPlane(splittingPlane);
+
+        for (const auto &object: objects) {
+            if (isObjectInLeftSplit(splittingPlane, currentSplittingPlane, object)) {
+                leftChild.push_back(object);
+            } else {
+                rightChild.push_back(object);
             }
         }
     }
