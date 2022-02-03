@@ -78,20 +78,33 @@ namespace {
         }
     }
 
+    int getCurrentSplittingPlane(const Vector3D &splittingPlane){
+        for (int i = 0; i < 3; i++) {
+            if (splittingPlane[i] != 0) {
+                return i;
+            }
+        }
+        throw std::invalid_argument("The given vector does not define a splitting plane");
+    }
+
+    bool isObjectInLeftSplit(const Vector3D &splittingPlane, int currentSplittingPlane, Object *const &object) {
+        return (object->getBoundaries().maxCorner[currentSplittingPlane] +
+                object->getBoundaries().minCorner[currentSplittingPlane]) / 2 <
+               splittingPlane[currentSplittingPlane];
+    }
+
     void
     sortObjectsIntoBuckets(const std::vector<Object *> &objects, const Vector3D &splittingPlane, BoundingBox &aabbLeft,
                            BoundingBox &aabbRight, double &objectCostLeft, double &objectCostRight) {
-        for (int i = 0; i < 3; i++) {
-            if (splittingPlane[i] == 0) continue;
-            for (const auto &object: objects) {
-                if ((object->getBoundaries().maxCorner[i] + object->getBoundaries().minCorner[i]) / 2 <
-                    splittingPlane[i]) {
-                    refit(aabbLeft, *object);
-                    objectCostLeft += object->getSurfaceArea();
-                } else {
-                    refit(aabbRight, *object);
-                    objectCostRight += object->getSurfaceArea();
-                }
+        int currentSplittingPlane = getCurrentSplittingPlane(splittingPlane);
+
+        for (const auto &object: objects) {
+            if (isObjectInLeftSplit(splittingPlane, currentSplittingPlane, object)) {
+                refit(aabbLeft, *object);
+                objectCostLeft += object->getSurfaceArea();
+            } else {
+                refit(aabbRight, *object);
+                objectCostRight += object->getSurfaceArea();
             }
         }
     }
