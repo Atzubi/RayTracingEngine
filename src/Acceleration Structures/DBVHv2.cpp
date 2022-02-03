@@ -78,7 +78,7 @@ namespace {
         }
     }
 
-    int getCurrentSplittingPlane(const Vector3D &splittingPlane){
+    int getCurrentSplittingPlane(const Vector3D &splittingPlane) {
         for (int i = 0; i < 3; i++) {
             if (splittingPlane[i] != 0) {
                 return i;
@@ -639,7 +639,8 @@ namespace {
         for (int dim = 0; dim < 3; dim++) {
             double split = (node.boundingBox.maxCorner[dim] - node.boundingBox.minCorner[dim]) / splitsPerDimension;
             for (int plane = 0; plane < numberOfSplittingPlanes / 3; plane++) {
-                splittingPlanes[3 * dim + plane][dim] = node.boundingBox.minCorner[dim] + split * (plane + 1);
+                splittingPlanes[3 * dim + plane][dim] =
+                        node.boundingBox.minCorner[dim] + split * (plane + 1) + std::numeric_limits<double>::min();
             }
         }
 
