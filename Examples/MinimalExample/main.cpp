@@ -127,8 +127,10 @@ int main() {
     PipelineDescription pipelineDescription;
 
     // define resolution, the ray generator shader will be called for each pixel
-    pipelineDescription.resolutionX = 1000;
-    pipelineDescription.resolutionY = 1000;
+    int resolutionX = 1000;
+    int resolutionY = 1000;
+    pipelineDescription.resolutionX = resolutionX;
+    pipelineDescription.resolutionY = resolutionY;
 
     // define the virtual camera position and orientation, the ray generator shader can take this into account
     pipelineDescription.cameraPosition = {0, 3, -10};
@@ -160,25 +162,28 @@ int main() {
     auto texture = rayEngine.getPipelineResult(pipelineID);
 
     // create image container for sfml
-    auto *pixels = new sf::Uint8[1000 * 1000 * 4];
+    int channelCount = 4;
+    auto *pixels = new sf::Uint8[resolutionX * resolutionY * channelCount];
+
+    int fullOpacity = 255;
 
     // translate from texture to sfml
-    for (int x = 0; x < 1000; x++) {
-        for (int y = 0; y < 1000; y++) {
-            pixels[(x + y * 1000) * 4 + 0] = texture->image[(x + y * 1000) * 3 + 0];
-            pixels[(x + y * 1000) * 4 + 1] = texture->image[(x + y * 1000) * 3 + 1];
-            pixels[(x + y * 1000) * 4 + 2] = texture->image[(x + y * 1000) * 3 + 2];
-            pixels[(x + y * 1000) * 4 + 3] = 255;
+    for (int x = 0; x < resolutionY; x++) {
+        for (int y = 0; y < resolutionY; y++) {
+            pixels[(x + y * resolutionY) * channelCount + 0] = texture->image[(x + y * resolutionY) * 3 + 0];
+            pixels[(x + y * resolutionY) * channelCount + 1] = texture->image[(x + y * resolutionY) * 3 + 1];
+            pixels[(x + y * resolutionY) * channelCount + 2] = texture->image[(x + y * resolutionY) * 3 + 2];
+            pixels[(x + y * resolutionY) * channelCount + 3] = fullOpacity;
         }
     }
 
     // create window
     sf::RenderWindow window;
-    window.create(sf::VideoMode(1000, 1000), "Render");
+    window.create(sf::VideoMode(resolutionX, resolutionY), "Render");
 
     // create image
     sf::Image image;
-    image.create(1000, 1000, pixels);
+    image.create(resolutionX, resolutionY, pixels);
 
     // create texture from image
     sf::Texture tex;
