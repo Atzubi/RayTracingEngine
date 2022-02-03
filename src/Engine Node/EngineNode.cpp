@@ -38,23 +38,18 @@ void EngineNode::MemoryBlock::storeShaderResource(ShaderResource *shaderResource
 }
 
 bool EngineNode::MemoryBlock::deleteShaderResource(ShaderResourceId id) {
-    if (shaderResources.count(id) == 0) return false;
-
-    shaderResources.erase(id);
-
-    return true;
+    const bool objectRemoved = shaderResources.erase(id) != 0;
+    return objectRemoved;
 }
 
 bool EngineNode::MemoryBlock::deleteBaseDataFragment(ObjectId id) {
-    if (objects.count(id) == 0) return false;
-    objects.erase(id);
-    return true;
+    const bool objectRemoved = objects.erase(id) != 0;
+    return objectRemoved;
 }
 
 bool EngineNode::MemoryBlock::deleteInstanceDataFragment(InstanceId id) {
-    if (objectInstances.count(id) == 0) return false;
-    objectInstances.erase(id);
-    return true;
+    const bool objectRemoved = objectInstances.erase(id) != 0;
+    return objectRemoved;
 }
 
 Object *EngineNode::MemoryBlock::getBaseDataFragment(ObjectId id) {
