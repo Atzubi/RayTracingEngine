@@ -10,9 +10,7 @@
 #include "Acceleration Structures/DBVHv2.h"
 #include "RayTraceEngine/Shader.h"
 
-DataManagementUnitV2::DataManagementUnitV2() {
-    deviceId = getDeviceId();
-
+DataManagementUnitV2::DataManagementUnitV2() : deviceId(getDeviceId()){
     objectIds.insert(ObjectId{0});
     rayGeneratorShaderIds.insert(RayGeneratorShaderId{0});
     hitShaderIds.insert(HitShaderId{0});
@@ -41,7 +39,7 @@ PipelineId DataManagementUnitV2::createPipeline(PipelineDescription *pipelineDes
         if (objectIdDeviceMap.count(i) == 1) {
             if (objectIdDeviceMap[i].id == deviceId.id) {
                 auto buffer = engineNode->requestBaseData(i)->getCapsule();
-                auto capsule = ObjectCapsule{ObjectId{i.objectId}, buffer.boundingBox, buffer.cost};
+                auto capsule = ObjectCapsule{ObjectId{i.id}, buffer.boundingBox, buffer.cost};
 
                 // create instances of objects
                 auto instance = std::make_unique<Instance>(engineNode, &capsule);
@@ -51,7 +49,7 @@ PipelineId DataManagementUnitV2::createPipeline(PipelineDescription *pipelineDes
                 // manage instance ids
                 auto instanceId = objectInstanceIds.extract(objectInstanceIds.begin()).value();
                 if (objectInstanceIds.empty()) {
-                    objectInstanceIds.insert(InstanceId{instanceId.instanceId + 1});
+                    objectInstanceIds.insert(InstanceId{instanceId.id + 1});
                 }
                 pipelineDescription->objectInstanceIDs->push_back(instanceId);
                 objectToInstanceMap[i].insert(instanceId);
@@ -184,9 +182,9 @@ bool DataManagementUnitV2::removePipeline(PipelineId id) {
         pipelineIds.insert(id);
 
         auto iterator = pipelineIds.rbegin();
-        int end = iterator->id - 1;
+        unsigned long end = iterator->id - 1;
 
-        int buffer = iterator->id;
+        unsigned long buffer = iterator->id;
         while (end-- == (++iterator)->id) {
             pipelineIds.erase(PipelineId{buffer});
             buffer = iterator->id;
@@ -203,7 +201,7 @@ DataManagementUnitV2::updatePipelineObjects(PipelineId pipelineId, std::vector<I
                                             std::vector<ObjectParameter *> *objectParameters) {
     if (objectInstanceIDs->size() != transforms->size()) return false;
 
-    for (int i = 0; i < objectInstanceIDs->size(); i++) {
+    for (unsigned long i = 0; i < objectInstanceIDs->size(); i++) {
         if (objectInstanceIds.count(objectInstanceIDs->at(i)) == 1) {
             if (objectInstanceIdDeviceMap[objectInstanceIDs->at(i)].id == deviceId.id) {
                 auto instance = engineNode->requestInstanceData(objectInstanceIDs->at(i));
@@ -365,7 +363,7 @@ DataManagementUnitV2::bindGeometryToPipeline(PipelineId pipelineId, std::vector<
     std::vector<Object*> instances;
     std::vector<InstanceId> instanceIds;
 
-    for (int i = 0; i < objectIDs->size(); i++) {
+    for (unsigned long i = 0; i < objectIDs->size(); i++) {
         if (objectIdDeviceMap.count(objectIDs->at(i)) == 1) {
             if (objectIdDeviceMap[objectIDs->at(i)].id == deviceId.id) {
                 auto buffer = engineNode->requestBaseData(objectIDs->at(i))->getCapsule();
@@ -379,7 +377,7 @@ DataManagementUnitV2::bindGeometryToPipeline(PipelineId pipelineId, std::vector<
                 // manage instance ids
                 auto instanceId = objectInstanceIds.extract(objectInstanceIds.begin()).value();
                 if (objectInstanceIds.empty()) {
-                    objectInstanceIds.insert(InstanceId{instanceId.instanceId + 1});
+                    objectInstanceIds.insert(InstanceId{instanceId.id + 1});
                 }
                 instanceIDs->push_back(instanceId);
                 objectToInstanceMap[objectIDs->at((i))].insert(instanceId);
@@ -516,7 +514,7 @@ ObjectId DataManagementUnitV2::addObject(Object *object) {
     engineNode->storeBaseDataFragments(clone, buffer);
 
     if (objectIds.empty()) {
-        objectIds.insert(ObjectId{buffer.objectId + 1});
+        objectIds.insert(ObjectId{buffer.id + 1});
     }
 
     return buffer;
@@ -541,12 +539,12 @@ bool DataManagementUnitV2::removeObject(ObjectId id) {
     objectIds.insert(id);
 
     auto iterator = objectIds.rbegin();
-    int end = iterator->objectId - 1;
+    unsigned long end = iterator->id - 1;
 
-    int buffer = iterator->objectId;
-    while (end-- == (++iterator)->objectId) {
+    unsigned long buffer = iterator->id;
+    while (end-- == (++iterator)->id) {
         objectIds.erase(ObjectId{buffer});
-        buffer = iterator->objectId;
+        buffer = iterator->id;
     }
 
     return true;
@@ -626,9 +624,9 @@ bool DataManagementUnitV2::removeShader(RayGeneratorShaderId id) {
     rayGeneratorShaderIds.insert(id);
 
     auto iterator = rayGeneratorShaderIds.rbegin();
-    int end = iterator->id - 1;
+    unsigned long end = iterator->id - 1;
 
-    int buffer = iterator->id;
+    unsigned long buffer = iterator->id;
     while (end-- == (++iterator)->id) {
         rayGeneratorShaderIds.erase(RayGeneratorShaderId{buffer});
         buffer = iterator->id;
@@ -644,9 +642,9 @@ bool DataManagementUnitV2::removeShader(HitShaderId id) {
     hitShaderIds.insert(id);
 
     auto iterator = hitShaderIds.rbegin();
-    int end = iterator->id - 1;
+    unsigned long end = iterator->id - 1;
 
-    int buffer = iterator->id;
+    unsigned long buffer = iterator->id;
     while (end-- == (++iterator)->id) {
         hitShaderIds.erase(HitShaderId{buffer});
         buffer = iterator->id;
@@ -662,9 +660,9 @@ bool DataManagementUnitV2::removeShader(OcclusionShaderId id) {
     occlusionShaderIds.insert(id);
 
     auto iterator = occlusionShaderIds.rbegin();
-    int end = iterator->id - 1;
+    unsigned long end = iterator->id - 1;
 
-    int buffer = iterator->id;
+    unsigned long buffer = iterator->id;
     while (end-- == (++iterator)->id) {
         occlusionShaderIds.erase(OcclusionShaderId{buffer});
         buffer = iterator->id;
@@ -680,9 +678,9 @@ bool DataManagementUnitV2::removeShader(PierceShaderId id) {
     pierceShaderIds.insert(id);
 
     auto iterator = pierceShaderIds.rbegin();
-    int end = iterator->id - 1;
+    unsigned long end = iterator->id - 1;
 
-    int buffer = iterator->id;
+    unsigned long buffer = iterator->id;
     while (end-- == (++iterator)->id) {
         pierceShaderIds.erase(PierceShaderId{buffer});
         buffer = iterator->id;
@@ -698,9 +696,9 @@ bool DataManagementUnitV2::removeShader(MissShaderId id) {
     missShaderIds.insert(id);
 
     auto iterator = missShaderIds.rbegin();
-    int end = iterator->id - 1;
+    unsigned long end = iterator->id - 1;
 
-    int buffer = iterator->id;
+    unsigned long buffer = iterator->id;
     while (end-- == (++iterator)->id) {
         missShaderIds.erase(MissShaderId{buffer});
         buffer = iterator->id;
@@ -727,9 +725,9 @@ bool DataManagementUnitV2::removeShaderResource(ShaderResourceId id) {
     shaderResourceIds.insert(id);
 
     auto iterator = shaderResourceIds.rbegin();
-    int end = iterator->id - 1;
+    unsigned long end = iterator->id - 1;
 
-    int buffer = iterator->id;
+    unsigned long buffer = iterator->id;
     while (end-- == (++iterator)->id) {
         shaderResourceIds.erase(ShaderResourceId{buffer});
         buffer = iterator->id;

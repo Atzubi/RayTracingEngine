@@ -9,8 +9,9 @@
 #include <cstdint>
 #include <memory>
 #include "BasicStructures.h"
+#include "Utility/Id.h"
 
-struct ObjectId {
+/*struct ObjectId {
     int objectId;
 
     bool operator==(const ObjectId &other) const {
@@ -46,7 +47,7 @@ struct std::hash<InstanceId> {
     std::size_t operator()(const InstanceId &k) const {
         return std::hash<int>()(k.instanceId);
     }
-};
+};*/
 
 /**
  * Container outputted by the ray tracing engine.

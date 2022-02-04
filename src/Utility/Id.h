@@ -12,7 +12,7 @@ struct std::hash<hashable> {                           \
 
 
 struct GenericId {
-    int id;
+    unsigned long id;
 
     bool operator==(const GenericId &other) const {
         return id == other.id;
@@ -37,6 +37,8 @@ struct ResourceId: public GenericId {};
 struct ShaderResourceId: public ResourceId {};
 struct PipelineId: public ResourceId {};
 struct DeviceId: public ResourceId {};
+struct ObjectId: public ResourceId {};
+struct InstanceId: public ResourceId {};
 
 // Compiler macros
 DEFINE_STD_HASH_SPECIALIZATION(GenericId);
@@ -50,6 +52,8 @@ DEFINE_STD_HASH_SPECIALIZATION(ResourceId);
 DEFINE_STD_HASH_SPECIALIZATION(ShaderResourceId);
 DEFINE_STD_HASH_SPECIALIZATION(PipelineId);
 DEFINE_STD_HASH_SPECIALIZATION(DeviceId);
+DEFINE_STD_HASH_SPECIALIZATION(ObjectId);
+DEFINE_STD_HASH_SPECIALIZATION(InstanceId);
 
 
 #endif //RAYTRACECORE_UTILITY_H

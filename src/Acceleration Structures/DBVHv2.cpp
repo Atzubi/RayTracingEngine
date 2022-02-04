@@ -338,30 +338,30 @@ namespace {
                     rightRightSA = (rightNode->rightLeaf)->getSurfaceArea();
                 }
 
-                swapLeftLeftToRight = {std::min(rightBox.minCorner.x, leftRightBox.minCorner.x),
+                swapLeftLeftToRight = {{std::min(rightBox.minCorner.x, leftRightBox.minCorner.x),
                                        std::min(rightBox.minCorner.y, leftRightBox.minCorner.y),
-                                       std::min(rightBox.minCorner.z, leftRightBox.minCorner.z),
-                                       std::max(rightBox.maxCorner.x, leftRightBox.maxCorner.x),
+                                       std::min(rightBox.minCorner.z, leftRightBox.minCorner.z)},
+                                       {std::max(rightBox.maxCorner.x, leftRightBox.maxCorner.x),
                                        std::max(rightBox.maxCorner.y, leftRightBox.maxCorner.y),
-                                       std::max(rightBox.maxCorner.z, leftRightBox.maxCorner.z)};
-                swapLeftRightToRight = {std::min(rightBox.minCorner.x, leftLeftBox.minCorner.x),
+                                       std::max(rightBox.maxCorner.z, leftRightBox.maxCorner.z)}};
+                swapLeftRightToRight = {{std::min(rightBox.minCorner.x, leftLeftBox.minCorner.x),
                                         std::min(rightBox.minCorner.y, leftLeftBox.minCorner.y),
-                                        std::min(rightBox.minCorner.z, leftLeftBox.minCorner.z),
-                                        std::max(rightBox.maxCorner.x, leftLeftBox.maxCorner.x),
+                                        std::min(rightBox.minCorner.z, leftLeftBox.minCorner.z)},
+                                        {std::max(rightBox.maxCorner.x, leftLeftBox.maxCorner.x),
                                         std::max(rightBox.maxCorner.y, leftLeftBox.maxCorner.y),
-                                        std::max(rightBox.maxCorner.z, leftLeftBox.maxCorner.z)};
-                swapRightLeftToLeft = {std::min(leftBox.minCorner.x, rightRightBox.minCorner.x),
+                                        std::max(rightBox.maxCorner.z, leftLeftBox.maxCorner.z)}};
+                swapRightLeftToLeft = {{std::min(leftBox.minCorner.x, rightRightBox.minCorner.x),
                                        std::min(leftBox.minCorner.y, rightRightBox.minCorner.y),
-                                       std::min(leftBox.minCorner.z, rightRightBox.minCorner.z),
-                                       std::max(leftBox.maxCorner.x, rightRightBox.maxCorner.x),
+                                       std::min(leftBox.minCorner.z, rightRightBox.minCorner.z)},
+                                       {std::max(leftBox.maxCorner.x, rightRightBox.maxCorner.x),
                                        std::max(leftBox.maxCorner.y, rightRightBox.maxCorner.y),
-                                       std::max(leftBox.maxCorner.z, rightRightBox.maxCorner.z)};
-                swapRightRightToLeft = {std::min(leftBox.minCorner.x, rightLeftBox.minCorner.x),
+                                       std::max(leftBox.maxCorner.z, rightRightBox.maxCorner.z)}};
+                swapRightRightToLeft = {{std::min(leftBox.minCorner.x, rightLeftBox.minCorner.x),
                                         std::min(leftBox.minCorner.y, rightLeftBox.minCorner.y),
-                                        std::min(leftBox.minCorner.z, rightLeftBox.minCorner.z),
-                                        std::max(leftBox.maxCorner.x, rightLeftBox.maxCorner.x),
+                                        std::min(leftBox.minCorner.z, rightLeftBox.minCorner.z)},
+                                        {std::max(leftBox.maxCorner.x, rightLeftBox.maxCorner.x),
                                         std::max(leftBox.maxCorner.y, rightLeftBox.maxCorner.y),
-                                        std::max(leftBox.maxCorner.z, rightLeftBox.maxCorner.z)};
+                                        std::max(leftBox.maxCorner.z, rightLeftBox.maxCorner.z)}};
 
                 SAHs[1] =
                         node.boundingBox.getSA() + leftLeftSA + rightSA + leftRightSA + swapLeftLeftToRight.getSA();
@@ -376,18 +376,18 @@ namespace {
                 rightBox = rightNode->getBoundaries();
                 rightSA = rightNode->getSurfaceArea();
 
-                swapLeftLeftToRight = {std::min(rightBox.minCorner.x, leftRightBox.minCorner.x),
+                swapLeftLeftToRight = {{std::min(rightBox.minCorner.x, leftRightBox.minCorner.x),
                                        std::min(rightBox.minCorner.y, leftRightBox.minCorner.y),
-                                       std::min(rightBox.minCorner.z, leftRightBox.minCorner.z),
-                                       std::max(rightBox.maxCorner.x, leftRightBox.maxCorner.x),
+                                       std::min(rightBox.minCorner.z, leftRightBox.minCorner.z)},
+                                       {std::max(rightBox.maxCorner.x, leftRightBox.maxCorner.x),
                                        std::max(rightBox.maxCorner.y, leftRightBox.maxCorner.y),
-                                       std::max(rightBox.maxCorner.z, leftRightBox.maxCorner.z)};
-                swapLeftRightToRight = {std::min(rightBox.minCorner.x, leftLeftBox.minCorner.x),
+                                       std::max(rightBox.maxCorner.z, leftRightBox.maxCorner.z)}};
+                swapLeftRightToRight = {{std::min(rightBox.minCorner.x, leftLeftBox.minCorner.x),
                                         std::min(rightBox.minCorner.y, leftLeftBox.minCorner.y),
-                                        std::min(rightBox.minCorner.z, leftLeftBox.minCorner.z),
-                                        std::max(rightBox.maxCorner.x, leftLeftBox.maxCorner.x),
+                                        std::min(rightBox.minCorner.z, leftLeftBox.minCorner.z)},
+                                        {std::max(rightBox.maxCorner.x, leftLeftBox.maxCorner.x),
                                         std::max(rightBox.maxCorner.y, leftLeftBox.maxCorner.y),
-                                        std::max(rightBox.maxCorner.z, leftLeftBox.maxCorner.z)};
+                                        std::max(rightBox.maxCorner.z, leftLeftBox.maxCorner.z)}};
 
                 SAHs[1] =
                         node.boundingBox.getSA() + leftLeftSA + rightSA + leftRightSA + swapLeftLeftToRight.getSA();
@@ -420,18 +420,18 @@ namespace {
                     rightRightSA = (rightNode->rightLeaf)->getSurfaceArea();
                 }
 
-                swapRightLeftToLeft = {std::min(leftBox.minCorner.x, rightRightBox.minCorner.x),
+                swapRightLeftToLeft = {{std::min(leftBox.minCorner.x, rightRightBox.minCorner.x),
                                        std::min(leftBox.minCorner.y, rightRightBox.minCorner.y),
-                                       std::min(leftBox.minCorner.z, rightRightBox.minCorner.z),
-                                       std::max(leftBox.maxCorner.x, rightRightBox.maxCorner.x),
+                                       std::min(leftBox.minCorner.z, rightRightBox.minCorner.z)},
+                                       {std::max(leftBox.maxCorner.x, rightRightBox.maxCorner.x),
                                        std::max(leftBox.maxCorner.y, rightRightBox.maxCorner.y),
-                                       std::max(leftBox.maxCorner.z, rightRightBox.maxCorner.z)};
-                swapRightRightToLeft = {std::min(leftBox.minCorner.x, rightLeftBox.minCorner.x),
+                                       std::max(leftBox.maxCorner.z, rightRightBox.maxCorner.z)}};
+                swapRightRightToLeft = {{std::min(leftBox.minCorner.x, rightLeftBox.minCorner.x),
                                         std::min(leftBox.minCorner.y, rightLeftBox.minCorner.y),
-                                        std::min(leftBox.minCorner.z, rightLeftBox.minCorner.z),
-                                        std::max(leftBox.maxCorner.x, rightLeftBox.maxCorner.x),
+                                        std::min(leftBox.minCorner.z, rightLeftBox.minCorner.z)},
+                                        {std::max(leftBox.maxCorner.x, rightLeftBox.maxCorner.x),
                                         std::max(leftBox.maxCorner.y, rightLeftBox.maxCorner.y),
-                                        std::max(leftBox.maxCorner.z, rightLeftBox.maxCorner.z)};
+                                        std::max(leftBox.maxCorner.z, rightLeftBox.maxCorner.z)}};
 
                 SAHs[1] = std::numeric_limits<double>::max();
                 SAHs[2] = std::numeric_limits<double>::max();

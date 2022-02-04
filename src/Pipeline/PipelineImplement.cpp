@@ -6,7 +6,6 @@
 
 #include "Data Management/DataManagementUnitV2.h"
 #include "Pipeline/PipelineImplement.h"
-#include "RayTraceEngine/Pipeline.h"
 #include "RayTraceEngine/BasicStructures.h"
 #include "RayTraceEngine/Shader.h"
 #include "Acceleration Structures/DBVHv2.h"
@@ -136,7 +135,7 @@ int PipelineImplement::run() {
                         }
 
                         IntersectionInfo closest = {false, std::numeric_limits<double>::max(), ray.origin,
-                                                    ray.direction, 0, 0, 0, 0, 0};
+                                                    ray.direction, {0, 0, 0}, {0, 0, 0}, {0, 0}, nullptr};
                         bool hitAny = false;
                         for (auto info: infos) {
                             if (info.hit) {
@@ -222,8 +221,8 @@ int PipelineImplement::run() {
                         ray.dirfrac.y = 1.0 / ray.direction.y;
                         ray.dirfrac.z = 1.0 / ray.direction.z;
 
-                        IntersectionInfo info = {false, std::numeric_limits<double>::max(), ray.origin, ray.direction,
-                                                 0, 0, 0, 0, 0};
+                        IntersectionInfo info = {false, std::numeric_limits<double>::max(), ray.origin,
+                                                    ray.direction, {0, 0, 0}, {0, 0, 0}, {0, 0}, nullptr};
                         DBVHv2::intersectFirst(*geometry, info, ray);
 
                         RayGeneratorOutput newRays;
@@ -298,8 +297,8 @@ int PipelineImplement::run() {
                         ray.dirfrac.y = 1.0 / ray.direction.y;
                         ray.dirfrac.z = 1.0 / ray.direction.z;
 
-                        IntersectionInfo info = {false, std::numeric_limits<double>::max(), ray.origin, ray.direction,
-                                                 0, 0, 0, 0, 0};
+                        IntersectionInfo info = {false, std::numeric_limits<double>::max(), ray.origin,
+                                                    ray.direction, {0, 0, 0}, {0, 0, 0}, {0, 0}, nullptr};
                         DBVHv2::intersectAny(*geometry, info, ray);
 
                         RayGeneratorOutput newRays;

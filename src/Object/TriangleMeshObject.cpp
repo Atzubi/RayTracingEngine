@@ -170,8 +170,9 @@ public:
     }
 
     bool intersectAll(std::vector<IntersectionInfo> &intersectionInfo, const Ray &ray) override {
-        IntersectionInfo info{false, std::numeric_limits<double>::max(), ray.origin, ray.direction, 0, 0,
-                              0, 0, 0};
+        IntersectionInfo info{false, std::numeric_limits<double>::max(), ray.origin, ray.direction, {0, 0,
+                                                                                                     0}, {0, 0, 0},
+                              {0, 0}, nullptr};
         bool hit = intersectFirst(info, ray);
         intersectionInfo.push_back(info);
         return hit;
@@ -182,7 +183,7 @@ public:
     }
 
     [[nodiscard]] ObjectCapsule getCapsule() const override {
-        ObjectCapsule capsule{-1, getBoundaries(), getSurfaceArea()};
+        ObjectCapsule capsule{{0}, getBoundaries(), getSurfaceArea()};
         return capsule;
     }
 
@@ -225,7 +226,7 @@ TriangleMeshObject::TriangleMeshObject(const std::vector<Vertex> *vertices, cons
     this->material = *material;
 
     std::vector<Object *> objects;
-    for (int i = 0; i < indices->size() / 3; i++) {
+    for (unsigned long i = 0; i < indices->size() / 3; i++) {
         auto triangle = std::make_unique<Triangle>();
         triangle->mesh = this;
         triangle->pos = i * 3;
@@ -276,6 +277,6 @@ bool TriangleMeshObject::operator!=(const Object &object) const {
 }
 
 ObjectCapsule TriangleMeshObject::getCapsule() const {
-    ObjectCapsule capsule{-1, getBoundaries(), getSurfaceArea()};
+    ObjectCapsule capsule{{0}, getBoundaries(), getSurfaceArea()};
     return capsule;
 }
