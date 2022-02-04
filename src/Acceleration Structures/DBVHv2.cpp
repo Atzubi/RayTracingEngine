@@ -339,29 +339,29 @@ namespace {
                 }
 
                 swapLeftLeftToRight = {{std::min(rightBox.minCorner.x, leftRightBox.minCorner.x),
-                                       std::min(rightBox.minCorner.y, leftRightBox.minCorner.y),
-                                       std::min(rightBox.minCorner.z, leftRightBox.minCorner.z)},
+                                               std::min(rightBox.minCorner.y, leftRightBox.minCorner.y),
+                                               std::min(rightBox.minCorner.z, leftRightBox.minCorner.z)},
                                        {std::max(rightBox.maxCorner.x, leftRightBox.maxCorner.x),
-                                       std::max(rightBox.maxCorner.y, leftRightBox.maxCorner.y),
-                                       std::max(rightBox.maxCorner.z, leftRightBox.maxCorner.z)}};
+                                               std::max(rightBox.maxCorner.y, leftRightBox.maxCorner.y),
+                                               std::max(rightBox.maxCorner.z, leftRightBox.maxCorner.z)}};
                 swapLeftRightToRight = {{std::min(rightBox.minCorner.x, leftLeftBox.minCorner.x),
-                                        std::min(rightBox.minCorner.y, leftLeftBox.minCorner.y),
-                                        std::min(rightBox.minCorner.z, leftLeftBox.minCorner.z)},
+                                                std::min(rightBox.minCorner.y, leftLeftBox.minCorner.y),
+                                                std::min(rightBox.minCorner.z, leftLeftBox.minCorner.z)},
                                         {std::max(rightBox.maxCorner.x, leftLeftBox.maxCorner.x),
-                                        std::max(rightBox.maxCorner.y, leftLeftBox.maxCorner.y),
-                                        std::max(rightBox.maxCorner.z, leftLeftBox.maxCorner.z)}};
+                                                std::max(rightBox.maxCorner.y, leftLeftBox.maxCorner.y),
+                                                std::max(rightBox.maxCorner.z, leftLeftBox.maxCorner.z)}};
                 swapRightLeftToLeft = {{std::min(leftBox.minCorner.x, rightRightBox.minCorner.x),
-                                       std::min(leftBox.minCorner.y, rightRightBox.minCorner.y),
-                                       std::min(leftBox.minCorner.z, rightRightBox.minCorner.z)},
+                                               std::min(leftBox.minCorner.y, rightRightBox.minCorner.y),
+                                               std::min(leftBox.minCorner.z, rightRightBox.minCorner.z)},
                                        {std::max(leftBox.maxCorner.x, rightRightBox.maxCorner.x),
-                                       std::max(leftBox.maxCorner.y, rightRightBox.maxCorner.y),
-                                       std::max(leftBox.maxCorner.z, rightRightBox.maxCorner.z)}};
+                                               std::max(leftBox.maxCorner.y, rightRightBox.maxCorner.y),
+                                               std::max(leftBox.maxCorner.z, rightRightBox.maxCorner.z)}};
                 swapRightRightToLeft = {{std::min(leftBox.minCorner.x, rightLeftBox.minCorner.x),
-                                        std::min(leftBox.minCorner.y, rightLeftBox.minCorner.y),
-                                        std::min(leftBox.minCorner.z, rightLeftBox.minCorner.z)},
+                                                std::min(leftBox.minCorner.y, rightLeftBox.minCorner.y),
+                                                std::min(leftBox.minCorner.z, rightLeftBox.minCorner.z)},
                                         {std::max(leftBox.maxCorner.x, rightLeftBox.maxCorner.x),
-                                        std::max(leftBox.maxCorner.y, rightLeftBox.maxCorner.y),
-                                        std::max(leftBox.maxCorner.z, rightLeftBox.maxCorner.z)}};
+                                                std::max(leftBox.maxCorner.y, rightLeftBox.maxCorner.y),
+                                                std::max(leftBox.maxCorner.z, rightLeftBox.maxCorner.z)}};
 
                 SAHs[1] =
                         node.boundingBox.getSA() + leftLeftSA + rightSA + leftRightSA + swapLeftLeftToRight.getSA();
@@ -377,17 +377,17 @@ namespace {
                 rightSA = rightNode->getSurfaceArea();
 
                 swapLeftLeftToRight = {{std::min(rightBox.minCorner.x, leftRightBox.minCorner.x),
-                                       std::min(rightBox.minCorner.y, leftRightBox.minCorner.y),
-                                       std::min(rightBox.minCorner.z, leftRightBox.minCorner.z)},
+                                               std::min(rightBox.minCorner.y, leftRightBox.minCorner.y),
+                                               std::min(rightBox.minCorner.z, leftRightBox.minCorner.z)},
                                        {std::max(rightBox.maxCorner.x, leftRightBox.maxCorner.x),
-                                       std::max(rightBox.maxCorner.y, leftRightBox.maxCorner.y),
-                                       std::max(rightBox.maxCorner.z, leftRightBox.maxCorner.z)}};
+                                               std::max(rightBox.maxCorner.y, leftRightBox.maxCorner.y),
+                                               std::max(rightBox.maxCorner.z, leftRightBox.maxCorner.z)}};
                 swapLeftRightToRight = {{std::min(rightBox.minCorner.x, leftLeftBox.minCorner.x),
-                                        std::min(rightBox.minCorner.y, leftLeftBox.minCorner.y),
-                                        std::min(rightBox.minCorner.z, leftLeftBox.minCorner.z)},
+                                                std::min(rightBox.minCorner.y, leftLeftBox.minCorner.y),
+                                                std::min(rightBox.minCorner.z, leftLeftBox.minCorner.z)},
                                         {std::max(rightBox.maxCorner.x, leftLeftBox.maxCorner.x),
-                                        std::max(rightBox.maxCorner.y, leftLeftBox.maxCorner.y),
-                                        std::max(rightBox.maxCorner.z, leftLeftBox.maxCorner.z)}};
+                                                std::max(rightBox.maxCorner.y, leftLeftBox.maxCorner.y),
+                                                std::max(rightBox.maxCorner.z, leftLeftBox.maxCorner.z)}};
 
                 SAHs[1] =
                         node.boundingBox.getSA() + leftLeftSA + rightSA + leftRightSA + swapLeftLeftToRight.getSA();
@@ -421,17 +421,17 @@ namespace {
                 }
 
                 swapRightLeftToLeft = {{std::min(leftBox.minCorner.x, rightRightBox.minCorner.x),
-                                       std::min(leftBox.minCorner.y, rightRightBox.minCorner.y),
-                                       std::min(leftBox.minCorner.z, rightRightBox.minCorner.z)},
+                                               std::min(leftBox.minCorner.y, rightRightBox.minCorner.y),
+                                               std::min(leftBox.minCorner.z, rightRightBox.minCorner.z)},
                                        {std::max(leftBox.maxCorner.x, rightRightBox.maxCorner.x),
-                                       std::max(leftBox.maxCorner.y, rightRightBox.maxCorner.y),
-                                       std::max(leftBox.maxCorner.z, rightRightBox.maxCorner.z)}};
+                                               std::max(leftBox.maxCorner.y, rightRightBox.maxCorner.y),
+                                               std::max(leftBox.maxCorner.z, rightRightBox.maxCorner.z)}};
                 swapRightRightToLeft = {{std::min(leftBox.minCorner.x, rightLeftBox.minCorner.x),
-                                        std::min(leftBox.minCorner.y, rightLeftBox.minCorner.y),
-                                        std::min(leftBox.minCorner.z, rightLeftBox.minCorner.z)},
+                                                std::min(leftBox.minCorner.y, rightLeftBox.minCorner.y),
+                                                std::min(leftBox.minCorner.z, rightLeftBox.minCorner.z)},
                                         {std::max(leftBox.maxCorner.x, rightLeftBox.maxCorner.x),
-                                        std::max(leftBox.maxCorner.y, rightLeftBox.maxCorner.y),
-                                        std::max(leftBox.maxCorner.z, rightLeftBox.maxCorner.z)}};
+                                                std::max(leftBox.maxCorner.y, rightLeftBox.maxCorner.y),
+                                                std::max(leftBox.maxCorner.z, rightLeftBox.maxCorner.z)}};
 
                 SAHs[1] = std::numeric_limits<double>::max();
                 SAHs[2] = std::numeric_limits<double>::max();
@@ -1247,6 +1247,49 @@ namespace {
         }
     }
 
+    bool
+    getChildrenIntersection(IntersectionInfo &intersectionInfo, const Ray &ray, const DBVHNode **stack,
+                            uint64_t &stackPointer) {
+        bool hit = false;
+        auto node = stack[stackPointer];
+        if (isNodeRight(*node)) {
+            // TODO request child if missing
+            double distanceRight = 0;
+            auto rightChild = node->rightChild.get();
+            if (rayBoxIntersection((rightChild->boundingBox.minCorner),
+                                   (rightChild->boundingBox.maxCorner), ray, distanceRight)) {
+                stack[stackPointer++] = node->rightChild.get();
+            }
+        } else {
+            // TODO request leaf if missing
+            intersectLeaf(ray, intersectionInfo,*node->rightLeaf, hit);
+        }
+        if (isNodeLeft(*node) && !hit) {
+            // TODO request child if missing
+            double distanceLeft = 0;
+            auto leftChild = node->leftChild.get();
+            if (rayBoxIntersection((leftChild->boundingBox.minCorner),
+                                   (leftChild->boundingBox.maxCorner), ray, distanceLeft)) {
+                stack[stackPointer++] = node->leftChild.get();
+            }
+        } else {
+            // TODO request leaf if missing
+            intersectLeaf(ray, intersectionInfo,*node->leftLeaf, hit);
+        }
+        return hit;
+    }
+
+    bool processTraversalStack(IntersectionInfo &intersectionInfo, const Ray &ray, const DBVHNode **stack,
+                               uint64_t stackPointer) {
+        while (stackPointer != 0) {
+            stackPointer--;
+
+            if (getChildrenIntersection(intersectionInfo, ray, stack, stackPointer))
+                return true;
+        }
+        return false;
+    }
+
     bool traverseAny(const DBVHNode &root, IntersectionInfo &intersectionInfo, const Ray &ray) {
         if (root.maxDepthRight >= 64 || root.maxDepthLeft >= 64) {
             std::vector<const DBVHNode *> stack(
@@ -1254,112 +1297,12 @@ namespace {
                     root.maxDepthLeft + 1);
             uint64_t stackPointer = 1;
             stack[0] = &root;
-
-            while (stackPointer != 0) {
-                auto node = stack[stackPointer - 1];
-                stackPointer--;
-
-                double distanceRight = 0;
-                double distanceLeft = 0;
-
-                if (isNodeRight(*node)) {
-                    // TODO request child if missing
-                    auto rightChild = node->rightChild.get();
-                    if (rayBoxIntersection((rightChild->boundingBox.minCorner),
-                                           (rightChild->boundingBox.maxCorner), ray, distanceRight)) {
-                        stack[stackPointer++] = node->rightChild.get();
-                    }
-                } else {
-                    // TODO request leaf if missing
-                    IntersectionInfo intersectionInformationBuffer{};
-                    intersectionInformationBuffer.hit = false;
-                    intersectionInformationBuffer.distance = std::numeric_limits<double>::max();
-                    intersectionInformationBuffer.position = {0, 0, 0};
-                    auto rightLeaf = node->rightLeaf;
-                    rightLeaf->intersectAny(intersectionInformationBuffer, ray);
-                    if (intersectionInformationBuffer.hit) {
-                        intersectionInfo = intersectionInformationBuffer;
-                        return true;
-                    }
-                }
-                if (isNodeLeft(*node)) {
-                    // TODO request child if missing
-                    auto leftChild = node->leftChild.get();
-                    if (rayBoxIntersection((leftChild->boundingBox.minCorner),
-                                           (leftChild->boundingBox.maxCorner), ray, distanceLeft)) {
-                        stack[stackPointer++] = node->leftChild.get();
-                    }
-                } else {
-                    // TODO request leaf if missing
-                    IntersectionInfo intersectionInformationBuffer{};
-                    intersectionInformationBuffer.hit = false;
-                    intersectionInformationBuffer.distance = std::numeric_limits<double>::max();
-                    intersectionInformationBuffer.position = {0, 0, 0};
-                    auto leftLeaf = node->leftLeaf;
-                    leftLeaf->intersectAny(intersectionInformationBuffer, ray);
-                    if (intersectionInformationBuffer.hit) {
-                        intersectionInfo = intersectionInformationBuffer;
-                        return true;
-                    }
-                }
-            }
-
-            return false;
+            return processTraversalStack(intersectionInfo, ray, stack.data(), stackPointer);
         } else {
             const DBVHNode *stack[64];
             uint64_t stackPointer = 1;
             stack[0] = &root;
-
-            while (stackPointer != 0) {
-                auto node = stack[stackPointer - 1];
-                stackPointer--;
-
-                double distanceRight = 0;
-                double distanceLeft = 0;
-
-                if (isNodeRight(*node)) {
-                    // TODO request child if missing
-                    auto rightChild = node->rightChild.get();
-                    if (rayBoxIntersection((rightChild->boundingBox.minCorner),
-                                           (rightChild->boundingBox.maxCorner), ray, distanceRight)) {
-                        stack[stackPointer++] = node->rightChild.get();
-                    }
-                } else {
-                    // TODO request leaf if missing
-                    IntersectionInfo intersectionInformationBuffer{};
-                    intersectionInformationBuffer.hit = false;
-                    intersectionInformationBuffer.distance = std::numeric_limits<double>::max();
-                    intersectionInformationBuffer.position = {0, 0, 0};
-                    auto rightLeaf = node->rightLeaf;
-                    rightLeaf->intersectAny(intersectionInformationBuffer, ray);
-                    if (intersectionInformationBuffer.hit) {
-                        intersectionInfo = intersectionInformationBuffer;
-                        return true;
-                    }
-                }
-                if (isNodeLeft(*node)) {
-                    // TODO request child if missing
-                    auto leftChild = node->leftChild.get();
-                    if (rayBoxIntersection((leftChild->boundingBox.minCorner),
-                                           (leftChild->boundingBox.maxCorner), ray, distanceLeft)) {
-                        stack[stackPointer++] = node->leftChild.get();
-                    }
-                } else {
-                    // TODO request leaf if missing
-                    IntersectionInfo intersectionInformationBuffer{};
-                    intersectionInformationBuffer.hit = false;
-                    intersectionInformationBuffer.distance = std::numeric_limits<double>::max();
-                    intersectionInformationBuffer.position = {0, 0, 0};
-                    auto leftLeaf = node->leftLeaf;
-                    leftLeaf->intersectAny(intersectionInformationBuffer, ray);
-                    if (intersectionInformationBuffer.hit) {
-                        intersectionInfo = intersectionInformationBuffer;
-                        return true;
-                    }
-                }
-            }
-
-            return false;
+            return processTraversalStack(intersectionInfo, ray, stack, stackPointer);
         }
     }
 
