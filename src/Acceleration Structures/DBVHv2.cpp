@@ -266,25 +266,29 @@ namespace {
         return tMax >= 0 && tMin <= tMax;
     }
 
+    void refitChild(DBVHNode &node, DBVHNode &child){
+        refit(node.boundingBox, child.boundingBox);
+        node.surfaceArea = child.surfaceArea;
+        node.maxDepthRight = std::max(child.maxDepthRight, child.maxDepthLeft) + 1;
+    }
+
+    void refitLeaf(DBVHNode &node, Object &leaf){
+        refit(node.boundingBox, leaf.getBoundaries());
+        node.surfaceArea = leaf.getSurfaceArea();
+        node.maxDepthRight = 1;
+    }
+
     void refit(DBVHNode &node) {
         node.boundingBox = BoundingBox();
         if (isNodeRight(node)) {
-            refit(node.boundingBox, (node.rightChild)->boundingBox);
-            node.surfaceArea = (node.rightChild)->surfaceArea;
-            node.maxDepthRight = std::max(node.rightChild->maxDepthRight, node.rightChild->maxDepthLeft) + 1;
+            refitChild(node, *node.rightChild);
         } else {
-            refit(node.boundingBox, (node.rightLeaf)->getBoundaries());
-            node.surfaceArea = (node.rightLeaf)->getSurfaceArea();
-            node.maxDepthRight = 1;
+            refitLeaf(node, *node.rightLeaf);
         }
         if (isNodeLeft(node)) {
-            refit(node.boundingBox, (node.leftChild)->boundingBox);
-            node.surfaceArea += (node.leftChild)->surfaceArea;
-            node.maxDepthLeft = std::max(node.leftChild->maxDepthRight, node.leftChild->maxDepthLeft) + 1;
+            refitChild(node, *node.leftChild);
         } else {
-            refit(node.boundingBox, (node.leftLeaf)->getBoundaries());
-            node.surfaceArea += (node.leftLeaf)->getSurfaceArea();
-            node.maxDepthLeft = 1;
+            refitLeaf(node, *node.leftLeaf);
         }
         node.surfaceArea += node.boundingBox.getSA();
     }
