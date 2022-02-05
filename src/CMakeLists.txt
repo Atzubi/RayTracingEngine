@@ -12,7 +12,7 @@ endif ()
 # Compiler optimisations
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     message(STATUS "Linux detected, enabled compiler optimisations..")
-    set(CMAKE_CXX_FLAGS "-pthread -O0 -march=native")
+    set(CMAKE_CXX_FLAGS "-pthread -O0 -march=native -pedantic -Wall -W -Wextra")
 endif ()
 
 configure_file(RayTraceEngine.pc.in RayTraceEngine.pc @ONLY)

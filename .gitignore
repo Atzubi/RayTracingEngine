@@ -5,3 +5,5 @@ cmake-build-debug
 cmake-build-release
 CMakeFiles
 SFML-2.5.1
+cmake-build-release-coverage
+cmake-build-debug-coverage

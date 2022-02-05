@@ -219,7 +219,7 @@ struct BoundingBox {
     Vector3D minCorner = {std::numeric_limits<double>::max(), std::numeric_limits<double>::max(),
                           std::numeric_limits<double>::max()};
     Vector3D maxCorner = {-std::numeric_limits<double>::max(),
-                          -std::numeric_limits<double>::max(), -std::numeric_limits<double>::max()};;
+                          -std::numeric_limits<double>::max(), -std::numeric_limits<double>::max()};
 
     /**
      * Computes the surface area of the axis aligned bounding box.

@@ -626,7 +626,7 @@ double Instance::getSurfaceArea() const {
 bool Instance::operator==(const Object &object) const {
     const auto obj = dynamic_cast<const Instance *>(&object);
     if (obj == nullptr) return false;
-    if (obj->baseObjectId.objectId == baseObjectId.objectId) {
+    if (obj->baseObjectId == baseObjectId) {
         return obj->transform.elements[0][0] == transform.elements[0][0] &&
                obj->transform.elements[0][1] == transform.elements[0][1] &&
                obj->transform.elements[0][2] == transform.elements[0][2] &&
@@ -652,7 +652,7 @@ bool Instance::operator!=(const Object &object) const {
 }
 
 ObjectCapsule Instance::getCapsule() const {
-    ObjectCapsule capsule{-1, getBoundaries(), getSurfaceArea()};
+    ObjectCapsule capsule{{0}, getBoundaries(), getSurfaceArea()};
     return capsule;
 }
 
