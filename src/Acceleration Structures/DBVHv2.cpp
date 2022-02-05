@@ -1388,8 +1388,6 @@ void DBVHv2::addObjects(DBVHNode &root, const std::vector<Object *> &objects) {
         return;
 
     add(root, objects, 1);
-
-    std::cout << root.surfaceArea << std::endl;
 }
 
 void DBVHv2::removeObjects(DBVHNode &root, const std::vector<Object *> &objects) {
