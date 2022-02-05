@@ -1140,9 +1140,9 @@ namespace {
         }
     }
 
-    bool processTraversalStack(IntersectionInfo &intersectionInfo, const Ray &ray, TraversalContainer *stack,
-                               uint64_t stackPointer) {
+    bool processTraversalStack(IntersectionInfo &intersectionInfo, const Ray &ray, TraversalContainer *stack) {
         bool hit = false;
+        uint64_t stackPointer = 1;
         while (stackPointer != 0) {
             stackPointer--;
             if (stack[stackPointer].distance < intersectionInfo.distance) {
@@ -1165,14 +1165,12 @@ namespace {
         if (root.maxDepthRight >= 64 || root.maxDepthLeft >= 64) {
             std::vector<TraversalContainer> stack(
                     root.maxDepthRight > root.maxDepthLeft ? root.maxDepthRight + 1 : root.maxDepthLeft + 1);
-            uint64_t stackPointer = 1;
             stack[0] = {&root, 0};
-            return processTraversalStack(intersectionInfo, ray, stack.data(), stackPointer);
+            return processTraversalStack(intersectionInfo, ray, stack.data());
         } else {
             TraversalContainer stack[64];
-            uint64_t stackPointer = 1;
             stack[0] = {&root, 0};
-            return processTraversalStack(intersectionInfo, ray, stack, stackPointer);
+            return processTraversalStack(intersectionInfo, ray, stack);
         }
     }
 
@@ -1206,8 +1204,8 @@ namespace {
         return hit;
     }
 
-    bool processTraversalStack(IntersectionInfo &intersectionInfo, const Ray &ray, const DBVHNode **stack,
-                               uint64_t stackPointer) {
+    bool processTraversalStack(IntersectionInfo &intersectionInfo, const Ray &ray, const DBVHNode **stack) {
+        uint64_t stackPointer = 1;
         while (stackPointer != 0) {
             stackPointer--;
 
@@ -1222,14 +1220,12 @@ namespace {
             std::vector<const DBVHNode *> stack(
                     root.maxDepthRight > root.maxDepthLeft ? root.maxDepthRight + 1 :
                     root.maxDepthLeft + 1);
-            uint64_t stackPointer = 1;
             stack[0] = &root;
-            return processTraversalStack(intersectionInfo, ray, stack.data(), stackPointer);
+            return processTraversalStack(intersectionInfo, ray, stack.data());
         } else {
             const DBVHNode *stack[64];
-            uint64_t stackPointer = 1;
             stack[0] = &root;
-            return processTraversalStack(intersectionInfo, ray, stack, stackPointer);
+            return processTraversalStack(intersectionInfo, ray, stack);
         }
     }
 
@@ -1265,7 +1261,8 @@ namespace {
     }
 
     void processTraversalStack(std::vector<IntersectionInfo> &intersectionInfo, const Ray &ray,
-                               const DBVHNode **stack, uint64_t stackPointer) {
+                               const DBVHNode **stack) {
+        uint64_t stackPointer = 1;
         while (stackPointer != 0) {
             stackPointer--;
 
@@ -1282,13 +1279,13 @@ namespace {
             uint64_t stackPointer = 1;
             stack[0] = &root;
 
-            processTraversalStack(intersectionInfo, ray, stack.data(), stackPointer);
+            processTraversalStack(intersectionInfo, ray, stack.data());
         } else {
             const DBVHNode *stack[64];
             uint64_t stackPointer = 1;
             stack[0] = &root;
 
-            processTraversalStack(intersectionInfo, ray, stack, stackPointer);
+            processTraversalStack(intersectionInfo, ray, stack);
         }
         return false;
     }
