@@ -8,6 +8,7 @@
 
 namespace {
     constexpr int numberOfSplittingPlanes = 9;
+    constexpr int numberOfPossibleRotation = 5;
 
     bool isEmpty(const DBVHNode &root) {
         return root.maxDepthLeft == 0;
@@ -266,13 +267,13 @@ namespace {
         return tMax >= 0 && tMin <= tMax;
     }
 
-    void refitChild(DBVHNode &node, DBVHNode &child){
+    void refitChild(DBVHNode &node, DBVHNode &child) {
         refit(node.boundingBox, child.boundingBox);
         node.surfaceArea = child.surfaceArea;
         node.maxDepthRight = std::max(child.maxDepthRight, child.maxDepthLeft) + 1;
     }
 
-    void refitLeaf(DBVHNode &node, Object &leaf){
+    void refitLeaf(DBVHNode &node, Object &leaf) {
         refit(node.boundingBox, leaf.getBoundaries());
         node.surfaceArea = leaf.getSurfaceArea();
         node.maxDepthRight = 1;
@@ -293,328 +294,368 @@ namespace {
         node.surfaceArea += node.boundingBox.getSA();
     }
 
-    bool optimizeSAH(DBVHNode &node) {
-        int bestSAH = 0;
-        double SAHs[5];
+    struct BoxSA {
+        BoundingBox box;
+        double sa = 0;
+    };
 
-        BoundingBox leftBox{}, rightBox{}, leftLeftBox{}, leftRightBox{}, rightLeftBox{}, rightRightBox{};
-        double leftSA = 0, rightSA = 0, leftLeftSA = 0, leftRightSA = 0, rightLeftSA = 0, rightRightSA = 0;
+    struct Rotations {
+        BoxSA left;
+        BoxSA right;
+        BoxSA leftLeft;
+        BoxSA leftRight;
+        BoxSA rightRight;
+        BoxSA rightLeft;
+        BoundingBox swapLeftLeftToRight;
+        BoundingBox swapLeftRightToRight;
+        BoundingBox swapRightLeftToLeft;
+        BoundingBox swapRightRightToLeft;
+    };
 
-        BoundingBox swapLeftLeftToRight{}, swapLeftRightToRight{}, swapRightLeftToLeft{}, swapRightRightToLeft{};
+    BoundingBox createSwapBox(BoundingBox a, BoundingBox b) {
+        return {{std::min(a.minCorner.x, b.minCorner.x), std::min(a.minCorner.y, b.minCorner.y), std::min(a.minCorner.z,
+                                                                                                          b.minCorner.z)},
+                {std::max(a.maxCorner.x, b.maxCorner.x), std::max(a.maxCorner.y, b.maxCorner.y), std::max(a.maxCorner.z,
+                                                                                                          b.maxCorner.z)}};
+    }
 
-        SAHs[0] = node.surfaceArea;
-
+    void fillRotationBoxes(BoxSA &left, BoxSA &right, const DBVHNode &node) {
         if (isNodeLeft(node)) {
-            auto leftNode = node.leftChild.get();
-            leftBox = leftNode->boundingBox;
-            leftSA = leftNode->surfaceArea;
-            if (isNodeLeft(*leftNode)) {
-                leftLeftBox = (leftNode->leftChild)->boundingBox;
-                leftLeftSA = (leftNode->leftChild)->surfaceArea;
-            } else {
-                leftLeftBox = (leftNode->leftLeaf)->getBoundaries();
-                leftLeftSA = (leftNode->leftLeaf)->getSurfaceArea();
-            }
-            if (isNodeRight(*leftNode)) {
-                leftRightBox = (leftNode->rightChild)->boundingBox;
-                leftRightSA = (leftNode->rightChild)->surfaceArea;
-            } else {
-                leftRightBox = (leftNode->rightLeaf)->getBoundaries();
-                leftRightSA = (leftNode->rightLeaf)->getSurfaceArea();
-            }
-
-            if (isNodeRight(node)) {
-                auto rightNode = node.rightChild.get();
-                rightBox = rightNode->boundingBox;
-                rightSA = rightNode->surfaceArea;
-                if (isNodeLeft(*rightNode)) {
-                    rightLeftBox = (rightNode->leftChild)->boundingBox;
-                    rightLeftSA = (rightNode->leftChild)->surfaceArea;
-                } else {
-                    rightLeftBox = (rightNode->leftLeaf)->getBoundaries();
-                    rightLeftSA = (rightNode->leftLeaf)->getSurfaceArea();
-                }
-                if (isNodeRight(*rightNode)) {
-                    rightRightBox = (rightNode->rightChild)->boundingBox;
-                    rightRightSA = (rightNode->rightChild)->surfaceArea;
-                } else {
-                    rightRightBox = (rightNode->rightLeaf)->getBoundaries();
-                    rightRightSA = (rightNode->rightLeaf)->getSurfaceArea();
-                }
-
-                swapLeftLeftToRight = {{std::min(rightBox.minCorner.x, leftRightBox.minCorner.x),
-                                               std::min(rightBox.minCorner.y, leftRightBox.minCorner.y),
-                                               std::min(rightBox.minCorner.z, leftRightBox.minCorner.z)},
-                                       {std::max(rightBox.maxCorner.x, leftRightBox.maxCorner.x),
-                                               std::max(rightBox.maxCorner.y, leftRightBox.maxCorner.y),
-                                               std::max(rightBox.maxCorner.z, leftRightBox.maxCorner.z)}};
-                swapLeftRightToRight = {{std::min(rightBox.minCorner.x, leftLeftBox.minCorner.x),
-                                                std::min(rightBox.minCorner.y, leftLeftBox.minCorner.y),
-                                                std::min(rightBox.minCorner.z, leftLeftBox.minCorner.z)},
-                                        {std::max(rightBox.maxCorner.x, leftLeftBox.maxCorner.x),
-                                                std::max(rightBox.maxCorner.y, leftLeftBox.maxCorner.y),
-                                                std::max(rightBox.maxCorner.z, leftLeftBox.maxCorner.z)}};
-                swapRightLeftToLeft = {{std::min(leftBox.minCorner.x, rightRightBox.minCorner.x),
-                                               std::min(leftBox.minCorner.y, rightRightBox.minCorner.y),
-                                               std::min(leftBox.minCorner.z, rightRightBox.minCorner.z)},
-                                       {std::max(leftBox.maxCorner.x, rightRightBox.maxCorner.x),
-                                               std::max(leftBox.maxCorner.y, rightRightBox.maxCorner.y),
-                                               std::max(leftBox.maxCorner.z, rightRightBox.maxCorner.z)}};
-                swapRightRightToLeft = {{std::min(leftBox.minCorner.x, rightLeftBox.minCorner.x),
-                                                std::min(leftBox.minCorner.y, rightLeftBox.minCorner.y),
-                                                std::min(leftBox.minCorner.z, rightLeftBox.minCorner.z)},
-                                        {std::max(leftBox.maxCorner.x, rightLeftBox.maxCorner.x),
-                                                std::max(leftBox.maxCorner.y, rightLeftBox.maxCorner.y),
-                                                std::max(leftBox.maxCorner.z, rightLeftBox.maxCorner.z)}};
-
-                SAHs[1] =
-                        node.boundingBox.getSA() + leftLeftSA + rightSA + leftRightSA + swapLeftLeftToRight.getSA();
-                SAHs[2] =
-                        node.boundingBox.getSA() + leftRightSA + rightSA + leftLeftSA + swapLeftRightToRight.getSA();
-                SAHs[3] =
-                        node.boundingBox.getSA() + rightLeftSA + leftSA + rightRightSA + swapRightLeftToLeft.getSA();
-                SAHs[4] = node.boundingBox.getSA() + rightRightSA + leftSA + rightLeftSA +
-                          swapRightRightToLeft.getSA();
-            } else {
-                auto rightNode = node.rightLeaf;
-                rightBox = rightNode->getBoundaries();
-                rightSA = rightNode->getSurfaceArea();
-
-                swapLeftLeftToRight = {{std::min(rightBox.minCorner.x, leftRightBox.minCorner.x),
-                                               std::min(rightBox.minCorner.y, leftRightBox.minCorner.y),
-                                               std::min(rightBox.minCorner.z, leftRightBox.minCorner.z)},
-                                       {std::max(rightBox.maxCorner.x, leftRightBox.maxCorner.x),
-                                               std::max(rightBox.maxCorner.y, leftRightBox.maxCorner.y),
-                                               std::max(rightBox.maxCorner.z, leftRightBox.maxCorner.z)}};
-                swapLeftRightToRight = {{std::min(rightBox.minCorner.x, leftLeftBox.minCorner.x),
-                                                std::min(rightBox.minCorner.y, leftLeftBox.minCorner.y),
-                                                std::min(rightBox.minCorner.z, leftLeftBox.minCorner.z)},
-                                        {std::max(rightBox.maxCorner.x, leftLeftBox.maxCorner.x),
-                                                std::max(rightBox.maxCorner.y, leftLeftBox.maxCorner.y),
-                                                std::max(rightBox.maxCorner.z, leftLeftBox.maxCorner.z)}};
-
-                SAHs[1] =
-                        node.boundingBox.getSA() + leftLeftSA + rightSA + leftRightSA + swapLeftLeftToRight.getSA();
-                SAHs[2] =
-                        node.boundingBox.getSA() + leftRightSA + rightSA + leftLeftSA + swapLeftRightToRight.getSA();
-                SAHs[3] = std::numeric_limits<double>::max();
-                SAHs[4] = std::numeric_limits<double>::max();
-            }
+            left.box = (node.leftChild)->boundingBox;
+            left.sa = (node.leftChild)->surfaceArea;
         } else {
-            auto leftNode = node.leftLeaf;
-            leftBox = leftNode->getBoundaries();
-            leftSA = leftNode->getSurfaceArea();
-
-            if (isNodeRight(node)) {
-                auto &rightNode = node.rightChild;
-                rightBox = rightNode->boundingBox;
-                rightSA = rightNode->surfaceArea;
-                if (isNodeLeft(*rightNode)) {
-                    rightLeftBox = (rightNode->leftChild)->boundingBox;
-                    rightLeftSA = (rightNode->leftChild)->surfaceArea;
-                } else {
-                    rightLeftBox = (rightNode->leftLeaf)->getBoundaries();
-                    rightLeftSA = (rightNode->leftLeaf)->getSurfaceArea();
-                }
-                if (isNodeRight(*rightNode)) {
-                    rightRightBox = (rightNode->rightChild)->boundingBox;
-                    rightRightSA = (rightNode->rightChild)->surfaceArea;
-                } else {
-                    rightRightBox = (rightNode->rightLeaf)->getBoundaries();
-                    rightRightSA = (rightNode->rightLeaf)->getSurfaceArea();
-                }
-
-                swapRightLeftToLeft = {{std::min(leftBox.minCorner.x, rightRightBox.minCorner.x),
-                                               std::min(leftBox.minCorner.y, rightRightBox.minCorner.y),
-                                               std::min(leftBox.minCorner.z, rightRightBox.minCorner.z)},
-                                       {std::max(leftBox.maxCorner.x, rightRightBox.maxCorner.x),
-                                               std::max(leftBox.maxCorner.y, rightRightBox.maxCorner.y),
-                                               std::max(leftBox.maxCorner.z, rightRightBox.maxCorner.z)}};
-                swapRightRightToLeft = {{std::min(leftBox.minCorner.x, rightLeftBox.minCorner.x),
-                                                std::min(leftBox.minCorner.y, rightLeftBox.minCorner.y),
-                                                std::min(leftBox.minCorner.z, rightLeftBox.minCorner.z)},
-                                        {std::max(leftBox.maxCorner.x, rightLeftBox.maxCorner.x),
-                                                std::max(leftBox.maxCorner.y, rightLeftBox.maxCorner.y),
-                                                std::max(leftBox.maxCorner.z, rightLeftBox.maxCorner.z)}};
-
-                SAHs[1] = std::numeric_limits<double>::max();
-                SAHs[2] = std::numeric_limits<double>::max();
-                SAHs[3] =
-                        node.boundingBox.getSA() + rightLeftSA + leftSA + rightRightSA + swapRightLeftToLeft.getSA();
-                SAHs[4] = node.boundingBox.getSA() + rightRightSA + leftSA + rightLeftSA +
-                          swapRightRightToLeft.getSA();
-            } else {
-                return false;
-            }
+            left.box = (node.leftLeaf)->getBoundaries();
+            left.sa = (node.leftLeaf)->getSurfaceArea();
         }
+        if (isNodeRight(node)) {
+            right.box = (node.rightChild)->boundingBox;
+            right.sa = (node.rightChild)->surfaceArea;
+        } else {
+            right.box = (node.rightLeaf)->getBoundaries();
+            right.sa = (node.rightLeaf)->getSurfaceArea();
+        }
+    }
 
+    enum Rotation {
+        NoRotation, SwapLeftLeftToRight, SwapLeftRightToRight, SwapRightLeftToLeft, SwapRightRightToLeft
+    };
 
-        if (SAHs[1] < SAHs[0]) {
-            bestSAH = 1;
+    void computeSwapSAHsFull(const DBVHNode &node, double *SAHs, const Rotations &rotations) {
+        SAHs[SwapLeftLeftToRight] =
+                node.boundingBox.getSA() + rotations.leftLeft.sa + rotations.right.sa + rotations.leftRight.sa +
+                rotations.swapLeftLeftToRight.getSA();
+        SAHs[SwapLeftRightToRight] =
+                node.boundingBox.getSA() + rotations.leftRight.sa + rotations.right.sa + rotations.leftLeft.sa +
+                rotations.swapLeftRightToRight.getSA();
+        SAHs[SwapRightLeftToLeft] = node.boundingBox.getSA() + rotations.rightLeft.sa + rotations.left.sa +
+                                    rotations.rightRight.sa + rotations.swapRightLeftToLeft.getSA();
+        SAHs[SwapRightRightToLeft] = node.boundingBox.getSA() + rotations.rightRight.sa + rotations.left.sa +
+                                     rotations.rightLeft.sa + rotations.swapRightRightToLeft.getSA();
+    }
+
+    void computeSwapSAHsLeft(const DBVHNode &node, double *SAHs, const Rotations &rotations) {
+        SAHs[SwapLeftLeftToRight] =
+                node.boundingBox.getSA() + rotations.leftLeft.sa + rotations.right.sa + rotations.leftRight.sa +
+                rotations.swapLeftLeftToRight.getSA();
+        SAHs[SwapLeftRightToRight] =
+                node.boundingBox.getSA() + rotations.leftRight.sa + rotations.right.sa + rotations.leftLeft.sa +
+                rotations.swapLeftRightToRight.getSA();
+        SAHs[SwapRightLeftToLeft] = std::numeric_limits<double>::max();
+        SAHs[SwapRightRightToLeft] = std::numeric_limits<double>::max();
+    }
+
+    void computeSwapSAHsRight(const DBVHNode &node, double *SAHs, const Rotations &rotations) {
+        SAHs[SwapLeftLeftToRight] = std::numeric_limits<double>::max();
+        SAHs[SwapLeftRightToRight] = std::numeric_limits<double>::max();
+        SAHs[SwapRightLeftToLeft] = node.boundingBox.getSA() + rotations.rightLeft.sa + rotations.left.sa +
+                                    rotations.rightRight.sa + rotations.swapRightLeftToLeft.getSA();
+        SAHs[SwapRightRightToLeft] = node.boundingBox.getSA() + rotations.rightRight.sa + rotations.left.sa +
+                                     rotations.rightLeft.sa + rotations.swapRightRightToLeft.getSA();
+    }
+
+    void fillRightRotationBoxes(const DBVHNode &node, Rotations &rotations) {
+        auto rightNode = node.rightChild.get();
+        rotations.right.box = rightNode->boundingBox;
+        rotations.right.sa = rightNode->surfaceArea;
+        fillRotationBoxes(rotations.rightLeft, rotations.rightRight, *rightNode);
+    }
+
+    bool getRotationsRight(DBVHNode &node, double *SAHs, Rotations &rotations) {
+        auto leftNode = node.leftLeaf;
+        rotations.left.box = leftNode->getBoundaries();
+        rotations.left.sa = leftNode->getSurfaceArea();
+
+        if (isNodeRight(node)) {
+            fillRightRotationBoxes(node, rotations);
+
+            rotations.swapRightLeftToLeft = createSwapBox(rotations.left.box, rotations.rightRight.box);
+            rotations.swapRightRightToLeft = createSwapBox(rotations.left.box, rotations.rightLeft.box);
+
+            computeSwapSAHsRight(node, SAHs, rotations);
+            return true;
+        } else {
+            return false;
         }
-        if (SAHs[2] < SAHs[bestSAH]) {
-            bestSAH = 2;
+    }
+
+    void getRotationsLeft(DBVHNode &node, double *SAHs, Rotations &rotations) {
+        auto rightNode = node.rightLeaf;
+        rotations.right.box = rightNode->getBoundaries();
+        rotations.right.sa = rightNode->getSurfaceArea();
+
+        rotations.swapLeftLeftToRight = createSwapBox(rotations.right.box, rotations.leftRight.box);
+        rotations.swapLeftRightToRight = createSwapBox(rotations.right.box, rotations.leftLeft.box);
+
+        computeSwapSAHsLeft(node, SAHs, rotations);
+    }
+
+    void getRotationsFull(const DBVHNode &node, double *SAHs, Rotations &rotations) {
+        fillRightRotationBoxes(node, rotations);
+
+        rotations.swapLeftLeftToRight = createSwapBox(rotations.right.box, rotations.leftRight.box);
+        rotations.swapLeftRightToRight = createSwapBox(rotations.right.box, rotations.leftLeft.box);
+        rotations.swapRightLeftToLeft = createSwapBox(rotations.left.box, rotations.rightRight.box);
+        rotations.swapRightRightToLeft = createSwapBox(rotations.left.box, rotations.rightLeft.box);
+
+        computeSwapSAHsFull(node, SAHs, rotations);
+    }
+
+    void getRotations(DBVHNode &node, double *SAHs, Rotations &rotations) {
+        auto leftNode = node.leftChild.get();
+        rotations.left.box = leftNode->boundingBox;
+        rotations.left.sa = leftNode->surfaceArea;
+        fillRotationBoxes(rotations.leftLeft, rotations.leftRight, *leftNode);
+
+        if (isNodeRight(node)) {
+            getRotationsFull(node, SAHs, rotations);
+        } else {
+            getRotationsLeft(node, SAHs, rotations);
         }
-        if (SAHs[3] < SAHs[bestSAH]) {
-            bestSAH = 3;
+    }
+
+    bool getPossibleRotations(DBVHNode &node, double *SAHs, Rotations rotations) {
+        if (isNodeLeft(node)) {
+            getRotations(node, SAHs, rotations);
+        } else {
+            return getRotationsRight(node, SAHs, rotations);
         }
-        if (SAHs[4] < SAHs[bestSAH]) {
-            bestSAH = 4;
+        return true;
+    }
+
+    Rotation getBestSAH(const double *SAHs) {
+        Rotation bestSAH = NoRotation;
+        if (SAHs[SwapLeftLeftToRight] < SAHs[NoRotation]) {
+            bestSAH = SwapLeftLeftToRight;
         }
+        if (SAHs[SwapLeftRightToRight] < SAHs[bestSAH]) {
+            bestSAH = SwapLeftRightToRight;
+        }
+        if (SAHs[SwapRightLeftToLeft] < SAHs[bestSAH]) {
+            bestSAH = SwapRightLeftToLeft;
+        }
+        if (SAHs[SwapRightRightToLeft] < SAHs[bestSAH]) {
+            bestSAH = SwapRightRightToLeft;
+        }
+        return bestSAH;
+    }
+
+    void setNodeLeftLeft(DBVHNode &node) {
+        if (isNodeLeft(*node.leftChild)) {
+            node.rightChild = std::move((node.leftChild)->leftChild);
+            node.maxDepthRight =
+                    std::max(node.rightChild->maxDepthLeft, node.rightChild->maxDepthRight) + 1;
+        } else {
+            node.rightLeaf = (node.leftChild)->leftLeaf;
+            node.maxDepthRight = 1;
+        }
+    }
+
+    void swapChildLeftLeft(DBVHNode &node, const Rotations &rotations) {
+        auto buffer = std::move(node.rightChild);
+        setNodeLeftLeft(node);
+        (node.leftChild)->boundingBox = rotations.swapLeftLeftToRight;
+        (node.leftChild)->maxDepthLeft = std::max(buffer->maxDepthLeft, buffer->maxDepthRight) + 1;
+        (node.leftChild)->leftChild = std::move(buffer);
+    }
+
+    void swapLeafLeftLeft(DBVHNode &node, const Rotations &rotations) {
+        auto buffer = node.rightLeaf;
+        setNodeLeftLeft(node);
+        (node.leftChild)->boundingBox = rotations.swapLeftLeftToRight;
+        (node.leftChild)->leftLeaf = buffer;
+        (node.leftChild)->maxDepthLeft = 1;
+    }
+
+    void setSurfaceAreaLeftLeft(DBVHNode &node, const Rotations &rotations, const double *SAHs) {
+        node.surfaceArea = SAHs[SwapLeftLeftToRight];
+        (node.leftChild)->surfaceArea =
+                rotations.right.sa + rotations.leftRight.sa + rotations.swapLeftLeftToRight.getSA();
+    }
+
+    void swapLeftLeftToRight(DBVHNode &node, const Rotations &rotations, const double *SAHs) {
+        if (isNodeRight(node)) {
+            swapChildLeftLeft(node, rotations);
+        } else {
+            swapLeafLeftLeft(node, rotations);
+        }
+        setSurfaceAreaLeftLeft(node, rotations, SAHs);
+    }
+
+    void setNodeLeftRight(DBVHNode &node) {
+        if (isNodeRight(*node.leftChild)) {
+            node.rightChild = std::move((node.leftChild)->rightChild);
+            node.maxDepthRight =
+                    std::max(node.rightChild->maxDepthLeft, node.rightChild->maxDepthRight) + 1;
+        } else {
+            node.rightLeaf = (node.leftChild)->rightLeaf;
+            node.maxDepthRight = 1;
+        }
+    }
+
+    void swapChildLeftRight(DBVHNode &node, const Rotations &rotations) {
+        auto buffer = std::move(node.rightChild);
+        setNodeLeftRight(node);
+        (node.leftChild)->boundingBox = rotations.swapLeftRightToRight;
+        (node.leftChild)->maxDepthRight = std::max(buffer->maxDepthLeft, buffer->maxDepthRight) + 1;
+        (node.leftChild)->rightChild = std::move(buffer);
+    }
+
+    void swapLeafLeftRight(DBVHNode &node, const Rotations &rotations) {
+        auto buffer = node.rightLeaf;
+        setNodeLeftRight(node);
+        (node.leftChild)->boundingBox = rotations.swapLeftRightToRight;
+        (node.leftChild)->rightLeaf = buffer;
+        (node.leftChild)->maxDepthRight = 1;
+    }
+
+    void setSurfaceAreaLeftRight(DBVHNode &node, const Rotations &rotations, const double *SAHs) {
+        node.surfaceArea = SAHs[SwapLeftRightToRight];
+        (node.leftChild)->surfaceArea =
+                rotations.right.sa + rotations.leftLeft.sa + rotations.swapLeftRightToRight.getSA();
+    }
+
+    void swapLeftRightToRight(DBVHNode &node, const Rotations &rotations, const double *SAHs) {
+        if (isNodeRight(node)) {
+            swapChildLeftRight(node, rotations);
+        } else {
+            swapLeafLeftRight(node, rotations);
+        }
+        setSurfaceAreaLeftRight(node, rotations, SAHs);
+    }
+
+    void setNodeRightLeft(DBVHNode &node) {
+        if (isNodeLeft(*node.rightChild)) {
+            node.leftChild = std::move((node.rightChild)->leftChild);
+            node.maxDepthLeft = std::max(node.leftChild->maxDepthLeft, node.leftChild->maxDepthRight) + 1;
+        } else {
+            node.leftLeaf = (node.rightChild)->leftLeaf;
+            node.maxDepthLeft = 1;
+        }
+    }
+
+    void swapChildRightLeft(DBVHNode &node, const Rotations &rotations) {
+        auto buffer = std::move(node.leftChild);
+        setNodeRightLeft(node);
+        (node.rightChild)->boundingBox = rotations.swapRightLeftToLeft;
+        (node.rightChild)->maxDepthLeft = std::max(buffer->maxDepthLeft, buffer->maxDepthRight) + 1;
+        (node.rightChild)->leftChild = std::move(buffer);
+    }
+
+    void swapLeafRightLeft(DBVHNode &node, const Rotations &rotations) {
+        auto buffer = node.leftLeaf;
+        setNodeRightLeft(node);
+        (node.rightChild)->boundingBox = rotations.swapRightLeftToLeft;
+        (node.rightChild)->leftLeaf = buffer;
+        (node.rightChild)->maxDepthLeft = 1;
+    }
+
+    void setSurfaceAreaRightLeft(DBVHNode &node, const Rotations &rotations, const double *SAHs) {
+        node.surfaceArea = SAHs[SwapRightLeftToLeft];
+        (node.rightChild)->surfaceArea =
+                rotations.left.sa + rotations.rightRight.sa + rotations.swapRightLeftToLeft.getSA();
+    }
+
+    void swapRightLeft(DBVHNode &node, const Rotations &rotations, const double *SAHs) {
+        if (isNodeLeft(node)) {
+            swapChildRightLeft(node, rotations);
+        } else {
+            swapLeafRightLeft(node, rotations);
+        }
+        setSurfaceAreaRightLeft(node, rotations, SAHs);
+    }
+
+    void setNodeRightRight(DBVHNode &node) {
+        if (isNodeRight(*node.rightChild)) {
+            node.leftChild = std::move((node.rightChild)->rightChild);
+            node.maxDepthLeft = std::max(node.leftChild->maxDepthLeft, node.leftChild->maxDepthRight) + 1;
+        } else {
+            node.leftLeaf = (node.rightChild)->rightLeaf;
+            node.maxDepthLeft = 1;
+        }
+    }
+
+    void swapChildRightRight(DBVHNode &node, const Rotations &rotations) {
+        auto buffer = std::move(node.leftChild);
+        setNodeRightRight(node);
+        (node.rightChild)->boundingBox = rotations.swapRightRightToLeft;
+        (node.rightChild)->maxDepthRight = std::max(buffer->maxDepthLeft, buffer->maxDepthRight) + 1;
+        (node.rightChild)->rightChild = std::move(buffer);
+    }
+
+    void swapLeafRightRight(DBVHNode &node, const Rotations &rotations) {
+        auto buffer = node.leftLeaf;
+        setNodeRightRight(node);
+        (node.rightChild)->boundingBox = rotations.swapRightRightToLeft;
+        (node.rightChild)->rightLeaf = buffer;
+        (node.rightChild)->maxDepthRight = 1;
+    }
+
+    void setSurfaceAreaRightRight(DBVHNode &node, const Rotations &rotations, const double *SAHs) {
+        node.surfaceArea = SAHs[SwapRightRightToLeft];
+        (node.rightChild)->surfaceArea =
+                rotations.left.sa + rotations.rightLeft.sa + rotations.swapRightRightToLeft.getSA();
+    }
+
+    void swapRightRight(DBVHNode &node, const Rotations &rotations, const double *SAHs) {
+        if (isNodeLeft(node)) {
+            swapChildRightRight(node, rotations);
+        } else {
+            swapLeafRightRight(node, rotations);
+        }
+        setSurfaceAreaRightRight(node, rotations, SAHs);
+    }
+
+    bool optimizeSAH(DBVHNode &node) {
+        Rotations rotations;
+        double SAHs[numberOfPossibleRotation];
+
+        if (!getPossibleRotations(node, SAHs, rotations)) return false;
+
+        SAHs[NoRotation] = node.surfaceArea;
+        Rotation bestSAH = getBestSAH(SAHs);
 
         switch (bestSAH) {
-            case 1: {
-                if (isNodeRight(node)) {
-                    auto buffer = std::move(node.rightChild);
-                    if (isNodeLeft(*node.leftChild)) {
-                        node.rightChild = std::move((node.leftChild)->leftChild);
-                        node.maxDepthRight =
-                                std::max(node.rightChild->maxDepthLeft, node.rightChild->maxDepthRight) + 1;
-                    } else {
-                        using namespace std;
-                        node.rightLeaf = (node.leftChild)->leftLeaf;
-                        node.maxDepthRight = 1;
-                    }
-                    (node.leftChild)->boundingBox = swapLeftLeftToRight;
-                    (node.leftChild)->leftChild.reset();
-
-                    (node.leftChild)->maxDepthLeft = std::max(buffer->maxDepthLeft, buffer->maxDepthRight) + 1;
-                    (node.leftChild)->leftChild = std::move(buffer);
-
-
-                    node.surfaceArea = SAHs[1];
-                    (node.leftChild)->surfaceArea = rightSA + leftRightSA + swapLeftLeftToRight.getSA();
-                    return true;
-                } else {
-                    auto buffer = node.rightLeaf;
-                    if (isNodeLeft(*node.leftChild)) {
-                        node.rightChild = std::move((node.leftChild)->leftChild);
-                        node.maxDepthRight =
-                                std::max(node.rightChild->maxDepthLeft, node.rightChild->maxDepthRight) + 1;
-                    } else {
-                        node.rightLeaf = (node.leftChild)->leftLeaf;
-                        node.maxDepthRight = 1;
-                    }
-                    (node.leftChild)->boundingBox = swapLeftLeftToRight;
-                    (node.leftChild)->leftLeaf = buffer;
-                    (node.leftChild)->maxDepthLeft = 1;
-
-                    node.surfaceArea = SAHs[1];
-                    (node.leftChild)->surfaceArea = rightSA + leftRightSA + swapLeftLeftToRight.getSA();
-                    return true;
-                }
-            }
-            case 2: {
-                if (isNodeRight(node)) {
-                    auto buffer = std::move(node.rightChild);
-                    if (isNodeRight(*node.leftChild)) {
-                        node.rightChild = std::move((node.leftChild)->rightChild);
-                        node.maxDepthRight =
-                                std::max(node.rightChild->maxDepthLeft, node.rightChild->maxDepthRight) + 1;
-                    } else {
-                        node.rightLeaf = (node.leftChild)->rightLeaf;
-                        node.maxDepthRight = 1;
-                    }
-                    (node.leftChild)->boundingBox = swapLeftRightToRight;
-                    (node.leftChild)->maxDepthRight = std::max(buffer->maxDepthLeft, buffer->maxDepthRight) + 1;
-                    (node.leftChild)->rightChild = std::move(buffer);
-
-                    node.surfaceArea = SAHs[2];
-                    (node.leftChild)->surfaceArea = rightSA + leftLeftSA + swapLeftRightToRight.getSA();
-                    return true;
-                } else {
-                    auto buffer = node.rightLeaf;
-                    if (isNodeRight(*node.leftChild)) {
-                        node.rightChild = std::move((node.leftChild)->rightChild);
-                        node.maxDepthRight =
-                                std::max(node.rightChild->maxDepthLeft, node.rightChild->maxDepthRight) + 1;
-                    } else {
-                        node.rightLeaf = (node.leftChild)->rightLeaf;
-                        node.maxDepthRight = 1;
-                    }
-                    (node.leftChild)->boundingBox = swapLeftRightToRight;
-                    (node.leftChild)->rightLeaf = buffer;
-                    (node.leftChild)->maxDepthRight = 1;
-
-                    node.surfaceArea = SAHs[2];
-                    (node.leftChild)->surfaceArea = rightSA + leftLeftSA + swapLeftRightToRight.getSA();
-                    return true;
-                }
-            }
-            case 3: {
-                if (isNodeLeft(node)) {
-                    auto buffer = std::move(node.leftChild);
-                    if (isNodeLeft(*node.rightChild)) {
-                        node.leftChild = std::move((node.rightChild)->leftChild);
-                        node.maxDepthLeft = std::max(node.leftChild->maxDepthLeft, node.leftChild->maxDepthRight) + 1;
-                    } else {
-                        node.leftLeaf = (node.rightChild)->leftLeaf;
-                        node.maxDepthLeft = 1;
-                    }
-                    (node.rightChild)->boundingBox = swapRightLeftToLeft;
-                    (node.rightChild)->maxDepthLeft = std::max(buffer->maxDepthLeft, buffer->maxDepthRight) + 1;
-                    (node.rightChild)->leftChild = std::move(buffer);
-
-                    node.surfaceArea = SAHs[3];
-                    (node.rightChild)->surfaceArea = leftSA + rightRightSA + swapRightLeftToLeft.getSA();
-                    return true;
-                } else {
-                    auto buffer = node.leftLeaf;
-                    if (isNodeLeft(*node.rightChild)) {
-                        node.leftChild = std::move((node.rightChild)->leftChild);
-                        node.maxDepthLeft = std::max(node.leftChild->maxDepthLeft, node.leftChild->maxDepthRight) + 1;
-                    } else {
-                        node.leftLeaf = (node.rightChild)->leftLeaf;
-                        node.maxDepthLeft = 1;
-                    }
-                    (node.rightChild)->boundingBox = swapRightLeftToLeft;
-                    (node.rightChild)->leftLeaf = buffer;
-                    (node.rightChild)->maxDepthLeft = 1;
-
-                    node.surfaceArea = SAHs[3];
-                    (node.rightChild)->surfaceArea = leftSA + rightRightSA + swapRightLeftToLeft.getSA();
-                    return true;
-                }
-            }
-            case 4: {
-                if (isNodeLeft(node)) {
-                    auto buffer = std::move(node.leftChild);
-                    if (isNodeRight(*node.rightChild)) {
-                        node.leftChild = std::move((node.rightChild)->rightChild);
-                        node.maxDepthLeft = std::max(node.leftChild->maxDepthLeft, node.leftChild->maxDepthRight) + 1;
-                    } else {
-                        node.leftLeaf = (node.rightChild)->rightLeaf;
-                        node.maxDepthLeft = 1;
-                    }
-                    (node.rightChild)->boundingBox = swapRightRightToLeft;
-                    (node.rightChild)->maxDepthRight = std::max(buffer->maxDepthLeft, buffer->maxDepthRight) + 1;
-                    (node.rightChild)->rightChild = std::move(buffer);
-
-                    node.surfaceArea = SAHs[4];
-                    (node.rightChild)->surfaceArea = leftSA + rightLeftSA + swapRightRightToLeft.getSA();
-                    return true;
-                } else {
-                    auto buffer = node.leftLeaf;
-                    if (isNodeRight(*node.rightChild)) {
-                        node.leftChild = std::move((node.rightChild)->rightChild);
-                        node.maxDepthLeft = std::max(node.leftChild->maxDepthLeft, node.leftChild->maxDepthRight) + 1;
-                    } else {
-                        node.leftLeaf = (node.rightChild)->rightLeaf;
-                        node.maxDepthLeft = 1;
-                    }
-                    (node.rightChild)->boundingBox = swapRightRightToLeft;
-                    (node.rightChild)->rightLeaf = buffer;
-                    (node.rightChild)->maxDepthRight = 1;
-
-                    node.surfaceArea = SAHs[4];
-                    (node.rightChild)->surfaceArea = leftSA + rightLeftSA + swapRightRightToLeft.getSA();
-                    return true;
-                }
-            }
-            default:
-                node.surfaceArea = SAHs[0];
+            case NoRotation:
+                node.surfaceArea = SAHs[NoRotation];
                 return false;
+            case SwapLeftLeftToRight: {
+                swapLeftLeftToRight(node, rotations, SAHs);
+                break;
+            }
+            case SwapLeftRightToRight: {
+                swapLeftRightToRight(node, rotations, SAHs);
+                break;
+            }
+            case SwapRightLeftToLeft: {
+                swapRightLeft(node, rotations, SAHs);
+                break;
+            }
+            case SwapRightRightToLeft: {
+                swapRightRight(node, rotations, SAHs);
+                break;
+            }
         }
+        return true;
     }
 
     std::vector<Vector3D> createSplittingPlanes(DBVHNode &node) {
@@ -1153,14 +1194,14 @@ namespace {
             intersectChild(ray, stack, stackPointer, node->rightChild.get());
         } else {
             // TODO request leaf if missing
-            intersectLeaf(ray, intersectionInfo,*node->rightLeaf, hit);
+            intersectLeaf(ray, intersectionInfo, *node->rightLeaf, hit);
         }
         if (isNodeLeft(*node) && !hit) {
             // TODO request child if missing
             intersectChild(ray, stack, stackPointer, node->leftChild.get());
         } else {
             // TODO request leaf if missing
-            intersectLeaf(ray, intersectionInfo,*node->leftLeaf, hit);
+            intersectLeaf(ray, intersectionInfo, *node->leftLeaf, hit);
         }
         return hit;
     }
@@ -1347,6 +1388,8 @@ void DBVHv2::addObjects(DBVHNode &root, const std::vector<Object *> &objects) {
         return;
 
     add(root, objects, 1);
+
+    std::cout << root.surfaceArea << std::endl;
 }
 
 void DBVHv2::removeObjects(DBVHNode &root, const std::vector<Object *> &objects) {

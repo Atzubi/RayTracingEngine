@@ -1209,7 +1209,7 @@ static void stbi__vertical_flip(void *image, int w, int h, int bytes_per_pixel)
    for (row = 0; row < (h>>1); row++) {
       stbi_uc *row0 = bytes + row*bytes_per_row;
       stbi_uc *row1 = bytes + (h - row - 1)*bytes_per_row;
-      // swap row0 with row1
+      // swapLeftLeftToRight row0 with row1
       size_t bytes_left = bytes_per_row;
       while (bytes_left) {
          size_t bytes_copy = (bytes_left < sizeof(temp)) ? bytes_left : sizeof(temp);
@@ -5962,7 +5962,7 @@ static void *stbi__tga_load(stbi__context *s, int *x, int *y, int *comp, int req
       }
    }
 
-   // swap RGB - if the source data was RGB16, it already is in the right order
+   // swapLeftLeftToRight RGB - if the source data was RGB16, it already is in the right order
    if (tga_comp >= 3 && !tga_rgb16)
    {
       unsigned char* tga_pixel = tga_data;
