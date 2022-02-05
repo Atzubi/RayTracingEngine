@@ -19,8 +19,8 @@ public:
         // TODO
     }
 
-    Shader* clone() override{
-        return new BasicOcclusionShader(*this);
+    std::unique_ptr<OcclusionShader> clone() override{
+        return std::make_unique<BasicOcclusionShader>(*this);
     }
 
     ShaderOutput shade(uint64_t id, PipelineInfo *pipelineInfo, OcclusionShaderInput *shaderInput, std::vector<ShaderResource *> *shaderResource,

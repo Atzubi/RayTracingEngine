@@ -34,8 +34,8 @@ struct PipelineDescription {
     Vector3D cameraDirection;
     Vector3D cameraUp;
     std::vector<ObjectId> objectIDs;
-    std::vector<Matrix4x4 *> objectTransformations;
-    std::vector<ObjectParameter *> objectParameters;
+    std::vector<Matrix4x4> objectTransformations;
+    std::vector<ObjectParameter> objectParameters;
     std::vector<RayGeneratorShaderResourcePackage> rayGeneratorShaders;
     std::vector<HitShaderResourcePackage> hitShaders;
     std::vector<OcclusionShaderResourcePackage> occlusionShaders;

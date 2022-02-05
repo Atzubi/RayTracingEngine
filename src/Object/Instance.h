@@ -23,9 +23,9 @@ private:
     Matrix4x4 inverseTransform{};
 
 public:
-    explicit Instance(EngineNode *node, ObjectCapsule *objectCapsule);
+    explicit Instance(EngineNode &node, ObjectCapsule &objectCapsule);
 
-    void applyTransform(Matrix4x4 *newTransform);
+    void applyTransform(Matrix4x4 &newTransform);
 
     void invalidateCache();
 

@@ -92,7 +92,7 @@ class PipelineImplement {
 private:
     EngineNode *engineNode;
 
-    PipelineInfo *pipelineInfo;
+    PipelineInfo pipelineInfo;
 
     std::unordered_map<RayGeneratorShaderId, RayGeneratorShaderContainer> rayGeneratorShaders;
     std::unordered_map<OcclusionShaderId, OcclusionShaderContainer> occlusionShaders;
@@ -103,7 +103,7 @@ private:
 
     std::unique_ptr<DBVHNode> geometry;
 
-    Texture *result;
+    std::unique_ptr<Texture> result;
 
 public:
     PipelineImplement(EngineNode *engine, int width, int height, Vector3D *cameraPosition, Vector3D *cameraDirection,
@@ -155,7 +155,7 @@ public:
 
     DBVHNode *getGeometry();
 
-    Object *getGeometryAsObject();
+    std::unique_ptr<Object> getGeometryAsObject();
 
     void setEngine(EngineNode *engine);
 };

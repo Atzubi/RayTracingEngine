@@ -8,174 +8,174 @@
 #include "Engine Node/EngineNode.h"
 
 
-void createAABB(BoundingBox *aabb, Matrix4x4 *transform) {
+void createAABB(BoundingBox &aabb, const Matrix4x4 &transform) {
     // apply transformation to box
-    Vector3D mid = {(aabb->maxCorner.x + aabb->minCorner.x) / 2,
-                    (aabb->maxCorner.y + aabb->minCorner.y) / 2,
-                    (aabb->maxCorner.z + aabb->minCorner.z) / 2};
+    Vector3D mid = {(aabb.maxCorner.x + aabb.minCorner.x) / 2,
+                    (aabb.maxCorner.y + aabb.minCorner.y) / 2,
+                    (aabb.maxCorner.z + aabb.minCorner.z) / 2};
 
-    aabb->minCorner.x -= mid.x;
-    aabb->minCorner.y -= mid.y;
-    aabb->minCorner.z -= mid.z;
-    aabb->maxCorner.x -= mid.x;
-    aabb->maxCorner.y -= mid.y;
-    aabb->maxCorner.z -= mid.z;
+    aabb.minCorner.x -= mid.x;
+    aabb.minCorner.y -= mid.y;
+    aabb.minCorner.z -= mid.z;
+    aabb.maxCorner.x -= mid.x;
+    aabb.maxCorner.y -= mid.y;
+    aabb.maxCorner.z -= mid.z;
 
-    Vector3D frontBottomLeft = aabb->minCorner;
-    Vector3D frontBottomRight = {aabb->maxCorner.x, aabb->minCorner.y, aabb->minCorner.z};
-    Vector3D frontTopLeft = {aabb->minCorner.x, aabb->maxCorner.y, aabb->minCorner.z};
-    Vector3D frontTopRight = {aabb->maxCorner.x, aabb->maxCorner.y, aabb->minCorner.z};
-    Vector3D backBottomLeft = {aabb->minCorner.x, aabb->minCorner.y, aabb->maxCorner.z};
-    Vector3D backBottomRight = {aabb->maxCorner.x, aabb->minCorner.y, aabb->maxCorner.z};
-    Vector3D backTopLeft = {aabb->minCorner.x, aabb->maxCorner.y, aabb->maxCorner.z};
-    Vector3D backTopRight = aabb->maxCorner;
+    Vector3D frontBottomLeft = aabb.minCorner;
+    Vector3D frontBottomRight = {aabb.maxCorner.x, aabb.minCorner.y, aabb.minCorner.z};
+    Vector3D frontTopLeft = {aabb.minCorner.x, aabb.maxCorner.y, aabb.minCorner.z};
+    Vector3D frontTopRight = {aabb.maxCorner.x, aabb.maxCorner.y, aabb.minCorner.z};
+    Vector3D backBottomLeft = {aabb.minCorner.x, aabb.minCorner.y, aabb.maxCorner.z};
+    Vector3D backBottomRight = {aabb.maxCorner.x, aabb.minCorner.y, aabb.maxCorner.z};
+    Vector3D backTopLeft = {aabb.minCorner.x, aabb.maxCorner.y, aabb.maxCorner.z};
+    Vector3D backTopRight = aabb.maxCorner;
 
     Vector3D buffer{};
 
     buffer = frontBottomLeft;
-    frontBottomLeft.x = transform->elements[0][0] * buffer.x +
-                        transform->elements[0][1] * buffer.y +
-                        transform->elements[0][2] * buffer.z +
-                        transform->elements[0][3];
-    frontBottomLeft.y = transform->elements[1][0] * buffer.x +
-                        transform->elements[1][1] * buffer.y +
-                        transform->elements[1][2] * buffer.z +
-                        transform->elements[1][3];
-    frontBottomLeft.z = transform->elements[2][0] * buffer.x +
-                        transform->elements[2][1] * buffer.y +
-                        transform->elements[2][2] * buffer.z +
-                        transform->elements[2][3];
+    frontBottomLeft.x = transform.elements[0][0] * buffer.x +
+                        transform.elements[0][1] * buffer.y +
+                        transform.elements[0][2] * buffer.z +
+                        transform.elements[0][3];
+    frontBottomLeft.y = transform.elements[1][0] * buffer.x +
+                        transform.elements[1][1] * buffer.y +
+                        transform.elements[1][2] * buffer.z +
+                        transform.elements[1][3];
+    frontBottomLeft.z = transform.elements[2][0] * buffer.x +
+                        transform.elements[2][1] * buffer.y +
+                        transform.elements[2][2] * buffer.z +
+                        transform.elements[2][3];
     buffer = frontBottomRight;
-    frontBottomRight.x = transform->elements[0][0] * buffer.x +
-                         transform->elements[0][1] * buffer.y +
-                         transform->elements[0][2] * buffer.z +
-                         transform->elements[0][3];
-    frontBottomRight.y = transform->elements[1][0] * buffer.x +
-                         transform->elements[1][1] * buffer.y +
-                         transform->elements[1][2] * buffer.z +
-                         transform->elements[1][3];
-    frontBottomRight.z = transform->elements[2][0] * buffer.x +
-                         transform->elements[2][1] * buffer.y +
-                         transform->elements[2][2] * buffer.z +
-                         transform->elements[2][3];
+    frontBottomRight.x = transform.elements[0][0] * buffer.x +
+                         transform.elements[0][1] * buffer.y +
+                         transform.elements[0][2] * buffer.z +
+                         transform.elements[0][3];
+    frontBottomRight.y = transform.elements[1][0] * buffer.x +
+                         transform.elements[1][1] * buffer.y +
+                         transform.elements[1][2] * buffer.z +
+                         transform.elements[1][3];
+    frontBottomRight.z = transform.elements[2][0] * buffer.x +
+                         transform.elements[2][1] * buffer.y +
+                         transform.elements[2][2] * buffer.z +
+                         transform.elements[2][3];
     buffer = frontTopLeft;
-    frontTopLeft.x = transform->elements[0][0] * buffer.x +
-                     transform->elements[0][1] * buffer.y +
-                     transform->elements[0][2] * buffer.z +
-                     transform->elements[0][3];
-    frontTopLeft.y = transform->elements[1][0] * buffer.x +
-                     transform->elements[1][1] * buffer.y +
-                     transform->elements[1][2] * buffer.z +
-                     transform->elements[1][3];
-    frontTopLeft.z = transform->elements[2][0] * buffer.x +
-                     transform->elements[2][1] * buffer.y +
-                     transform->elements[2][2] * buffer.z +
-                     transform->elements[2][3];
+    frontTopLeft.x = transform.elements[0][0] * buffer.x +
+                     transform.elements[0][1] * buffer.y +
+                     transform.elements[0][2] * buffer.z +
+                     transform.elements[0][3];
+    frontTopLeft.y = transform.elements[1][0] * buffer.x +
+                     transform.elements[1][1] * buffer.y +
+                     transform.elements[1][2] * buffer.z +
+                     transform.elements[1][3];
+    frontTopLeft.z = transform.elements[2][0] * buffer.x +
+                     transform.elements[2][1] * buffer.y +
+                     transform.elements[2][2] * buffer.z +
+                     transform.elements[2][3];
     buffer = frontTopRight;
-    frontTopRight.x = transform->elements[0][0] * buffer.x +
-                      transform->elements[0][1] * buffer.y +
-                      transform->elements[0][2] * buffer.z +
-                      transform->elements[0][3];
-    frontTopRight.y = transform->elements[1][0] * buffer.x +
-                      transform->elements[1][1] * buffer.y +
-                      transform->elements[1][2] * buffer.z +
-                      transform->elements[1][3];
-    frontTopRight.z = transform->elements[2][0] * buffer.x +
-                      transform->elements[2][1] * buffer.y +
-                      transform->elements[2][2] * buffer.z +
-                      transform->elements[2][3];
+    frontTopRight.x = transform.elements[0][0] * buffer.x +
+                      transform.elements[0][1] * buffer.y +
+                      transform.elements[0][2] * buffer.z +
+                      transform.elements[0][3];
+    frontTopRight.y = transform.elements[1][0] * buffer.x +
+                      transform.elements[1][1] * buffer.y +
+                      transform.elements[1][2] * buffer.z +
+                      transform.elements[1][3];
+    frontTopRight.z = transform.elements[2][0] * buffer.x +
+                      transform.elements[2][1] * buffer.y +
+                      transform.elements[2][2] * buffer.z +
+                      transform.elements[2][3];
     buffer = backBottomLeft;
-    backBottomLeft.x = transform->elements[0][0] * buffer.x +
-                       transform->elements[0][1] * buffer.y +
-                       transform->elements[0][2] * buffer.z +
-                       transform->elements[0][3];
-    backBottomLeft.y = transform->elements[1][0] * buffer.x +
-                       transform->elements[1][1] * buffer.y +
-                       transform->elements[1][2] * buffer.z +
-                       transform->elements[1][3];
-    backBottomLeft.z = transform->elements[2][0] * buffer.x +
-                       transform->elements[2][1] * buffer.y +
-                       transform->elements[2][2] * buffer.z +
-                       transform->elements[2][3];
+    backBottomLeft.x = transform.elements[0][0] * buffer.x +
+                       transform.elements[0][1] * buffer.y +
+                       transform.elements[0][2] * buffer.z +
+                       transform.elements[0][3];
+    backBottomLeft.y = transform.elements[1][0] * buffer.x +
+                       transform.elements[1][1] * buffer.y +
+                       transform.elements[1][2] * buffer.z +
+                       transform.elements[1][3];
+    backBottomLeft.z = transform.elements[2][0] * buffer.x +
+                       transform.elements[2][1] * buffer.y +
+                       transform.elements[2][2] * buffer.z +
+                       transform.elements[2][3];
     buffer = backBottomRight;
-    backBottomRight.x = transform->elements[0][0] * buffer.x +
-                        transform->elements[0][1] * buffer.y +
-                        transform->elements[0][2] * buffer.z +
-                        transform->elements[0][3];
-    backBottomRight.y = transform->elements[1][0] * buffer.x +
-                        transform->elements[1][1] * buffer.y +
-                        transform->elements[1][2] * buffer.z +
-                        transform->elements[1][3];
-    backBottomRight.z = transform->elements[2][0] * buffer.x +
-                        transform->elements[2][1] * buffer.y +
-                        transform->elements[2][2] * buffer.z +
-                        transform->elements[2][3];
+    backBottomRight.x = transform.elements[0][0] * buffer.x +
+                        transform.elements[0][1] * buffer.y +
+                        transform.elements[0][2] * buffer.z +
+                        transform.elements[0][3];
+    backBottomRight.y = transform.elements[1][0] * buffer.x +
+                        transform.elements[1][1] * buffer.y +
+                        transform.elements[1][2] * buffer.z +
+                        transform.elements[1][3];
+    backBottomRight.z = transform.elements[2][0] * buffer.x +
+                        transform.elements[2][1] * buffer.y +
+                        transform.elements[2][2] * buffer.z +
+                        transform.elements[2][3];
     buffer = backTopLeft;
-    backTopLeft.x = transform->elements[0][0] * buffer.x +
-                    transform->elements[0][1] * buffer.y +
-                    transform->elements[0][2] * buffer.z +
-                    transform->elements[0][3];
-    backTopLeft.y = transform->elements[1][0] * buffer.x +
-                    transform->elements[1][1] * buffer.y +
-                    transform->elements[1][2] * buffer.z +
-                    transform->elements[1][3];
-    backTopLeft.z = transform->elements[2][0] * buffer.x +
-                    transform->elements[2][1] * buffer.y +
-                    transform->elements[2][2] * buffer.z +
-                    transform->elements[2][3];
+    backTopLeft.x = transform.elements[0][0] * buffer.x +
+                    transform.elements[0][1] * buffer.y +
+                    transform.elements[0][2] * buffer.z +
+                    transform.elements[0][3];
+    backTopLeft.y = transform.elements[1][0] * buffer.x +
+                    transform.elements[1][1] * buffer.y +
+                    transform.elements[1][2] * buffer.z +
+                    transform.elements[1][3];
+    backTopLeft.z = transform.elements[2][0] * buffer.x +
+                    transform.elements[2][1] * buffer.y +
+                    transform.elements[2][2] * buffer.z +
+                    transform.elements[2][3];
     buffer = backTopRight;
-    backTopRight.x = transform->elements[0][0] * buffer.x +
-                     transform->elements[0][1] * buffer.y +
-                     transform->elements[0][2] * buffer.z +
-                     transform->elements[0][3];
-    backTopRight.y = transform->elements[1][0] * buffer.x +
-                     transform->elements[1][1] * buffer.y +
-                     transform->elements[1][2] * buffer.z +
-                     transform->elements[1][3];
-    backTopRight.z = transform->elements[2][0] * buffer.x +
-                     transform->elements[2][1] * buffer.y +
-                     transform->elements[2][2] * buffer.z +
-                     transform->elements[2][3];
+    backTopRight.x = transform.elements[0][0] * buffer.x +
+                     transform.elements[0][1] * buffer.y +
+                     transform.elements[0][2] * buffer.z +
+                     transform.elements[0][3];
+    backTopRight.y = transform.elements[1][0] * buffer.x +
+                     transform.elements[1][1] * buffer.y +
+                     transform.elements[1][2] * buffer.z +
+                     transform.elements[1][3];
+    backTopRight.z = transform.elements[2][0] * buffer.x +
+                     transform.elements[2][1] * buffer.y +
+                     transform.elements[2][2] * buffer.z +
+                     transform.elements[2][3];
 
-    aabb->minCorner.x = std::min(std::min(std::min(std::min(
+    aabb.minCorner.x = std::min(std::min(std::min(std::min(
             std::min(std::min(std::min(backTopRight.x, backTopLeft.x), backBottomRight.x), backBottomLeft.x),
             frontTopRight.x), frontTopLeft.x), frontBottomRight.x), frontBottomLeft.x);
-    aabb->minCorner.y = std::min(std::min(std::min(std::min(
+    aabb.minCorner.y = std::min(std::min(std::min(std::min(
             std::min(std::min(std::min(backTopRight.y, backTopLeft.y), backBottomRight.y), backBottomLeft.y),
             frontTopRight.y), frontTopLeft.y), frontBottomRight.y), frontBottomLeft.y);
-    aabb->minCorner.z = std::min(std::min(std::min(std::min(
+    aabb.minCorner.z = std::min(std::min(std::min(std::min(
             std::min(std::min(std::min(backTopRight.z, backTopLeft.z), backBottomRight.z), backBottomLeft.z),
             frontTopRight.z), frontTopLeft.z), frontBottomRight.z), frontBottomLeft.z);
-    aabb->maxCorner.x = std::max(std::max(std::max(std::max(
+    aabb.maxCorner.x = std::max(std::max(std::max(std::max(
             std::max(std::max(std::max(backTopRight.x, backTopLeft.x), backBottomRight.x), backBottomLeft.x),
             frontTopRight.x), frontTopLeft.x), frontBottomRight.x), frontBottomLeft.x);
-    aabb->maxCorner.y = std::max(std::max(std::max(std::max(
+    aabb.maxCorner.y = std::max(std::max(std::max(std::max(
             std::max(std::max(std::max(backTopRight.y, backTopLeft.y), backBottomRight.y), backBottomLeft.y),
             frontTopRight.y), frontTopLeft.y), frontBottomRight.y), frontBottomLeft.y);
-    aabb->maxCorner.z = std::max(std::max(std::max(std::max(
+    aabb.maxCorner.z = std::max(std::max(std::max(std::max(
             std::max(std::max(std::max(backTopRight.z, backTopLeft.z), backBottomRight.z), backBottomLeft.z),
             frontTopRight.z), frontTopLeft.z), frontBottomRight.z), frontBottomLeft.z);
 
-    aabb->minCorner.x += mid.x;
-    aabb->minCorner.y += mid.y;
-    aabb->minCorner.z += mid.z;
-    aabb->maxCorner.x += mid.x;
-    aabb->maxCorner.y += mid.y;
-    aabb->maxCorner.z += mid.z;
+    aabb.minCorner.x += mid.x;
+    aabb.minCorner.y += mid.y;
+    aabb.minCorner.z += mid.z;
+    aabb.maxCorner.x += mid.x;
+    aabb.maxCorner.y += mid.y;
+    aabb.maxCorner.z += mid.z;
 }
 
-Instance::Instance(EngineNode *node, ObjectCapsule *objectCapsule) : baseObjectId(objectCapsule->id) {
-    engineNode = node;
+Instance::Instance(EngineNode &node, ObjectCapsule &objectCapsule) : baseObjectId(objectCapsule.id) {
+    engineNode = &node;
     objectCached = false;
     objectCache = nullptr;
-    cost = objectCapsule->cost;
-    boundingBox = objectCapsule->boundingBox;
+    cost = objectCapsule.cost;
+    boundingBox = objectCapsule.boundingBox;
     transform = Matrix4x4::getIdentity();
     inverseTransform = Matrix4x4::getIdentity();
 }
 
-void Instance::applyTransform(Matrix4x4 *newTransform) {
-    createAABB(&boundingBox, newTransform);
+void Instance::applyTransform(Matrix4x4 &newTransform) {
+    createAABB(boundingBox, newTransform);
     transform.multiplyBy(newTransform);
     inverseTransform = transform.getInverse();
 }

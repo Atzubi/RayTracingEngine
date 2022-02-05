@@ -41,7 +41,7 @@ public:
      * @param pipelineDescription   Describes the pipeline to be created.
      * @return                      An id for referencing the pipeline after creation.
      */
-    PipelineId createPipeline(PipelineDescription *pipelineDescription);
+    PipelineId createPipeline(PipelineDescription &pipelineDescription);
 
     /**
      * Updates a pipelines virtual camera description.
@@ -93,8 +93,8 @@ public:
      * @param instanceIDs       Contains the resulting object instance ids.
      * @return                  True if the objects could successfully be bound to the pipeline, false otherwise.
      */
-    bool bindGeometryToPipeline(PipelineId pipelineId, std::vector<ObjectId> *objectIDs, std::vector<Matrix4x4> *transforms,
-                                std::vector<ObjectParameter> *objectParameters, std::vector<InstanceId> *instanceIDs);
+    bool bindGeometryToPipeline(PipelineId pipelineId, std::vector<ObjectId> &objectIDs, std::vector<Matrix4x4> &transforms,
+                                std::vector<ObjectParameter> &objectParameters, std::vector<InstanceId> &instanceIDs);
 
     /**
      * Binds a shader with its resources to a pipeline.
@@ -103,11 +103,11 @@ public:
      * @param shaderResourceIds Vector of resource ids.
      * @return                  True if the shader could successfully be bound to the pipeline, false otherwise.
      */
-    bool bindShaderToPipeline(PipelineId pipelineId, RayGeneratorShaderId shaderId, std::vector<ShaderResourceId> *shaderResourceIds);
-    bool bindShaderToPipeline(PipelineId pipelineId, HitShaderId shaderId, std::vector<ShaderResourceId> *shaderResourceIds);
-    bool bindShaderToPipeline(PipelineId pipelineId, OcclusionShaderId shaderId, std::vector<ShaderResourceId> *shaderResourceIds);
-    bool bindShaderToPipeline(PipelineId pipelineId, PierceShaderId shaderId, std::vector<ShaderResourceId> *shaderResourceIds);
-    bool bindShaderToPipeline(PipelineId pipelineId, MissShaderId shaderId, std::vector<ShaderResourceId> *shaderResourceIds);
+    bool bindShaderToPipeline(PipelineId pipelineId, RayGeneratorShaderId shaderId, std::vector<ShaderResourceId> &shaderResourceIds);
+    bool bindShaderToPipeline(PipelineId pipelineId, HitShaderId shaderId, std::vector<ShaderResourceId> &shaderResourceIds);
+    bool bindShaderToPipeline(PipelineId pipelineId, OcclusionShaderId shaderId, std::vector<ShaderResourceId> &shaderResourceIds);
+    bool bindShaderToPipeline(PipelineId pipelineId, PierceShaderId shaderId, std::vector<ShaderResourceId> &shaderResourceIds);
+    bool bindShaderToPipeline(PipelineId pipelineId, MissShaderId shaderId, std::vector<ShaderResourceId> &shaderResourceIds);
 
     /**
      * Updates object instances within a pipeline.
@@ -117,9 +117,9 @@ public:
      * @param objectParameters  New additional parameters for the object instances.
      * @return                  True if the object instances could successfully be updated, false otherwise.
      */
-    bool updatePipelineObjects(PipelineId pipelineId, std::vector<InstanceId> *objectInstanceIDs,
-                               std::vector<Matrix4x4 *> *transforms,
-                               std::vector<ObjectParameter *> *objectParameters);
+    bool updatePipelineObjects(PipelineId pipelineId, std::vector<InstanceId> &objectInstanceIDs,
+                               std::vector<Matrix4x4> &transforms,
+                               std::vector<ObjectParameter> &objectParameters);
 
     /**
      * Updates Shaders within a pipeline.
@@ -128,11 +128,11 @@ public:
      * @param shaderResourceIds New resource ids.
      * @return                  True if the shader could successfully be updated, false otherwise.
      */
-    bool updatePipelineShader(PipelineId pipelineId, RayGeneratorShaderId shaderId, std::vector<ShaderResourceId> *shaderResourceIds);
-    bool updatePipelineShader(PipelineId pipelineId, HitShaderId shaderId, std::vector<ShaderResourceId> *shaderResourceIds);
-    bool updatePipelineShader(PipelineId pipelineId, OcclusionShaderId shaderId, std::vector<ShaderResourceId> *shaderResourceIds);
-    bool updatePipelineShader(PipelineId pipelineId, PierceShaderId shaderId, std::vector<ShaderResourceId> *shaderResourceIds);
-    bool updatePipelineShader(PipelineId pipelineId, MissShaderId shaderId, std::vector<ShaderResourceId> *shaderResourceIds);
+    bool updatePipelineShader(PipelineId pipelineId, RayGeneratorShaderId shaderId, std::vector<ShaderResourceId> &shaderResourceIds);
+    bool updatePipelineShader(PipelineId pipelineId, HitShaderId shaderId, std::vector<ShaderResourceId> &shaderResourceIds);
+    bool updatePipelineShader(PipelineId pipelineId, OcclusionShaderId shaderId, std::vector<ShaderResourceId> &shaderResourceIds);
+    bool updatePipelineShader(PipelineId pipelineId, PierceShaderId shaderId, std::vector<ShaderResourceId> &shaderResourceIds);
+    bool updatePipelineShader(PipelineId pipelineId, MissShaderId shaderId, std::vector<ShaderResourceId> &shaderResourceIds);
 
     /**
      * Removes an object instance from a pipeline.
@@ -159,7 +159,7 @@ public:
      * @param object    Pointer to the object that is being added.
      * @return          Returns the object id.
      */
-    ObjectId addObject(Object *object);
+    ObjectId addObject(Object &object);
 
     /**
      * Removes and object from the engines object pool.
@@ -174,42 +174,42 @@ public:
      * @param object    New object.
      * @return          True if the object could be updated, false otherwise.
      */
-    bool updateObject(ObjectId id, Object *object);
+    bool updateObject(ObjectId id, Object &object);
 
     /**
      * Adds a shader to the engines shader pool.
      * @param shader    Shader that will be added.
      * @return          Id of the shader for referencing it within the engine.
      */
-    HitShaderId addShader(HitShader *shader);
+    HitShaderId addShader(HitShader &shader);
 
     /**
      * Adds a shader to the engines shader pool.
      * @param shader    Shader that will be added.
      * @return          Id of the shader for referencing it within the engine.
      */
-    MissShaderId addShader(MissShader *shader);
+    MissShaderId addShader(MissShader &shader);
 
     /**
      * Adds a shader to the engines shader pool.
      * @param shader    Shader that will be added.
      * @return          Id of the shader for referencing it within the engine.
      */
-    OcclusionShaderId addShader(OcclusionShader *shader);
+    OcclusionShaderId addShader(OcclusionShader &shader);
 
     /**
      * Adds a shader to the engines shader pool.
      * @param shader    Shader that will be added.
      * @return          Id of the shader for referencing it within the engine.
      */
-    PierceShaderId addShader(PierceShader *shader);
+    PierceShaderId addShader(PierceShader &shader);
 
     /**
      * Adds a shader to the engines shader pool.
      * @param shader    Shader that will be added.
      * @return          Id of the shader for referencing it within the engine.
      */
-    RayGeneratorShaderId addShader(RayGeneratorShader *shader);
+    RayGeneratorShaderId addShader(RayGeneratorShader &shader);
 
     /**
      * Removes a shader from the engines shader pool.
@@ -227,7 +227,7 @@ public:
      * @param resource  Shader resource.
      * @return          Id of the shader resource for referencing it within the engine.
      */
-    ShaderResourceId addShaderResource(ShaderResource *resource);
+    ShaderResourceId addShaderResource(ShaderResource &resource);
 
     /**
      * Removes a shader resource from the engines pool.

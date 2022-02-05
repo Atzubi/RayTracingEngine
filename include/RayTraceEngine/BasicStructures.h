@@ -8,6 +8,7 @@
 #include <iostream>
 #include <string>
 #include <limits>
+#include <utility>
 
 /**
  * Contains x, y and z coordinates representing a vector in 3 dimensions.
@@ -70,13 +71,13 @@ struct Matrix4x4 {
      * Multiplies another matrix with this matrix. Stores the result in the current matrix.
      * @param matrix    Another matrix.
      */
-    void multiplyBy(Matrix4x4 *matrix) {
+    void multiplyBy(const Matrix4x4 &matrix) {
         double e[4][4];
         for (int row = 0; row < 4; row++) {
             for (int column = 0; column < 4; column++) {
                 e[row][column] = 0;
                 for (int index = 0; index < 4; index++) {
-                    e[row][column] += elements[row][index] * matrix->elements[index][column];
+                    e[row][column] += elements[row][index] * matrix.elements[index][column];
                 }
             }
         }
@@ -243,7 +244,7 @@ struct Texture {
     std::string name;
     int w;
     int h;
-    unsigned char *image;
+    std::vector<unsigned char> image;
 };
 
 /**

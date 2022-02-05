@@ -54,9 +54,15 @@ int main() {
         material.map_Ka.name = m.MeshMaterial.map_Ka;
         material.map_Kd.name = m.MeshMaterial.map_Kd;
         // load the texture using stbi
-        material.map_Kd.image = stbi_load(("../Data/Basketball/" + material.map_Kd.name).c_str(),
-                                           &(material.map_Kd.w), &(material.map_Kd.h), &comp,
-                                           STBI_rgb);
+        auto texture = stbi_load(("../Data/Basketball/" + material.map_Kd.name).c_str(),
+                                 &(material.map_Kd.w), &(material.map_Kd.h), &comp,
+                                 STBI_rgb);
+        if(texture) {
+            material.map_Kd.image.reserve(comp * material.map_Kd.w * material.map_Kd.h);
+            for (int i = 0; i < comp * material.map_Kd.w * material.map_Kd.h; i++) {
+                material.map_Kd.image.push_back(texture[i]);
+            }
+        }
         material.map_Ks.name = m.MeshMaterial.map_Ks;
         material.map_Ns.name = m.MeshMaterial.map_Ns;
         material.map_d.name = m.MeshMaterial.map_d;
@@ -84,7 +90,7 @@ int main() {
         TriangleMeshObject triangleMeshObject(&vertices, &indices, &material);
 
         // add the object to engine
-        auto id = rayEngine.addObject(&triangleMeshObject);
+        auto id = rayEngine.addObject(triangleMeshObject);
 
         // add the id to our referencing ids
         objectIDs.push_back(id);
@@ -97,13 +103,13 @@ int main() {
     BasicHitShader hitShader;
 
     // add hit shader to the engine, id can be used to reference to the shader within the engine
-    auto hitShaderID = rayEngine.addShader(&hitShader);
+    auto hitShaderID = rayEngine.addShader(hitShader);
 
     // use basic ray generator shader prefab
     BasicRayGeneratorShader rayGeneratorShader;
 
     // add ray generator shader to the engine
-    auto rayGeneratorShaderID = rayEngine.addShader(&rayGeneratorShader);
+    auto rayGeneratorShaderID = rayEngine.addShader(rayGeneratorShader);
 
     // ================================================================================================================
 
@@ -114,11 +120,10 @@ int main() {
     std::vector<InstanceId> instanceIDs;
 
     // instanced objects have their own transformation, create one for each instance
-    std::vector<Matrix4x4 *> transforms;
+    std::vector<Matrix4x4> transforms;
     for (int i = 0; i < objectIDs.size(); i++) {
         // identity matrix, no transformation
-        auto *transform = new Matrix4x4();
-        *transform = Matrix4x4::getIdentity();
+        Matrix4x4 transform = Matrix4x4::getIdentity();
 
         transforms.push_back(transform);
     }
@@ -151,7 +156,7 @@ int main() {
     pipelineDescription.hitShaders.push_back({hitShaderID});
 
     // add pipeline to the engine
-    auto pipelineID = rayEngine.createPipeline(&pipelineDescription);
+    auto pipelineID = rayEngine.createPipeline(pipelineDescription);
 
     // ================================================================================================================
 
@@ -163,7 +168,7 @@ int main() {
 
     // create image container for sfml
     int channelCount = 4;
-    auto *pixels = new sf::Uint8[resolutionX * resolutionY * channelCount];
+    std::vector<sf::Uint8> pixels(resolutionX * resolutionY * channelCount);
 
     int fullOpacity = 255;
 
@@ -183,7 +188,7 @@ int main() {
 
     // create image
     sf::Image image;
-    image.create(resolutionX, resolutionY, pixels);
+    image.create(resolutionX, resolutionY, pixels.data());
 
     // create texture from image
     sf::Texture tex;
@@ -207,13 +212,6 @@ int main() {
             }
         }
     }
-
-    // cleanup
-    for (auto transform: transforms) {
-        delete transform;
-    }
-
-    delete[] pixels;
 
     return 0;
 }

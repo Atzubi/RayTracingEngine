@@ -21,8 +21,8 @@ public:
 
     }
 
-    Shader *clone() override {
-        return new BasicRayGeneratorShader(*this);
+    std::unique_ptr<RayGeneratorShader> clone() override {
+        return std::make_unique<BasicRayGeneratorShader>(*this);
     }
 
     void

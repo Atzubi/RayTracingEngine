@@ -10,39 +10,39 @@
 #include "Object.h"
 #include "Utility/Id.h"
 
-struct RayGeneratorShaderResourcePackage{
+struct RayGeneratorShaderResourcePackage {
     RayGeneratorShaderId shaderId;
     std::vector<ShaderResourceId> shaderResourceIds;
 };
 
-struct HitShaderResourcePackage{
+struct HitShaderResourcePackage {
     HitShaderId shaderId;
     std::vector<ShaderResourceId> shaderResourceIds;
 };
 
-struct OcclusionShaderResourcePackage{
+struct OcclusionShaderResourcePackage {
     OcclusionShaderId shaderId;
     std::vector<ShaderResourceId> shaderResourceIds;
 };
 
-struct PierceShaderResourcePackage{
+struct PierceShaderResourcePackage {
     PierceShaderId shaderId;
     std::vector<ShaderResourceId> shaderResourceIds;
 };
 
-struct MissShaderResourcePackage{
+struct MissShaderResourcePackage {
     MissShaderId shaderId;
     std::vector<ShaderResourceId> shaderResourceIds;
 };
 
 class ShaderResource {
 public:
-    virtual ShaderResource *clone() = 0;
+    virtual std::unique_ptr<ShaderResource> clone() = 0;
 };
 
 class RayResource {
 public:
-    virtual RayResource *clone() = 0;
+    virtual std::unique_ptr<RayResource> clone() = 0;
 };
 
 /**
@@ -114,22 +114,10 @@ struct ShaderOutput {
 };
 
 /**
- * Base class for all shaders. Shaders can be added to a pipeline.
- */
-class Shader {
-public:
-    /**
-     * Clones a shader.
-     * @return  New pointer to the cloned Shader object.
-     */
-    virtual Shader *clone() = 0;
-};
-
-/**
  * Template for the Ray Generator Shader to be implemented. On pipeline execution it is called to generate the rays used
  * for ray tracing.
  */
-class RayGeneratorShader : public Shader {
+class RayGeneratorShader {
 public:
     /**
      * Shading method. This will be called on pipeline execution. Its result is then passed to the ray tracing engine.
@@ -146,12 +134,14 @@ public:
      * Destructor.
      */
     virtual ~RayGeneratorShader() = default;
+
+    virtual std::unique_ptr<RayGeneratorShader> clone() = 0;
 };
 
 /**
  * Template for the Occlusion Shader to be implemented. It is called on pipeline execution whenever a ray hits anything.
  */
-class OcclusionShader : public Shader {
+class OcclusionShader {
 public:
     /**
      * Shading method. This will be called for every ray that intersects with any geometry.
@@ -172,12 +162,14 @@ public:
      * Destructor.
      */
     virtual ~OcclusionShader() = default;
+
+    virtual std::unique_ptr<OcclusionShader> clone() = 0;
 };
 
 /**
  * Template for the Pierce Shader to be implemented. It is called on pipeline execution for every object that is hit by a ray.
  */
-class PierceShader : public Shader {
+class PierceShader {
 public:
     /**
      * Shading method. This will be called for every ray and every intersection with the geometry.
@@ -198,12 +190,14 @@ public:
      * Destructor.
      */
     virtual ~PierceShader() = default;
+
+    virtual std::unique_ptr<PierceShader> clone() = 0;
 };
 
 /**
  * Template for the Hit Shader to be implemented. It is called on pipeline execution for the closest object hit by a ray.
  */
-class HitShader : public Shader {
+class HitShader {
 public:
     /**
      * Shading Method. This will be called for the closest intersection for all rays that intersect anything.
@@ -224,12 +218,14 @@ public:
      * Destructor.
      */
     virtual ~HitShader() = default;
+
+    virtual std::unique_ptr<HitShader> clone() = 0;
 };
 
 /**
  * Template for the Miss Shader to be implemented. It is called on pipeline execution whenever a ray hits no geometry.
  */
-class MissShader : public Shader {
+class MissShader {
 public:
     /**
      * Shading method. It is called for every ray that does not intersect with any geometry.
@@ -250,6 +246,8 @@ public:
      * Destructor.
      */
     virtual ~MissShader() = default;
+
+    virtual std::unique_ptr<MissShader> clone() = 0;
 };
 
 #endif //RAYTRACECORE_SHADER_H

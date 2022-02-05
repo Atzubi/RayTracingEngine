@@ -20,8 +20,8 @@ public:
         // TODO
     }
 
-    Shader *clone() override {
-        return new BasicHitShader(*this);
+    std::unique_ptr<HitShader> clone() override {
+        return std::make_unique<BasicHitShader>(*this);
     }
 
     ShaderOutput shade(uint64_t id, PipelineInfo *pipelineInfo, HitShaderInput *shaderInput,
@@ -34,11 +34,11 @@ public:
 
         auto shaderInputInfo = shaderInput->intersectionInfo;
 
-        unsigned char *image = shaderInputInfo->material->map_Kd.image;
+        auto image = shaderInputInfo->material->map_Kd.image;
 
         double_t diffuse = 1, specular = 0.5, exponent = 8, ambient = 0.1;
 
-        if (image == nullptr) {
+        if (image.empty()) {
             if (shaderInputInfo->material->illum == 2) {
                 exponent = shaderInputInfo->material->Ns;
                 Ka = shaderInputInfo->material->Ka;

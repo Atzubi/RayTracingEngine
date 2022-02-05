@@ -30,30 +30,30 @@ private:
         std::unordered_map<ObjectId, std::unique_ptr<Object>> objectCache;
         std::unordered_map<InstanceId, std::unique_ptr<Instance>> objectInstanceCache;
 
-        std::unordered_map<ShaderResourceId, ShaderResource *> shaderResources;
+        std::unordered_map<ShaderResourceId, std::unique_ptr<ShaderResource>> shaderResources;
 
     public:
         MemoryBlock();
 
         ~MemoryBlock();
 
-        void storeBaseDataFragments(std::unique_ptr<Object> &object, ObjectId id);
+        void storeBaseDataFragments(std::unique_ptr<Object> object, ObjectId id);
 
         bool deleteBaseDataFragment(ObjectId id);
 
         Object *getBaseDataFragment(ObjectId id);
 
-        void storeInstanceDataFragments(std::unique_ptr<Instance> &instance, InstanceId id);
+        void storeInstanceDataFragments(std::unique_ptr<Instance> instance, InstanceId id);
 
         bool deleteInstanceDataFragment(InstanceId id);
 
         Instance *getInstanceDataFragment(InstanceId id);
 
-        void cacheBaseData(std::unique_ptr<Object> &object, ObjectId id);
+        void cacheBaseData(std::unique_ptr<Object> object, ObjectId id);
 
-        void cacheInstanceData(std::unique_ptr<Instance> &instance, InstanceId id);
+        void cacheInstanceData(std::unique_ptr<Instance> instance, InstanceId id);
 
-        void storeShaderResource(ShaderResource *shaderResource, ShaderResourceId id);
+        void storeShaderResource(std::unique_ptr<ShaderResource> shaderResource, ShaderResourceId id);
 
         ShaderResource *getShaderResource(ShaderResourceId id);
 
@@ -62,35 +62,35 @@ private:
 
     class PipelineBlock {
     private:
-        std::unordered_map<PipelineId, PipelineImplement *> pipelines;
+        std::unordered_map<PipelineId, std::unique_ptr<PipelineImplement>> pipelines;
         std::unordered_map<DBVHNode *, DBVHNode *> pipelineCache;
 
-        std::unordered_map<HitShaderId, HitShader *> hitShaders;
-        std::unordered_map<MissShaderId, MissShader *> missShaders;
-        std::unordered_map<OcclusionShaderId, OcclusionShader *> occlusionShaders;
-        std::unordered_map<PierceShaderId, PierceShader *> pierceShaders;
-        std::unordered_map<RayGeneratorShaderId, RayGeneratorShader *> rayGeneratorShaders;
+        std::unordered_map<HitShaderId, std::unique_ptr<HitShader>> hitShaders;
+        std::unordered_map<MissShaderId, std::unique_ptr<MissShader>> missShaders;
+        std::unordered_map<OcclusionShaderId, std::unique_ptr<OcclusionShader>> occlusionShaders;
+        std::unordered_map<PierceShaderId, std::unique_ptr<PierceShader>> pierceShaders;
+        std::unordered_map<RayGeneratorShaderId, std::unique_ptr<RayGeneratorShader>> rayGeneratorShaders;
 
     public:
         PipelineBlock();
 
         ~PipelineBlock();
 
-        void storePipelineFragments(PipelineImplement *pipeline, PipelineId id);
+        void storePipelineFragments(std::unique_ptr<PipelineImplement> pipeline, PipelineId id);
 
         bool deletePipelineFragment(PipelineId id);
 
         PipelineImplement *getPipelineFragment(PipelineId id);
 
-        void addShader(RayGeneratorShaderId id, RayGeneratorShader *shader);
+        void addShader(RayGeneratorShaderId id, std::unique_ptr<RayGeneratorShader> shader);
 
-        void addShader(HitShaderId id, HitShader *shader);
+        void addShader(HitShaderId id, std::unique_ptr<HitShader> shader);
 
-        void addShader(OcclusionShaderId id, OcclusionShader *shader);
+        void addShader(OcclusionShaderId id, std::unique_ptr<OcclusionShader> shader);
 
-        void addShader(PierceShaderId id, PierceShader *shader);
+        void addShader(PierceShaderId id, std::unique_ptr<PierceShader> shader);
 
-        void addShader(MissShaderId id, MissShader *shader);
+        void addShader(MissShaderId id, std::unique_ptr<MissShader> shader);
 
         RayGeneratorShader *getShader(RayGeneratorShaderId id);
 
@@ -119,33 +119,33 @@ private:
 
     DataManagementUnitV2 *dataManagementUnit;
 
-    MemoryBlock *memoryBlock;
-    PipelineBlock *pipelineBlock;
+    std::unique_ptr<MemoryBlock> memoryBlock;
+    std::unique_ptr<PipelineBlock> pipelineBlock;
 
 public:
     explicit EngineNode(DataManagementUnitV2 *DMU);
 
     ~EngineNode();
 
-    void storeBaseDataFragments(std::unique_ptr<Object> &object, ObjectId id);
+    void storeBaseDataFragments(std::unique_ptr<Object> object, ObjectId id);
 
     bool deleteBaseDataFragment(ObjectId id);
 
-    void storeInstanceDataFragments(std::unique_ptr<Instance> &instance, InstanceId id);
+    void storeInstanceDataFragments(std::unique_ptr<Instance> instance, InstanceId id);
 
     bool deleteInstanceDataFragment(InstanceId id);
 
-    void cacheBaseData(std::unique_ptr<Object> &, ObjectId id);
+    void cacheBaseData(std::unique_ptr<Object> object, ObjectId id);
 
-    void cacheInstanceData(std::unique_ptr<Instance> &instance, InstanceId id);
+    void cacheInstanceData(std::unique_ptr<Instance> instance, InstanceId id);
 
-    void storeShaderResource(ShaderResource *shaderResource, ShaderResourceId id);
+    void storeShaderResource(std::unique_ptr<ShaderResource> shaderResource, ShaderResourceId id);
 
     bool deleteShaderResource(ShaderResourceId id);
 
     ShaderResource *getShaderResource(ShaderResourceId id);
 
-    void storePipelineFragments(PipelineImplement *pipeline, PipelineId id);
+    void storePipelineFragments(std::unique_ptr<PipelineImplement> pipeline, PipelineId id);
 
     bool deletePipelineFragment(PipelineId id);
 
@@ -155,15 +155,15 @@ public:
 
     PipelineImplement *requestPipelineFragment(PipelineId id);
 
-    void addShader(RayGeneratorShaderId id, RayGeneratorShader *shader);
+    void addShader(RayGeneratorShaderId id, std::unique_ptr<RayGeneratorShader> shader);
 
-    void addShader(HitShaderId id, HitShader *shader);
+    void addShader(HitShaderId id, std::unique_ptr<HitShader> shader);
 
-    void addShader(OcclusionShaderId id, OcclusionShader *shader);
+    void addShader(OcclusionShaderId id, std::unique_ptr<OcclusionShader> shader);
 
-    void addShader(PierceShaderId id, PierceShader *shader);
+    void addShader(PierceShaderId id, std::unique_ptr<PierceShader> shader);
 
-    void addShader(MissShaderId id, MissShader *shader);
+    void addShader(MissShaderId id, std::unique_ptr<MissShader> shader);
 
     RayGeneratorShader *getShader(RayGeneratorShaderId id);
 

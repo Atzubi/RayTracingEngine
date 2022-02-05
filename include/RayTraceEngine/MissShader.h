@@ -20,8 +20,8 @@ public:
         // TODO
     }
 
-    Shader* clone() override{
-        return new BasicMissShader(*this);
+    std::unique_ptr<MissShader> clone() override{
+        return std::make_unique<BasicMissShader>(*this);
     }
 
     ShaderOutput shade(uint64_t id, PipelineInfo *pipelineInfo, MissShaderInput *shaderInput, std::vector<ShaderResource *> *shaderResource,
