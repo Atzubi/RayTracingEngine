@@ -37,12 +37,12 @@ struct MissShaderResourcePackage {
 
 class ShaderResource {
 public:
-    virtual std::unique_ptr<ShaderResource> clone() = 0;
+    [[nodiscard]] virtual std::unique_ptr<ShaderResource> clone() const = 0;
 };
 
 class RayResource {
 public:
-    virtual std::unique_ptr<RayResource> clone() = 0;
+    [[nodiscard]] virtual std::unique_ptr<RayResource> clone() const = 0;
 };
 
 /**
@@ -135,7 +135,7 @@ public:
      */
     virtual ~RayGeneratorShader() = default;
 
-    virtual std::unique_ptr<RayGeneratorShader> clone() = 0;
+    [[nodiscard]] virtual std::unique_ptr<RayGeneratorShader> clone() const = 0;
 };
 
 /**
@@ -163,7 +163,7 @@ public:
      */
     virtual ~OcclusionShader() = default;
 
-    virtual std::unique_ptr<OcclusionShader> clone() = 0;
+    [[nodiscard]] virtual std::unique_ptr<OcclusionShader> clone() const = 0;
 };
 
 /**
@@ -191,7 +191,7 @@ public:
      */
     virtual ~PierceShader() = default;
 
-    virtual std::unique_ptr<PierceShader> clone() = 0;
+    [[nodiscard]] virtual std::unique_ptr<PierceShader> clone() const = 0;
 };
 
 /**
@@ -219,7 +219,7 @@ public:
      */
     virtual ~HitShader() = default;
 
-    virtual std::unique_ptr<HitShader> clone() = 0;
+    [[nodiscard]] virtual std::unique_ptr<HitShader> clone() const = 0;
 };
 
 /**
@@ -247,7 +247,7 @@ public:
      */
     virtual ~MissShader() = default;
 
-    virtual std::unique_ptr<MissShader> clone() = 0;
+    [[nodiscard]] virtual std::unique_ptr<MissShader> clone() const = 0;
 };
 
 #endif //RAYTRACECORE_SHADER_H

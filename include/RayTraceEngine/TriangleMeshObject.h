@@ -86,7 +86,7 @@ public:
      * Makes a perfect clone of this object.
      * @return  Pointer to the new clone.
      */
-    std::unique_ptr<Object> clone() override;
+    [[nodiscard]] std::unique_ptr<Object> clone() const override;
 
     /**
      * Computes the effective surface area of this object.

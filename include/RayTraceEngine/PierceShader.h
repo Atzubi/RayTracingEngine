@@ -19,14 +19,14 @@ public:
         // TODO
     }
 
-    std::unique_ptr<PierceShader> clone() override{
+    [[nodiscard]] std::unique_ptr<PierceShader> clone() const override{
         return std::make_unique<BasicPierceShader>(*this);
     }
 
     ShaderOutput shade(uint64_t id, PipelineInfo *pipelineInfo, PierceShaderInput *shaderInput, std::vector<ShaderResource *> *shaderResource,
                        RayResource **rayResource, RayGeneratorOutput *newRays) override{
         // TODO
-        return ShaderOutput();
+        return {};
     }
 };
 

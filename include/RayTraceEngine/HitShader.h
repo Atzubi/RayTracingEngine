@@ -20,7 +20,7 @@ public:
         // TODO
     }
 
-    std::unique_ptr<HitShader> clone() override {
+    [[nodiscard]] std::unique_ptr<HitShader> clone() const override {
         return std::make_unique<BasicHitShader>(*this);
     }
 

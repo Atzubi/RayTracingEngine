@@ -32,12 +32,14 @@ bool RayEngine::deletePipeline(PipelineId id) {
     return dataManagementUnit->removePipeline(id);
 }
 
-bool RayEngine::bindGeometryToPipeline(PipelineId pipelineId, std::vector<ObjectId> &objectIds, std::vector<Matrix4x4> &transforms,
-                                       std::vector<ObjectParameter> &objectParameters, std::vector<InstanceId>&instanceIDs) {
+bool RayEngine::bindGeometryToPipeline(PipelineId pipelineId, const std::vector<ObjectId> &objectIds,
+                                       const std::vector<Matrix4x4> &transforms,
+                                       const std::vector<ObjectParameter> &objectParameters,
+                                       std::vector<InstanceId> &instanceIDs) {
     return dataManagementUnit->bindGeometryToPipeline(pipelineId, objectIds, transforms, objectParameters, instanceIDs);
 }
 
-ObjectId RayEngine::addObject(Object &object) {
+ObjectId RayEngine::addObject(const Object &object) {
     return dataManagementUnit->addObject(object);
 }
 
@@ -45,47 +47,52 @@ bool RayEngine::removeObject(ObjectId id) {
     return dataManagementUnit->removeObject(id);
 }
 
-bool RayEngine::updateObject(ObjectId id, Object &object) {
+bool RayEngine::updateObject(ObjectId id, const Object &object) {
     return dataManagementUnit->updateObject(id, object);
 }
 
-bool RayEngine::bindShaderToPipeline(PipelineId pipelineId, RayGeneratorShaderId shaderId, std::vector<ShaderResourceId> &shaderResourceIds) {
+bool RayEngine::bindShaderToPipeline(PipelineId pipelineId, RayGeneratorShaderId shaderId,
+                                     std::vector<ShaderResourceId> &shaderResourceIds) {
     return dataManagementUnit->bindShaderToPipeline(pipelineId, shaderId, shaderResourceIds);
 }
 
-bool RayEngine::bindShaderToPipeline(PipelineId pipelineId, HitShaderId shaderId, std::vector<ShaderResourceId> &shaderResourceIds) {
+bool RayEngine::bindShaderToPipeline(PipelineId pipelineId, HitShaderId shaderId,
+                                     std::vector<ShaderResourceId> &shaderResourceIds) {
     return dataManagementUnit->bindShaderToPipeline(pipelineId, shaderId, shaderResourceIds);
 }
 
-bool RayEngine::bindShaderToPipeline(PipelineId pipelineId, OcclusionShaderId shaderId, std::vector<ShaderResourceId> &shaderResourceIds) {
+bool RayEngine::bindShaderToPipeline(PipelineId pipelineId, OcclusionShaderId shaderId,
+                                     std::vector<ShaderResourceId> &shaderResourceIds) {
     return dataManagementUnit->bindShaderToPipeline(pipelineId, shaderId, shaderResourceIds);
 }
 
-bool RayEngine::bindShaderToPipeline(PipelineId pipelineId, PierceShaderId shaderId, std::vector<ShaderResourceId> &shaderResourceIds) {
+bool RayEngine::bindShaderToPipeline(PipelineId pipelineId, PierceShaderId shaderId,
+                                     std::vector<ShaderResourceId> &shaderResourceIds) {
     return dataManagementUnit->bindShaderToPipeline(pipelineId, shaderId, shaderResourceIds);
 }
 
-bool RayEngine::bindShaderToPipeline(PipelineId pipelineId, MissShaderId shaderId, std::vector<ShaderResourceId> &shaderResourceIds) {
+bool RayEngine::bindShaderToPipeline(PipelineId pipelineId, MissShaderId shaderId,
+                                     std::vector<ShaderResourceId> &shaderResourceIds) {
     return dataManagementUnit->bindShaderToPipeline(pipelineId, shaderId, shaderResourceIds);
 }
 
-HitShaderId RayEngine::addShader(HitShader &shader) {
+HitShaderId RayEngine::addShader(const HitShader &shader) {
     return dataManagementUnit->addShader(shader);
 }
 
-MissShaderId RayEngine::addShader(MissShader &shader) {
+MissShaderId RayEngine::addShader(const MissShader &shader) {
     return dataManagementUnit->addShader(shader);
 }
 
-OcclusionShaderId RayEngine::addShader(OcclusionShader &shader) {
+OcclusionShaderId RayEngine::addShader(const OcclusionShader &shader) {
     return dataManagementUnit->addShader(shader);
 }
 
-PierceShaderId RayEngine::addShader(PierceShader &shader) {
+PierceShaderId RayEngine::addShader(const PierceShader &shader) {
     return dataManagementUnit->addShader(shader);
 }
 
-RayGeneratorShaderId RayEngine::addShader(RayGeneratorShader &shader) {
+RayGeneratorShaderId RayEngine::addShader(const RayGeneratorShader &shader) {
     return dataManagementUnit->addShader(shader);
 }
 
@@ -109,7 +116,7 @@ bool RayEngine::removeShader(MissShaderId id) {
     return dataManagementUnit->removeShader(id);
 }
 
-ShaderResourceId RayEngine::addShaderResource(ShaderResource &resource) {
+ShaderResourceId RayEngine::addShaderResource(const ShaderResource &resource) {
     return dataManagementUnit->addShaderResource(resource);
 }
 
@@ -117,29 +124,34 @@ bool RayEngine::removeShaderResource(ShaderResourceId id) {
     return dataManagementUnit->removeShaderResource(id);
 }
 
-bool RayEngine::updatePipelineObjects(PipelineId pipelineId, std::vector<InstanceId> &objectInstanceIDs,
-                                      std::vector<Matrix4x4> &transforms,
-                                      std::vector<ObjectParameter> &objectParameters) {
+bool RayEngine::updatePipelineObjects(PipelineId pipelineId, const std::vector<InstanceId> &objectInstanceIDs,
+                                      const std::vector<Matrix4x4> &transforms,
+                                      const std::vector<ObjectParameter> &objectParameters) {
     return dataManagementUnit->updatePipelineObjects(pipelineId, objectInstanceIDs, transforms, objectParameters);
 }
 
-bool RayEngine::updatePipelineShader(PipelineId pipelineId, RayGeneratorShaderId shaderId, std::vector<ShaderResourceId> &shaderResourceIds) {
+bool RayEngine::updatePipelineShader(PipelineId pipelineId, RayGeneratorShaderId shaderId,
+                                     const std::vector<ShaderResourceId> &shaderResourceIds) {
     return dataManagementUnit->updatePipelineShader(pipelineId, shaderId, shaderResourceIds);
 }
 
-bool RayEngine::updatePipelineShader(PipelineId pipelineId, HitShaderId shaderId, std::vector<ShaderResourceId> &shaderResourceIds) {
+bool RayEngine::updatePipelineShader(PipelineId pipelineId, HitShaderId shaderId,
+                                     const std::vector<ShaderResourceId> &shaderResourceIds) {
     return dataManagementUnit->updatePipelineShader(pipelineId, shaderId, shaderResourceIds);
 }
 
-bool RayEngine::updatePipelineShader(PipelineId pipelineId, OcclusionShaderId shaderId, std::vector<ShaderResourceId> &shaderResourceIds) {
+bool RayEngine::updatePipelineShader(PipelineId pipelineId, OcclusionShaderId shaderId,
+                                     const std::vector<ShaderResourceId> &shaderResourceIds) {
     return dataManagementUnit->updatePipelineShader(pipelineId, shaderId, shaderResourceIds);
 }
 
-bool RayEngine::updatePipelineShader(PipelineId pipelineId, PierceShaderId shaderId, std::vector<ShaderResourceId> &shaderResourceIds) {
+bool RayEngine::updatePipelineShader(PipelineId pipelineId, PierceShaderId shaderId,
+                                     const std::vector<ShaderResourceId> &shaderResourceIds) {
     return dataManagementUnit->updatePipelineShader(pipelineId, shaderId, shaderResourceIds);
 }
 
-bool RayEngine::updatePipelineShader(PipelineId pipelineId, MissShaderId shaderId, std::vector<ShaderResourceId> &shaderResourceIds) {
+bool RayEngine::updatePipelineShader(PipelineId pipelineId, MissShaderId shaderId,
+                                     const std::vector<ShaderResourceId> &shaderResourceIds) {
     return dataManagementUnit->updatePipelineShader(pipelineId, shaderId, shaderResourceIds);
 }
 
@@ -168,8 +180,8 @@ bool RayEngine::removePipelineShader(PipelineId pipelineId, MissShaderId shaderI
 }
 
 void
-RayEngine::updatePipelineCamera(PipelineId id, int resolutionX, int resolutionY, Vector3D cameraPosition, Vector3D cameraDirection,
-                                Vector3D cameraUp) {
+RayEngine::updatePipelineCamera(PipelineId id, int resolutionX, int resolutionY, const Vector3D &cameraPosition,
+                                const Vector3D &cameraDirection, const Vector3D &cameraUp) {
     dataManagementUnit->updatePipelineCamera(id, resolutionX, resolutionY, cameraPosition, cameraDirection, cameraUp);
 }
 

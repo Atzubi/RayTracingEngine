@@ -91,7 +91,7 @@ public:
      * Creates a clone of this object.
      * @return  Pointer to a new clone.
      */
-    virtual std::unique_ptr<Object> clone() = 0;
+    [[nodiscard]] virtual std::unique_ptr<Object> clone() const = 0;
 
     /**
      * Computes the axis aligned bounding box of this object.

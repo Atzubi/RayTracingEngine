@@ -14,7 +14,7 @@ public:
 
     Triangle() = default;
 
-    std::unique_ptr<Object> clone() override {
+    [[nodiscard]] std::unique_ptr<Object> clone() const override {
         return nullptr;
     }
 
@@ -258,7 +258,7 @@ bool TriangleMeshObject::intersectAll(std::vector<IntersectionInfo> &intersectio
     return DBVHv2::intersectAll(*structure, intersectionInfo, ray);
 }
 
-std::unique_ptr<Object> TriangleMeshObject::clone() {
+std::unique_ptr<Object> TriangleMeshObject::clone() const {
     // TODO
     return std::make_unique<TriangleMeshObject>(&vertices, &indices, &material);
 }

@@ -19,14 +19,14 @@ public:
         // TODO
     }
 
-    std::unique_ptr<OcclusionShader> clone() override{
+    [[nodiscard]] std::unique_ptr<OcclusionShader> clone() const override{
         return std::make_unique<BasicOcclusionShader>(*this);
     }
 
     ShaderOutput shade(uint64_t id, PipelineInfo *pipelineInfo, OcclusionShaderInput *shaderInput, std::vector<ShaderResource *> *shaderResource,
                        RayResource **rayResource, RayGeneratorOutput *newRays) override{
         // TODO
-        return ShaderOutput();
+        return {};
     }
 };
 

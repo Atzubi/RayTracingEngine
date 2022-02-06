@@ -21,7 +21,7 @@ public:
 
     }
 
-    std::unique_ptr<RayGeneratorShader> clone() override {
+    [[nodiscard]] std::unique_ptr<RayGeneratorShader> clone() const override {
         return std::make_unique<BasicRayGeneratorShader>(*this);
     }
 

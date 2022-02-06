@@ -174,7 +174,7 @@ Instance::Instance(EngineNode &node, ObjectCapsule &objectCapsule) : baseObjectI
     inverseTransform = Matrix4x4::getIdentity();
 }
 
-void Instance::applyTransform(Matrix4x4 &newTransform) {
+void Instance::applyTransform(const Matrix4x4 &newTransform) {
     createAABB(boundingBox, newTransform);
     transform.multiplyBy(newTransform);
     inverseTransform = transform.getInverse();
@@ -615,7 +615,7 @@ BoundingBox Instance::getBoundaries() const {
     return boundingBox;
 }
 
-std::unique_ptr<Object> Instance::clone() {
+std::unique_ptr<Object> Instance::clone() const {
     return nullptr;
 }
 

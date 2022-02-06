@@ -25,13 +25,13 @@ private:
 public:
     explicit Instance(EngineNode &node, ObjectCapsule &objectCapsule);
 
-    void applyTransform(Matrix4x4 &newTransform);
+    void applyTransform(const Matrix4x4 &newTransform);
 
     void invalidateCache();
 
     ~Instance() override;
 
-    std::unique_ptr<Object> clone() override;
+    [[nodiscard]] std::unique_ptr<Object> clone() const override;
 
     [[nodiscard]] BoundingBox getBoundaries() const override;
 
