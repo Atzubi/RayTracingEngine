@@ -25,22 +25,22 @@ public:
         return std::make_unique<BasicRayGeneratorShader>(*this);
     }
 
-    void
-    shade(uint64_t id, PipelineInfo *pipelineInfo, std::vector<ShaderResource *> *shaderResource, RayGeneratorOutput *rayGeneratorOutput) override {
-        int64_t x = (((int64_t) id) % pipelineInfo->width) - (pipelineInfo->width) / 2;
-        int64_t y = -(((int64_t) id) / pipelineInfo->height) + (pipelineInfo->height) / 2;
+    void shade(uint64_t id, const PipelineInfo &pipelineInfo, const std::vector<ShaderResource *> &shaderResource,
+               RayGeneratorOutput &rayGeneratorOutput) const override {
+        int64_t x = (((int64_t) id) % pipelineInfo.width) - (pipelineInfo.width) / 2;
+        int64_t y = -(((int64_t) id) / pipelineInfo.height) + (pipelineInfo.height) / 2;
 
         Vector3D rayOrigin{};
         Vector3D rayDirection{};
 
         Vector3D camRight{};
 
-        camRight = {pipelineInfo->cameraUp.y * pipelineInfo->cameraDirection.z -
-                    pipelineInfo->cameraUp.z * pipelineInfo->cameraDirection.y,
-                    pipelineInfo->cameraUp.z * pipelineInfo->cameraDirection.x -
-                    pipelineInfo->cameraUp.x * pipelineInfo->cameraDirection.z,
-                    pipelineInfo->cameraUp.x * pipelineInfo->cameraDirection.y -
-                    pipelineInfo->cameraUp.y * pipelineInfo->cameraDirection.x};
+        camRight = {pipelineInfo.cameraUp.y * pipelineInfo.cameraDirection.z -
+                    pipelineInfo.cameraUp.z * pipelineInfo.cameraDirection.y,
+                    pipelineInfo.cameraUp.z * pipelineInfo.cameraDirection.x -
+                    pipelineInfo.cameraUp.x * pipelineInfo.cameraDirection.z,
+                    pipelineInfo.cameraUp.x * pipelineInfo.cameraDirection.y -
+                    pipelineInfo.cameraUp.y * pipelineInfo.cameraDirection.x};
 
         double camRightLength = std::sqrt(
                 camRight.x * camRight.x + camRight.y * camRight.y + camRight.z * camRight.z);
@@ -49,19 +49,19 @@ public:
         camRight.y /= camRightLength;
         camRight.z /= camRightLength;
 
-        rayOrigin = pipelineInfo->cameraPosition;
+        rayOrigin = pipelineInfo.cameraPosition;
         rayDirection.x =
-                pipelineInfo->cameraDirection.x +
-                (camRight.x * (x / (pipelineInfo->width + 0.0)) +
-                 (pipelineInfo->cameraUp.x * (y / (pipelineInfo->height + 0.0))));
+                pipelineInfo.cameraDirection.x +
+                (camRight.x * (x / (pipelineInfo.width + 0.0)) +
+                 (pipelineInfo.cameraUp.x * (y / (pipelineInfo.height + 0.0))));
         rayDirection.y =
-                pipelineInfo->cameraDirection.y +
-                (camRight.y * (x / (pipelineInfo->width + 0.0)) +
-                 (pipelineInfo->cameraUp.y * (y / (pipelineInfo->height + 0.0))));
+                pipelineInfo.cameraDirection.y +
+                (camRight.y * (x / (pipelineInfo.width + 0.0)) +
+                 (pipelineInfo.cameraUp.y * (y / (pipelineInfo.height + 0.0))));
         rayDirection.z =
-                pipelineInfo->cameraDirection.z +
-                (camRight.z * (x / (pipelineInfo->width + 0.0)) +
-                 (pipelineInfo->cameraUp.z * (y / (pipelineInfo->height + 0.0))));
+                pipelineInfo.cameraDirection.z +
+                (camRight.z * (x / (pipelineInfo.width + 0.0)) +
+                 (pipelineInfo.cameraUp.z * (y / (pipelineInfo.height + 0.0))));
 
         double length = std::sqrt(rayDirection.x * rayDirection.x +
                                   rayDirection.y * rayDirection.y +
@@ -73,7 +73,7 @@ public:
 
         GeneratorRay generatorRay = {rayOrigin, rayDirection};
 
-        rayGeneratorOutput->rays.push_back(generatorRay);
+        rayGeneratorOutput.rays.push_back(generatorRay);
     }
 
     void *getAssociatedData() {

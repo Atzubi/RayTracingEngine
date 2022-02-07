@@ -11,21 +11,23 @@
 /**
  * Default implementation of a miss shader.
  */
-class BasicMissShader : public MissShader{
+class BasicMissShader : public MissShader {
 public:
-    BasicMissShader(){
+    BasicMissShader() {
 
     }
-    BasicMissShader(const BasicMissShader& copy){
+
+    BasicMissShader(const BasicMissShader &copy) {
         // TODO
     }
 
-    [[nodiscard]] std::unique_ptr<MissShader> clone() const override{
+    [[nodiscard]] std::unique_ptr<MissShader> clone() const override {
         return std::make_unique<BasicMissShader>(*this);
     }
 
-    ShaderOutput shade(uint64_t id, PipelineInfo *pipelineInfo, MissShaderInput *shaderInput, std::vector<ShaderResource *> *shaderResource,
-                       RayResource **rayResource, RayGeneratorOutput *newRays) override{
+    ShaderOutput shade(uint64_t id, const PipelineInfo &pipelineInfo, const MissShaderInput &shaderInput,
+                       const std::vector<ShaderResource *> &shaderResource, RayResource *&rayResource,
+                       RayGeneratorOutput &newRays) const override {
         // TODO
         return {};
     }

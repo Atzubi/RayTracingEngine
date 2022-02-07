@@ -11,33 +11,34 @@
 #include "Acceleration Structures/DBVHv2.h"
 #include "Engine Node/EngineNode.h"
 
-PipelineImplement::PipelineImplement(EngineNode *engine, int width, int height, Vector3D *cameraPosition,
-                                     Vector3D *cameraDirection, Vector3D *cameraUp,
-                                     std::vector<RayGeneratorShaderPackage> *rayGeneratorShaders,
-                                     std::vector<OcclusionShaderPackage> *occlusionShaders,
-                                     std::vector<HitShaderPackage> *hitShaders,
-                                     std::vector<PierceShaderPackage> *pierceShaders,
-                                     std::vector<MissShaderPackage> *missShaders, std::unique_ptr<DBVHNode> &geometry) {
+PipelineImplement::PipelineImplement(EngineNode *engine, int width, int height, const Vector3D &cameraPosition,
+                                     const Vector3D &cameraDirection, const Vector3D &cameraUp,
+                                     const std::vector<RayGeneratorShaderPackage> &rayGeneratorShaders,
+                                     const std::vector<OcclusionShaderPackage> &occlusionShaders,
+                                     const std::vector<HitShaderPackage> &hitShaders,
+                                     const std::vector<PierceShaderPackage> &pierceShaders,
+                                     const std::vector<MissShaderPackage> &missShaders,
+                                     std::unique_ptr<DBVHNode> geometry) {
     this->engineNode = engine;
     this->pipelineInfo.width = width;
     this->pipelineInfo.height = height;
-    this->pipelineInfo.cameraPosition = *cameraPosition;
-    this->pipelineInfo.cameraDirection = *cameraDirection;
-    this->pipelineInfo.cameraUp = *cameraUp;
+    this->pipelineInfo.cameraPosition = cameraPosition;
+    this->pipelineInfo.cameraDirection = cameraDirection;
+    this->pipelineInfo.cameraUp = cameraUp;
 
-    for (auto &shader: *rayGeneratorShaders) {
+    for (auto &shader: rayGeneratorShaders) {
         this->rayGeneratorShaders[shader.id] = shader.rayGeneratorShader;
     }
-    for (auto &shader: *hitShaders) {
+    for (auto &shader: hitShaders) {
         this->hitShaders[shader.id] = shader.hitShader;
     }
-    for (auto &shader: *occlusionShaders) {
+    for (auto &shader: occlusionShaders) {
         this->occlusionShaders[shader.id] = shader.occlusionShader;
     }
-    for (auto &shader: *pierceShaders) {
+    for (auto &shader: pierceShaders) {
         this->pierceShaders[shader.id] = shader.pierceShader;
     }
-    for (auto &shader: *missShaders) {
+    for (auto &shader: missShaders) {
         this->missShaders[shader.id] = shader.missShader;
     }
 
@@ -60,7 +61,7 @@ void PipelineImplement::setResolution(int resolutionWidth, int resolutionHeight)
     pipelineInfo.height = resolutionHeight;
 }
 
-void PipelineImplement::setCamera(Vector3D pos, Vector3D dir, Vector3D up) {
+void PipelineImplement::setCamera(const Vector3D &pos, const Vector3D &dir, const Vector3D &up) {
     pipelineInfo.cameraPosition = pos;
     pipelineInfo.cameraDirection = dir;
     pipelineInfo.cameraUp = up;
@@ -105,9 +106,9 @@ void
 PipelineImplement::processMissShaders(int id, RayResource *&rayResource, const Ray &ray, RayGeneratorOutput &newRays) {
     for (auto &missShader: missShaders) {
         MissShaderInput missShaderInput = {ray.origin, ray.direction};
-        auto pixel = missShader.second.missShader->shade(id, &pipelineInfo, &missShaderInput,
-                                                         &missShader.second.shaderResources,
-                                                         &rayResource, &newRays);
+        auto pixel = missShader.second.missShader->shade(id, pipelineInfo, missShaderInput,
+                                                         missShader.second.shaderResources,
+                                                         rayResource, newRays);
         setPixel(id, pixel);
     }
 }
@@ -116,11 +117,11 @@ void PipelineImplement::processOcclusionShaders(int id, RayResource *&rayResourc
                                                 RayGeneratorOutput &newRays) {
     for (auto &occlusionShader: occlusionShaders) {
         OcclusionShaderInput occlusionShaderInput = {ray.origin, ray.direction};
-        auto pixel = occlusionShader.second.occlusionShader->shade(id, &pipelineInfo,
-                                                                   &occlusionShaderInput,
-                                                                   &occlusionShader.second.shaderResources,
-                                                                   &rayResource,
-                                                                   &newRays);
+        auto pixel = occlusionShader.second.occlusionShader->shade(id, pipelineInfo,
+                                                                   occlusionShaderInput,
+                                                                   occlusionShader.second.shaderResources,
+                                                                   rayResource,
+                                                                   newRays);
         setPixel(id, pixel);
     }
 }
@@ -129,9 +130,9 @@ void PipelineImplement::processHitShaders(int id, IntersectionInfo &info, RayRes
                                           RayGeneratorOutput &newRays) {
     for (auto &hitShader: hitShaders) {
         HitShaderInput hitShaderInput = {&info};
-        auto pixel = hitShader.second.hitShader->shade(id, &pipelineInfo, &hitShaderInput,
-                                                       &hitShader.second.shaderResources,
-                                                       &rayResource, &newRays);
+        auto pixel = hitShader.second.hitShader->shade(id, pipelineInfo, hitShaderInput,
+                                                       hitShader.second.shaderResources,
+                                                       rayResource, newRays);
         setPixel(id, pixel);
     }
 }
@@ -140,18 +141,18 @@ void PipelineImplement::processPierceShaders(int id, RayResource *&rayResource, 
                                              RayGeneratorOutput &newRays) {
     for (auto &pierceShader: pierceShaders) {
         PierceShaderInput pierceShaderInput = {infos};
-        auto pixel = pierceShader.second.pierceShader->shade(id, &pipelineInfo, &pierceShaderInput,
-                                                             &pierceShader.second.shaderResources,
-                                                             &rayResource, &newRays);
+        auto pixel = pierceShader.second.pierceShader->shade(id, pipelineInfo, pierceShaderInput,
+                                                             pierceShader.second.shaderResources,
+                                                             rayResource, newRays);
         setPixel(id, pixel);
     }
 }
 
-void PipelineImplement::generateRays(RayGeneratorShaderContainer &generator, std::vector<RayContainer> &rayContainers,
-                                     int rayID) {
+void
+PipelineImplement::generateRays(const RayGeneratorShaderContainer &generator, std::vector<RayContainer> &rayContainers,
+                                int rayID) {
     RayGeneratorOutput rays;
-    generator.rayGeneratorShader->shade(rayID, &pipelineInfo, &generator.shaderResources,
-                                        &rays);
+    generator.rayGeneratorShader->shade(rayID, pipelineInfo, generator.shaderResources, rays);
     for (auto &ray: rays.rays) {
         RayContainer rayContainer = {rayID, ray.rayOrigin, ray.rayDirection, nullptr};
         rayContainers.push_back(rayContainer);
@@ -168,12 +169,12 @@ Ray PipelineImplement::initRay(const std::vector<RayContainer> &rayContainers) {
     return ray;
 }
 
-IntersectionInfo PipelineImplement::initInfo(Ray &ray) {
+IntersectionInfo PipelineImplement::initInfo(const Ray &ray) {
     return {false, std::numeric_limits<double>::max(), ray.origin,
             ray.direction, {0, 0, 0}, {0, 0, 0}, {0, 0}, nullptr};
 }
 
-IntersectionInfo PipelineImplement::getClosestIntersection(std::vector<IntersectionInfo> &infos, Ray &ray) {
+IntersectionInfo PipelineImplement::getClosestIntersection(std::vector<IntersectionInfo> &infos, const Ray &ray) {
     IntersectionInfo closest = initInfo(ray);
     for (auto info: infos) {
         if (info.hit && closest.distance > info.distance) {
@@ -184,7 +185,7 @@ IntersectionInfo PipelineImplement::getClosestIntersection(std::vector<Intersect
 }
 
 void
-PipelineImplement::updateRayStack(std::vector<RayContainer> &rayContainers, int id, RayGeneratorOutput &newRays) {
+PipelineImplement::updateRayStack(std::vector<RayContainer> &rayContainers, int id, const RayGeneratorOutput &newRays) {
     rayContainers.pop_back();
 
     for (auto &r: newRays.rays) {
@@ -221,7 +222,7 @@ void PipelineImplement::processShadersAnyHit(const Ray &ray, const IntersectionI
 }
 
 void
-PipelineImplement::processShadersAllHits(Ray &ray, std::vector<IntersectionInfo> &infos, RayGeneratorOutput &newRays,
+PipelineImplement::processShadersAllHits(const Ray &ray, std::vector<IntersectionInfo> &infos, RayGeneratorOutput &newRays,
                                          int id, RayResource *rayResource) {
     processPierceShaders(id, rayResource, infos, newRays);
 
@@ -251,7 +252,7 @@ void PipelineImplement::processClosestHitInformation(std::vector<RayContainer> &
     updateRayStack(rayContainers, id, newRays);
 }
 
-void PipelineImplement::processAllHitInformation(Ray &ray, std::vector<RayContainer> &rayContainers,
+void PipelineImplement::processAllHitInformation(const Ray &ray, std::vector<RayContainer> &rayContainers,
                                                  std::vector<IntersectionInfo> &infos) {
     RayGeneratorOutput newRays;
     int id = rayContainers.back().rayID;
@@ -327,24 +328,26 @@ void PipelineImplement::fullTraversal() {
 }
 
 void
-PipelineImplement::addShader(RayGeneratorShaderId shaderId, RayGeneratorShaderContainer *rayGeneratorShaderContainer) {
-    rayGeneratorShaders[shaderId] = *rayGeneratorShaderContainer;
+PipelineImplement::addShader(RayGeneratorShaderId shaderId,
+                             const RayGeneratorShaderContainer &rayGeneratorShaderContainer) {
+    rayGeneratorShaders[shaderId] = rayGeneratorShaderContainer;
 }
 
-void PipelineImplement::addShader(HitShaderId shaderId, HitShaderContainer *hitShaderContainer) {
-    hitShaders[shaderId] = *hitShaderContainer;
+void PipelineImplement::addShader(HitShaderId shaderId, const HitShaderContainer &hitShaderContainer) {
+    hitShaders[shaderId] = hitShaderContainer;
 }
 
-void PipelineImplement::addShader(OcclusionShaderId shaderId, OcclusionShaderContainer *occlusionShaderContainer) {
-    occlusionShaders[shaderId] = *occlusionShaderContainer;
+void
+PipelineImplement::addShader(OcclusionShaderId shaderId, const OcclusionShaderContainer &occlusionShaderContainer) {
+    occlusionShaders[shaderId] = occlusionShaderContainer;
 }
 
-void PipelineImplement::addShader(PierceShaderId shaderId, PierceShaderContainer *pierceShaderContainer) {
-    pierceShaders[shaderId] = *pierceShaderContainer;
+void PipelineImplement::addShader(PierceShaderId shaderId, const PierceShaderContainer &pierceShaderContainer) {
+    pierceShaders[shaderId] = pierceShaderContainer;
 }
 
-void PipelineImplement::addShader(MissShaderId shaderId, MissShaderContainer *missShaderContainer) {
-    missShaders[shaderId] = *missShaderContainer;
+void PipelineImplement::addShader(MissShaderId shaderId, const MissShaderContainer &missShaderContainer) {
+    missShaders[shaderId] = missShaderContainer;
 }
 
 bool PipelineImplement::removeShader(RayGeneratorShaderId shaderId) {
@@ -387,41 +390,42 @@ bool PipelineImplement::removeShader(MissShaderId shaderId) {
     return false;
 }
 
-bool PipelineImplement::updateShader(RayGeneratorShaderId shaderId, std::vector<ShaderResource *> *shaderResources) {
+bool
+PipelineImplement::updateShader(RayGeneratorShaderId shaderId, const std::vector<ShaderResource *> &shaderResources) {
     if (rayGeneratorShaders.count(shaderId) != 0) {
-        rayGeneratorShaders[shaderId].shaderResources = *shaderResources;
+        rayGeneratorShaders[shaderId].shaderResources = shaderResources;
         return true;
     }
     return false;
 }
 
-bool PipelineImplement::updateShader(HitShaderId shaderId, std::vector<ShaderResource *> *shaderResources) {
+bool PipelineImplement::updateShader(HitShaderId shaderId, const std::vector<ShaderResource *> &shaderResources) {
     if (hitShaders.count(shaderId) != 0) {
-        hitShaders[shaderId].shaderResources = *shaderResources;
+        hitShaders[shaderId].shaderResources = shaderResources;
         return true;
     }
     return false;
 }
 
-bool PipelineImplement::updateShader(OcclusionShaderId shaderId, std::vector<ShaderResource *> *shaderResources) {
+bool PipelineImplement::updateShader(OcclusionShaderId shaderId, const std::vector<ShaderResource *> &shaderResources) {
     if (occlusionShaders.count(shaderId) != 0) {
-        occlusionShaders[shaderId].shaderResources = *shaderResources;
+        occlusionShaders[shaderId].shaderResources = shaderResources;
         return true;
     }
     return false;
 }
 
-bool PipelineImplement::updateShader(PierceShaderId shaderId, std::vector<ShaderResource *> *shaderResources) {
+bool PipelineImplement::updateShader(PierceShaderId shaderId, const std::vector<ShaderResource *> &shaderResources) {
     if (pierceShaders.count(shaderId) != 0) {
-        pierceShaders[shaderId].shaderResources = *shaderResources;
+        pierceShaders[shaderId].shaderResources = shaderResources;
         return true;
     }
     return false;
 }
 
-bool PipelineImplement::updateShader(MissShaderId shaderId, std::vector<ShaderResource *> *shaderResources) {
+bool PipelineImplement::updateShader(MissShaderId shaderId, const std::vector<ShaderResource *> &shaderResources) {
     if (missShaders.count(shaderId) != 0) {
-        missShaders[shaderId].shaderResources = *shaderResources;
+        missShaders[shaderId].shaderResources = shaderResources;
         return true;
     }
     return false;

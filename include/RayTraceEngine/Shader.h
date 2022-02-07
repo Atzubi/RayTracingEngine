@@ -127,8 +127,8 @@ public:
      * @return
      */
     virtual void
-    shade(uint64_t id, PipelineInfo *pipelineInfo, std::vector<ShaderResource *> *shaderResource,
-          RayGeneratorOutput *rayGeneratorOutput) = 0;
+    shade(uint64_t id, const PipelineInfo &pipelineInfo, const std::vector<ShaderResource *> &shaderResource,
+          RayGeneratorOutput &rayGeneratorOutput) const = 0;
 
     /**
      * Destructor.
@@ -154,9 +154,9 @@ public:
      * @return              Returns colour information that will be added to the rays corresponding pixel.
      */
     virtual ShaderOutput
-    shade(uint64_t id, PipelineInfo *pipelineInfo, OcclusionShaderInput *shaderInput,
-          std::vector<ShaderResource *> *shaderResource,
-          RayResource **rayResource, RayGeneratorOutput *newRays) = 0;
+    shade(uint64_t id, const PipelineInfo &pipelineInfo, const OcclusionShaderInput &shaderInput,
+          const std::vector<ShaderResource *> &shaderResource,
+          RayResource *&rayResource, RayGeneratorOutput &newRays) const = 0;
 
     /**
      * Destructor.
@@ -182,9 +182,9 @@ public:
      * @return              Returns colour information that will be added to the rays corresponding pixel.
      */
     virtual ShaderOutput
-    shade(uint64_t id, PipelineInfo *pipelineInfo, PierceShaderInput *shaderInput,
-          std::vector<ShaderResource *> *shaderResource,
-          RayResource **rayResource, RayGeneratorOutput *newRays) = 0;
+    shade(uint64_t id, const PipelineInfo &pipelineInfo, const PierceShaderInput &shaderInput,
+          const std::vector<ShaderResource *> &shaderResource,
+          RayResource *&rayResource, RayGeneratorOutput &newRays) const = 0;
 
     /**
      * Destructor.
@@ -210,9 +210,9 @@ public:
      * @return              Returns colour information that will be added to the rays corresponding pixel.
      */
     virtual ShaderOutput
-    shade(uint64_t id, PipelineInfo *pipelineInfo, HitShaderInput *shaderInput,
-          std::vector<ShaderResource *> *shaderResource,
-          RayResource **rayResource, RayGeneratorOutput *newRays) = 0;
+    shade(uint64_t id, const PipelineInfo &pipelineInfo, const HitShaderInput &shaderInput,
+          const std::vector<ShaderResource *> &shaderResource,
+          RayResource *&rayResource, RayGeneratorOutput &newRays) const = 0;
 
     /**
      * Destructor.
@@ -238,9 +238,9 @@ public:
      * @return              Returns colour information that will be added to the rays corresponding pixel.
      */
     virtual ShaderOutput
-    shade(uint64_t id, PipelineInfo *pipelineInfo, MissShaderInput *shaderInput,
-          std::vector<ShaderResource *> *shaderResource,
-          RayResource **rayResource, RayGeneratorOutput *newRays) = 0;
+    shade(uint64_t id, const PipelineInfo &pipelineInfo, const MissShaderInput &shaderInput,
+          const std::vector<ShaderResource *> &shaderResource,
+          RayResource *&rayResource, RayGeneratorOutput &newRays) const = 0;
 
     /**
      * Destructor.

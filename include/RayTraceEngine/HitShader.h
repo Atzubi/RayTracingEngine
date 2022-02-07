@@ -24,15 +24,15 @@ public:
         return std::make_unique<BasicHitShader>(*this);
     }
 
-    ShaderOutput shade(uint64_t id, PipelineInfo *pipelineInfo, HitShaderInput *shaderInput,
-                       std::vector<ShaderResource *> *shaderResource,
-                       RayResource **rayResource, RayGeneratorOutput *newRays) override {
+    ShaderOutput shade(uint64_t id, const PipelineInfo &pipelineInfo, const HitShaderInput &shaderInput,
+                       const std::vector<ShaderResource *> &shaderResource,
+                       RayResource *&rayResource, RayGeneratorOutput &newRays) const override {
         Vector3D Ka = {1, 1, 1};
         Vector3D Kd = {1, 1, 1};
         Vector3D Ks = {1, 1, 1};
         uint8_t pix[3];
 
-        auto shaderInputInfo = shaderInput->intersectionInfo;
+        auto shaderInputInfo = shaderInput.intersectionInfo;
 
         auto image = shaderInputInfo->material->map_Kd.image;
 
@@ -85,9 +85,9 @@ public:
 
         n = shaderInputInfo->normal;
 
-        v.x = -1.0 * (shaderInputInfo->rayOrigin.x - pipelineInfo->cameraPosition.x);
-        v.y = -1.0 * (shaderInputInfo->rayOrigin.y - pipelineInfo->cameraPosition.y);
-        v.z = -1.0 * (shaderInputInfo->rayOrigin.z - pipelineInfo->cameraPosition.z);
+        v.x = -1.0 * (shaderInputInfo->rayOrigin.x - pipelineInfo.cameraPosition.x);
+        v.y = -1.0 * (shaderInputInfo->rayOrigin.y - pipelineInfo.cameraPosition.y);
+        v.z = -1.0 * (shaderInputInfo->rayOrigin.z - pipelineInfo.cameraPosition.z);
 
 
         double_t length = sqrt(l.x * l.x + l.y * l.y + l.z * l.z);

@@ -10,21 +10,23 @@
 /**
  * Default implementation of a pierce shader.
  */
-class BasicPierceShader : public PierceShader{
+class BasicPierceShader : public PierceShader {
 public:
-    BasicPierceShader(){
+    BasicPierceShader() {
 
     }
-    BasicPierceShader(const BasicPierceShader& copy){
+
+    BasicPierceShader(const BasicPierceShader &copy) {
         // TODO
     }
 
-    [[nodiscard]] std::unique_ptr<PierceShader> clone() const override{
+    [[nodiscard]] std::unique_ptr<PierceShader> clone() const override {
         return std::make_unique<BasicPierceShader>(*this);
     }
 
-    ShaderOutput shade(uint64_t id, PipelineInfo *pipelineInfo, PierceShaderInput *shaderInput, std::vector<ShaderResource *> *shaderResource,
-                       RayResource **rayResource, RayGeneratorOutput *newRays) override{
+    ShaderOutput shade(uint64_t id, const PipelineInfo &pipelineInfo, const PierceShaderInput &shaderInput,
+                       const std::vector<ShaderResource *> &shaderResource, RayResource *&rayResource,
+                       RayGeneratorOutput &newRays) const override {
         // TODO
         return {};
     }

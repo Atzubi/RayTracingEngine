@@ -126,16 +126,16 @@ private:
                               RayGeneratorOutput &newRays);
 
     void
-    generateRays(RayGeneratorShaderContainer &generator, std::vector<RayContainer> &rayContainers,
+    generateRays(const RayGeneratorShaderContainer &generator, std::vector<RayContainer> &rayContainers,
                  int rayID);
 
     static Ray initRay(const std::vector<RayContainer> &rayContainers);
 
-    static IntersectionInfo getClosestIntersection(std::vector<IntersectionInfo> &infos, Ray &ray);
+    static IntersectionInfo getClosestIntersection(std::vector<IntersectionInfo> &infos, const Ray &ray);
 
-    static void updateRayStack(std::vector<RayContainer> &rayContainers, int id, RayGeneratorOutput &newRays);
+    static void updateRayStack(std::vector<RayContainer> &rayContainers, int id, const RayGeneratorOutput &newRays);
 
-    static IntersectionInfo initInfo(Ray &ray);
+    static IntersectionInfo initInfo(const Ray &ray);
 
     void processShadersAnyHit(const Ray &ray, const IntersectionInfo &info, int id, RayGeneratorOutput &newRays,
                               RayResource *rayResource);
@@ -150,9 +150,9 @@ private:
                    RayResource *rayResource);
 
     void
-    processAllHitInformation(Ray &ray, std::vector<RayContainer> &rayContainers, std::vector<IntersectionInfo> &infos);
+    processAllHitInformation(const Ray &ray, std::vector<RayContainer> &rayContainers, std::vector<IntersectionInfo> &infos);
 
-    void processShadersAllHits(Ray &ray, std::vector<IntersectionInfo> &infos, RayGeneratorOutput &newRays, int id,
+    void processShadersAllHits(const Ray &ray, std::vector<IntersectionInfo> &infos, RayGeneratorOutput &newRays, int id,
                                RayResource *rayResource);
 
     void generatePrimaryRays(std::vector<RayContainer> &rayContainers, int rayID);
@@ -170,12 +170,14 @@ private:
     void anyHitTraversal();
 
 public:
-    PipelineImplement(EngineNode *engine, int width, int height, Vector3D *cameraPosition, Vector3D *cameraDirection,
-                      Vector3D *cameraUp, std::vector<RayGeneratorShaderPackage> *rayGeneratorShaders,
-                      std::vector<OcclusionShaderPackage> *occlusionShaders,
-                      std::vector<HitShaderPackage> *hitShaders,
-                      std::vector<PierceShaderPackage> *pierceShaders, std::vector<MissShaderPackage> *missShaders,
-                      std::unique_ptr<DBVHNode> &geometry);
+    PipelineImplement(EngineNode *engine, int width, int height, const Vector3D &cameraPosition,
+                      const Vector3D &cameraDirection, const Vector3D &cameraUp,
+                      const std::vector<RayGeneratorShaderPackage> &rayGeneratorShaders,
+                      const std::vector<OcclusionShaderPackage> &occlusionShaders,
+                      const std::vector<HitShaderPackage> &hitShaders,
+                      const std::vector<PierceShaderPackage> &pierceShaders,
+                      const std::vector<MissShaderPackage> &missShaders,
+                      std::unique_ptr<DBVHNode> geometry);
 
     ~PipelineImplement();
 
@@ -185,17 +187,17 @@ public:
 
     void setResolution(int width, int height);
 
-    void setCamera(Vector3D pos, Vector3D dir, Vector3D up);
+    void setCamera(const Vector3D &pos, const Vector3D &dir, const Vector3D &up);
 
-    void addShader(RayGeneratorShaderId shaderId, RayGeneratorShaderContainer *rayGeneratorShaderContainer);
+    void addShader(RayGeneratorShaderId shaderId, const RayGeneratorShaderContainer &rayGeneratorShaderContainer);
 
-    void addShader(HitShaderId shaderId, HitShaderContainer *hitShaderContainer);
+    void addShader(HitShaderId shaderId, const HitShaderContainer &hitShaderContainer);
 
-    void addShader(OcclusionShaderId shaderId, OcclusionShaderContainer *occlusionShaderContainer);
+    void addShader(OcclusionShaderId shaderId, const OcclusionShaderContainer &occlusionShaderContainer);
 
-    void addShader(PierceShaderId shaderId, PierceShaderContainer *pierceShaderContainer);
+    void addShader(PierceShaderId shaderId, const PierceShaderContainer &pierceShaderContainer);
 
-    void addShader(MissShaderId shaderId, MissShaderContainer *missShaderContainer);
+    void addShader(MissShaderId shaderId, const MissShaderContainer &missShaderContainer);
 
     bool removeShader(RayGeneratorShaderId shaderId);
 
@@ -207,15 +209,15 @@ public:
 
     bool removeShader(MissShaderId shaderId);
 
-    bool updateShader(RayGeneratorShaderId shaderId, std::vector<ShaderResource *> *shaderResources);
+    bool updateShader(RayGeneratorShaderId shaderId, const std::vector<ShaderResource *> &shaderResources);
 
-    bool updateShader(HitShaderId shaderId, std::vector<ShaderResource *> *shaderResources);
+    bool updateShader(HitShaderId shaderId, const std::vector<ShaderResource *> &shaderResources);
 
-    bool updateShader(OcclusionShaderId shaderId, std::vector<ShaderResource *> *shaderResources);
+    bool updateShader(OcclusionShaderId shaderId, const std::vector<ShaderResource *> &shaderResources);
 
-    bool updateShader(PierceShaderId shaderId, std::vector<ShaderResource *> *shaderResources);
+    bool updateShader(PierceShaderId shaderId, const std::vector<ShaderResource *> &shaderResources);
 
-    bool updateShader(MissShaderId shaderId, std::vector<ShaderResource *> *shaderResources);
+    bool updateShader(MissShaderId shaderId, const std::vector<ShaderResource *> &shaderResources);
 
     DBVHNode *getGeometry();
 
