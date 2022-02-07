@@ -11,13 +11,6 @@
 #include "Acceleration Structures/DBVHv2.h"
 #include "Engine Node/EngineNode.h"
 
-struct RayContainer {
-    int rayID;
-    Vector3D rayOrigin;
-    Vector3D rayDirection;
-    RayResource* rayResource;
-};
-
 PipelineImplement::PipelineImplement(EngineNode *engine, int width, int height, Vector3D *cameraPosition,
                                      Vector3D *cameraDirection, Vector3D *cameraUp,
                                      std::vector<RayGeneratorShaderPackage> *rayGeneratorShaders,
@@ -83,262 +76,254 @@ std::unique_ptr<Object> PipelineImplement::getGeometryAsObject() {
 }
 
 int PipelineImplement::run() {
-    RayGeneratorOutput rays;
-
-    std::vector<RayContainer> rayContainers;
-
-    for (int i = 0; i < pipelineInfo.width * pipelineInfo.height * 3; i++) {
-        result->image[i] = 0;
-    }
+    resetResult();
 
     if (!pierceShaders.empty()) {
-        // worst case, full traversal
-        for (int x = 0; x < pipelineInfo.width; x++) {
-            for (int y = 0; y < pipelineInfo.height; y++) {
-                for (auto &generator: rayGeneratorShaders) {
-                    int rayID = x + y * pipelineInfo.width;
-                    generator.second.rayGeneratorShader->shade(rayID, &pipelineInfo, &generator.second.shaderResources,
-                                                               &rays);
-
-                    for (auto &ray: rays.rays) {
-                        RayContainer rayContainer = {rayID, ray.rayOrigin, ray.rayDirection, nullptr};
-                        rayContainers.push_back(rayContainer);
-                    }
-
-                    rays.rays.clear();
-
-                    while (!rayContainers.empty()) {
-                        int id = rayContainers.back().rayID;
-                        auto rayResource = rayContainers.back().rayResource;
-                        Ray ray{};
-                        ray.origin = rayContainers.back().rayOrigin;
-                        ray.direction = rayContainers.back().rayDirection;
-                        ray.dirfrac.x = 1.0 / ray.direction.x;
-                        ray.dirfrac.y = 1.0 / ray.direction.y;
-                        ray.dirfrac.z = 1.0 / ray.direction.z;
-
-                        std::vector<IntersectionInfo> infos;
-                        DBVHv2::intersectAll(*geometry, infos, ray);
-
-                        RayGeneratorOutput newRays;
-
-                        for (auto &pierceShader: pierceShaders) {
-                            PierceShaderInput pierceShaderInput = {infos};
-                            auto pixel = pierceShader.second.pierceShader->shade(id, &pipelineInfo, &pierceShaderInput,
-                                                                                 &pierceShader.second.shaderResources,
-                                                                                 &rayResource, &newRays);
-                            result->image[id * 3] += pixel.color[0];
-                            result->image[id * 3 + 1] += pixel.color[1];
-                            result->image[id * 3 + 2] += pixel.color[2];
-                        }
-
-                        IntersectionInfo closest = {false, std::numeric_limits<double>::max(), ray.origin,
-                                                    ray.direction, {0, 0, 0}, {0, 0, 0}, {0, 0}, nullptr};
-                        bool hitAny = false;
-                        for (auto info: infos) {
-                            if (info.hit) {
-                                hitAny = true;
-                                if (closest.distance > info.distance) {
-                                    closest = info;
-                                }
-                            }
-                        }
-
-                        if (closest.hit) {
-                            for (auto &hitShader: hitShaders) {
-                                HitShaderInput hitShaderInput = {&closest};
-                                auto pixel = hitShader.second.hitShader->shade(id, &pipelineInfo, &hitShaderInput,
-                                                                               &hitShader.second.shaderResources,
-                                                                               &rayResource, &newRays);
-                                result->image[id * 3] += pixel.color[0];
-                                result->image[id * 3 + 1] += pixel.color[1];
-                                result->image[id * 3 + 2] += pixel.color[2];
-                            }
-                        }
-
-                        if (closest.hit) {
-                            for (auto &occlusionShader: occlusionShaders) {
-                                OcclusionShaderInput occlusionShaderInput = {ray.origin, ray.direction};
-                                auto pixel = occlusionShader.second.occlusionShader->shade(id, &pipelineInfo,
-                                                                                           &occlusionShaderInput,
-                                                                                           &occlusionShader.second.shaderResources,
-                                                                                           &rayResource,
-                                                                                           &newRays);
-                                result->image[id * 3] += pixel.color[0];
-                                result->image[id * 3 + 1] += pixel.color[1];
-                                result->image[id * 3 + 2] += pixel.color[2];
-                            }
-                        }
-
-                        if (!hitAny) {
-                            for (auto &missShader: missShaders) {
-                                MissShaderInput missShaderInput = {ray.origin, ray.direction};
-                                auto pixel = missShader.second.missShader->shade(id, &pipelineInfo, &missShaderInput,
-                                                                                 &missShader.second.shaderResources,
-                                                                                 &rayResource, &newRays);
-                                result->image[id * 3] += pixel.color[0];
-                                result->image[id * 3 + 1] += pixel.color[1];
-                                result->image[id * 3 + 2] += pixel.color[2];
-                            }
-                        }
-
-                        rayContainers.pop_back();
-
-                        for (auto &r: newRays.rays) {
-                            RayContainer rayContainer = {id, r.rayDirection, r.rayOrigin,
-                                                         nullptr};
-                            rayContainers.push_back(rayContainer);
-                        }
-                    }
-                }
-            }
-        }
+        fullTraversal();
     } else if (!hitShaders.empty()) {
-        // normal case, early out when closest found
-        for (int x = 0; x < pipelineInfo.width; x++) {
-            for (int y = 0; y < pipelineInfo.height; y++) {
-                for (auto &generator: rayGeneratorShaders) {
-                    int rayID = x + y * pipelineInfo.width;
-                    generator.second.rayGeneratorShader->shade(rayID, &pipelineInfo, &generator.second.shaderResources,
-                                                               &rays);
-
-                    for (auto &ray: rays.rays) {
-                        RayContainer rayContainer = {rayID, ray.rayOrigin, ray.rayDirection, nullptr};
-                        rayContainers.push_back(rayContainer);
-                    }
-
-                    rays.rays.clear();
-
-                    while (!rayContainers.empty()) {
-                        int id = rayContainers.back().rayID;
-                        auto rayResource = rayContainers.back().rayResource;
-                        Ray ray{};
-                        ray.origin = rayContainers.back().rayOrigin;
-                        ray.direction = rayContainers.back().rayDirection;
-                        ray.dirfrac.x = 1.0 / ray.direction.x;
-                        ray.dirfrac.y = 1.0 / ray.direction.y;
-                        ray.dirfrac.z = 1.0 / ray.direction.z;
-
-                        IntersectionInfo info = {false, std::numeric_limits<double>::max(), ray.origin,
-                                                    ray.direction, {0, 0, 0}, {0, 0, 0}, {0, 0}, nullptr};
-                        DBVHv2::intersectFirst(*geometry, info, ray);
-
-                        RayGeneratorOutput newRays;
-
-                        if (info.hit) {
-                            for (auto &hitShader: hitShaders) {
-                                HitShaderInput hitShaderInput = {&info};
-                                auto pixel = hitShader.second.hitShader->shade(id, &pipelineInfo, &hitShaderInput,
-                                                                               &hitShader.second.shaderResources,
-                                                                               &rayResource, &newRays);
-                                result->image[id * 3] += pixel.color[0];
-                                result->image[id * 3 + 1] += pixel.color[1];
-                                result->image[id * 3 + 2] += pixel.color[2];
-                            }
-
-                            for (auto &occlusionShader: occlusionShaders) {
-                                OcclusionShaderInput occlusionShaderInput = {ray.origin, ray.direction};
-                                auto pixel = occlusionShader.second.occlusionShader->shade(id, &pipelineInfo,
-                                                                                           &occlusionShaderInput,
-                                                                                           &occlusionShader.second.shaderResources,
-                                                                                           &rayResource,
-                                                                                           &newRays);
-                                result->image[id * 3] += pixel.color[0];
-                                result->image[id * 3 + 1] += pixel.color[1];
-                                result->image[id * 3 + 2] += pixel.color[2];
-                            }
-                        } else {
-                            for (auto &missShader: missShaders) {
-                                MissShaderInput missShaderInput = {ray.origin, ray.direction};
-                                auto pixel = missShader.second.missShader->shade(id, &pipelineInfo, &missShaderInput,
-                                                                                 &missShader.second.shaderResources,
-                                                                                 &rayResource, &newRays);
-                                result->image[id * 3] += pixel.color[0];
-                                result->image[id * 3 + 1] += pixel.color[1];
-                                result->image[id * 3 + 2] += pixel.color[2];
-                            }
-                        }
-
-                        rayContainers.pop_back();
-
-                        for (auto &r: newRays.rays) {
-                            RayContainer rayContainer = {id, r.rayDirection, r.rayOrigin,
-                                                         nullptr};
-                            rayContainers.push_back(rayContainer);
-                        }
-                    }
-                }
-            }
-        }
+        closestHitTraversal();
     } else {
-        // best case, early out when any found
-        for (int x = 0; x < pipelineInfo.width; x++) {
-            for (int y = 0; y < pipelineInfo.height; y++) {
-                for (auto &generator: rayGeneratorShaders) {
-                    int rayID = x + y * pipelineInfo.width;
-                    generator.second.rayGeneratorShader->shade(rayID, &pipelineInfo, &generator.second.shaderResources,
-                                                               &rays);
-                    for (auto &ray: rays.rays) {
-                        RayContainer rayContainer = {rayID, ray.rayOrigin, ray.rayDirection, nullptr};
-                        rayContainers.push_back(rayContainer);
-                    }
-
-                    rays.rays.clear();
-
-                    while (!rayContainers.empty()) {
-                        int id = rayContainers.back().rayID;
-                        auto rayResource = rayContainers.back().rayResource;
-                        Ray ray{};
-                        ray.origin = rayContainers.back().rayOrigin;
-                        ray.direction = rayContainers.back().rayDirection;
-                        ray.dirfrac.x = 1.0 / ray.direction.x;
-                        ray.dirfrac.y = 1.0 / ray.direction.y;
-                        ray.dirfrac.z = 1.0 / ray.direction.z;
-
-                        IntersectionInfo info = {false, std::numeric_limits<double>::max(), ray.origin,
-                                                    ray.direction, {0, 0, 0}, {0, 0, 0}, {0, 0}, nullptr};
-                        DBVHv2::intersectAny(*geometry, info, ray);
-
-                        RayGeneratorOutput newRays;
-
-                        if (info.hit) {
-                            for (auto &occlusionShader: occlusionShaders) {
-                                OcclusionShaderInput occlusionShaderInput = {ray.origin, ray.direction};
-                                auto pixel = occlusionShader.second.occlusionShader->shade(id, &pipelineInfo,
-                                                                                           &occlusionShaderInput,
-                                                                                           &occlusionShader.second.shaderResources,
-                                                                                           &rayResource,
-                                                                                           &newRays);
-                                result->image[id * 3] += pixel.color[0];
-                                result->image[id * 3 + 1] += pixel.color[1];
-                                result->image[id * 3 + 2] += pixel.color[2];
-                            }
-                        } else {
-                            for (auto &missShader: missShaders) {
-                                MissShaderInput missShaderInput = {ray.origin, ray.direction};
-                                auto pixel = missShader.second.missShader->shade(id, &pipelineInfo, &missShaderInput,
-                                                                                 &missShader.second.shaderResources,
-                                                                                 &rayResource, &newRays);
-                                result->image[id * 3] += pixel.color[0];
-                                result->image[id * 3 + 1] += pixel.color[1];
-                                result->image[id * 3 + 2] += pixel.color[2];
-                            }
-                        }
-
-                        rayContainers.pop_back();
-
-                        for (auto &r: newRays.rays) {
-                            RayContainer rayContainer = {id, r.rayDirection, r.rayOrigin,
-                                                          nullptr};
-                            rayContainers.push_back(rayContainer);
-                        }
-                    }
-                }
-            }
-        }
+        anyHitTraversal();
     }
 
     return 0;
+}
+
+void PipelineImplement::resetResult() {
+    for (int i = 0; i < pipelineInfo.width * pipelineInfo.height * 3; i++) {
+        result->image[i] = 0;
+    }
+}
+
+void PipelineImplement::setPixel(int id, const ShaderOutput &pixel) {
+    result->image[id * 3] += pixel.color[0];
+    result->image[id * 3 + 1] += pixel.color[1];
+    result->image[id * 3 + 2] += pixel.color[2];
+}
+
+void
+PipelineImplement::processMissShaders(int id, RayResource *&rayResource, const Ray &ray, RayGeneratorOutput &newRays) {
+    for (auto &missShader: missShaders) {
+        MissShaderInput missShaderInput = {ray.origin, ray.direction};
+        auto pixel = missShader.second.missShader->shade(id, &pipelineInfo, &missShaderInput,
+                                                         &missShader.second.shaderResources,
+                                                         &rayResource, &newRays);
+        setPixel(id, pixel);
+    }
+}
+
+void PipelineImplement::processOcclusionShaders(int id, RayResource *&rayResource, const Ray &ray,
+                                                RayGeneratorOutput &newRays) {
+    for (auto &occlusionShader: occlusionShaders) {
+        OcclusionShaderInput occlusionShaderInput = {ray.origin, ray.direction};
+        auto pixel = occlusionShader.second.occlusionShader->shade(id, &pipelineInfo,
+                                                                   &occlusionShaderInput,
+                                                                   &occlusionShader.second.shaderResources,
+                                                                   &rayResource,
+                                                                   &newRays);
+        setPixel(id, pixel);
+    }
+}
+
+void PipelineImplement::processHitShaders(int id, IntersectionInfo &info, RayResource *&rayResource,
+                                          RayGeneratorOutput &newRays) {
+    for (auto &hitShader: hitShaders) {
+        HitShaderInput hitShaderInput = {&info};
+        auto pixel = hitShader.second.hitShader->shade(id, &pipelineInfo, &hitShaderInput,
+                                                       &hitShader.second.shaderResources,
+                                                       &rayResource, &newRays);
+        setPixel(id, pixel);
+    }
+}
+
+void PipelineImplement::processPierceShaders(int id, RayResource *&rayResource, std::vector<IntersectionInfo> &infos,
+                                             RayGeneratorOutput &newRays) {
+    for (auto &pierceShader: pierceShaders) {
+        PierceShaderInput pierceShaderInput = {infos};
+        auto pixel = pierceShader.second.pierceShader->shade(id, &pipelineInfo, &pierceShaderInput,
+                                                             &pierceShader.second.shaderResources,
+                                                             &rayResource, &newRays);
+        setPixel(id, pixel);
+    }
+}
+
+void PipelineImplement::generateRays(RayGeneratorShaderContainer &generator, std::vector<RayContainer> &rayContainers,
+                                     int rayID) {
+    RayGeneratorOutput rays;
+    generator.rayGeneratorShader->shade(rayID, &pipelineInfo, &generator.shaderResources,
+                                        &rays);
+    for (auto &ray: rays.rays) {
+        RayContainer rayContainer = {rayID, ray.rayOrigin, ray.rayDirection, nullptr};
+        rayContainers.push_back(rayContainer);
+    }
+}
+
+Ray PipelineImplement::initRay(const std::vector<RayContainer> &rayContainers) {
+    Ray ray{};
+    ray.origin = rayContainers.back().rayOrigin;
+    ray.direction = rayContainers.back().rayDirection;
+    ray.dirfrac.x = 1.0 / ray.direction.x;
+    ray.dirfrac.y = 1.0 / ray.direction.y;
+    ray.dirfrac.z = 1.0 / ray.direction.z;
+    return ray;
+}
+
+IntersectionInfo PipelineImplement::initInfo(Ray &ray) {
+    return {false, std::numeric_limits<double>::max(), ray.origin,
+            ray.direction, {0, 0, 0}, {0, 0, 0}, {0, 0}, nullptr};
+}
+
+IntersectionInfo PipelineImplement::getClosestIntersection(std::vector<IntersectionInfo> &infos, Ray &ray) {
+    IntersectionInfo closest = initInfo(ray);
+    for (auto info: infos) {
+        if (info.hit && closest.distance > info.distance) {
+            closest = info;
+        }
+    }
+    return closest;
+}
+
+void
+PipelineImplement::updateRayStack(std::vector<RayContainer> &rayContainers, int id, RayGeneratorOutput &newRays) {
+    rayContainers.pop_back();
+
+    for (auto &r: newRays.rays) {
+        RayContainer rayContainer = {id, r.rayDirection, r.rayOrigin,
+                                     nullptr};
+        rayContainers.push_back(rayContainer);
+    }
+}
+
+void PipelineImplement::generatePrimaryRays(std::vector<RayContainer> &rayContainers, int rayID) {
+    for (auto &generator: rayGeneratorShaders) {
+        generateRays(generator.second, rayContainers, rayID);
+    }
+}
+
+void PipelineImplement::processShaders(const Ray &ray, IntersectionInfo &info, int id, RayGeneratorOutput &newRays,
+                                       RayResource *rayResource) {
+    if (info.hit) {
+        processHitShaders(id, info, rayResource, newRays);
+
+        processOcclusionShaders(id, rayResource, ray, newRays);
+    } else {
+        processMissShaders(id, rayResource, ray, newRays);
+    }
+}
+
+void PipelineImplement::processShadersAnyHit(const Ray &ray, const IntersectionInfo &info, int id,
+                                             RayGeneratorOutput &newRays, RayResource *rayResource) {
+    if (info.hit) {
+        processOcclusionShaders(id, rayResource, ray, newRays);
+    } else {
+        processMissShaders(id, rayResource, ray, newRays);
+    }
+}
+
+void
+PipelineImplement::processShadersAllHits(Ray &ray, std::vector<IntersectionInfo> &infos, RayGeneratorOutput &newRays,
+                                         int id, RayResource *rayResource) {
+    processPierceShaders(id, rayResource, infos, newRays);
+
+    auto closest = getClosestIntersection(infos, ray);
+
+    processShaders(ray, closest, id, newRays, rayResource);
+}
+
+void
+PipelineImplement::processAnyHitInformation(std::vector<RayContainer> &rayContainers, const Ray &ray,
+                                            const IntersectionInfo &info) {
+    int id = rayContainers.back().rayID;
+    RayGeneratorOutput newRays;
+    auto rayResource = rayContainers.back().rayResource;
+    processShadersAnyHit(ray, info, id, newRays, rayResource);
+
+    updateRayStack(rayContainers, id, newRays);
+}
+
+void PipelineImplement::processClosestHitInformation(std::vector<RayContainer> &rayContainers, const Ray &ray,
+                                                     IntersectionInfo &info) {
+    int id = rayContainers.back().rayID;
+    RayGeneratorOutput newRays;
+    auto rayResource = rayContainers.back().rayResource;
+    processShaders(ray, info, id, newRays, rayResource);
+
+    updateRayStack(rayContainers, id, newRays);
+}
+
+void PipelineImplement::processAllHitInformation(Ray &ray, std::vector<RayContainer> &rayContainers,
+                                                 std::vector<IntersectionInfo> &infos) {
+    RayGeneratorOutput newRays;
+    int id = rayContainers.back().rayID;
+    auto rayResource = rayContainers.back().rayResource;
+
+    processShadersAllHits(ray, infos, newRays, id, rayResource);
+
+    updateRayStack(rayContainers, id, newRays);
+}
+
+void PipelineImplement::processRaysAnyHit(std::vector<RayContainer> &rayContainers) {
+    while (!rayContainers.empty()) {
+        Ray ray = initRay(rayContainers);
+        IntersectionInfo info = initInfo(ray);
+
+        DBVHv2::intersectAny(*geometry, info, ray);
+
+        processAnyHitInformation(rayContainers, ray, info);
+
+    }
+}
+
+void PipelineImplement::processRaysClosestHit(std::vector<RayContainer> &rayContainers) {
+    while (!rayContainers.empty()) {
+        Ray ray = initRay(rayContainers);
+        IntersectionInfo info = initInfo(ray);
+        DBVHv2::intersectFirst(*geometry, info, ray);
+
+        processClosestHitInformation(rayContainers, ray, info);
+    }
+}
+
+void PipelineImplement::processRaysAllHits(std::vector<RayContainer> &rayContainers) {
+    while (!rayContainers.empty()) {
+        Ray ray = initRay(rayContainers);
+        std::vector<IntersectionInfo> infos;
+
+        DBVHv2::intersectAll(*geometry, infos, ray);
+
+        processAllHitInformation(ray, rayContainers, infos);
+
+    }
+}
+
+void PipelineImplement::anyHitTraversal() {
+    std::vector<RayContainer> rayContainers;
+
+    for (int rayID = 0; rayID < pipelineInfo.width * pipelineInfo.height; rayID++) {
+        generatePrimaryRays(rayContainers, rayID);
+
+        processRaysAnyHit(rayContainers);
+    }
+}
+
+void PipelineImplement::closestHitTraversal() {
+    std::vector<RayContainer> rayContainers;
+
+    for (int rayID = 0; rayID < pipelineInfo.width * pipelineInfo.height; rayID++) {
+        generatePrimaryRays(rayContainers, rayID);
+
+        processRaysClosestHit(rayContainers);
+    }
+}
+
+void PipelineImplement::fullTraversal() {
+    std::vector<RayContainer> rayContainers;
+
+    for (int rayID = 0; rayID < pipelineInfo.width * pipelineInfo.height; rayID++) {
+        generatePrimaryRays(rayContainers, rayID);
+
+        processRaysAllHits(rayContainers);
+    }
 }
 
 void
