@@ -38,11 +38,13 @@ struct MissShaderResourcePackage {
 class ShaderResource {
 public:
     [[nodiscard]] virtual std::unique_ptr<ShaderResource> clone() const = 0;
+    virtual ~ShaderResource() = default;
 };
 
 class RayResource {
 public:
     [[nodiscard]] virtual std::unique_ptr<RayResource> clone() const = 0;
+    virtual ~RayResource() = default;
 };
 
 /**
