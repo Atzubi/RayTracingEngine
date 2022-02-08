@@ -11,44 +11,6 @@
 #include "BasicStructures.h"
 #include "Utility/Id.h"
 
-/*struct ObjectId {
-    int objectId;
-
-    bool operator==(const ObjectId &other) const {
-        return objectId == other.objectId;
-    }
-
-    bool operator<(const ObjectId &other) const {
-        return objectId < other.objectId;
-    }
-};
-
-template<>
-struct std::hash<ObjectId> {
-    std::size_t operator()(const ObjectId &k) const {
-        return std::hash<int>()(k.objectId);
-    }
-};
-
-struct InstanceId {
-    int instanceId;
-
-    bool operator==(const InstanceId &other) const {
-        return instanceId == other.instanceId;
-    }
-
-    bool operator<(const InstanceId &other) const {
-        return instanceId < other.instanceId;
-    }
-};
-
-template<>
-struct std::hash<InstanceId> {
-    std::size_t operator()(const InstanceId &k) const {
-        return std::hash<int>()(k.instanceId);
-    }
-};*/
-
 /**
  * Container outputted by the ray tracing engine.
  * hit:             Whether the ray intersected geometry.
