@@ -23,43 +23,13 @@ public:
         Vector3D vertex2 = mesh->vertices[mesh->indices[pos + 1]].position;
         Vector3D vertex3 = mesh->vertices[mesh->indices[pos + 2]].position;
 
-        Vector3D front = vertex1, back = vertex1;
-        if (front.x > vertex2.x) {
-            front.x = vertex2.x;
-        }
-        if (front.x > vertex3.x) {
-            front.x = vertex3.x;
-        }
-        if (front.y > vertex2.y) {
-            front.y = vertex2.y;
-        }
-        if (front.y > vertex3.y) {
-            front.y = vertex3.y;
-        }
-        if (front.z > vertex2.z) {
-            front.z = vertex2.z;
-        }
-        if (front.z > vertex3.z) {
-            front.z = vertex3.z;
-        }
-        if (back.x < vertex2.x) {
-            back.x = vertex2.x;
-        }
-        if (back.x < vertex3.x) {
-            back.x = vertex3.x;
-        }
-        if (back.y < vertex2.y) {
-            back.y = vertex2.y;
-        }
-        if (back.y < vertex3.y) {
-            back.y = vertex3.y;
-        }
-        if (back.z < vertex2.z) {
-            back.z = vertex2.z;
-        }
-        if (back.z < vertex3.z) {
-            back.z = vertex3.z;
-        }
+        Vector3D front{std::min(std::min(vertex1.x, vertex2.x), vertex3.x),
+                       std::min(std::min(vertex1.y, vertex2.y), vertex3.y),
+                       std::min(std::min(vertex1.z, vertex2.z), vertex3.z)};
+
+        Vector3D back{std::max(std::max(vertex1.x, vertex2.x), vertex3.x),
+                      std::max(std::max(vertex1.y, vertex2.y), vertex3.y),
+                      std::max(std::max(vertex1.z, vertex2.z), vertex3.z)};
         return {front, back};
     }
 
