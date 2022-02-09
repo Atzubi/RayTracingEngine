@@ -150,8 +150,7 @@ void PipelineImplement::processPierceShaders(int id, RayResource *&rayResource, 
 
 void
 PipelineImplement::generateRays(const RayGeneratorShaderContainer &generator, std::vector<RayContainer> &rayContainers,
-                                int rayID) {
-    RayGeneratorOutput rays;
+                                int rayID, RayGeneratorOutput &rays) {
     generator.rayGeneratorShader->shade(rayID, pipelineInfo, generator.shaderResources, rays);
     for (auto &ray: rays.rays) {
         RayContainer rayContainer = {rayID, ray.rayOrigin, ray.rayDirection, nullptr};
@@ -194,8 +193,10 @@ PipelineImplement::updateRayStack(std::vector<RayContainer> &rayContainers, int 
 }
 
 void PipelineImplement::generatePrimaryRays(std::vector<RayContainer> &rayContainers, int rayID) {
+    RayGeneratorOutput rays;
     for (auto &generator: rayGeneratorShaders) {
-        generateRays(generator.second, rayContainers, rayID);
+        generateRays(generator.second, rayContainers, rayID, rays);
+        rays.rays.clear();
     }
 }
 

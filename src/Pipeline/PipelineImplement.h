@@ -127,7 +127,7 @@ private:
 
     void
     generateRays(const RayGeneratorShaderContainer &generator, std::vector<RayContainer> &rayContainers,
-                 int rayID);
+                 int rayID, RayGeneratorOutput &rays);
 
     static Ray initRay(const std::vector<RayContainer> &rayContainers);
 
