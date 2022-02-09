@@ -22,6 +22,8 @@ private:
     Matrix4x4 transform{};
     Matrix4x4 inverseTransform{};
 
+    Object *getBaseObject();
+
 public:
     explicit Instance(EngineNode &node, ObjectCapsule &objectCapsule);
 
