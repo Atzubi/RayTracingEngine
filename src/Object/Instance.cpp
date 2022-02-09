@@ -60,14 +60,14 @@ void transformOldBox(const BoundingBox &aabb, const Matrix4x4 &transform, Vector
                      Vector3D &frontBottomRight, Vector3D &frontTopLeft, Vector3D &frontTopRight,
                      Vector3D &backBottomLeft, Vector3D &backBottomRight, Vector3D &backTopLeft,
                      Vector3D &backTopRight) {
-    frontBottomLeft= aabb.minCorner;
-    frontBottomRight= {aabb.maxCorner.x, aabb.minCorner.y, aabb.minCorner.z};
-    frontTopLeft= {aabb.minCorner.x, aabb.maxCorner.y, aabb.minCorner.z};
-    frontTopRight= {aabb.maxCorner.x, aabb.maxCorner.y, aabb.minCorner.z};
-    backBottomLeft= {aabb.minCorner.x, aabb.minCorner.y, aabb.maxCorner.z};
-    backBottomRight= {aabb.maxCorner.x, aabb.minCorner.y, aabb.maxCorner.z};
-    backTopLeft= {aabb.minCorner.x, aabb.maxCorner.y, aabb.maxCorner.z};
-    backTopRight= aabb.maxCorner;
+    frontBottomLeft = aabb.minCorner;
+    frontBottomRight = {aabb.maxCorner.x, aabb.minCorner.y, aabb.minCorner.z};
+    frontTopLeft = {aabb.minCorner.x, aabb.maxCorner.y, aabb.minCorner.z};
+    frontTopRight = {aabb.maxCorner.x, aabb.maxCorner.y, aabb.minCorner.z};
+    backBottomLeft = {aabb.minCorner.x, aabb.minCorner.y, aabb.maxCorner.z};
+    backBottomRight = {aabb.maxCorner.x, aabb.minCorner.y, aabb.maxCorner.z};
+    backTopLeft = {aabb.minCorner.x, aabb.maxCorner.y, aabb.maxCorner.z};
+    backTopRight = aabb.maxCorner;
 
     frontBottomLeft = multiplyMatrixVector(transform, frontBottomLeft);
     frontBottomRight = multiplyMatrixVector(transform, frontBottomRight);
@@ -567,28 +567,20 @@ double Instance::getSurfaceArea() const {
     return cost + boundingBox.getSA(); // TODO: fix math
 }
 
+bool isTransformEqual(const Matrix4x4 &transform1, const Matrix4x4 &transform2) {
+    for (int x = 0; x < 4; x++) {
+        for (int y = 0; y < 4; y++) {
+            if (transform1.elements[x][y] != transform2.elements[x][y])
+                return false;
+        }
+    }
+    return true;
+}
+
 bool Instance::operator==(const Object &object) const {
     const auto obj = dynamic_cast<const Instance *>(&object);
-    if (obj == nullptr) return false;
-    if (obj->baseObjectId == baseObjectId) {
-        return obj->transform.elements[0][0] == transform.elements[0][0] &&
-               obj->transform.elements[0][1] == transform.elements[0][1] &&
-               obj->transform.elements[0][2] == transform.elements[0][2] &&
-               obj->transform.elements[0][3] == transform.elements[0][3] &&
-               obj->transform.elements[1][0] == transform.elements[1][0] &&
-               obj->transform.elements[1][1] == transform.elements[1][1] &&
-               obj->transform.elements[1][2] == transform.elements[1][2] &&
-               obj->transform.elements[1][3] == transform.elements[1][3] &&
-               obj->transform.elements[2][0] == transform.elements[2][0] &&
-               obj->transform.elements[2][1] == transform.elements[2][1] &&
-               obj->transform.elements[2][2] == transform.elements[2][2] &&
-               obj->transform.elements[2][3] == transform.elements[2][3] &&
-               obj->transform.elements[3][0] == transform.elements[3][0] &&
-               obj->transform.elements[3][1] == transform.elements[3][1] &&
-               obj->transform.elements[3][2] == transform.elements[3][2] &&
-               obj->transform.elements[3][3] == transform.elements[3][3];
-    }
-    return false;
+    if (obj == nullptr || obj->baseObjectId != baseObjectId) return false;
+    return isTransformEqual(obj->transform, transform);
 }
 
 bool Instance::operator!=(const Object &object) const {
