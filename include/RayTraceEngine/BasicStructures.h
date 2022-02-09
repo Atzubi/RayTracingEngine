@@ -141,6 +141,10 @@ struct Vector3D {
     [[nodiscard]] Vector3D getInverse() const {
         return {1.0 / x, 1.0 / y, 1.0 / z};
     }
+
+    [[nodiscard]] Vector3D cross(const Vector3D &other) const {
+        return {y * other.z - z * other.y, z * other.x - x * other.z, x * other.y - y * other.x};
+    }
 };
 
 /**
