@@ -8,11 +8,11 @@
 #include "Engine Node/EngineNode.h"
 
 namespace {
-    double multiplyLineVector(const Matrix4x4 &transform, const Vector3D &vector, int column) {
-        return transform.elements[column][0] * vector.x +
-               transform.elements[column][1] * vector.y +
-               transform.elements[column][2] * vector.z +
-               transform.elements[column][3];
+    double multiplyLineVector(const Matrix4x4 &transform, const Vector3D &vector, int line) {
+        return transform.elements[line][0] * vector.x +
+               transform.elements[line][1] * vector.y +
+               transform.elements[line][2] * vector.z +
+               transform.elements[line][3];
     }
 
     Vector3D multiplyMatrixVector(const Matrix4x4 &transform, const Vector3D &vector) {

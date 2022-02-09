@@ -45,6 +45,90 @@ struct Vector3D {
                 throw std::out_of_range(message);
         }
     }
+
+    Vector3D operator+(Vector3D &other) const {
+        return {x + other.x, y + other.y, z + other.z};
+    }
+
+    Vector3D operator+=(Vector3D &other) {
+        x += other.x;
+        y += other.y;
+        z += other.z;
+    }
+
+    Vector3D operator+(double scalar) const {
+        return {x + scalar, y + scalar, z + scalar};
+    }
+
+    Vector3D operator+=(double scalar) {
+        x += scalar;
+        y += scalar;
+        z += scalar;
+    }
+
+    Vector3D operator-(Vector3D &other) const {
+        return {x - other.x, y - other.y, z - other.z};
+    }
+
+    Vector3D operator-=(Vector3D &other) {
+        x -= other.x;
+        y -= other.y;
+        z -= other.z;
+    }
+
+    Vector3D operator-(double scalar) const {
+        return {x - scalar, y - scalar, z - scalar};
+    }
+
+    Vector3D operator-=(double scalar) {
+        x -= scalar;
+        y -= scalar;
+        z -= scalar;
+    }
+
+    Vector3D operator*(Vector3D &other) const {
+        return {x * other.x, y * other.y, z * other.z};
+    }
+
+    Vector3D operator*=(Vector3D &other) {
+        x *= other.x;
+        y *= other.y;
+        z *= other.z;
+    }
+
+    Vector3D operator*(double scalar) const {
+        return {x * scalar, y * scalar, z * scalar};
+    }
+
+    Vector3D operator*=(double scalar) {
+        x *= scalar;
+        y *= scalar;
+        z *= scalar;
+    }
+
+    Vector3D operator/(Vector3D &other) const {
+        if (other.x == 0 || other.y == 0 || other.z == 0) throw std::invalid_argument("Division by 0!");
+        return {x / other.x, y / other.y, z / other.z};
+    }
+
+    Vector3D operator/=(Vector3D &other) {
+        if (other.x == 0 || other.y == 0 || other.z == 0) throw std::invalid_argument("Division by 0!");
+        x /= other.x;
+        y /= other.y;
+        z /= other.z;
+    }
+
+    Vector3D operator/(double scalar) const {
+        if (scalar == 0) throw std::invalid_argument("Division by 0!");
+        return {x / scalar, y / scalar, z / scalar};
+    }
+
+    Vector3D operator/=(double scalar) {
+        if (scalar == 0) throw std::invalid_argument("Division by 0!");
+        x /= scalar;
+        y /= scalar;
+        z /= scalar;
+    }
 };
 
 /**
@@ -86,6 +170,17 @@ struct Matrix4x4 {
                 elements[row][column] = e[row][column];
             }
         }
+    }
+
+    Vector3D operator*(Vector3D &vector) {
+        Vector3D result{};
+        for (int line = 0; line < 3; line++) {
+            result[line] = elements[line][0] * vector.x +
+                           elements[line][1] * vector.y +
+                           elements[line][2] * vector.z +
+                           elements[line][3];
+        }
+        return result;
     }
 
     /**
