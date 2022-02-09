@@ -18,8 +18,16 @@ struct GenericId {
         return id == other.id;
     }
 
+    bool operator!=(const GenericId &other) const {
+        return id != other.id;
+    }
+
     bool operator<(const GenericId &other) const {
         return id < other.id;
+    }
+
+    bool operator>(const GenericId &other) const {
+        return id > other.id;
     }
 };
 
