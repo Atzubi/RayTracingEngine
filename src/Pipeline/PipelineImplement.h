@@ -141,27 +141,31 @@ private:
                               RayResource *rayResource);
 
     void
-    processAnyHitInformation(std::vector<RayContainer> &rayContainers, const Ray &ray, const IntersectionInfo &info);
+    processAnyHitInformation(std::vector<RayContainer> &rayContainers, const Ray &ray, const IntersectionInfo &info,
+                             RayGeneratorOutput &newRays);
 
-    void processClosestHitInformation(std::vector<RayContainer> &rayContainers, const Ray &ray, IntersectionInfo &info);
+    void processClosestHitInformation(std::vector<RayContainer> &rayContainers, const Ray &ray, IntersectionInfo &info,
+                                      RayGeneratorOutput &newRays);
 
     void
     processShaders(const Ray &ray, IntersectionInfo &info, int id, RayGeneratorOutput &newRays,
                    RayResource *rayResource);
 
     void
-    processAllHitInformation(const Ray &ray, std::vector<RayContainer> &rayContainers, std::vector<IntersectionInfo> &infos);
+    processAllHitInformation(const Ray &ray, std::vector<RayContainer> &rayContainers,
+                             std::vector<IntersectionInfo> &infos, RayGeneratorOutput &newRays);
 
-    void processShadersAllHits(const Ray &ray, std::vector<IntersectionInfo> &infos, RayGeneratorOutput &newRays, int id,
-                               RayResource *rayResource);
+    void
+    processShadersAllHits(const Ray &ray, std::vector<IntersectionInfo> &infos, RayGeneratorOutput &newRays, int id,
+                          RayResource *rayResource);
 
     void generatePrimaryRays(std::vector<RayContainer> &rayContainers, int rayID, RayGeneratorOutput &rays);
 
-    void processRaysAnyHit(std::vector<RayContainer> &rayContainers);
+    void processRaysAnyHit(std::vector<RayContainer> &rayContainers, RayGeneratorOutput &newRays);
 
-    void processRaysClosestHit(std::vector<RayContainer> &rayContainers);
+    void processRaysClosestHit(std::vector<RayContainer> &rayContainers, RayGeneratorOutput &newRays);
 
-    void processRaysAllHits(std::vector<RayContainer> &rayContainers);
+    void processRaysAllHits(std::vector<RayContainer> &rayContainers, RayGeneratorOutput &newRays);
 
     void fullTraversal();
 

@@ -231,9 +231,8 @@ PipelineImplement::processShadersAllHits(const Ray &ray, std::vector<Intersectio
 
 void
 PipelineImplement::processAnyHitInformation(std::vector<RayContainer> &rayContainers, const Ray &ray,
-                                            const IntersectionInfo &info) {
+                                            const IntersectionInfo &info, RayGeneratorOutput &newRays) {
     int id = rayContainers.back().rayID;
-    RayGeneratorOutput newRays;
     auto rayResource = rayContainers.back().rayResource;
     processShadersAnyHit(ray, info, id, newRays, rayResource);
 
@@ -241,9 +240,8 @@ PipelineImplement::processAnyHitInformation(std::vector<RayContainer> &rayContai
 }
 
 void PipelineImplement::processClosestHitInformation(std::vector<RayContainer> &rayContainers, const Ray &ray,
-                                                     IntersectionInfo &info) {
+                                                     IntersectionInfo &info, RayGeneratorOutput &newRays) {
     int id = rayContainers.back().rayID;
-    RayGeneratorOutput newRays;
     auto rayResource = rayContainers.back().rayResource;
     processShaders(ray, info, id, newRays, rayResource);
 
@@ -251,8 +249,7 @@ void PipelineImplement::processClosestHitInformation(std::vector<RayContainer> &
 }
 
 void PipelineImplement::processAllHitInformation(const Ray &ray, std::vector<RayContainer> &rayContainers,
-                                                 std::vector<IntersectionInfo> &infos) {
-    RayGeneratorOutput newRays;
+                                                 std::vector<IntersectionInfo> &infos, RayGeneratorOutput &newRays) {
     int id = rayContainers.back().rayID;
     auto rayResource = rayContainers.back().rayResource;
 
@@ -261,36 +258,36 @@ void PipelineImplement::processAllHitInformation(const Ray &ray, std::vector<Ray
     updateRayStack(rayContainers, id, newRays);
 }
 
-void PipelineImplement::processRaysAnyHit(std::vector<RayContainer> &rayContainers) {
+void PipelineImplement::processRaysAnyHit(std::vector<RayContainer> &rayContainers, RayGeneratorOutput &newRays) {
     while (!rayContainers.empty()) {
         Ray ray = initRay(rayContainers);
         IntersectionInfo info = initInfo(ray);
 
         DBVHv2::intersectAny(*geometry, info, ray);
 
-        processAnyHitInformation(rayContainers, ray, info);
+        processAnyHitInformation(rayContainers, ray, info, newRays);
 
     }
 }
 
-void PipelineImplement::processRaysClosestHit(std::vector<RayContainer> &rayContainers) {
+void PipelineImplement::processRaysClosestHit(std::vector<RayContainer> &rayContainers, RayGeneratorOutput &newRays) {
     while (!rayContainers.empty()) {
         Ray ray = initRay(rayContainers);
         IntersectionInfo info = initInfo(ray);
         DBVHv2::intersectFirst(*geometry, info, ray);
 
-        processClosestHitInformation(rayContainers, ray, info);
+        processClosestHitInformation(rayContainers, ray, info, newRays);
     }
 }
 
-void PipelineImplement::processRaysAllHits(std::vector<RayContainer> &rayContainers) {
+void PipelineImplement::processRaysAllHits(std::vector<RayContainer> &rayContainers, RayGeneratorOutput &newRays) {
     while (!rayContainers.empty()) {
         Ray ray = initRay(rayContainers);
         std::vector<IntersectionInfo> infos;
 
         DBVHv2::intersectAll(*geometry, infos, ray);
 
-        processAllHitInformation(ray, rayContainers, infos);
+        processAllHitInformation(ray, rayContainers, infos, newRays);
 
     }
 }
@@ -298,33 +295,36 @@ void PipelineImplement::processRaysAllHits(std::vector<RayContainer> &rayContain
 void PipelineImplement::anyHitTraversal() {
     std::vector<RayContainer> rayContainers;
     RayGeneratorOutput rays;
+    RayGeneratorOutput newRays;
 
     for (int rayID = 0; rayID < pipelineInfo.width * pipelineInfo.height; rayID++) {
         generatePrimaryRays(rayContainers, rayID, rays);
 
-        processRaysAnyHit(rayContainers);
+        processRaysAnyHit(rayContainers, newRays);
     }
 }
 
 void PipelineImplement::closestHitTraversal() {
     std::vector<RayContainer> rayContainers;
     RayGeneratorOutput rays;
+    RayGeneratorOutput newRays;
 
     for (int rayID = 0; rayID < pipelineInfo.width * pipelineInfo.height; rayID++) {
         generatePrimaryRays(rayContainers, rayID, rays);
 
-        processRaysClosestHit(rayContainers);
+        processRaysClosestHit(rayContainers, newRays);
     }
 }
 
 void PipelineImplement::fullTraversal() {
     std::vector<RayContainer> rayContainers;
     RayGeneratorOutput rays;
+    RayGeneratorOutput newRays;
 
     for (int rayID = 0; rayID < pipelineInfo.width * pipelineInfo.height; rayID++) {
         generatePrimaryRays(rayContainers, rayID, rays);
 
-        processRaysAllHits(rayContainers);
+        processRaysAllHits(rayContainers, newRays);
     }
 }
 
