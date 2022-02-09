@@ -67,15 +67,9 @@ namespace {
 
         // increase box size by looseness factor
         if (looseness > 0) {
-            double scaleX = aabb.maxCorner.x - aabb.minCorner.x;
-            double scaleY = aabb.maxCorner.y - aabb.minCorner.y;
-            double scaleZ = aabb.maxCorner.z - aabb.minCorner.z;
-            aabb.minCorner.x -= scaleX * looseness;
-            aabb.minCorner.y -= scaleY * looseness;
-            aabb.minCorner.z -= scaleZ * looseness;
-            aabb.maxCorner.x += scaleX * looseness;
-            aabb.maxCorner.y += scaleY * looseness;
-            aabb.maxCorner.z += scaleZ * looseness;
+            Vector3D scale = aabb.maxCorner - aabb.minCorner;
+            aabb.minCorner -= scale * looseness;
+            aabb.maxCorner += scale * looseness;
         }
     }
 
@@ -253,15 +247,11 @@ namespace {
     }
 
     bool rayBoxIntersection(const Vector3D &min, const Vector3D &max, const Ray &ray, double &distance) {
-        double t1 = (min.x - ray.origin.x) * ray.dirfrac.x;
-        double t2 = (max.x - ray.origin.x) * ray.dirfrac.x;
-        double t3 = (min.y - ray.origin.y) * ray.dirfrac.y;
-        double t4 = (max.y - ray.origin.y) * ray.dirfrac.y;
-        double t5 = (min.z - ray.origin.z) * ray.dirfrac.z;
-        double t6 = (max.z - ray.origin.z) * ray.dirfrac.z;
+        Vector3D v1 = (min - ray.origin) * ray.dirfrac;
+        Vector3D v2 = (max - ray.origin) * ray.dirfrac;
 
-        double tMin = std::max(std::max(std::min(t1, t2), std::min(t3, t4)), std::min(t5, t6));
-        double tMax = std::min(std::min(std::max(t1, t2), std::max(t3, t4)), std::max(t5, t6));
+        double tMin = std::max(std::max(std::min(v1.x, v2.x), std::min(v1.y, v2.y)), std::min(v1.z, v2.z));
+        double tMax = std::min(std::min(std::max(v1.x, v2.x), std::max(v1.y, v2.y)), std::max(v1.z, v2.z));
 
         distance = tMin;
         return tMax >= 0 && tMin <= tMax;

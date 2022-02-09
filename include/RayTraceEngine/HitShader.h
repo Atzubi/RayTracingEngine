@@ -30,7 +30,7 @@ public:
         Vector3D Ka = {1, 1, 1};
         Vector3D Kd = {1, 1, 1};
         Vector3D Ks = {1, 1, 1};
-        uint8_t pix[3];
+        Vector3D pix{};
 
         auto shaderInputInfo = shaderInput.intersectionInfo;
 
@@ -45,9 +45,7 @@ public:
                 Kd = shaderInputInfo->material->Kd;
                 Ks = shaderInputInfo->material->Ks;
             }
-            pix[0] = 255;
-            pix[1] = 255;
-            pix[2] = 255;
+            pix = {255, 255, 255};
         } else {
             int w = shaderInputInfo->material->map_Kd.w;
             int h = shaderInputInfo->material->map_Kd.h;
@@ -67,66 +65,37 @@ public:
             Ks = shaderInputInfo->material->Ks;
         }
 
-        Vector3D light{};
-        light.x = -0.707107;
-        light.y = 0.707107;
-        light.z = 0;
-
-        ShaderOutput shaderOutput;
+        ShaderOutput shaderOutput{};
 
         if (shaderInputInfo->distance == std::numeric_limits<double_t>::max()) return shaderOutput;
 
-        Vector3D n{}, l{}, v{}, r{};
+        Vector3D n{}, v{}, r{}, l{};
         double_t nl;
 
-        l.x = light.x;
-        l.y = light.y;
-        l.z = light.z;
+        l.x = -0.707107;
+        l.y = 0.707107;
+        l.z = 0;
 
         n = shaderInputInfo->normal;
 
-        v.x = -1.0 * (shaderInputInfo->rayOrigin.x - pipelineInfo.cameraPosition.x);
-        v.y = -1.0 * (shaderInputInfo->rayOrigin.y - pipelineInfo.cameraPosition.y);
-        v.z = -1.0 * (shaderInputInfo->rayOrigin.z - pipelineInfo.cameraPosition.z);
-
-
-        double_t length = sqrt(l.x * l.x + l.y * l.y + l.z * l.z);
-        l.x /= length;
-        l.y /= length;
-        l.z /= length;
-
-        length = sqrt(n.x * n.x + n.y * n.y + n.z * n.z);
-        n.x /= length;
-        n.y /= length;
-        n.z /= length;
-
-        length = sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
-        v.x /= length;
-        v.y /= length;
-        v.z /= length;
+        v = (shaderInputInfo->rayOrigin - pipelineInfo.cameraPosition) * -1;
+        l.normalize();
+        n.normalize();
+        v.normalize();
 
         nl = fmax(n.x * l.x + n.y * l.y + n.z * l.z, 0);
 
-        r.x = (2 * nl * n.x) - l.x;
-        r.y = (2 * nl * n.y) - l.y;
-        r.z = (2 * nl * n.z) - l.z;
+        r = (n * 2 * nl) - l;
 
-        length = sqrt(r.x * r.x + r.y * r.y + r.z * r.z);
-        r.x /= length;
-        r.y /= length;
-        r.z /= length;
+        r.normalize();
 
         double_t dot = fmax(v.x * r.x + v.y * r.y + v.z * r.z, 0);
 
-        shaderOutput.color[0] = (uint8_t) fmin(
-                (ambient * Ka.x + diffuse * nl * Kd.x + specular * powf(dot, exponent) * Ks.x) * pix[0],
-                255);
-        shaderOutput.color[1] = (uint8_t) fmin(
-                (ambient * Ka.y + diffuse * nl * Kd.y + specular * powf(dot, exponent) * Ks.y) * pix[1],
-                255);
-        shaderOutput.color[2] = (uint8_t) fmin(
-                (ambient * Ka.z + diffuse * nl * Kd.z + specular * powf(dot, exponent) * Ks.z) * pix[2],
-                255);
+        Vector3D color = (Ka * ambient + Kd * diffuse * nl + Ks * specular * pow(dot, exponent)) * pix;
+
+        shaderOutput.color[0] = (uint8_t) fmin(color[0], 255);
+        shaderOutput.color[1] = (uint8_t) fmin(color[1], 255);
+        shaderOutput.color[2] = (uint8_t) fmin(color[2], 255);
 
         return shaderOutput;
     }

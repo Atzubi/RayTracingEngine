@@ -163,9 +163,7 @@ Ray PipelineImplement::initRay(const std::vector<RayContainer> &rayContainers) {
     Ray ray{};
     ray.origin = rayContainers.back().rayOrigin;
     ray.direction = rayContainers.back().rayDirection;
-    ray.dirfrac.x = 1.0 / ray.direction.x;
-    ray.dirfrac.y = 1.0 / ray.direction.y;
-    ray.dirfrac.z = 1.0 / ray.direction.z;
+    ray.dirfrac = ray.direction.getInverse();
     return ray;
 }
 

@@ -50,7 +50,7 @@ struct Vector3D {
         return {x + other.x, y + other.y, z + other.z};
     }
 
-    Vector3D operator+=(const Vector3D &other) {
+    void operator+=(const Vector3D &other) {
         x += other.x;
         y += other.y;
         z += other.z;
@@ -60,7 +60,7 @@ struct Vector3D {
         return {x + scalar, y + scalar, z + scalar};
     }
 
-    Vector3D operator+=(double scalar) {
+    void operator+=(double scalar) {
         x += scalar;
         y += scalar;
         z += scalar;
@@ -70,7 +70,7 @@ struct Vector3D {
         return {x - other.x, y - other.y, z - other.z};
     }
 
-    Vector3D operator-=(const Vector3D &other) {
+    void operator-=(const Vector3D &other) {
         x -= other.x;
         y -= other.y;
         z -= other.z;
@@ -80,7 +80,7 @@ struct Vector3D {
         return {x - scalar, y - scalar, z - scalar};
     }
 
-    Vector3D operator-=(double scalar) {
+    void operator-=(double scalar) {
         x -= scalar;
         y -= scalar;
         z -= scalar;
@@ -90,7 +90,7 @@ struct Vector3D {
         return {x * other.x, y * other.y, z * other.z};
     }
 
-    Vector3D operator*=(const Vector3D &other) {
+    void operator*=(const Vector3D &other) {
         x *= other.x;
         y *= other.y;
         z *= other.z;
@@ -100,7 +100,7 @@ struct Vector3D {
         return {x * scalar, y * scalar, z * scalar};
     }
 
-    Vector3D operator*=(double scalar) {
+    void operator*=(double scalar) {
         x *= scalar;
         y *= scalar;
         z *= scalar;
@@ -111,7 +111,7 @@ struct Vector3D {
         return {x / other.x, y / other.y, z / other.z};
     }
 
-    Vector3D operator/=(const Vector3D &other) {
+    void operator/=(const Vector3D &other) {
         if (other.x == 0 || other.y == 0 || other.z == 0) throw std::invalid_argument("Division by 0!");
         x /= other.x;
         y /= other.y;
@@ -123,7 +123,7 @@ struct Vector3D {
         return {x / scalar, y / scalar, z / scalar};
     }
 
-    Vector3D operator/=(double scalar) {
+    void operator/=(double scalar) {
         if (scalar == 0) throw std::invalid_argument("Division by 0!");
         x /= scalar;
         y /= scalar;
