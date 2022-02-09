@@ -183,7 +183,7 @@ IntersectionInfo PipelineImplement::getClosestIntersection(std::vector<Intersect
 }
 
 void
-PipelineImplement::updateRayStack(std::vector<RayContainer> &rayContainers, int id, const RayGeneratorOutput &newRays) {
+PipelineImplement::updateRayStack(std::vector<RayContainer> &rayContainers, int id, RayGeneratorOutput &newRays) {
     rayContainers.pop_back();
 
     for (auto &r: newRays.rays) {
@@ -191,6 +191,7 @@ PipelineImplement::updateRayStack(std::vector<RayContainer> &rayContainers, int 
                                      nullptr};
         rayContainers.push_back(rayContainer);
     }
+    newRays.rays.clear();
 }
 
 void PipelineImplement::generatePrimaryRays(std::vector<RayContainer> &rayContainers, int rayID, RayGeneratorOutput &rays) {
@@ -266,7 +267,6 @@ void PipelineImplement::processRaysAnyHit(std::vector<RayContainer> &rayContaine
         DBVHv2::intersectAny(*geometry, info, ray);
 
         processAnyHitInformation(rayContainers, ray, info, newRays);
-
     }
 }
 
@@ -288,7 +288,6 @@ void PipelineImplement::processRaysAllHits(std::vector<RayContainer> &rayContain
         DBVHv2::intersectAll(*geometry, infos, ray);
 
         processAllHitInformation(ray, rayContainers, infos, newRays);
-
     }
 }
 

@@ -133,7 +133,7 @@ private:
 
     static IntersectionInfo getClosestIntersection(std::vector<IntersectionInfo> &infos, const Ray &ray);
 
-    static void updateRayStack(std::vector<RayContainer> &rayContainers, int id, const RayGeneratorOutput &newRays);
+    static void updateRayStack(std::vector<RayContainer> &rayContainers, int id, RayGeneratorOutput &newRays);
 
     static IntersectionInfo initInfo(const Ray &ray);
 
