@@ -7,104 +7,117 @@
 #include "Object/Instance.h"
 #include "Engine Node/EngineNode.h"
 
-
-double multiplyColumnVector(const Matrix4x4 &transform, const Vector3D &vector, int column) {
-    return transform.elements[column][0] * vector.x +
-           transform.elements[column][1] * vector.y +
-           transform.elements[column][2] * vector.z +
-           transform.elements[column][3];
-}
-
-Vector3D multiplyMatrixVector(const Matrix4x4 &transform, const Vector3D &vector) {
-    Vector3D result{};
-    for (int i = 0; i < 3; i++) {
-        result[i] = multiplyColumnVector(transform, vector, i);
+namespace {
+    double multiplyColumnVector(const Matrix4x4 &transform, const Vector3D &vector, int column) {
+        return transform.elements[column][0] * vector.x +
+               transform.elements[column][1] * vector.y +
+               transform.elements[column][2] * vector.z +
+               transform.elements[column][3];
     }
-    return result;
-}
 
-Vector3D getCenter(const BoundingBox &aabb) {
-    return {(aabb.maxCorner.x + aabb.minCorner.x) / 2,
-            (aabb.maxCorner.y + aabb.minCorner.y) / 2,
-            (aabb.maxCorner.z + aabb.minCorner.z) / 2};
-}
-
-void moveBoxToCenter(BoundingBox &aabb, const Vector3D &center) {
-    for (int i = 0; i < 3; i++) {
-        aabb.minCorner[i] -= center[i];
-        aabb.maxCorner[i] -= center[i];
+    Vector3D multiplyMatrixVector(const Matrix4x4 &transform, const Vector3D &vector) {
+        Vector3D result{};
+        for (int i = 0; i < 3; i++) {
+            result[i] = multiplyColumnVector(transform, vector, i);
+        }
+        return result;
     }
-}
 
-void moveBoxBackToOriginalPosition(BoundingBox &aabb, const Vector3D &center) {
-    for (int i = 0; i < 3; i++) {
-        aabb.minCorner[i] += center[i];
-        aabb.maxCorner[i] += center[i];
+    Vector3D getCenter(const BoundingBox &aabb) {
+        return {(aabb.maxCorner.x + aabb.minCorner.x) / 2,
+                (aabb.maxCorner.y + aabb.minCorner.y) / 2,
+                (aabb.maxCorner.z + aabb.minCorner.z) / 2};
     }
-}
 
-void setNewBox(BoundingBox &aabb, const Vector3D &frontBottomLeft, const Vector3D &frontBottomRight,
-               const Vector3D &frontTopLeft, const Vector3D &frontTopRight, const Vector3D &backBottomLeft,
-               const Vector3D &backBottomRight, const Vector3D &backTopLeft, const Vector3D &backTopRight) {
-    for (int i = 0; i < 3; i++) {
-        aabb.minCorner[i] = std::min(std::min(std::min(std::min(
-                std::min(std::min(std::min(backTopRight[i], backTopLeft[i]), backBottomRight[i]), backBottomLeft[i]),
-                frontTopRight[i]), frontTopLeft[i]), frontBottomRight[i]), frontBottomLeft[i]);
-        aabb.maxCorner[i] = std::max(std::max(std::max(std::max(
-                std::max(std::min(std::max(backTopRight[i], backTopLeft[i]), backBottomRight[i]), backBottomLeft[i]),
-                frontTopRight[i]), frontTopLeft[i]), frontBottomRight[i]), frontBottomLeft[i]);
+    void moveBoxToCenter(BoundingBox &aabb, const Vector3D &center) {
+        for (int i = 0; i < 3; i++) {
+            aabb.minCorner[i] -= center[i];
+            aabb.maxCorner[i] -= center[i];
+        }
     }
-}
 
-void transformOldBox(const BoundingBox &aabb, const Matrix4x4 &transform, Vector3D &frontBottomLeft,
-                     Vector3D &frontBottomRight, Vector3D &frontTopLeft, Vector3D &frontTopRight,
-                     Vector3D &backBottomLeft, Vector3D &backBottomRight, Vector3D &backTopLeft,
-                     Vector3D &backTopRight) {
-    frontBottomLeft = aabb.minCorner;
-    frontBottomRight = {aabb.maxCorner.x, aabb.minCorner.y, aabb.minCorner.z};
-    frontTopLeft = {aabb.minCorner.x, aabb.maxCorner.y, aabb.minCorner.z};
-    frontTopRight = {aabb.maxCorner.x, aabb.maxCorner.y, aabb.minCorner.z};
-    backBottomLeft = {aabb.minCorner.x, aabb.minCorner.y, aabb.maxCorner.z};
-    backBottomRight = {aabb.maxCorner.x, aabb.minCorner.y, aabb.maxCorner.z};
-    backTopLeft = {aabb.minCorner.x, aabb.maxCorner.y, aabb.maxCorner.z};
-    backTopRight = aabb.maxCorner;
+    void moveBoxBackToOriginalPosition(BoundingBox &aabb, const Vector3D &center) {
+        for (int i = 0; i < 3; i++) {
+            aabb.minCorner[i] += center[i];
+            aabb.maxCorner[i] += center[i];
+        }
+    }
 
-    frontBottomLeft = multiplyMatrixVector(transform, frontBottomLeft);
-    frontBottomRight = multiplyMatrixVector(transform, frontBottomRight);
-    frontTopLeft = multiplyMatrixVector(transform, frontTopLeft);
-    frontTopRight = multiplyMatrixVector(transform, frontTopRight);
-    backBottomLeft = multiplyMatrixVector(transform, backBottomLeft);
-    backBottomRight = multiplyMatrixVector(transform, backBottomRight);
-    backTopLeft = multiplyMatrixVector(transform, backTopLeft);
-    backTopRight = multiplyMatrixVector(transform, backTopRight);
-}
+    void setNewBox(BoundingBox &aabb, const Vector3D &frontBottomLeft, const Vector3D &frontBottomRight,
+                   const Vector3D &frontTopLeft, const Vector3D &frontTopRight, const Vector3D &backBottomLeft,
+                   const Vector3D &backBottomRight, const Vector3D &backTopLeft, const Vector3D &backTopRight) {
+        for (int i = 0; i < 3; i++) {
+            aabb.minCorner[i] = std::min(std::min(std::min(std::min(
+                    std::min(std::min(std::min(backTopRight[i], backTopLeft[i]), backBottomRight[i]),
+                             backBottomLeft[i]),
+                    frontTopRight[i]), frontTopLeft[i]), frontBottomRight[i]), frontBottomLeft[i]);
+            aabb.maxCorner[i] = std::max(std::max(std::max(std::max(
+                    std::max(std::min(std::max(backTopRight[i], backTopLeft[i]), backBottomRight[i]),
+                             backBottomLeft[i]),
+                    frontTopRight[i]), frontTopLeft[i]), frontBottomRight[i]), frontBottomLeft[i]);
+        }
+    }
 
-void applyTransformToBox(BoundingBox &aabb, const Matrix4x4 &transform) {
-    Vector3D frontBottomLeft{};
-    Vector3D frontBottomRight{};
-    Vector3D frontTopLeft{};
-    Vector3D frontTopRight{};
-    Vector3D backBottomLeft{};
-    Vector3D backBottomRight{};
-    Vector3D backTopLeft{};
-    Vector3D backTopRight{};
+    void transformOldBox(const BoundingBox &aabb, const Matrix4x4 &transform, Vector3D &frontBottomLeft,
+                         Vector3D &frontBottomRight, Vector3D &frontTopLeft, Vector3D &frontTopRight,
+                         Vector3D &backBottomLeft, Vector3D &backBottomRight, Vector3D &backTopLeft,
+                         Vector3D &backTopRight) {
+        frontBottomLeft = aabb.minCorner;
+        frontBottomRight = {aabb.maxCorner.x, aabb.minCorner.y, aabb.minCorner.z};
+        frontTopLeft = {aabb.minCorner.x, aabb.maxCorner.y, aabb.minCorner.z};
+        frontTopRight = {aabb.maxCorner.x, aabb.maxCorner.y, aabb.minCorner.z};
+        backBottomLeft = {aabb.minCorner.x, aabb.minCorner.y, aabb.maxCorner.z};
+        backBottomRight = {aabb.maxCorner.x, aabb.minCorner.y, aabb.maxCorner.z};
+        backTopLeft = {aabb.minCorner.x, aabb.maxCorner.y, aabb.maxCorner.z};
+        backTopRight = aabb.maxCorner;
 
-    transformOldBox(aabb, transform, frontBottomLeft, frontBottomRight, frontTopLeft, frontTopRight, backBottomLeft,
-                    backBottomRight,
-                    backTopLeft, backTopRight);
+        frontBottomLeft = multiplyMatrixVector(transform, frontBottomLeft);
+        frontBottomRight = multiplyMatrixVector(transform, frontBottomRight);
+        frontTopLeft = multiplyMatrixVector(transform, frontTopLeft);
+        frontTopRight = multiplyMatrixVector(transform, frontTopRight);
+        backBottomLeft = multiplyMatrixVector(transform, backBottomLeft);
+        backBottomRight = multiplyMatrixVector(transform, backBottomRight);
+        backTopLeft = multiplyMatrixVector(transform, backTopLeft);
+        backTopRight = multiplyMatrixVector(transform, backTopRight);
+    }
 
-    setNewBox(aabb, frontBottomLeft, frontBottomRight, frontTopLeft, frontTopRight, backBottomLeft, backBottomRight,
-              backTopLeft, backTopRight);
-}
+    void applyTransformToBox(BoundingBox &aabb, const Matrix4x4 &transform) {
+        Vector3D frontBottomLeft{};
+        Vector3D frontBottomRight{};
+        Vector3D frontTopLeft{};
+        Vector3D frontTopRight{};
+        Vector3D backBottomLeft{};
+        Vector3D backBottomRight{};
+        Vector3D backTopLeft{};
+        Vector3D backTopRight{};
 
-void createTransformedAABB(BoundingBox &aabb, const Matrix4x4 &transform) {
-    Vector3D center = getCenter(aabb);
+        transformOldBox(aabb, transform, frontBottomLeft, frontBottomRight, frontTopLeft, frontTopRight, backBottomLeft,
+                        backBottomRight,
+                        backTopLeft, backTopRight);
 
-    moveBoxToCenter(aabb, center);
+        setNewBox(aabb, frontBottomLeft, frontBottomRight, frontTopLeft, frontTopRight, backBottomLeft, backBottomRight,
+                  backTopLeft, backTopRight);
+    }
 
-    applyTransformToBox(aabb, transform);
+    void createTransformedAABB(BoundingBox &aabb, const Matrix4x4 &transform) {
+        Vector3D center = getCenter(aabb);
 
-    moveBoxBackToOriginalPosition(aabb, center);
+        moveBoxToCenter(aabb, center);
+
+        applyTransformToBox(aabb, transform);
+
+        moveBoxBackToOriginalPosition(aabb, center);
+    }
+
+    bool isTransformEqual(const Matrix4x4 &transform1, const Matrix4x4 &transform2) {
+        for (int x = 0; x < 4; x++) {
+            for (int y = 0; y < 4; y++) {
+                if (transform1.elements[x][y] != transform2.elements[x][y])
+                    return false;
+            }
+        }
+        return true;
+    }
 }
 
 Instance::Instance(EngineNode &node, ObjectCapsule &objectCapsule) : baseObjectId(objectCapsule.id) {
@@ -565,16 +578,6 @@ std::unique_ptr<Object> Instance::clone() const {
 
 double Instance::getSurfaceArea() const {
     return cost + boundingBox.getSA(); // TODO: fix math
-}
-
-bool isTransformEqual(const Matrix4x4 &transform1, const Matrix4x4 &transform2) {
-    for (int x = 0; x < 4; x++) {
-        for (int y = 0; y < 4; y++) {
-            if (transform1.elements[x][y] != transform2.elements[x][y])
-                return false;
-        }
-    }
-    return true;
 }
 
 bool Instance::operator==(const Object &object) const {
