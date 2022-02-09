@@ -46,11 +46,11 @@ struct Vector3D {
         }
     }
 
-    Vector3D operator+(Vector3D &other) const {
+    Vector3D operator+(const Vector3D &other) const {
         return {x + other.x, y + other.y, z + other.z};
     }
 
-    Vector3D operator+=(Vector3D &other) {
+    Vector3D operator+=(const Vector3D &other) {
         x += other.x;
         y += other.y;
         z += other.z;
@@ -66,11 +66,11 @@ struct Vector3D {
         z += scalar;
     }
 
-    Vector3D operator-(Vector3D &other) const {
+    Vector3D operator-(const Vector3D &other) const {
         return {x - other.x, y - other.y, z - other.z};
     }
 
-    Vector3D operator-=(Vector3D &other) {
+    Vector3D operator-=(const Vector3D &other) {
         x -= other.x;
         y -= other.y;
         z -= other.z;
@@ -86,11 +86,11 @@ struct Vector3D {
         z -= scalar;
     }
 
-    Vector3D operator*(Vector3D &other) const {
+    Vector3D operator*(const Vector3D &other) const {
         return {x * other.x, y * other.y, z * other.z};
     }
 
-    Vector3D operator*=(Vector3D &other) {
+    Vector3D operator*=(const Vector3D &other) {
         x *= other.x;
         y *= other.y;
         z *= other.z;
@@ -106,12 +106,12 @@ struct Vector3D {
         z *= scalar;
     }
 
-    Vector3D operator/(Vector3D &other) const {
+    Vector3D operator/(const Vector3D &other) const {
         if (other.x == 0 || other.y == 0 || other.z == 0) throw std::invalid_argument("Division by 0!");
         return {x / other.x, y / other.y, z / other.z};
     }
 
-    Vector3D operator/=(Vector3D &other) {
+    Vector3D operator/=(const Vector3D &other) {
         if (other.x == 0 || other.y == 0 || other.z == 0) throw std::invalid_argument("Division by 0!");
         x /= other.x;
         y /= other.y;
@@ -128,6 +128,18 @@ struct Vector3D {
         x /= scalar;
         y /= scalar;
         z /= scalar;
+    }
+
+    [[nodiscard]] double getLength() const {
+        return sqrt(x * x + y * y + z * z);
+    }
+
+    void normalize() {
+        *this /= getLength();
+    }
+
+    [[nodiscard]] Vector3D getInverse() const {
+        return {1.0 / x, 1.0 / y, 1.0 / z};
     }
 };
 
@@ -172,7 +184,7 @@ struct Matrix4x4 {
         }
     }
 
-    Vector3D operator*(Vector3D &vector) {
+    Vector3D operator*(const Vector3D &vector) const {
         Vector3D result{};
         for (int line = 0; line < 3; line++) {
             result[line] = elements[line][0] * vector.x +

@@ -8,39 +8,18 @@
 #include "Engine Node/EngineNode.h"
 
 namespace {
-    double multiplyLineVector(const Matrix4x4 &transform, const Vector3D &vector, int line) {
-        return transform.elements[line][0] * vector.x +
-               transform.elements[line][1] * vector.y +
-               transform.elements[line][2] * vector.z +
-               transform.elements[line][3];
-    }
-
-    Vector3D multiplyMatrixVector(const Matrix4x4 &transform, const Vector3D &vector) {
-        Vector3D result{};
-        for (int i = 0; i < 3; i++) {
-            result[i] = multiplyLineVector(transform, vector, i);
-        }
-        return result;
-    }
-
     Vector3D getCenter(const BoundingBox &aabb) {
-        return {(aabb.maxCorner.x + aabb.minCorner.x) / 2,
-                (aabb.maxCorner.y + aabb.minCorner.y) / 2,
-                (aabb.maxCorner.z + aabb.minCorner.z) / 2};
+        return (aabb.maxCorner + aabb.minCorner) / 2.0;
     }
 
     void moveBoxToCenter(BoundingBox &aabb, const Vector3D &center) {
-        for (int i = 0; i < 3; i++) {
-            aabb.minCorner[i] -= center[i];
-            aabb.maxCorner[i] -= center[i];
-        }
+            aabb.minCorner -= center;
+            aabb.maxCorner -= center;
     }
 
     void moveBoxBackToOriginalPosition(BoundingBox &aabb, const Vector3D &center) {
-        for (int i = 0; i < 3; i++) {
-            aabb.minCorner[i] += center[i];
-            aabb.maxCorner[i] += center[i];
-        }
+            aabb.minCorner += center;
+            aabb.maxCorner += center;
     }
 
     void setNewBox(BoundingBox &aabb, const Vector3D &frontBottomLeft, const Vector3D &frontBottomRight,
@@ -71,14 +50,14 @@ namespace {
         backTopLeft = {aabb.minCorner.x, aabb.maxCorner.y, aabb.maxCorner.z};
         backTopRight = aabb.maxCorner;
 
-        frontBottomLeft = multiplyMatrixVector(transform, frontBottomLeft);
-        frontBottomRight = multiplyMatrixVector(transform, frontBottomRight);
-        frontTopLeft = multiplyMatrixVector(transform, frontTopLeft);
-        frontTopRight = multiplyMatrixVector(transform, frontTopRight);
-        backBottomLeft = multiplyMatrixVector(transform, backBottomLeft);
-        backBottomRight = multiplyMatrixVector(transform, backBottomRight);
-        backTopLeft = multiplyMatrixVector(transform, backTopLeft);
-        backTopRight = multiplyMatrixVector(transform, backTopRight);
+        frontBottomLeft = transform * frontBottomLeft;
+        frontBottomRight = transform * frontBottomRight;
+        frontTopLeft = transform * frontTopLeft;
+        frontTopRight = transform * frontTopRight;
+        backBottomLeft = transform * backBottomLeft;
+        backBottomRight = transform * backBottomRight;
+        backTopLeft = transform * backTopLeft;
+        backTopRight = transform * backTopRight;
     }
 
     void applyTransformToBox(BoundingBox &aabb, const Matrix4x4 &transform) {
@@ -120,62 +99,26 @@ namespace {
     }
 
     void transformRay(const Vector3D &originalMid, Ray &newRay, const Matrix4x4 &inverseTransform) {
-        newRay.origin.x -= originalMid.x;
-        newRay.origin.y -= originalMid.y;
-        newRay.origin.z -= originalMid.z;
+        newRay.origin -= originalMid;
+        newRay.direction += newRay.origin;
 
-        newRay.direction.x += newRay.origin.x;
-        newRay.direction.y += newRay.origin.y;
-        newRay.direction.z += newRay.origin.z;
+        newRay.origin = inverseTransform * newRay.origin;
+        newRay.direction = inverseTransform * newRay.direction;
 
-        newRay.origin = multiplyMatrixVector(inverseTransform, newRay.origin);
-        newRay.direction = multiplyMatrixVector(inverseTransform, newRay.direction);
+        newRay.direction -= newRay.origin;
+        newRay.direction.normalize();
 
-        newRay.direction.x -= newRay.origin.x;
-        newRay.direction.y -= newRay.origin.y;
-        newRay.direction.z -= newRay.origin.z;
+        newRay.dirfrac = newRay.direction.getInverse();
 
-        double length = sqrt(newRay.direction.x * newRay.direction.x + newRay.direction.y * newRay.direction.y +
-                             newRay.direction.z * newRay.direction.z);
-
-        newRay.direction.x /= length;
-        newRay.direction.y /= length;
-        newRay.direction.z /= length;
-
-        newRay.dirfrac.x = 1.0 / newRay.direction.x;
-        newRay.dirfrac.y = 1.0 / newRay.direction.y;
-        newRay.dirfrac.z = 1.0 / newRay.direction.z;
-
-        newRay.origin.x += originalMid.x;
-        newRay.origin.y += originalMid.y;
-        newRay.origin.z += originalMid.z;
+        newRay.origin += originalMid;
     }
 
     void reverseTransformHit(const Ray &ray, IntersectionInfo &info, const Matrix4x4 &transform) {
         Vector3D pos = info.position;
-
-        info.position = multiplyMatrixVector(transform, pos);
-
-        Vector3D normal = {info.normal.x + pos.x,
-                           info.normal.y + pos.y,
-                           info.normal.z + pos.z};
-
-        info.normal = multiplyMatrixVector(transform, normal);
-
-        info.normal.x = info.normal.x - info.position.x;
-        info.normal.y = info.normal.y - info.position.y;
-        info.normal.z = info.normal.z - info.position.z;
-
-        double length = sqrt(
-                info.normal.x * info.normal.x + info.normal.y * info.normal.y + info.normal.z * info.normal.z);
-
-        info.normal.x /= length;
-        info.normal.y /= length;
-        info.normal.z /= length;
-
-        info.distance = sqrt((ray.origin.x - info.position.x) * (ray.origin.x - info.position.x) +
-                             (ray.origin.y - info.position.y) * (ray.origin.y - info.position.y) +
-                             (ray.origin.z - info.position.z) * (ray.origin.z - info.position.z));
+        info.position = transform * pos;
+        info.normal = transform * (info.normal + pos) - info.position;
+        info.normal.normalize();
+        info.distance = (ray.origin - info.position).getLength();
     }
 
     bool overwriteClosestHit(IntersectionInfo &intersectionInfo, const Ray &ray, IntersectionInfo &info, bool hit,
