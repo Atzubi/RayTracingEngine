@@ -156,6 +156,7 @@ PipelineImplement::generateRays(const RayGeneratorShaderContainer &generator, st
         RayContainer rayContainer = {rayID, ray.rayOrigin, ray.rayDirection, nullptr};
         rayContainers.push_back(rayContainer);
     }
+    rays.rays.clear();
 }
 
 Ray PipelineImplement::initRay(const std::vector<RayContainer> &rayContainers) {
@@ -192,11 +193,9 @@ PipelineImplement::updateRayStack(std::vector<RayContainer> &rayContainers, int 
     }
 }
 
-void PipelineImplement::generatePrimaryRays(std::vector<RayContainer> &rayContainers, int rayID) {
-    RayGeneratorOutput rays;
+void PipelineImplement::generatePrimaryRays(std::vector<RayContainer> &rayContainers, int rayID, RayGeneratorOutput &rays) {
     for (auto &generator: rayGeneratorShaders) {
         generateRays(generator.second, rayContainers, rayID, rays);
-        rays.rays.clear();
     }
 }
 
@@ -298,9 +297,10 @@ void PipelineImplement::processRaysAllHits(std::vector<RayContainer> &rayContain
 
 void PipelineImplement::anyHitTraversal() {
     std::vector<RayContainer> rayContainers;
+    RayGeneratorOutput rays;
 
     for (int rayID = 0; rayID < pipelineInfo.width * pipelineInfo.height; rayID++) {
-        generatePrimaryRays(rayContainers, rayID);
+        generatePrimaryRays(rayContainers, rayID, rays);
 
         processRaysAnyHit(rayContainers);
     }
@@ -308,9 +308,10 @@ void PipelineImplement::anyHitTraversal() {
 
 void PipelineImplement::closestHitTraversal() {
     std::vector<RayContainer> rayContainers;
+    RayGeneratorOutput rays;
 
     for (int rayID = 0; rayID < pipelineInfo.width * pipelineInfo.height; rayID++) {
-        generatePrimaryRays(rayContainers, rayID);
+        generatePrimaryRays(rayContainers, rayID, rays);
 
         processRaysClosestHit(rayContainers);
     }
@@ -318,9 +319,10 @@ void PipelineImplement::closestHitTraversal() {
 
 void PipelineImplement::fullTraversal() {
     std::vector<RayContainer> rayContainers;
+    RayGeneratorOutput rays;
 
     for (int rayID = 0; rayID < pipelineInfo.width * pipelineInfo.height; rayID++) {
-        generatePrimaryRays(rayContainers, rayID);
+        generatePrimaryRays(rayContainers, rayID, rays);
 
         processRaysAllHits(rayContainers);
     }

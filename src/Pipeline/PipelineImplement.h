@@ -155,7 +155,7 @@ private:
     void processShadersAllHits(const Ray &ray, std::vector<IntersectionInfo> &infos, RayGeneratorOutput &newRays, int id,
                                RayResource *rayResource);
 
-    void generatePrimaryRays(std::vector<RayContainer> &rayContainers, int rayID);
+    void generatePrimaryRays(std::vector<RayContainer> &rayContainers, int rayID, RayGeneratorOutput &rays);
 
     void processRaysAnyHit(std::vector<RayContainer> &rayContainers);
 
