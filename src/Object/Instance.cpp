@@ -13,13 +13,13 @@ namespace {
     }
 
     void moveBoxToCenter(BoundingBox &aabb, const Vector3D &center) {
-            aabb.minCorner -= center;
-            aabb.maxCorner -= center;
+        aabb.minCorner -= center;
+        aabb.maxCorner -= center;
     }
 
     void moveBoxBackToOriginalPosition(BoundingBox &aabb, const Vector3D &center) {
-            aabb.minCorner += center;
-            aabb.maxCorner += center;
+        aabb.minCorner += center;
+        aabb.maxCorner += center;
     }
 
     void setNewBox(BoundingBox &aabb, const Vector3D &frontBottomLeft, const Vector3D &frontBottomRight,
@@ -122,14 +122,32 @@ namespace {
     }
 
     bool overwriteClosestHit(IntersectionInfo &intersectionInfo, const Ray &ray, IntersectionInfo &info, bool hit,
-                             Matrix4x4 transform) {
+                             const Matrix4x4 &transform) {
         if (!hit || info.distance >= intersectionInfo.distance) return false;
         reverseTransformHit(ray, info, transform);
         intersectionInfo = info;
         return true;
     }
 
-    IntersectionInfo initInfo(){
+    bool overwriteAnyHit(IntersectionInfo &intersectionInfo, const Ray &ray, IntersectionInfo &info, bool hit,
+                         const Matrix4x4 &transform) {
+        if (!hit) return false;
+        reverseTransformHit(ray, info, transform);
+        intersectionInfo = info;
+        return true;
+    }
+
+    bool overwriteAllHit(std::vector<IntersectionInfo> &intersectionInfo, const Ray &ray,
+                         std::vector<IntersectionInfo> &infos, bool hit, const Matrix4x4 &transform) {
+        if (!hit) return false;
+        for (auto info: infos) {
+            reverseTransformHit(ray, info, transform);
+            intersectionInfo.push_back(info);
+        }
+        return true;
+    }
+
+    IntersectionInfo initInfo() {
         IntersectionInfo info{};
         info.hit = false;
         info.distance = std::numeric_limits<double>::max();
@@ -137,7 +155,7 @@ namespace {
         return info;
     }
 
-    Ray createTransformedRay(const Ray &ray, const Object *baseObject, Matrix4x4 inverseTransform)  {
+    Ray createTransformedRay(const Ray &ray, const Object *baseObject, Matrix4x4 inverseTransform) {
         BoundingBox originalAABB = baseObject->getBoundaries();
         Vector3D originalMid = getCenter(originalAABB);
 
@@ -187,282 +205,20 @@ Object *Instance::getBaseObject() {
 }
 
 bool Instance::intersectAny(IntersectionInfo &intersectionInfo, const Ray &ray) {
-    Object *baseObject;
-    if (objectCached) {
-        baseObject = objectCache;
-    } else {
-        baseObject = engineNode->requestBaseData(baseObjectId);
-    }
+    Object *baseObject = getBaseObject();
+    Ray newRay = createTransformedRay(ray, baseObject, inverseTransform);
+    IntersectionInfo info = initInfo();
+    bool hit = baseObject->intersectAny(info, newRay);
+    return overwriteAnyHit(intersectionInfo, ray, info, hit, transform);
 
-    Ray newRay = ray;
-
-    BoundingBox originalAABB = baseObject->getBoundaries();
-
-    Vector3D originalMid = {(originalAABB.maxCorner.x + originalAABB.minCorner.x) / 2,
-                            (originalAABB.maxCorner.y + originalAABB.minCorner.y) / 2,
-                            (originalAABB.maxCorner.z + originalAABB.minCorner.z) / 2};
-
-    newRay.origin.x -= originalMid.x;
-    newRay.origin.y -= originalMid.y;
-    newRay.origin.z -= originalMid.z;
-
-    Vector3D directionBuffer{};
-    directionBuffer.x = newRay.origin.x + newRay.direction.x;
-    directionBuffer.y = newRay.origin.y + newRay.direction.y;
-    directionBuffer.z = newRay.origin.z + newRay.direction.z;
-
-    Vector3D originBuffer = newRay.origin;
-    newRay.origin.x = inverseTransform.elements[0][0] * originBuffer.x +
-                      inverseTransform.elements[0][1] * originBuffer.y +
-                      inverseTransform.elements[0][2] * originBuffer.z +
-                      inverseTransform.elements[0][3];
-    newRay.origin.y = inverseTransform.elements[1][0] * originBuffer.x +
-                      inverseTransform.elements[1][1] * originBuffer.y +
-                      inverseTransform.elements[1][2] * originBuffer.z +
-                      inverseTransform.elements[1][3];
-    newRay.origin.z = inverseTransform.elements[2][0] * originBuffer.x +
-                      inverseTransform.elements[2][1] * originBuffer.y +
-                      inverseTransform.elements[2][2] * originBuffer.z +
-                      inverseTransform.elements[2][3];
-
-    newRay.direction.x = inverseTransform.elements[0][0] * directionBuffer.x +
-                         inverseTransform.elements[0][1] * directionBuffer.y +
-                         inverseTransform.elements[0][2] * directionBuffer.z +
-                         inverseTransform.elements[0][3];
-    newRay.direction.y = inverseTransform.elements[1][0] * directionBuffer.x +
-                         inverseTransform.elements[1][1] * directionBuffer.y +
-                         inverseTransform.elements[1][2] * directionBuffer.z +
-                         inverseTransform.elements[1][3];
-    newRay.direction.z = inverseTransform.elements[2][0] * directionBuffer.x +
-                         inverseTransform.elements[2][1] * directionBuffer.y +
-                         inverseTransform.elements[2][2] * directionBuffer.z +
-                         inverseTransform.elements[2][3];
-
-    newRay.direction.x = newRay.direction.x - newRay.origin.x;
-    newRay.direction.y = newRay.direction.y - newRay.origin.y;
-    newRay.direction.z = newRay.direction.z - newRay.origin.z;
-
-    double length = sqrt(newRay.direction.x * newRay.direction.x + newRay.direction.y * newRay.direction.y +
-                         newRay.direction.z * newRay.direction.z);
-
-    newRay.direction.x /= length;
-    newRay.direction.y /= length;
-    newRay.direction.z /= length;
-
-    newRay.dirfrac.x = 1.0 / newRay.direction.x;
-    newRay.dirfrac.y = 1.0 / newRay.direction.y;
-    newRay.dirfrac.z = 1.0 / newRay.direction.z;
-
-    newRay.origin.x += originalMid.x;
-    newRay.origin.y += originalMid.y;
-    newRay.origin.z += originalMid.z;
-
-    IntersectionInfo intersectionInformationBuffer{};
-    intersectionInformationBuffer.hit = false;
-    intersectionInformationBuffer.distance = std::numeric_limits<double>::max();
-    intersectionInformationBuffer.position = {0, 0, 0};
-    bool hit = baseObject->intersectAny(intersectionInformationBuffer, newRay);
-
-    if (hit) {
-        Vector3D pos = intersectionInformationBuffer.position;
-
-        intersectionInformationBuffer.position.x = transform.elements[0][0] * pos.x +
-                                                   transform.elements[0][1] * pos.y +
-                                                   transform.elements[0][2] * pos.z +
-                                                   transform.elements[0][3];
-        intersectionInformationBuffer.position.y = transform.elements[1][0] * pos.x +
-                                                   transform.elements[1][1] * pos.y +
-                                                   transform.elements[1][2] * pos.z +
-                                                   transform.elements[1][3];
-        intersectionInformationBuffer.position.z = transform.elements[2][0] * pos.x +
-                                                   transform.elements[2][1] * pos.y +
-                                                   transform.elements[2][2] * pos.z +
-                                                   transform.elements[2][3];
-
-        Vector3D normal = {intersectionInformationBuffer.normal.x + pos.x,
-                           intersectionInformationBuffer.normal.y + pos.y,
-                           intersectionInformationBuffer.normal.z + pos.z};
-
-        intersectionInformationBuffer.normal.x = transform.elements[0][0] * normal.x +
-                                                 transform.elements[0][1] * normal.y +
-                                                 transform.elements[0][2] * normal.z +
-                                                 transform.elements[0][3];
-        intersectionInformationBuffer.normal.y = transform.elements[1][0] * normal.x +
-                                                 transform.elements[1][1] * normal.y +
-                                                 transform.elements[1][2] * normal.z +
-                                                 transform.elements[1][3];
-        intersectionInformationBuffer.normal.z = transform.elements[2][0] * normal.x +
-                                                 transform.elements[2][1] * normal.y +
-                                                 transform.elements[2][2] * normal.z +
-                                                 transform.elements[2][3];
-
-        intersectionInformationBuffer.normal.x =
-                intersectionInformationBuffer.normal.x - intersectionInformationBuffer.position.x;
-        intersectionInformationBuffer.normal.y =
-                intersectionInformationBuffer.normal.y - intersectionInformationBuffer.position.y;
-        intersectionInformationBuffer.normal.z =
-                intersectionInformationBuffer.normal.z - intersectionInformationBuffer.position.z;
-
-        length = sqrt(intersectionInformationBuffer.normal.x * intersectionInformationBuffer.normal.x +
-                      intersectionInformationBuffer.normal.y * intersectionInformationBuffer.normal.y +
-                      intersectionInformationBuffer.normal.z * intersectionInformationBuffer.normal.z);
-
-        intersectionInformationBuffer.normal.x /= length;
-        intersectionInformationBuffer.normal.y /= length;
-        intersectionInformationBuffer.normal.z /= length;
-
-        intersectionInformationBuffer.
-                distance = sqrt(
-                (ray.origin.x - intersectionInformationBuffer.position.x) *
-                (ray.origin.x - intersectionInformationBuffer.position.x) +
-                (ray.origin.y - intersectionInformationBuffer.position.y) *
-                (ray.origin.y - intersectionInformationBuffer.position.y) +
-                (ray.origin.z - intersectionInformationBuffer.position.z) *
-                (ray.origin.z - intersectionInformationBuffer.position.z));
-
-        intersectionInfo = intersectionInformationBuffer;
-    }
-
-    return hit;
 }
 
 bool Instance::intersectAll(std::vector<IntersectionInfo> &intersectionInfo, const Ray &ray) {
-    Object *baseObject;
-    if (objectCached) {
-        baseObject = objectCache;
-    } else {
-        baseObject = engineNode->requestBaseData(baseObjectId);
-    }
-
-    Ray newRay = ray;
-
-    BoundingBox originalAABB = baseObject->getBoundaries();
-
-    Vector3D originalMid = {(originalAABB.maxCorner.x + originalAABB.minCorner.x) / 2,
-                            (originalAABB.maxCorner.y + originalAABB.minCorner.y) / 2,
-                            (originalAABB.maxCorner.z + originalAABB.minCorner.z) / 2};
-
-    newRay.origin.x -= originalMid.x;
-    newRay.origin.y -= originalMid.y;
-    newRay.origin.z -= originalMid.z;
-
-    Vector3D directionBuffer{};
-    directionBuffer.x = newRay.origin.x + newRay.direction.x;
-    directionBuffer.y = newRay.origin.y + newRay.direction.y;
-    directionBuffer.z = newRay.origin.z + newRay.direction.z;
-
-    Vector3D originBuffer = newRay.origin;
-    newRay.origin.x = inverseTransform.elements[0][0] * originBuffer.x +
-                      inverseTransform.elements[0][1] * originBuffer.y +
-                      inverseTransform.elements[0][2] * originBuffer.z +
-                      inverseTransform.elements[0][3];
-    newRay.origin.y = inverseTransform.elements[1][0] * originBuffer.x +
-                      inverseTransform.elements[1][1] * originBuffer.y +
-                      inverseTransform.elements[1][2] * originBuffer.z +
-                      inverseTransform.elements[1][3];
-    newRay.origin.z = inverseTransform.elements[2][0] * originBuffer.x +
-                      inverseTransform.elements[2][1] * originBuffer.y +
-                      inverseTransform.elements[2][2] * originBuffer.z +
-                      inverseTransform.elements[2][3];
-
-    newRay.direction.x = inverseTransform.elements[0][0] * directionBuffer.x +
-                         inverseTransform.elements[0][1] * directionBuffer.y +
-                         inverseTransform.elements[0][2] * directionBuffer.z +
-                         inverseTransform.elements[0][3];
-    newRay.direction.y = inverseTransform.elements[1][0] * directionBuffer.x +
-                         inverseTransform.elements[1][1] * directionBuffer.y +
-                         inverseTransform.elements[1][2] * directionBuffer.z +
-                         inverseTransform.elements[1][3];
-    newRay.direction.z = inverseTransform.elements[2][0] * directionBuffer.x +
-                         inverseTransform.elements[2][1] * directionBuffer.y +
-                         inverseTransform.elements[2][2] * directionBuffer.z +
-                         inverseTransform.elements[2][3];
-
-    newRay.direction.x = newRay.direction.x - newRay.origin.x;
-    newRay.direction.y = newRay.direction.y - newRay.origin.y;
-    newRay.direction.z = newRay.direction.z - newRay.origin.z;
-
-    double length = sqrt(newRay.direction.x * newRay.direction.x + newRay.direction.y * newRay.direction.y +
-                         newRay.direction.z * newRay.direction.z);
-
-    newRay.direction.x /= length;
-    newRay.direction.y /= length;
-    newRay.direction.z /= length;
-
-    newRay.dirfrac.x = 1.0 / newRay.direction.x;
-    newRay.dirfrac.y = 1.0 / newRay.direction.y;
-    newRay.dirfrac.z = 1.0 / newRay.direction.z;
-
-    newRay.origin.x += originalMid.x;
-    newRay.origin.y += originalMid.y;
-    newRay.origin.z += originalMid.z;
-
-    std::vector<IntersectionInfo> intersectionInformationBuffers;
-    bool hit = baseObject->intersectAll(intersectionInformationBuffers, newRay);
-
-    if (hit) {
-        for (auto intersectionInformationBuffer: intersectionInformationBuffers) {
-            Vector3D pos = intersectionInformationBuffer.position;
-
-            intersectionInformationBuffer.position.x = transform.elements[0][0] * pos.x +
-                                                       transform.elements[0][1] * pos.y +
-                                                       transform.elements[0][2] * pos.z +
-                                                       transform.elements[0][3];
-            intersectionInformationBuffer.position.y = transform.elements[1][0] * pos.x +
-                                                       transform.elements[1][1] * pos.y +
-                                                       transform.elements[1][2] * pos.z +
-                                                       transform.elements[1][3];
-            intersectionInformationBuffer.position.z = transform.elements[2][0] * pos.x +
-                                                       transform.elements[2][1] * pos.y +
-                                                       transform.elements[2][2] * pos.z +
-                                                       transform.elements[2][3];
-
-            Vector3D normal = {intersectionInformationBuffer.normal.x + pos.x,
-                               intersectionInformationBuffer.normal.y + pos.y,
-                               intersectionInformationBuffer.normal.z + pos.z};
-
-            intersectionInformationBuffer.normal.x = transform.elements[0][0] * normal.x +
-                                                     transform.elements[0][1] * normal.y +
-                                                     transform.elements[0][2] * normal.z +
-                                                     transform.elements[0][3];
-            intersectionInformationBuffer.normal.y = transform.elements[1][0] * normal.x +
-                                                     transform.elements[1][1] * normal.y +
-                                                     transform.elements[1][2] * normal.z +
-                                                     transform.elements[1][3];
-            intersectionInformationBuffer.normal.z = transform.elements[2][0] * normal.x +
-                                                     transform.elements[2][1] * normal.y +
-                                                     transform.elements[2][2] * normal.z +
-                                                     transform.elements[2][3];
-
-            intersectionInformationBuffer.normal.x =
-                    intersectionInformationBuffer.normal.x - intersectionInformationBuffer.position.x;
-            intersectionInformationBuffer.normal.y =
-                    intersectionInformationBuffer.normal.y - intersectionInformationBuffer.position.y;
-            intersectionInformationBuffer.normal.z =
-                    intersectionInformationBuffer.normal.z - intersectionInformationBuffer.position.z;
-
-            length = sqrt(intersectionInformationBuffer.normal.x * intersectionInformationBuffer.normal.x +
-                          intersectionInformationBuffer.normal.y * intersectionInformationBuffer.normal.y +
-                          intersectionInformationBuffer.normal.z * intersectionInformationBuffer.normal.z);
-
-            intersectionInformationBuffer.normal.x /= length;
-            intersectionInformationBuffer.normal.y /= length;
-            intersectionInformationBuffer.normal.z /= length;
-
-            intersectionInformationBuffer.
-                    distance = sqrt(
-                    (ray.origin.x - intersectionInformationBuffer.position.x) *
-                    (ray.origin.x - intersectionInformationBuffer.position.x) +
-                    (ray.origin.y - intersectionInformationBuffer.position.y) *
-                    (ray.origin.y - intersectionInformationBuffer.position.y) +
-                    (ray.origin.z - intersectionInformationBuffer.position.z) *
-                    (ray.origin.z - intersectionInformationBuffer.position.z));
-
-            intersectionInfo.push_back(intersectionInformationBuffer);
-        }
-    }
-
-    return hit;
+    Object *baseObject = getBaseObject();
+    Ray newRay = createTransformedRay(ray, baseObject, inverseTransform);
+    std::vector<IntersectionInfo> infos;
+    bool hit = baseObject->intersectAll(infos, newRay);
+    return overwriteAllHit(intersectionInfo, ray, infos, hit, transform);
 }
 
 BoundingBox Instance::getBoundaries() const {
