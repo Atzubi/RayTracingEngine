@@ -6,8 +6,36 @@
 #include "RayTraceEngine/TriangleMeshObject.h"
 #include "Acceleration Structures/DBVHv2.h"
 
-
 class Triangle : public Object {
+private:
+    void setTexture(IntersectionInfo &intersectionInfo, double_t u, double_t v, double_t w) const {
+        Vector2D texture1 = mesh->vertices[mesh->indices[pos]].texture;
+        Vector2D texture2 = mesh->vertices[mesh->indices[pos + 1]].texture;
+        Vector2D texture3 = mesh->vertices[mesh->indices[pos + 2]].texture;
+
+        intersectionInfo.texture.x = w * texture1.x + u * texture2.x + v * texture3.x;
+        intersectionInfo.texture.y = w * texture1.y + u * texture2.y + v * texture3.y;
+    }
+
+    void setNormal(IntersectionInfo &intersectionInfo, double_t u, double_t v, double_t w) const {
+        Vector3D normal1 = mesh->vertices[mesh->indices[pos]].normal;
+        Vector3D normal2 = mesh->vertices[mesh->indices[pos + 1]].normal;
+        Vector3D normal3 = mesh->vertices[mesh->indices[pos + 2]].normal;
+
+        intersectionInfo.normal = (normal1 * w) + (normal2 * u) + (normal3 * v);
+        intersectionInfo.normal.normalize();
+    }
+
+    void setIntersection(IntersectionInfo &intersectionInfo, const Ray &ray, double_t u, double_t v, double t,
+                         double_t w) const {
+        intersectionInfo.position = ray.origin + (ray.direction * t);
+        intersectionInfo.distance = (ray.origin - intersectionInfo.position).getLength();
+        setNormal(intersectionInfo, u, v, w);
+        setTexture(intersectionInfo, u, v, w);
+        intersectionInfo.material = &mesh->material;
+        intersectionInfo.hit = true;
+    }
+
 public:
     TriangleMeshObject *mesh{};
     uint64_t pos{};
@@ -38,57 +66,37 @@ public:
         Vector3D vertex2 = mesh->vertices[mesh->indices[pos + 1]].position;
         Vector3D vertex3 = mesh->vertices[mesh->indices[pos + 2]].position;
 
-        Vector3D e1{}, e2{}, pvec{}, qvec{}, tvec{};
+        Vector3D e1 = vertex2 - vertex1;
+        Vector3D e2 = vertex3 - vertex1;
+
+        Vector3D pvec = ray.direction.cross(e2);
+        double_t det = (pvec * e1).sum();
+
         double_t epsilon = 0.000001f;
-
-        e1.x = vertex2.x - vertex1.x;
-        e1.y = vertex2.y - vertex1.y;
-        e1.z = vertex2.z - vertex1.z;
-
-        e2.x = vertex3.x - vertex1.x;
-        e2.y = vertex3.y - vertex1.y;
-        e2.z = vertex3.z - vertex1.z;
-
-        pvec.x = ray.direction.y * e2.z - ray.direction.z * e2.y;
-        pvec.y = ray.direction.z * e2.x - ray.direction.x * e2.z;
-        pvec.z = ray.direction.x * e2.y - ray.direction.y * e2.x;
-
-        //NORMALIZE(pvec);
-        double_t det = pvec.x * e1.x + pvec.y * e1.y + pvec.z * e1.z;
 
         if (det < epsilon && det > -epsilon) {
             intersectionInfo.hit = false;
             return false;
         }
 
-        double_t invDet = 1.0f / det;
-
-        tvec.x = ray.origin.x - vertex1.x;
-        tvec.y = ray.origin.y - vertex1.y;
-        tvec.z = ray.origin.z - vertex1.z;
-
-        // NORMALIZE(tvec);
-        double_t u = invDet * (tvec.x * pvec.x + tvec.y * pvec.y + tvec.z * pvec.z);
+        double_t invDet = 1.0 / det;
+        Vector3D tvec = ray.origin - vertex1;
+        double_t u = invDet * (tvec * pvec).sum();
 
         if (u < 0.0f || u > 1.0f) {
             intersectionInfo.hit = false;
             return false;
         }
 
-        qvec.x = tvec.y * e1.z - tvec.z * e1.y;
-        qvec.y = tvec.z * e1.x - tvec.x * e1.z;
-        qvec.z = tvec.x * e1.y - tvec.y * e1.x;
-
-        // NORMALIZE(qvec);
-        double_t v =
-                invDet * (qvec.x * ray.direction.x + qvec.y * ray.direction.y + qvec.z * ray.direction.z);
+        Vector3D qvec = tvec.cross(e1);
+        double_t v = invDet * (qvec * ray.direction).sum();
 
         if (v < 0.0f || u + v > 1.0f) {
             intersectionInfo.hit = false;
             return false;
         }
 
-        double t = invDet * (e2.x * qvec.x + e2.y * qvec.y + e2.z * qvec.z);
+        double t = invDet * (e2 * qvec).sum();
 
         if (t <= epsilon) {
             intersectionInfo.hit = false;
@@ -97,41 +105,7 @@ public:
 
         double_t w = 1 - u - v;
 
-        intersectionInfo.position.x = ray.origin.x + ray.direction.x * t;
-        intersectionInfo.position.y = ray.origin.y + ray.direction.y * t;
-        intersectionInfo.position.z = ray.origin.z + ray.direction.z * t;
-
-        intersectionInfo.distance = sqrt(
-                (ray.origin.x - intersectionInfo.position.x) * (ray.origin.x - intersectionInfo.position.x) +
-                (ray.origin.y - intersectionInfo.position.y) * (ray.origin.y - intersectionInfo.position.y) +
-                (ray.origin.z - intersectionInfo.position.z) * (ray.origin.z - intersectionInfo.position.z));
-
-        Vector3D normal1 = mesh->vertices[mesh->indices[pos]].normal;
-        Vector3D normal2 = mesh->vertices[mesh->indices[pos + 1]].normal;
-        Vector3D normal3 = mesh->vertices[mesh->indices[pos + 2]].normal;
-
-        intersectionInfo.normal.x = w * normal1.x + u * normal2.x + v * normal3.x;
-        intersectionInfo.normal.y = w * normal1.y + u * normal2.y + v * normal3.y;
-        intersectionInfo.normal.z = w * normal1.z + u * normal2.z + v * normal3.z;
-
-        double_t length = sqrt(intersectionInfo.normal.x * intersectionInfo.normal.x +
-                               intersectionInfo.normal.y * intersectionInfo.normal.y +
-                               intersectionInfo.normal.z * intersectionInfo.normal.z);
-
-        intersectionInfo.normal.x /= length;
-        intersectionInfo.normal.y /= length;
-        intersectionInfo.normal.z /= length;
-
-        Vector2D texture1 = mesh->vertices[mesh->indices[pos]].texture;
-        Vector2D texture2 = mesh->vertices[mesh->indices[pos + 1]].texture;
-        Vector2D texture3 = mesh->vertices[mesh->indices[pos + 2]].texture;
-
-        intersectionInfo.texture.x = w * texture1.x + u * texture2.x + v * texture3.x;
-        intersectionInfo.texture.y = w * texture1.y + u * texture2.y + v * texture3.y;
-
-        intersectionInfo.material = &mesh->material;
-
-        intersectionInfo.hit = true;
+        setIntersection(intersectionInfo, ray, u, v, t, w);
         return true;
     }
 

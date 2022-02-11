@@ -146,6 +146,10 @@ struct Vector3D {
     [[nodiscard]] Vector3D cross(const Vector3D &other) const {
         return {y * other.z - z * other.y, z * other.x - x * other.z, x * other.y - y * other.x};
     }
+
+    [[nodiscard]] double sum() const {
+        return x + y + z;
+    }
 };
 
 /**
