@@ -131,11 +131,9 @@ private:
 
     static Ray initRay(const std::vector<RayContainer> &rayContainers);
 
-    static IntersectionInfo getClosestIntersection(std::vector<IntersectionInfo> &infos, const Ray &ray);
+    static IntersectionInfo getFirstIntersection(std::vector<IntersectionInfo> &infos, const Ray &ray);
 
     static void updateRayStack(std::vector<RayContainer> &rayContainers, int id, RayGeneratorOutput &newRays);
-
-    static IntersectionInfo initInfo(const Ray &ray);
 
     void processShadersAnyHit(const Ray &ray, const IntersectionInfo &info, int id, RayGeneratorOutput &newRays,
                               RayResource *rayResource);
@@ -144,8 +142,8 @@ private:
     processAnyHitInformation(std::vector<RayContainer> &rayContainers, const Ray &ray, const IntersectionInfo &info,
                              RayGeneratorOutput &newRays);
 
-    void processClosestHitInformation(std::vector<RayContainer> &rayContainers, const Ray &ray, IntersectionInfo &info,
-                                      RayGeneratorOutput &newRays);
+    void processFirstHitInformation(std::vector<RayContainer> &rayContainers, const Ray &ray, IntersectionInfo &info,
+                                    RayGeneratorOutput &newRays);
 
     void
     processShaders(const Ray &ray, IntersectionInfo &info, int id, RayGeneratorOutput &newRays,
@@ -163,13 +161,13 @@ private:
 
     void processRaysAnyHit(std::vector<RayContainer> &rayContainers, RayGeneratorOutput &newRays);
 
-    void processRaysClosestHit(std::vector<RayContainer> &rayContainers, RayGeneratorOutput &newRays);
+    void processRaysFirstHit(std::vector<RayContainer> &rayContainers, RayGeneratorOutput &newRays);
 
     void processRaysAllHits(std::vector<RayContainer> &rayContainers, RayGeneratorOutput &newRays);
 
     void fullTraversal();
 
-    void closestHitTraversal();
+    void firstHitTraversal();
 
     void anyHitTraversal();
 

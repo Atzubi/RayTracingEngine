@@ -23,8 +23,8 @@
  * material:        The intersected geometries material.
  */
 struct IntersectionInfo {
-    bool hit;
-    double distance;
+    bool hit = false;
+    double distance = std::numeric_limits<double>::max();
     Vector3D rayOrigin;
     Vector3D rayDirection;
     Vector3D normal;

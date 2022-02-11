@@ -136,7 +136,9 @@ struct Vector3D {
     }
 
     void normalize() {
-        *this /= getLength();
+        double length = getLength();
+        if(length != 0)
+            *this /= length;
     }
 
     [[nodiscard]] Vector3D getInverse() const {
@@ -194,7 +196,7 @@ struct Matrix4x4 {
     }
 
     Vector3D operator*(const Vector3D &vector) const {
-        Vector3D result{};
+        Vector3D result;
         for (int line = 0; line < 3; line++) {
             result[line] = elements[line][0] * vector.x +
                            elements[line][1] * vector.y +

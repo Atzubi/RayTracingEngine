@@ -147,14 +147,6 @@ namespace {
         return true;
     }
 
-    IntersectionInfo initInfo() {
-        IntersectionInfo info{};
-        info.hit = false;
-        info.distance = std::numeric_limits<double>::max();
-        info.position = {0, 0, 0};
-        return info;
-    }
-
     Ray createTransformedRay(const Ray &ray, const Object *baseObject, Matrix4x4 inverseTransform) {
         BoundingBox originalAABB = baseObject->getBoundaries();
         Vector3D originalMid = getCenter(originalAABB);
@@ -191,7 +183,7 @@ Instance::~Instance() = default;
 bool Instance::intersectFirst(IntersectionInfo &intersectionInfo, const Ray &ray) {
     Object *baseObject = getBaseObject();
     Ray newRay = createTransformedRay(ray, baseObject, inverseTransform);
-    IntersectionInfo info = initInfo();
+    IntersectionInfo info;
     bool hit = baseObject->intersectFirst(info, newRay);
     return overwriteClosestHit(intersectionInfo, ray, info, hit, transform);
 }
@@ -207,7 +199,7 @@ Object *Instance::getBaseObject() {
 bool Instance::intersectAny(IntersectionInfo &intersectionInfo, const Ray &ray) {
     Object *baseObject = getBaseObject();
     Ray newRay = createTransformedRay(ray, baseObject, inverseTransform);
-    IntersectionInfo info = initInfo();
+    IntersectionInfo info;
     bool hit = baseObject->intersectAny(info, newRay);
     return overwriteAnyHit(intersectionInfo, ray, info, hit, transform);
 

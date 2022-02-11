@@ -114,9 +114,7 @@ public:
     }
 
     bool intersectAll(std::vector<IntersectionInfo> &intersectionInfo, const Ray &ray) override {
-        IntersectionInfo info{false, std::numeric_limits<double>::max(), ray.origin, ray.direction, {0, 0,
-                                                                                                     0}, {0, 0, 0},
-                              {0, 0}, nullptr};
+        IntersectionInfo info;
         bool hit = intersectFirst(info, ray);
         intersectionInfo.push_back(info);
         return hit;

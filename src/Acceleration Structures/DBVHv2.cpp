@@ -1077,16 +1077,11 @@ namespace {
     };
 
     void intersectLeaf(const Ray &ray, IntersectionInfo &intersectionInfo, Object &leaf, bool &hit) {
-        IntersectionInfo intersectionInformationBuffer{};
-        intersectionInformationBuffer.hit = false;
-        intersectionInformationBuffer.distance = std::numeric_limits<double>::max();
-        intersectionInformationBuffer.position = {0, 0, 0};
-        leaf.intersectFirst(intersectionInformationBuffer, ray);
-        if (intersectionInformationBuffer.hit) {
-            if (intersectionInformationBuffer.distance < intersectionInfo.distance) {
-                intersectionInfo = intersectionInformationBuffer;
-                hit = true;
-            }
+        IntersectionInfo info;
+        leaf.intersectFirst(info, ray);
+        if (info.hit && info.distance < intersectionInfo.distance) {
+            intersectionInfo = info;
+            hit = true;
         }
     }
 
@@ -1220,13 +1215,10 @@ namespace {
     }
 
     void intersectLeaf(std::vector<IntersectionInfo> &intersectionInfo, const Ray &ray, Object &leaf) {
-        IntersectionInfo intersectionInformationBuffer{};
-        intersectionInformationBuffer.hit = false;
-        intersectionInformationBuffer.distance = std::numeric_limits<double>::max();
-        intersectionInformationBuffer.position = {0, 0, 0};
-        leaf.intersectFirst(intersectionInformationBuffer, ray);
-        if (intersectionInformationBuffer.hit) {
-            intersectionInfo.push_back(intersectionInformationBuffer);
+        IntersectionInfo info;
+        leaf.intersectFirst(info, ray);
+        if (info.hit) {
+            intersectionInfo.push_back(info);
         }
     }
 
