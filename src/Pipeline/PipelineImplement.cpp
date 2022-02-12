@@ -96,7 +96,7 @@ void PipelineImplement::resetResult() {
     }
 }
 
-void PipelineImplement::setPixel(int id, const ShaderOutput &pixel) {
+inline void PipelineImplement::setPixel(int id, const ShaderOutput &pixel) {
     result->image[id * 3] += pixel.color[0];
     result->image[id * 3 + 1] += pixel.color[1];
     result->image[id * 3 + 2] += pixel.color[2];
@@ -159,7 +159,7 @@ PipelineImplement::generateRays(const RayGeneratorShaderContainer &generator, st
     rays.rays.clear();
 }
 
-Ray PipelineImplement::initRay(const std::vector<RayContainer> &rayContainers) {
+inline Ray PipelineImplement::initRay(const std::vector<RayContainer> &rayContainers) {
     auto r = rayContainers.back();
     return {r.rayOrigin, r.rayDirection, r.rayOrigin.getInverse()};
 }
@@ -193,7 +193,7 @@ PipelineImplement::generatePrimaryRays(std::vector<RayContainer> &rayContainers,
     }
 }
 
-void PipelineImplement::processShaders(const Ray &ray, IntersectionInfo &info, int id, RayGeneratorOutput &newRays,
+inline void PipelineImplement::processShaders(const Ray &ray, IntersectionInfo &info, int id, RayGeneratorOutput &newRays,
                                        RayResource *rayResource) {
     if (info.hit) {
         processHitShaders(id, info, rayResource, newRays);
@@ -204,7 +204,7 @@ void PipelineImplement::processShaders(const Ray &ray, IntersectionInfo &info, i
     }
 }
 
-void PipelineImplement::processShadersAnyHit(const Ray &ray, const IntersectionInfo &info, int id,
+inline void PipelineImplement::processShadersAnyHit(const Ray &ray, const IntersectionInfo &info, int id,
                                              RayGeneratorOutput &newRays, RayResource *rayResource) {
     if (info.hit) {
         processOcclusionShaders(id, rayResource, ray, newRays);
@@ -213,7 +213,7 @@ void PipelineImplement::processShadersAnyHit(const Ray &ray, const IntersectionI
     }
 }
 
-void
+inline void
 PipelineImplement::processShadersAllHits(const Ray &ray, std::vector<IntersectionInfo> &infos,
                                          RayGeneratorOutput &newRays,
                                          int id, RayResource *rayResource) {
@@ -224,7 +224,7 @@ PipelineImplement::processShadersAllHits(const Ray &ray, std::vector<Intersectio
     processShaders(ray, closest, id, newRays, rayResource);
 }
 
-void
+inline void
 PipelineImplement::processAnyHitInformation(std::vector<RayContainer> &rayContainers, const Ray &ray,
                                             const IntersectionInfo &info, RayGeneratorOutput &newRays) {
     int id = rayContainers.back().rayID;
@@ -234,7 +234,7 @@ PipelineImplement::processAnyHitInformation(std::vector<RayContainer> &rayContai
     updateRayStack(rayContainers, id, newRays);
 }
 
-void PipelineImplement::processFirstHitInformation(std::vector<RayContainer> &rayContainers, const Ray &ray,
+inline void PipelineImplement::processFirstHitInformation(std::vector<RayContainer> &rayContainers, const Ray &ray,
                                                    IntersectionInfo &info, RayGeneratorOutput &newRays) {
     int id = rayContainers.back().rayID;
     auto rayResource = rayContainers.back().rayResource;

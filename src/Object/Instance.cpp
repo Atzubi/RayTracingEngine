@@ -8,7 +8,7 @@
 #include "Engine Node/EngineNode.h"
 
 namespace {
-    Vector3D getCenter(const BoundingBox &aabb) {
+    inline Vector3D getCenter(const BoundingBox &aabb) {
         return (aabb.maxCorner + aabb.minCorner) / 2.0;
     }
 
@@ -98,7 +98,7 @@ namespace {
         return true;
     }
 
-    void transformRay(const Vector3D &originalMid, Ray &newRay, const Matrix4x4 &inverseTransform) {
+    inline void transformRay(const Vector3D &originalMid, Ray &newRay, const Matrix4x4 &inverseTransform) {
         newRay.origin -= originalMid;
         newRay.direction += newRay.origin;
 
@@ -113,7 +113,7 @@ namespace {
         newRay.origin += originalMid;
     }
 
-    void reverseTransformHit(const Ray &ray, IntersectionInfo &info, const Matrix4x4 &transform) {
+    inline void reverseTransformHit(const Ray &ray, IntersectionInfo &info, const Matrix4x4 &transform) {
         Vector3D pos = info.position;
         info.position = transform * pos;
         info.normal = transform * (info.normal + pos) - info.position;
@@ -121,7 +121,7 @@ namespace {
         info.distance = (ray.origin - info.position).getLength();
     }
 
-    bool overwriteClosestHit(IntersectionInfo &intersectionInfo, const Ray &ray, IntersectionInfo &info, bool hit,
+    inline bool overwriteClosestHit(IntersectionInfo &intersectionInfo, const Ray &ray, IntersectionInfo &info, bool hit,
                              const Matrix4x4 &transform) {
         if (!hit || info.distance >= intersectionInfo.distance) return false;
         reverseTransformHit(ray, info, transform);
@@ -129,7 +129,7 @@ namespace {
         return true;
     }
 
-    bool overwriteAnyHit(IntersectionInfo &intersectionInfo, const Ray &ray, IntersectionInfo &info, bool hit,
+    inline bool overwriteAnyHit(IntersectionInfo &intersectionInfo, const Ray &ray, IntersectionInfo &info, bool hit,
                          const Matrix4x4 &transform) {
         if (!hit) return false;
         reverseTransformHit(ray, info, transform);
@@ -137,7 +137,7 @@ namespace {
         return true;
     }
 
-    bool overwriteAllHit(std::vector<IntersectionInfo> &intersectionInfo, const Ray &ray,
+    inline bool overwriteAllHit(std::vector<IntersectionInfo> &intersectionInfo, const Ray &ray,
                          std::vector<IntersectionInfo> &infos, bool hit, const Matrix4x4 &transform) {
         if (!hit) return false;
         for (auto info: infos) {
@@ -147,7 +147,7 @@ namespace {
         return true;
     }
 
-    Ray createTransformedRay(const Ray &ray, const Object *baseObject, Matrix4x4 inverseTransform) {
+    inline Ray createTransformedRay(const Ray &ray, const Object *baseObject, Matrix4x4 inverseTransform) {
         BoundingBox originalAABB = baseObject->getBoundaries();
         Vector3D originalMid = getCenter(originalAABB);
 
@@ -188,7 +188,7 @@ bool Instance::intersectFirst(IntersectionInfo &intersectionInfo, const Ray &ray
     return overwriteClosestHit(intersectionInfo, ray, info, hit, transform);
 }
 
-Object *Instance::getBaseObject() {
+inline Object *Instance::getBaseObject() {
     if (!objectCached) {
         objectCache = engineNode->requestBaseData(baseObjectId);
         objectCached = true;

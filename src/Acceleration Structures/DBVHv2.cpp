@@ -1076,7 +1076,7 @@ namespace {
         double distance;
     };
 
-    void intersectLeaf(const Ray &ray, IntersectionInfo &intersectionInfo, Object &leaf, bool &hit) {
+    inline void intersectLeaf(const Ray &ray, IntersectionInfo &intersectionInfo, Object &leaf, bool &hit) {
         IntersectionInfo info{false, std::numeric_limits<double>::max()};
         leaf.intersectFirst(info, ray);
         if (info.hit && info.distance < intersectionInfo.distance) {
@@ -1085,7 +1085,7 @@ namespace {
         }
     }
 
-    void getChildrenIntersections(const Ray &ray, const DBVHNode &node, IntersectionInfo &intersectionInfo,
+    inline void getChildrenIntersections(const Ray &ray, const DBVHNode &node, IntersectionInfo &intersectionInfo,
                                   double &distanceRight, double &distanceLeft, bool &right, bool &left, bool &hit) {
         if (isNodeRight(node)) {
             // TODO request child if missing
@@ -1107,7 +1107,7 @@ namespace {
         }
     }
 
-    void
+    inline void
     pushIntersectionsOnStack(const DBVHNode &node, double distanceRight, double distanceLeft, bool right, bool left,
                              TraversalContainer *stack, uint64_t &stackPointer) {
         if (right && left) {
@@ -1159,7 +1159,7 @@ namespace {
         }
     }
 
-    void intersectChild(const Ray &ray, const DBVHNode **stack, uint64_t &stackPointer, const DBVHNode *child) {
+    inline void intersectChild(const Ray &ray, const DBVHNode **stack, uint64_t &stackPointer, const DBVHNode *child) {
         double distance = 0;
         if (rayBoxIntersection((child->boundingBox.minCorner),
                                (child->boundingBox.maxCorner), ray, distance)) {
@@ -1167,7 +1167,7 @@ namespace {
         }
     }
 
-    bool
+    inline bool
     getChildrenIntersection(IntersectionInfo &intersectionInfo, const Ray &ray, const DBVHNode **stack,
                             uint64_t &stackPointer) {
         bool hit = false;
@@ -1214,7 +1214,7 @@ namespace {
         }
     }
 
-    void intersectLeaf(std::vector<IntersectionInfo> &intersectionInfo, const Ray &ray, Object &leaf) {
+    inline void intersectLeaf(std::vector<IntersectionInfo> &intersectionInfo, const Ray &ray, Object &leaf) {
         IntersectionInfo info{false, std::numeric_limits<double>::max()};
         leaf.intersectFirst(info, ray);
         if (info.hit) {
@@ -1222,7 +1222,7 @@ namespace {
         }
     }
 
-    void
+    inline void
     getChildrenIntersection(std::vector<IntersectionInfo> &intersectionInfo, const Ray &ray, const DBVHNode **stack,
                             uint64_t &stackPointer) {
         auto node = stack[stackPointer - 1];
