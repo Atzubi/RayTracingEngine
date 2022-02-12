@@ -23,8 +23,8 @@
  * material:        The intersected geometries material.
  */
 struct IntersectionInfo {
-    bool hit = false;
-    double distance = std::numeric_limits<double>::max();
+    bool hit;
+    double distance;
     Vector3D rayOrigin;
     Vector3D rayDirection;
     Vector3D normal;
@@ -36,7 +36,7 @@ struct IntersectionInfo {
 struct ObjectCapsule {
     ObjectId id;
     BoundingBox boundingBox;
-    double cost;
+    double cost = -1;
 };
 
 /**

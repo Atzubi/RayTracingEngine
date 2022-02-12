@@ -12,7 +12,7 @@ struct std::hash<hashable> {                           \
 
 
 struct GenericId {
-    unsigned long id;
+    unsigned long id = 0;
 
     bool operator==(const GenericId &other) const {
         return id == other.id;
