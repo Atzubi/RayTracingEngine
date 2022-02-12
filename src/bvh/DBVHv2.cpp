@@ -1257,16 +1257,11 @@ namespace {
             std::vector<const DBVHNode *> stack(
                     root.maxDepthRight > root.maxDepthLeft ? root.maxDepthRight + 1 :
                     root.maxDepthLeft + 1);
-
-            uint64_t stackPointer = 1;
             stack[0] = &root;
-
             processTraversalStack(intersectionInfo, ray, stack.data());
         } else {
             const DBVHNode *stack[64];
-            uint64_t stackPointer = 1;
             stack[0] = &root;
-
             processTraversalStack(intersectionInfo, ray, stack);
         }
         return false;

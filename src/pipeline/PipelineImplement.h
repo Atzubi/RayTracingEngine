@@ -131,7 +131,7 @@ private:
 
     static Ray initRay(const std::vector<RayContainer> &rayContainers);
 
-    static IntersectionInfo getFirstIntersection(std::vector<IntersectionInfo> &infos, const Ray &ray);
+    static IntersectionInfo getFirstIntersection(std::vector<IntersectionInfo> &infos);
 
     static void updateRayStack(std::vector<RayContainer> &rayContainers, int id, RayGeneratorOutput &newRays);
 

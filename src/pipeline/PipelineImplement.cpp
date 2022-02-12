@@ -164,7 +164,7 @@ inline Ray PipelineImplement::initRay(const std::vector<RayContainer> &rayContai
     return {r.rayOrigin, r.rayDirection, r.rayOrigin.getInverse()};
 }
 
-IntersectionInfo PipelineImplement::getFirstIntersection(std::vector<IntersectionInfo> &infos, const Ray &ray) {
+IntersectionInfo PipelineImplement::getFirstIntersection(std::vector<IntersectionInfo> &infos) {
     IntersectionInfo closest{false, std::numeric_limits<double>::max()};
     for (auto info: infos) {
         if (info.hit && closest.distance > info.distance) {
@@ -219,7 +219,7 @@ PipelineImplement::processShadersAllHits(const Ray &ray, std::vector<Intersectio
                                          int id, RayResource *rayResource) {
     processPierceShaders(id, rayResource, infos, newRays);
 
-    auto closest = getFirstIntersection(infos, ray);
+    auto closest = getFirstIntersection(infos);
 
     processShaders(ray, closest, id, newRays, rayResource);
 }

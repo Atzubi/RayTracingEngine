@@ -170,7 +170,7 @@ int main() {
     int channelCount = 4;
     std::vector<sf::Uint8> pixels(resolutionX * resolutionY * channelCount);
 
-    int fullOpacity = 255;
+    unsigned char fullOpacity = 255;
 
     // translate from texture to sfml
     for (int x = 0; x < resolutionY; x++) {
