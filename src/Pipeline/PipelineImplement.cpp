@@ -165,7 +165,7 @@ Ray PipelineImplement::initRay(const std::vector<RayContainer> &rayContainers) {
 }
 
 IntersectionInfo PipelineImplement::getFirstIntersection(std::vector<IntersectionInfo> &infos, const Ray &ray) {
-    IntersectionInfo closest{.hit = false, .distance = std::numeric_limits<double>::max()};
+    IntersectionInfo closest{false, std::numeric_limits<double>::max()};
     for (auto info: infos) {
         if (info.hit && closest.distance > info.distance) {
             closest = info;
@@ -247,7 +247,7 @@ void PipelineImplement::processAllHitInformation(const Ray &ray, std::vector<Ray
                                                  std::vector<IntersectionInfo> &infos, RayGeneratorOutput &newRays) {
     int id = rayContainers.back().rayID;
     auto rayResource = rayContainers.back().rayResource;
-    for(auto &info : infos){
+    for (auto &info: infos) {
         info.rayOrigin = rayContainers.back().rayOrigin;
         info.rayDirection = rayContainers.back().rayDirection;
     }
@@ -259,7 +259,7 @@ void PipelineImplement::processAllHitInformation(const Ray &ray, std::vector<Ray
 void PipelineImplement::processRaysAnyHit(std::vector<RayContainer> &rayContainers, RayGeneratorOutput &newRays) {
     while (!rayContainers.empty()) {
         Ray ray = initRay(rayContainers);
-        IntersectionInfo info{.hit = false, .distance = std::numeric_limits<double>::max()};
+        IntersectionInfo info{false, std::numeric_limits<double>::max()};
         if (DBVHv2::intersectAny(*geometry, info, ray)) {
             info.rayOrigin = rayContainers.back().rayOrigin;
             info.rayDirection = rayContainers.back().rayDirection;
@@ -272,7 +272,7 @@ void PipelineImplement::processRaysAnyHit(std::vector<RayContainer> &rayContaine
 void PipelineImplement::processRaysFirstHit(std::vector<RayContainer> &rayContainers, RayGeneratorOutput &newRays) {
     while (!rayContainers.empty()) {
         Ray ray = initRay(rayContainers);
-        IntersectionInfo info{.hit = false, .distance = std::numeric_limits<double>::max()};
+        IntersectionInfo info{false, std::numeric_limits<double>::max()};
         if (DBVHv2::intersectFirst(*geometry, info, ray)) {
             info.rayOrigin = rayContainers.back().rayOrigin;
             info.rayDirection = rayContainers.back().rayDirection;

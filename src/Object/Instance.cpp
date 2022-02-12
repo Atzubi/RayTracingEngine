@@ -183,7 +183,7 @@ Instance::~Instance() = default;
 bool Instance::intersectFirst(IntersectionInfo &intersectionInfo, const Ray &ray) {
     Object *baseObject = getBaseObject();
     Ray newRay = createTransformedRay(ray, baseObject, inverseTransform);
-    IntersectionInfo info{.hit = false, .distance = std::numeric_limits<double>::max()};
+    IntersectionInfo info{false, std::numeric_limits<double>::max()};
     bool hit = baseObject->intersectFirst(info, newRay);
     return overwriteClosestHit(intersectionInfo, ray, info, hit, transform);
 }
@@ -199,7 +199,7 @@ Object *Instance::getBaseObject() {
 bool Instance::intersectAny(IntersectionInfo &intersectionInfo, const Ray &ray) {
     Object *baseObject = getBaseObject();
     Ray newRay = createTransformedRay(ray, baseObject, inverseTransform);
-    IntersectionInfo info{.hit = false, .distance = std::numeric_limits<double>::max()};
+    IntersectionInfo info{false, std::numeric_limits<double>::max()};
     bool hit = baseObject->intersectAny(info, newRay);
     return overwriteAnyHit(intersectionInfo, ray, info, hit, transform);
 
