@@ -8,7 +8,7 @@
 #include <cstdint>
 #include <vector>
 #include "Intersectable.h"
-#include "Utility/Id.h"
+#include "utility/Id.h"
 
 struct RayGeneratorShaderResourcePackage {
     RayGeneratorShaderId shaderId;
