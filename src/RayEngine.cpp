@@ -9,12 +9,10 @@
 
 
 RayEngine::RayEngine() {
-    dataManagementUnit = new DataManagementUnitV2();
+    dataManagementUnit = std::make_unique<DataManagementUnitV2>();
 }
 
-RayEngine::~RayEngine() {
-    delete dataManagementUnit;
-}
+RayEngine::~RayEngine() = default;
 
 int RayEngine::runPipeline(PipelineId id) {
     return dataManagementUnit->runPipeline(id);

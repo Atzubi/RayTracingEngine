@@ -23,7 +23,7 @@ class DataManagementUnitV2;
  */
 class RayEngine {
 private:
-    DataManagementUnitV2 *dataManagementUnit;
+    std::unique_ptr<DataManagementUnitV2> dataManagementUnit;
 
 public:
     /**
