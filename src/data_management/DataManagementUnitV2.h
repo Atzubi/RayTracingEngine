@@ -7,7 +7,7 @@
 
 #include "RayTraceEngine/Shader.h"
 #include "RayTraceEngine/Pipeline.h"
-#include "Utility/Id.h"
+#include "utility/Id.h"
 #include <set>
 #include <unordered_map>
 #include <vector>
@@ -24,7 +24,7 @@ class PierceShader;
 
 class RayGeneratorShader;
 
-class Object;
+class Intersectable;
 
 class Instance;
 
@@ -190,7 +190,7 @@ public:
      * object:          the basic definition of the object
      * return:          the id of the object
      */
-    ObjectId addObject(const Object &object);
+    ObjectId addObject(const Intersectable &object);
 
     /*
      * Removes an object from the pool by id.
@@ -202,7 +202,7 @@ public:
      * Updates an objects mesh to a new mesh given by object.
      * return:          true if success, false otherwise
      */
-    bool updateObject(ObjectId id, const Object &object);
+    bool updateObject(ObjectId id, const Intersectable &object);
 
     /*
      * Adds a hit shader to the shader pool.
@@ -272,7 +272,7 @@ public:
 
     int runAllPipelines();
 
-    std::unique_ptr<Object> getBaseDataFragment(ObjectId id);
+    std::unique_ptr<Intersectable> getBaseDataFragment(ObjectId id);
 
     std::unique_ptr<Instance> getInstanceDataFragment(InstanceId id);
 };

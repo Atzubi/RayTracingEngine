@@ -104,9 +104,9 @@ void editor_init(void)
    stbte_define_tile(edit_map, 256+O_robot    , 8, "Char");
    for (i=O_lockeddoor; i < O__num_types-2; ++i)
       if (i == O_platform || i == O_vplatform)
-         stbte_define_tile(edit_map, 256+i, 4, "Object");
+         stbte_define_tile(edit_map, 256+i, 4, "intersectable");
       else
-         stbte_define_tile(edit_map, 256+i, 2, "Object");
+         stbte_define_tile(edit_map, 256+i, 2, "intersectable");
 
    //stbte_set_layername(edit_map, 0, "background");
    //stbte_set_layername(edit_map, 1, "objects");

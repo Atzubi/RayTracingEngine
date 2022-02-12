@@ -5,11 +5,11 @@
 
 #include <vector>
 
-#include "RayTraceEngine/Object.h"
-#include "Acceleration Structures/DBVH.h"
-#include "Data Management/DataManagementUnit.h"
-#include "Object/Instance.h"
-#include "Pipeline/PipelineImplement.h"
+#include "RayTraceEngine/Intersectable.h"
+#include "bvh/DBVH.h"
+#include "data_management/DataManagementUnit.h"
+#include "intersectable/Instance.h"
+#include "pipeline/PipelineImplement.h"
 
 
 DataManagementUnit::DataManagementUnit() {

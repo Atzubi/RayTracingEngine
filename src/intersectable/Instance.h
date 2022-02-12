@@ -5,24 +5,24 @@
 #ifndef RAYTRACECORE_INSTANCE_H
 #define RAYTRACECORE_INSTANCE_H
 
-#include "RayTraceEngine/Object.h"
+#include "RayTraceEngine/Intersectable.h"
 
 class EngineNode;
 
-class Instance : public Object {
+class Instance : public Intersectable {
 private:
     EngineNode *engineNode;
 
     ObjectId baseObjectId;
     bool objectCached;
-    Object *objectCache;
+    Intersectable *objectCache;
 
     double cost;
     BoundingBox boundingBox{};
     Matrix4x4 transform{};
     Matrix4x4 inverseTransform{};
 
-    Object *getBaseObject();
+    Intersectable *getBaseObject();
 
 public:
     explicit Instance(EngineNode &node, ObjectCapsule &objectCapsule);
@@ -33,7 +33,7 @@ public:
 
     ~Instance() override;
 
-    [[nodiscard]] std::unique_ptr<Object> clone() const override;
+    [[nodiscard]] std::unique_ptr<Intersectable> clone() const override;
 
     [[nodiscard]] BoundingBox getBoundaries() const override;
 
@@ -47,9 +47,9 @@ public:
 
     [[nodiscard]] ObjectCapsule getCapsule() const override;
 
-    bool operator==(const Object &object) const override;
+    bool operator==(const Intersectable &object) const override;
 
-    bool operator!=(const Object &object) const override;
+    bool operator!=(const Intersectable &object) const override;
 };
 
 #endif //RAYTRACECORE_INSTANCE_H

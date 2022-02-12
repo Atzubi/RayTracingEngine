@@ -212,7 +212,7 @@ namespace objl
 
     // Structure: Mesh
     //
-    // Description: A Simple Mesh Object that holds
+    // Description: A Simple Mesh Intersectable that holds
     //	a name, a vertex list, and an index list
     struct Mesh
     {
@@ -508,7 +508,7 @@ namespace objl
                     curline = curline.substr(0, curline.size()-1);
                 }
 
-                // Generate a Mesh Object or Prepare for an object to be created
+                // Generate a Mesh Intersectable or Prepare for an object to be created
                 if (algorithm::firstToken(curline) == "o" || algorithm::firstToken(curline) == "g" || curline[0] == 'g')
                 {
                     if (!listening)

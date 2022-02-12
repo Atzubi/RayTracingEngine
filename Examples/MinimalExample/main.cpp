@@ -1,6 +1,6 @@
 // include relevant headers of the ray tracing engine
 #include "RayTraceEngine/RayTraceCore.h"
-#include "RayTraceEngine/Object.h"
+#include "RayTraceEngine/Intersectable.h"
 
 // include an obj loader for parsing obj files
 #include "OBJ_Loader.h"
@@ -113,7 +113,7 @@ int main() {
 
     // ================================================================================================================
 
-    // =========================================== Create Engine Pipeline =============================================
+    // =========================================== Create Engine pipeline =============================================
 
     // objects that are bound to a pipeline get instanced, create instance id vector for referencing instanced objects
     // within a pipeline

@@ -7,7 +7,7 @@
 
 #include <cstdint>
 #include <vector>
-#include "Object.h"
+#include "Intersectable.h"
 #include "Utility/Id.h"
 
 struct RayGeneratorShaderResourcePackage {
@@ -48,7 +48,7 @@ public:
 };
 
 /**
- * Container passed to shaders, containing the basic information about the Pipeline.
+ * Container passed to shaders, containing the basic information about the pipeline.
  * width:           Horizontal resolution.
  * height:          Vertical resolution.
  * cameraPosition:  Position of the virtual camera.

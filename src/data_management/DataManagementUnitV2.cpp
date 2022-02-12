@@ -3,11 +3,11 @@
 //
 
 #include "DataManagementUnitV2.h"
-#include "Engine Node/EngineNode.h"
-#include "Pipeline/PipelineImplement.h"
-#include "Object/Instance.h"
+#include "engine_node/EngineNode.h"
+#include "pipeline/PipelineImplement.h"
+#include "intersectable/Instance.h"
 #include "RayTraceEngine/Pipeline.h"
-#include "Acceleration Structures/DBVHv2.h"
+#include "bvh/DBVHv2.h"
 #include "RayTraceEngine/Shader.h"
 
 DataManagementUnitV2::DataManagementUnitV2() : deviceId(getDeviceId()) {
@@ -27,7 +27,7 @@ DataManagementUnitV2::DataManagementUnitV2() : deviceId(getDeviceId()) {
 DataManagementUnitV2::~DataManagementUnitV2() = default;
 
 PipelineId DataManagementUnitV2::createPipeline(PipelineDescription &pipelineDescription) {
-    std::vector<Object *> instances;
+    std::vector<Intersectable *> instances;
     std::vector<InstanceId> instanceIds;
 
     // pull all objects required to create the pipeline
@@ -307,7 +307,7 @@ bool DataManagementUnitV2::removePipelineObject(PipelineId pipelineId, InstanceI
             auto pipeline = engineNode->requestPipelineFragment(pipelineId);
             auto geometry = pipeline->getGeometry();
             auto instance = engineNode->requestInstanceData(objectInstanceId);
-            std::vector<Object *> remove{instance};
+            std::vector<Intersectable *> remove{instance};
             DBVHv2::removeObjects(*geometry, remove);
             return engineNode->deleteInstanceDataFragment(objectInstanceId);
         } else {
@@ -367,7 +367,7 @@ DataManagementUnitV2::bindGeometryToPipeline(PipelineId pipelineId, const std::v
 
     auto geometry = pipeline->getGeometry();
 
-    std::vector<Object *> instances;
+    std::vector<Intersectable *> instances;
     std::vector<InstanceId> instanceIds;
 
     for (unsigned long i = 0; i < objectIDs.size(); i++) {
@@ -516,7 +516,7 @@ bool DataManagementUnitV2::bindShaderToPipeline(PipelineId pipelineId, MissShade
     return true;
 }
 
-ObjectId DataManagementUnitV2::addObject(const Object &object) {
+ObjectId DataManagementUnitV2::addObject(const Intersectable &object) {
     auto buffer = objectIds.extract(objectIds.begin()).value();
 
     objectIdDeviceMap[buffer] = deviceId;
@@ -562,7 +562,7 @@ bool DataManagementUnitV2::removeObject(ObjectId id) {
     return true;
 }
 
-bool DataManagementUnitV2::updateObject(ObjectId id, const Object &object) {
+bool DataManagementUnitV2::updateObject(ObjectId id, const Intersectable &object) {
     if (engineNode->deleteBaseDataFragment(id)) return false;
     auto clone = object.clone();
     engineNode->storeBaseDataFragments(std::move(clone), id);
@@ -783,7 +783,7 @@ DeviceId DataManagementUnitV2::getDeviceId() {
     return DeviceId{0};
 }
 
-std::unique_ptr<Object> DataManagementUnitV2::getBaseDataFragment(ObjectId id) {
+std::unique_ptr<Intersectable> DataManagementUnitV2::getBaseDataFragment(ObjectId id) {
     if (objectIdDeviceMap.count(id) == 0) return nullptr;
     // TODO: request object with id from other device
     return nullptr;

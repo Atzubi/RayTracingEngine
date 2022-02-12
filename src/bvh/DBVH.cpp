@@ -2,7 +2,7 @@
 // Created by sebastian on 19.07.21.
 //
 
-#include "Acceleration Structures/DBVH.h"
+#include "bvh/DBVH.h"
 
 
 void refit(BoundingBox *target, BoundingBox resizeBy) {

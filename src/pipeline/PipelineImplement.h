@@ -23,7 +23,7 @@ class PierceShader;
 
 class MissShader;
 
-class Object;
+class Intersectable;
 
 struct PipelineInfo;
 struct DBVHNode;
@@ -223,7 +223,7 @@ public:
 
     DBVHNode *getGeometry();
 
-    std::unique_ptr<Object> getGeometryAsObject();
+    std::unique_ptr<Intersectable> getGeometryAsObject();
 
     void setEngine(EngineNode *engine);
 };

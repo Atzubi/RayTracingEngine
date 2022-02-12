@@ -5,7 +5,7 @@
 #ifndef RAYTRACEENGINE_ENGINENODE_H
 #define RAYTRACEENGINE_ENGINENODE_H
 
-#include "RayTraceEngine/Object.h"
+#include "RayTraceEngine/Intersectable.h"
 #include "RayTraceEngine/Shader.h"
 #include "RayTraceEngine/Pipeline.h"
 #include <unordered_map>
@@ -24,10 +24,10 @@ class EngineNode {
 private:
     class MemoryBlock {
     private:
-        std::unordered_map<ObjectId, std::unique_ptr<Object>> objects;
+        std::unordered_map<ObjectId, std::unique_ptr<Intersectable>> objects;
         std::unordered_map<InstanceId, std::unique_ptr<Instance>> objectInstances;
 
-        std::unordered_map<ObjectId, std::unique_ptr<Object>> objectCache;
+        std::unordered_map<ObjectId, std::unique_ptr<Intersectable>> objectCache;
         std::unordered_map<InstanceId, std::unique_ptr<Instance>> objectInstanceCache;
 
         std::unordered_map<ShaderResourceId, std::unique_ptr<ShaderResource>> shaderResources;
@@ -37,11 +37,11 @@ private:
 
         ~MemoryBlock();
 
-        void storeBaseDataFragments(std::unique_ptr<Object> object, ObjectId id);
+        void storeBaseDataFragments(std::unique_ptr<Intersectable> object, ObjectId id);
 
         bool deleteBaseDataFragment(ObjectId id);
 
-        Object *getBaseDataFragment(ObjectId id);
+        Intersectable *getBaseDataFragment(ObjectId id);
 
         void storeInstanceDataFragments(std::unique_ptr<Instance> instance, InstanceId id);
 
@@ -49,7 +49,7 @@ private:
 
         Instance *getInstanceDataFragment(InstanceId id);
 
-        void cacheBaseData(std::unique_ptr<Object> object, ObjectId id);
+        void cacheBaseData(std::unique_ptr<Intersectable> object, ObjectId id);
 
         void cacheInstanceData(std::unique_ptr<Instance> instance, InstanceId id);
 
@@ -127,7 +127,7 @@ public:
 
     ~EngineNode();
 
-    void storeBaseDataFragments(std::unique_ptr<Object> object, ObjectId id);
+    void storeBaseDataFragments(std::unique_ptr<Intersectable> object, ObjectId id);
 
     bool deleteBaseDataFragment(ObjectId id);
 
@@ -135,7 +135,7 @@ public:
 
     bool deleteInstanceDataFragment(InstanceId id);
 
-    void cacheBaseData(std::unique_ptr<Object> object, ObjectId id);
+    void cacheBaseData(std::unique_ptr<Intersectable> object, ObjectId id);
 
     void cacheInstanceData(std::unique_ptr<Instance> instance, InstanceId id);
 
@@ -149,7 +149,7 @@ public:
 
     bool deletePipelineFragment(PipelineId id);
 
-    Object *requestBaseData(ObjectId id);
+    Intersectable *requestBaseData(ObjectId id);
 
     Instance *requestInstanceData(InstanceId id);
 

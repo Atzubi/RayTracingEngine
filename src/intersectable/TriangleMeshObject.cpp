@@ -4,9 +4,9 @@
 
 #include <cmath>
 #include "RayTraceEngine/TriangleMeshObject.h"
-#include "Acceleration Structures/DBVHv2.h"
+#include "bvh/DBVHv2.h"
 
-class Triangle : public Object {
+class Triangle : public Intersectable {
 private:
     void setTexture(IntersectionInfo &intersectionInfo, double_t u, double_t v, double_t w) const {
         Vector2D texture1 = mesh->vertices[mesh->indices[pos]].texture;
@@ -42,7 +42,7 @@ public:
 
     Triangle() = default;
 
-    [[nodiscard]] std::unique_ptr<Object> clone() const override {
+    [[nodiscard]] std::unique_ptr<Intersectable> clone() const override {
         return nullptr;
     }
 
@@ -129,7 +129,7 @@ public:
         return capsule;
     }
 
-    bool operator==(const Object &object) const override {
+    bool operator==(const Intersectable &object) const override {
         const auto *triangle = dynamic_cast<const Triangle *>(&object);
         if (triangle == nullptr) {
             return false;
@@ -150,7 +150,7 @@ public:
         }
     }
 
-    bool operator!=(const Object &object) const override {
+    bool operator!=(const Intersectable &object) const override {
         return !operator==(object);
     }
 
@@ -167,7 +167,7 @@ TriangleMeshObject::TriangleMeshObject(const std::vector<Vertex> *vertices, cons
     this->indices = *indices;
     this->material = *material;
 
-    std::vector<Object *> objects;
+    std::vector<Intersectable *> objects;
     for (unsigned long i = 0; i < indices->size() / 3; i++) {
         auto triangle = std::make_unique<Triangle>();
         triangle->mesh = this;
@@ -200,7 +200,7 @@ bool TriangleMeshObject::intersectAll(std::vector<IntersectionInfo> &intersectio
     return DBVHv2::intersectAll(*structure, intersectionInfo, ray);
 }
 
-std::unique_ptr<Object> TriangleMeshObject::clone() const {
+std::unique_ptr<Intersectable> TriangleMeshObject::clone() const {
     // TODO
     return std::make_unique<TriangleMeshObject>(&vertices, &indices, &material);
 }
@@ -209,12 +209,12 @@ double TriangleMeshObject::getSurfaceArea() const {
     return structure->surfaceArea;
 }
 
-bool TriangleMeshObject::operator==(const Object &object) const {
+bool TriangleMeshObject::operator==(const Intersectable &object) const {
     // TODO
     return false;
 }
 
-bool TriangleMeshObject::operator!=(const Object &object) const {
+bool TriangleMeshObject::operator!=(const Intersectable &object) const {
     return !operator==(object);
 }
 

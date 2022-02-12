@@ -5,17 +5,17 @@
 #include "EngineNode.h"
 
 #include <utility>
-#include "Data Management/DataManagementUnitV2.h"
-#include "RayTraceEngine/Object.h"
-#include "Pipeline/PipelineImplement.h"
-#include "Object/Instance.h"
-#include "Acceleration Structures/DBVHv2.h"
+#include "data_management/DataManagementUnitV2.h"
+#include "RayTraceEngine/Intersectable.h"
+#include "pipeline/PipelineImplement.h"
+#include "intersectable/Instance.h"
+#include "bvh/DBVHv2.h"
 
 EngineNode::MemoryBlock::MemoryBlock() = default;
 
 EngineNode::MemoryBlock::~MemoryBlock() = default;
 
-void EngineNode::MemoryBlock::storeBaseDataFragments( std::unique_ptr<Object> object, ObjectId id) {
+void EngineNode::MemoryBlock::storeBaseDataFragments(std::unique_ptr<Intersectable> object, ObjectId id) {
     objects[id] = std::move(object);
 }
 
@@ -23,7 +23,7 @@ void EngineNode::MemoryBlock::storeInstanceDataFragments(std::unique_ptr<Instanc
     objectInstances[id] = std::move(instance);
 }
 
-void EngineNode::MemoryBlock::cacheBaseData(std::unique_ptr<Object> object, ObjectId id) {
+void EngineNode::MemoryBlock::cacheBaseData(std::unique_ptr<Intersectable> object, ObjectId id) {
     // TODO: implement cache eviction
     objectCache[id] = std::move(object);
 }
@@ -52,7 +52,7 @@ bool EngineNode::MemoryBlock::deleteInstanceDataFragment(InstanceId id) {
     return objectRemoved;
 }
 
-Object *EngineNode::MemoryBlock::getBaseDataFragment(ObjectId id) {
+Intersectable *EngineNode::MemoryBlock::getBaseDataFragment(ObjectId id) {
     if (objects.count(id) == 0) {
         // object was not originally stored on this node, check cache
         if (objectCache.count(id) == 0) {
@@ -222,7 +222,7 @@ EngineNode::EngineNode(DataManagementUnitV2 *DMU) {
 
 EngineNode::~EngineNode() = default;
 
-void EngineNode::storeBaseDataFragments(std::unique_ptr<Object> object, ObjectId id) {
+void EngineNode::storeBaseDataFragments(std::unique_ptr<Intersectable> object, ObjectId id) {
     memoryBlock->storeBaseDataFragments(std::move(object), id);
 }
 
@@ -230,7 +230,7 @@ void EngineNode::storeInstanceDataFragments(std::unique_ptr<Instance> instance, 
     memoryBlock->storeInstanceDataFragments(std::move(instance), id);
 }
 
-void EngineNode::cacheBaseData(std::unique_ptr<Object> object, ObjectId id) {
+void EngineNode::cacheBaseData(std::unique_ptr<Intersectable> object, ObjectId id) {
     memoryBlock->cacheBaseData(std::move(object), id);
 }
 
@@ -255,7 +255,7 @@ bool EngineNode::deletePipelineFragment(PipelineId id) {
     return pipelineBlock->deletePipelineFragment(id);
 }
 
-Object *EngineNode::requestBaseData(ObjectId id) {
+Intersectable *EngineNode::requestBaseData(ObjectId id) {
     auto fragment = memoryBlock->getBaseDataFragment(id);
     if (fragment == nullptr) {
         auto sharedFragment = dataManagementUnit->getBaseDataFragment(id);

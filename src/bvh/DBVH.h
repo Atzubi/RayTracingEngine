@@ -9,10 +9,10 @@
 #include <utility>
 #include <deque>
 
-#include "RayTraceEngine/Object.h"
-#include "Utils/HashMap/robin_map.h"
+#include "RayTraceEngine/Intersectable.h"
+#include "HashMap/robin_map.h"
 
-class DBVH : public Object {
+class DBVH : public Intersectable {
 private:
     class Node {
     public:

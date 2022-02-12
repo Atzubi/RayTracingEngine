@@ -5,7 +5,7 @@
 #include <iostream>
 
 #include "RayTraceEngine/RayEngine.h"
-#include "Data Management/DataManagementUnitV2.h"
+#include "data_management/DataManagementUnitV2.h"
 
 
 RayEngine::RayEngine() {
@@ -39,7 +39,7 @@ bool RayEngine::bindGeometryToPipeline(PipelineId pipelineId, const std::vector<
     return dataManagementUnit->bindGeometryToPipeline(pipelineId, objectIds, transforms, objectParameters, instanceIDs);
 }
 
-ObjectId RayEngine::addObject(const Object &object) {
+ObjectId RayEngine::addObject(const Intersectable &object) {
     return dataManagementUnit->addObject(object);
 }
 
@@ -47,7 +47,7 @@ bool RayEngine::removeObject(ObjectId id) {
     return dataManagementUnit->removeObject(id);
 }
 
-bool RayEngine::updateObject(ObjectId id, const Object &object) {
+bool RayEngine::updateObject(ObjectId id, const Intersectable &object) {
     return dataManagementUnit->updateObject(id, object);
 }
 

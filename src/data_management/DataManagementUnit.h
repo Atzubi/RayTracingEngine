@@ -10,7 +10,7 @@
 
 #include "RayTraceEngine/Pipeline.h"
 #include "RayTraceEngine/Shader.h"
-#include "Pipeline/PipelineImplement.h"
+#include "pipeline/PipelineImplement.h"
 
 
 class DataManagementUnit {

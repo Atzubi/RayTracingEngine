@@ -6,7 +6,7 @@
 #define RAYTRACECORE_RAYENGINE_H
 
 #include <cstdint>
-#include "Object.h"
+#include "Intersectable.h"
 #include "Shader.h"
 #include "Pipeline.h"
 #include "BasicStructures.h"
@@ -123,7 +123,7 @@ public:
     /**
      * Updates object instances within a pipeline.
      * @param pipelineId        Id of the pipeline.
-     * @param objectInstanceIDs Object instance ids of the objects that will be updated.
+     * @param objectInstanceIDs Intersectable instance ids of the objects that will be updated.
      * @param transforms        New transforms for the object instances.
      * @param objectParameters  New additional parameters for the object instances.
      * @return                  True if the object instances could successfully be updated, false otherwise.
@@ -182,7 +182,7 @@ public:
      * @param object    Pointer to the object that is being added.
      * @return          Returns the object id.
      */
-    ObjectId addObject(const Object &object);
+    ObjectId addObject(const Intersectable &object);
 
     /**
      * Removes and object from the engines object pool.
@@ -197,7 +197,7 @@ public:
      * @param object    New object.
      * @return          True if the object could be updated, false otherwise.
      */
-    bool updateObject(ObjectId id, const Object &object);
+    bool updateObject(ObjectId id, const Intersectable &object);
 
     /**
      * Adds a shader to the engines shader pool.

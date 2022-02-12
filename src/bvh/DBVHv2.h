@@ -5,16 +5,16 @@
 #ifndef RAYTRACEENGINE_DBVHV2_H
 #define RAYTRACEENGINE_DBVHV2_H
 
-#include "RayTraceEngine/Object.h"
+#include "RayTraceEngine/Intersectable.h"
 
 struct DBVHNode {
     uint8_t maxDepthLeft = 0;
     std::unique_ptr<DBVHNode> leftChild;
-    Object *leftLeaf = nullptr;
+    Intersectable *leftLeaf = nullptr;
 
     uint8_t maxDepthRight = 0;
     std::unique_ptr<DBVHNode> rightChild;
-    Object *rightLeaf = nullptr;
+    Intersectable *rightLeaf = nullptr;
 
     BoundingBox boundingBox;
     double surfaceArea = 0;
@@ -22,9 +22,9 @@ struct DBVHNode {
 
 class DBVHv2 {
 public:
-    static void addObjects(DBVHNode &root, const std::vector<Object *> &objects);
+    static void addObjects(DBVHNode &root, const std::vector<Intersectable *> &objects);
 
-    static void removeObjects(DBVHNode &root, const std::vector<Object *> &objects);
+    static void removeObjects(DBVHNode &root, const std::vector<Intersectable *> &objects);
 
     static bool intersectFirst(const DBVHNode &root, IntersectionInfo &intersectionInfo, const Ray &ray);
 

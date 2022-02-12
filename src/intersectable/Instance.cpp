@@ -4,8 +4,8 @@
 
 #include <algorithm>
 #include <complex>
-#include "Object/Instance.h"
-#include "Engine Node/EngineNode.h"
+#include "intersectable/Instance.h"
+#include "engine_node/EngineNode.h"
 
 namespace {
     inline Vector3D getCenter(const BoundingBox &aabb) {
@@ -147,7 +147,7 @@ namespace {
         return true;
     }
 
-    inline Ray createTransformedRay(const Ray &ray, const Object *baseObject, Matrix4x4 inverseTransform) {
+    inline Ray createTransformedRay(const Ray &ray, const Intersectable *baseObject, Matrix4x4 inverseTransform) {
         BoundingBox originalAABB = baseObject->getBoundaries();
         Vector3D originalMid = getCenter(originalAABB);
 
@@ -181,14 +181,14 @@ void Instance::invalidateCache() {
 Instance::~Instance() = default;
 
 bool Instance::intersectFirst(IntersectionInfo &intersectionInfo, const Ray &ray) {
-    Object *baseObject = getBaseObject();
+    Intersectable *baseObject = getBaseObject();
     Ray newRay = createTransformedRay(ray, baseObject, inverseTransform);
     IntersectionInfo info{false, std::numeric_limits<double>::max()};
     bool hit = baseObject->intersectFirst(info, newRay);
     return overwriteClosestHit(intersectionInfo, ray, info, hit, transform);
 }
 
-inline Object *Instance::getBaseObject() {
+inline Intersectable *Instance::getBaseObject() {
     if (!objectCached) {
         objectCache = engineNode->requestBaseData(baseObjectId);
         objectCached = true;
@@ -197,7 +197,7 @@ inline Object *Instance::getBaseObject() {
 }
 
 bool Instance::intersectAny(IntersectionInfo &intersectionInfo, const Ray &ray) {
-    Object *baseObject = getBaseObject();
+    Intersectable *baseObject = getBaseObject();
     Ray newRay = createTransformedRay(ray, baseObject, inverseTransform);
     IntersectionInfo info{false, std::numeric_limits<double>::max()};
     bool hit = baseObject->intersectAny(info, newRay);
@@ -206,7 +206,7 @@ bool Instance::intersectAny(IntersectionInfo &intersectionInfo, const Ray &ray) 
 }
 
 bool Instance::intersectAll(std::vector<IntersectionInfo> &intersectionInfo, const Ray &ray) {
-    Object *baseObject = getBaseObject();
+    Intersectable *baseObject = getBaseObject();
     Ray newRay = createTransformedRay(ray, baseObject, inverseTransform);
     std::vector<IntersectionInfo> infos;
     bool hit = baseObject->intersectAll(infos, newRay);
@@ -217,7 +217,7 @@ BoundingBox Instance::getBoundaries() const {
     return boundingBox;
 }
 
-std::unique_ptr<Object> Instance::clone() const {
+std::unique_ptr<Intersectable> Instance::clone() const {
     return nullptr;
 }
 
@@ -225,13 +225,13 @@ double Instance::getSurfaceArea() const {
     return cost + boundingBox.getSA(); // TODO: fix math
 }
 
-bool Instance::operator==(const Object &object) const {
+bool Instance::operator==(const Intersectable &object) const {
     const auto obj = dynamic_cast<const Instance *>(&object);
     if (obj == nullptr || obj->baseObjectId != baseObjectId) return false;
     return isTransformEqual(obj->transform, transform);
 }
 
-bool Instance::operator!=(const Object &object) const {
+bool Instance::operator!=(const Intersectable &object) const {
     return !operator==(object);
 }
 

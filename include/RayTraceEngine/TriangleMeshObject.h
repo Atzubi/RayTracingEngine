@@ -5,7 +5,7 @@
 #ifndef RAYTRACECORE_TRIANGLEMESHOBJECT_H
 #define RAYTRACECORE_TRIANGLEMESHOBJECT_H
 
-#include "Object.h"
+#include "Intersectable.h"
 
 struct DBVHNode;
 
@@ -18,7 +18,7 @@ struct DBVHNode;
  * triangles:       object form of every triangle defined by vertices and indices
  * structure:       an intersection acceleration data structure
  */
-class TriangleMeshObject : public Object {
+class TriangleMeshObject : public Intersectable {
 public:
     struct Vertex {
         Vector3D position;
@@ -33,7 +33,7 @@ private:
     std::vector<uint64_t> indices;
     Material material;
 
-    std::vector<std::unique_ptr<Object>> triangles;
+    std::vector<std::unique_ptr<Intersectable>> triangles;
     std::unique_ptr<DBVHNode> structure;
 
 public:
@@ -86,7 +86,7 @@ public:
      * Makes a perfect clone of this object.
      * @return  Pointer to the new clone.
      */
-    [[nodiscard]] std::unique_ptr<Object> clone() const override;
+    [[nodiscard]] std::unique_ptr<Intersectable> clone() const override;
 
     /**
      * Computes the effective surface area of this object.
@@ -101,9 +101,9 @@ public:
      * @param object    Another object.
      * @return          True if they are equal, false otherwise.
      */
-    bool operator==(const Object &object) const override;
+    bool operator==(const Intersectable &object) const override;
 
-    bool operator!=(const Object &object) const override;
+    bool operator!=(const Intersectable &object) const override;
 };
 
 #endif //RAYTRACECORE_TRIANGLEMESHOBJECT_H

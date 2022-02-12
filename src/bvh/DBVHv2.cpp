@@ -55,11 +55,11 @@ namespace {
         target.maxCorner.z = std::max(target.maxCorner.z, resizeBy.maxCorner.z);
     }
 
-    void refit(BoundingBox &aabb, const Object &object) {
+    void refit(BoundingBox &aabb, const Intersectable &object) {
         refit(aabb, object.getBoundaries());
     }
 
-    void refit(BoundingBox &aabb, const std::vector<Object *> &objects, double looseness) {
+    void refit(BoundingBox &aabb, const std::vector<Intersectable *> &objects, double looseness) {
         // refit box to fit all objects
         for (const auto &object: objects) {
             refit(aabb, *object);
@@ -82,14 +82,14 @@ namespace {
         throw std::invalid_argument("The given vector does not define a splitting plane");
     }
 
-    bool isObjectInLeftSplit(const Vector3D &splittingPlane, int currentSplittingPlane, Object *const &object) {
+    bool isObjectInLeftSplit(const Vector3D &splittingPlane, int currentSplittingPlane, Intersectable *const &object) {
         return (object->getBoundaries().maxCorner[currentSplittingPlane] +
                 object->getBoundaries().minCorner[currentSplittingPlane]) / 2 <
                splittingPlane[currentSplittingPlane];
     }
 
     void
-    sortObjectsIntoBuckets(const std::vector<Object *> &objects, const Vector3D &splittingPlane, BoundingBox &aabbLeft,
+    sortObjectsIntoBuckets(const std::vector<Intersectable *> &objects, const Vector3D &splittingPlane, BoundingBox &aabbLeft,
                            BoundingBox &aabbRight, double &objectCostLeft, double &objectCostRight) {
         int currentSplittingPlane = getCurrentSplittingPlane(splittingPlane);
 
@@ -206,7 +206,7 @@ namespace {
         return SAHs[bestSAH];
     }
 
-    double evaluateBucket(const DBVHNode &node, const std::vector<Object *> &objects, const Vector3D &splittingPlane,
+    double evaluateBucket(const DBVHNode &node, const std::vector<Intersectable *> &objects, const Vector3D &splittingPlane,
                           SplitOperation &newParent) {
         BoundingBox aabbLeft;
         BoundingBox aabbRight;
@@ -224,8 +224,8 @@ namespace {
         }
     }
 
-    void split(std::vector<Object *> &leftChild, std::vector<Object *> &rightChild,
-               const std::vector<Object *> &objects, const Vector3D &splittingPlane) {
+    void split(std::vector<Intersectable *> &leftChild, std::vector<Intersectable *> &rightChild,
+               const std::vector<Intersectable *> &objects, const Vector3D &splittingPlane) {
         int currentSplittingPlane = getCurrentSplittingPlane(splittingPlane);
 
         for (const auto &object: objects) {
@@ -263,7 +263,7 @@ namespace {
         node.maxDepthRight = std::max(child.maxDepthRight, child.maxDepthLeft) + 1;
     }
 
-    void refitLeaf(DBVHNode &node, Object &leaf) {
+    void refitLeaf(DBVHNode &node, Intersectable &leaf) {
         refit(node.boundingBox, leaf.getBoundaries());
         node.surfaceArea = leaf.getSurfaceArea();
         node.maxDepthRight = 1;
@@ -663,7 +663,7 @@ namespace {
         return splittingPlanes;
     }
 
-    std::vector<double> evaluateSplittingPlanes(const DBVHNode &node, const std::vector<Object *> &objects,
+    std::vector<double> evaluateSplittingPlanes(const DBVHNode &node, const std::vector<Intersectable *> &objects,
                                                 const std::vector<Vector3D> &splittingPlanes,
                                                 std::vector<SplitOperation> &newParent) {
         std::vector<double> SAH(numberOfSplittingPlanes);
@@ -689,8 +689,8 @@ namespace {
         return bestSplittingPlane;
     }
 
-    void splitEven(const std::vector<Object *> &objects, std::vector<Object *> &left,
-                   std::vector<Object *> &right) {
+    void splitEven(const std::vector<Intersectable *> &objects, std::vector<Intersectable *> &left,
+                   std::vector<Intersectable *> &right) {
         left.reserve(objects.size() / 2);
         right.reserve((objects.size() + 1) / 2);
         for (uint64_t i = 0; i < objects.size() / 2; i++) {
@@ -705,7 +705,7 @@ namespace {
         return bestSplittingPlane != -1;
     }
 
-    void switchBoxOrder(std::vector<Object *> &leftObjects, std::vector<Object *> &rightObjects) {
+    void switchBoxOrder(std::vector<Intersectable *> &leftObjects, std::vector<Intersectable *> &rightObjects) {
         auto buffer = leftObjects;
         leftObjects = rightObjects;
         rightObjects = buffer;
@@ -738,9 +738,9 @@ namespace {
 
     void
     sortObjectsIntoBoxes(const SplitOperation splitOperation, const Vector3D &splittingPlane, DBVHNode &node,
-                         const std::vector<Object *> &objects,
-                         std::vector<Object *> &leftObjects,
-                         std::vector<Object *> &rightObjects) {
+                         const std::vector<Intersectable *> &objects,
+                         std::vector<Intersectable *> &leftObjects,
+                         std::vector<Intersectable *> &rightObjects) {
         switch (splitOperation) {
             case Default:
                 split(leftObjects, rightObjects, objects, splittingPlane);
@@ -779,7 +779,7 @@ namespace {
         }
     }
 
-    void createLeftLeaf(DBVHNode &node, const std::vector<Object *> &leftObjects) {
+    void createLeftLeaf(DBVHNode &node, const std::vector<Intersectable *> &leftObjects) {
         node.leftLeaf = leftObjects.at(0);
         node.maxDepthLeft = 1;
     }
@@ -791,7 +791,7 @@ namespace {
     }
 
     void
-    createNewParentForLeftLeafs(DBVHNode &node, const std::vector<Object *> &leftObjects) {
+    createNewParentForLeftLeafs(DBVHNode &node, const std::vector<Intersectable *> &leftObjects) {
         auto buffer = node.leftLeaf;
         auto parent = std::make_unique<DBVHNode>();
         parent->boundingBox = buffer->getBoundaries();
@@ -815,7 +815,7 @@ namespace {
         node.maxDepthLeft = 2;
     }
 
-    bool insertSingleObjectLeft(DBVHNode &node, const std::vector<Object *> &rightObjects) {
+    bool insertSingleObjectLeft(DBVHNode &node, const std::vector<Intersectable *> &rightObjects) {
         if (isEmptyRight(node)) {
             createLeftLeaf(node, rightObjects);
         } else if (isLeafRight(node)) {
@@ -834,7 +834,7 @@ namespace {
         }
     }
 
-    bool passObjectsToLeftChild(DBVHNode &node, const std::vector<Object *> &leftObjects) {
+    bool passObjectsToLeftChild(DBVHNode &node, const std::vector<Intersectable *> &leftObjects) {
         if (leftObjects.size() == 1) {
             return insertSingleObjectLeft(node, leftObjects);
         } else if (!leftObjects.empty()) {
@@ -844,7 +844,7 @@ namespace {
         return true;
     }
 
-    void createRightLeaf(DBVHNode &node, const std::vector<Object *> &rightObjects) {
+    void createRightLeaf(DBVHNode &node, const std::vector<Intersectable *> &rightObjects) {
         node.rightLeaf = rightObjects.at(0);
         node.maxDepthRight = 1;
     }
@@ -855,7 +855,7 @@ namespace {
         node.maxDepthRight = 2;
     }
 
-    void createNewParentForRightLeafs(DBVHNode &node, const std::vector<Object *> &rightObjects) {
+    void createNewParentForRightLeafs(DBVHNode &node, const std::vector<Intersectable *> &rightObjects) {
         auto buffer = node.rightLeaf;
         auto parent = std::make_unique<DBVHNode>();
         parent->boundingBox = buffer->getBoundaries();
@@ -880,7 +880,7 @@ namespace {
     }
 
     bool
-    insertSingleObjectRight(DBVHNode &node, const std::vector<Object *> &rightObjects) {
+    insertSingleObjectRight(DBVHNode &node, const std::vector<Intersectable *> &rightObjects) {
         if (isEmptyRight(node)) {
             createRightLeaf(node, rightObjects);
         } else if (isLeafRight(node)) {
@@ -900,7 +900,7 @@ namespace {
     }
 
     bool
-    passObjectsToRightChild(DBVHNode &node, const std::vector<Object *> &rightObjects) {
+    passObjectsToRightChild(DBVHNode &node, const std::vector<Intersectable *> &rightObjects) {
         if (rightObjects.size() == 1) {
             return insertSingleObjectRight(node, rightObjects);
         } else if (!rightObjects.empty()) {
@@ -934,7 +934,7 @@ namespace {
         checkRightChildSurfaceAreaAndDepth(node);
     }
 
-    void add(DBVHNode &currentNode, const std::vector<Object *> &objects, const uint8_t depth) {
+    void add(DBVHNode &currentNode, const std::vector<Intersectable *> &objects, const uint8_t depth) {
         // refit current currentNode to objects
         refit(currentNode.boundingBox, objects, 0);
 
@@ -949,8 +949,8 @@ namespace {
         // choose best split bucket and split currentNode accordingly
         int bestSplittingPlane = getBestSplittingPlane(SAH);
 
-        std::vector<Object *> leftObjects;
-        std::vector<Object *> rightObjects;
+        std::vector<Intersectable *> leftObjects;
+        std::vector<Intersectable *> rightObjects;
 
         if (!bestSplittingPlaneExists(bestSplittingPlane)) {
             splitEven(objects, leftObjects, rightObjects);
@@ -976,7 +976,7 @@ namespace {
     }
 
     bool removeRightLeftGrandChild(DBVHNode &currentNode, DBVHNode &child,
-                                   const Object &object) {
+                                   const Intersectable &object) {
         auto grandChild = child.leftLeaf;
         if (*grandChild != object) return false;
 
@@ -990,7 +990,7 @@ namespace {
     }
 
     bool removeRightRightGrandChild(DBVHNode &currentNode, DBVHNode &child,
-                                    const Object &object) {
+                                    const Intersectable &object) {
         auto grandChild = child.rightLeaf;
         if (*grandChild != object) return false;
 
@@ -1003,7 +1003,7 @@ namespace {
         return true;
     }
 
-    bool removeRightLeaf(DBVHNode &currentNode, const Object &object) {
+    bool removeRightLeaf(DBVHNode &currentNode, const Intersectable &object) {
         if (isLeafRight(currentNode)) return true;
         auto child = std::move(currentNode.rightChild);
         if (!contains(child->boundingBox, object.getBoundaries())) return false;
@@ -1018,7 +1018,7 @@ namespace {
     }
 
     bool removeLeftLeftGrandChild(DBVHNode &currentNode, DBVHNode &child,
-                                  const Object &object) {
+                                  const Intersectable &object) {
         auto grandChild = child.leftLeaf;
         if (*grandChild != object) return false;
 
@@ -1032,7 +1032,7 @@ namespace {
     }
 
     bool removeLeftRightGrandChild(DBVHNode &currentNode, DBVHNode &child,
-                                   const Object &object) {
+                                   const Intersectable &object) {
         auto grandChild = child.rightLeaf;
         if (*grandChild != object) return false;
 
@@ -1045,7 +1045,7 @@ namespace {
         return true;
     }
 
-    bool removeLeftLeaf(DBVHNode &currentNode, const Object &object) {
+    bool removeLeftLeaf(DBVHNode &currentNode, const Intersectable &object) {
         if (isLeafLeft(currentNode)) return true;
         auto child = std::move(currentNode.leftChild);
         if (!contains(child->boundingBox, object.getBoundaries())) return false;
@@ -1059,7 +1059,7 @@ namespace {
         return false;
     }
 
-    void remove(DBVHNode &currentNode, const Object &object) {
+    void remove(DBVHNode &currentNode, const Intersectable &object) {
         // find object in tree by insertion
         // remove object and refit nodes going the tree back up
         if (!contains(currentNode.boundingBox, object.getBoundaries())) return;
@@ -1076,7 +1076,7 @@ namespace {
         double distance;
     };
 
-    inline void intersectLeaf(const Ray &ray, IntersectionInfo &intersectionInfo, Object &leaf, bool &hit) {
+    inline void intersectLeaf(const Ray &ray, IntersectionInfo &intersectionInfo, Intersectable &leaf, bool &hit) {
         IntersectionInfo info{false, std::numeric_limits<double>::max()};
         leaf.intersectFirst(info, ray);
         if (info.hit && info.distance < intersectionInfo.distance) {
@@ -1214,7 +1214,7 @@ namespace {
         }
     }
 
-    inline void intersectLeaf(std::vector<IntersectionInfo> &intersectionInfo, const Ray &ray, Object &leaf) {
+    inline void intersectLeaf(std::vector<IntersectionInfo> &intersectionInfo, const Ray &ray, Intersectable &leaf) {
         IntersectionInfo info{false, std::numeric_limits<double>::max()};
         leaf.intersectFirst(info, ray);
         if (info.hit) {
@@ -1320,7 +1320,7 @@ namespace {
         replaceRootWithChild(root, *root.leftChild);
     }
 
-    bool removeSpecialCases(DBVHNode &root, const Object &object) {
+    bool removeSpecialCases(DBVHNode &root, const Intersectable &object) {
         if (isLastElement(root)) {
             if (*root.leftLeaf == object) {
                 removeLastChild(root);
@@ -1344,7 +1344,7 @@ namespace {
         return false;
     }
 
-    bool addFirstAndOnlyElement(DBVHNode &root, const std::vector<Object *> &objects) {
+    bool addFirstAndOnlyElement(DBVHNode &root, const std::vector<Intersectable *> &objects) {
         if (!isEmpty(root) || objects.size() != 1) return false;
         refit(root.boundingBox, objects, 0);
         root.leftLeaf = objects.back();
@@ -1352,9 +1352,9 @@ namespace {
         return true;
     }
 
-    bool addOntoSingleElement(DBVHNode &root, const std::vector<Object *> &objects) {
+    bool addOntoSingleElement(DBVHNode &root, const std::vector<Intersectable *> &objects) {
         if (!isLastElement(root)) return false;
-        std::vector<Object *> newObjects{objects};     // TODO: make more efficient
+        std::vector<Intersectable *> newObjects{objects};     // TODO: make more efficient
         newObjects.push_back(root.leftLeaf);
         root.maxDepthLeft = 0;
         add(root, newObjects, 1);
@@ -1362,14 +1362,14 @@ namespace {
     }
 }
 
-void DBVHv2::addObjects(DBVHNode &root, const std::vector<Object *> &objects) {
+void DBVHv2::addObjects(DBVHNode &root, const std::vector<Intersectable *> &objects) {
     if (objects.empty() || addFirstAndOnlyElement(root, objects) || addOntoSingleElement(root, objects))
         return;
 
     add(root, objects, 1);
 }
 
-void DBVHv2::removeObjects(DBVHNode &root, const std::vector<Object *> &objects) {
+void DBVHv2::removeObjects(DBVHNode &root, const std::vector<Intersectable *> &objects) {
     for (const auto &object: objects) {
         if (isEmpty(root)) return;
         if (!removeSpecialCases(root, *object)) {

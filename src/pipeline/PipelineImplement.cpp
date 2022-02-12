@@ -4,12 +4,12 @@
 
 #include <iostream>
 
-#include "Data Management/DataManagementUnitV2.h"
-#include "Pipeline/PipelineImplement.h"
+#include "data_management/DataManagementUnitV2.h"
+#include "pipeline/PipelineImplement.h"
 #include "RayTraceEngine/BasicStructures.h"
 #include "RayTraceEngine/Shader.h"
-#include "Acceleration Structures/DBVHv2.h"
-#include "Engine Node/EngineNode.h"
+#include "bvh/DBVHv2.h"
+#include "engine_node/EngineNode.h"
 
 PipelineImplement::PipelineImplement(EngineNode *engine, int width, int height, const Vector3D &cameraPosition,
                                      const Vector3D &cameraDirection, const Vector3D &cameraUp,
@@ -71,7 +71,7 @@ DBVHNode *PipelineImplement::getGeometry() {
     return geometry.get();
 }
 
-std::unique_ptr<Object> PipelineImplement::getGeometryAsObject() {
+std::unique_ptr<Intersectable> PipelineImplement::getGeometryAsObject() {
     // TODO
     return nullptr;
 }

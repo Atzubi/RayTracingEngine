@@ -9,7 +9,7 @@
 #include <cstdint>
 #include <memory>
 #include "BasicStructures.h"
-#include "Utility/Id.h"
+#include "utility/Id.h"
 
 /**
  * Container outputted by the ray tracing engine.
@@ -42,18 +42,18 @@ struct ObjectCapsule {
 /**
  * Base class for all geometry object that the ray tracing engine can work with.
  */
-class Object {
+class Intersectable {
 public:
     /**
      * Default destructor.
      */
-    virtual ~Object() = default;
+    virtual ~Intersectable() = default;
 
     /**
      * Creates a clone of this object.
      * @return  Pointer to a new clone.
      */
-    [[nodiscard]] virtual std::unique_ptr<Object> clone() const = 0;
+    [[nodiscard]] virtual std::unique_ptr<Intersectable> clone() const = 0;
 
     /**
      * Computes the axis aligned bounding box of this object.
@@ -99,9 +99,9 @@ public:
      * @param object    Another object.
      * @return          True if they are equal, false otherwise.
      */
-    virtual bool operator==(const Object &object) const = 0;
+    virtual bool operator==(const Intersectable &object) const = 0;
 
-    virtual bool operator!=(const Object &object) const = 0;
+    virtual bool operator!=(const Intersectable &object) const = 0;
 };
 
 #endif //RAYTRACECORE_OBJECT_H
