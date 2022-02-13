@@ -5,6 +5,23 @@
 #include "EngineNode.h"
 #include <functional>
 
+namespace {
+    template <class ID>
+    void removeId(std::set<ID> &set, ID id){
+        static_assert(std::is_base_of<GenericId, ID>::value, "ID must inherit from GenericId");
+        set.insert(id);
+
+        auto iterator = set.rbegin();
+        unsigned long end = iterator->id - 1;
+
+        unsigned long buffer = iterator->id;
+        while (end-- == (++iterator)->id) {
+            set.erase({buffer});
+            buffer = iterator->id;
+        }
+    }
+}
+
 EngineNode::EngineNode() : deviceId(getDeviceId()) {
     dmu = std::make_unique<DataManagementUnitV2>();
     pipelinePool = std::make_unique<PipelinePool>();
@@ -176,18 +193,8 @@ bool EngineNode::removePipeline(PipelineId id) {
         for (auto instance: pipelineToInstanceMap.at(id)) {
             removePipelineObject(id, instance);
         }
-
-        pipelineIds.insert(id);
-
-        auto iterator = pipelineIds.rbegin();
-        unsigned long end = iterator->id - 1;
-
-        unsigned long buffer = iterator->id;
-        while (end-- == (++iterator)->id) {
-            pipelineIds.erase(PipelineId{buffer});
-            buffer = iterator->id;
-        }
-
+        pipelineToInstanceMap.erase(id);
+        removeId(pipelineIds, id);
         return true;
     }
     return false;
@@ -299,12 +306,15 @@ bool EngineNode::updatePipelineShader(PipelineId pipelineId, MissShaderId shader
 
 bool EngineNode::removePipelineObject(PipelineId pipelineId, InstanceId objectInstanceId) {
     if (objectInstanceIdDeviceMap.count(objectInstanceId) == 1) {
-        if (objectInstanceIdDeviceMap[objectInstanceId].id == deviceId.id) {
+        if (objectInstanceIdDeviceMap[objectInstanceId] == deviceId) {
             auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
             auto geometry = pipeline->getGeometry();
             auto instance = dmu->getInstanceDataFragment(objectInstanceId);
             std::vector<Intersectable *> remove{instance};
             DBVHv2::removeObjects(*geometry, remove);
+            removeId(objectInstanceIds, objectInstanceId);
+            pipelineToInstanceMap.at(pipelineId).erase(objectInstanceId);
+            objectInstanceIdDeviceMap.erase(objectInstanceId);
             return dmu->deleteInstanceDataFragment(objectInstanceId);
         } else {
             // TODO: delete instance on other nodes
@@ -536,25 +546,13 @@ bool EngineNode::removeObject(ObjectId id) {
         for (auto &pipelineInstances: pipelineToInstanceMap) {
             if (pipelineInstances.second.count(instanceId) != 0) {
                 removePipelineObject(pipelineInstances.first, instanceId);
-                pipelineInstances.second.erase(instanceId);
                 break;
             }
         }
     }
 
     objectIdDeviceMap.erase(id);
-
-    objectIds.insert(id);
-
-    auto iterator = objectIds.rbegin();
-    unsigned long end = iterator->id - 1;
-
-    unsigned long buffer = iterator->id;
-    while (end-- == (++iterator)->id) {
-        objectIds.erase(ObjectId{buffer});
-        buffer = iterator->id;
-    }
-
+    removeId(objectIds, id);
     return true;
 }
 
@@ -632,86 +630,31 @@ RayGeneratorShaderId EngineNode::addShader(const RayGeneratorShader &shader) {
 
 bool EngineNode::removeShader(RayGeneratorShaderId id) {
     if (!pipelinePool->deleteShader(id)) return false;
-
-    rayGeneratorShaderIds.insert(id);
-
-    auto iterator = rayGeneratorShaderIds.rbegin();
-    unsigned long end = iterator->id - 1;
-
-    unsigned long buffer = iterator->id;
-    while (end-- == (++iterator)->id) {
-        rayGeneratorShaderIds.erase(RayGeneratorShaderId{buffer});
-        buffer = iterator->id;
-    }
-
+    removeId(rayGeneratorShaderIds, id);
     return true;
 }
 
 bool EngineNode::removeShader(HitShaderId id) {
     if (!pipelinePool->deleteShader(id)) return false;
-
-    hitShaderIds.insert(id);
-
-    auto iterator = hitShaderIds.rbegin();
-    unsigned long end = iterator->id - 1;
-
-    unsigned long buffer = iterator->id;
-    while (end-- == (++iterator)->id) {
-        hitShaderIds.erase(HitShaderId{buffer});
-        buffer = iterator->id;
-    }
-
+    removeId(hitShaderIds, id);
     return true;
 }
 
 bool EngineNode::removeShader(OcclusionShaderId id) {
     if (!pipelinePool->deleteShader(id)) return false;
-
-    occlusionShaderIds.insert(id);
-
-    auto iterator = occlusionShaderIds.rbegin();
-    unsigned long end = iterator->id - 1;
-
-    unsigned long buffer = iterator->id;
-    while (end-- == (++iterator)->id) {
-        occlusionShaderIds.erase(OcclusionShaderId{buffer});
-        buffer = iterator->id;
-    }
-
+    removeId(occlusionShaderIds, id);
     return true;
 }
 
 bool EngineNode::removeShader(PierceShaderId id) {
     if (!pipelinePool->deleteShader(id)) return false;
-
-    pierceShaderIds.insert(id);
-
-    auto iterator = pierceShaderIds.rbegin();
-    unsigned long end = iterator->id - 1;
-
-    unsigned long buffer = iterator->id;
-    while (end-- == (++iterator)->id) {
-        pierceShaderIds.erase(PierceShaderId{buffer});
-        buffer = iterator->id;
-    }
-
+    removeId(pierceShaderIds, id);
     return true;
 }
 
 bool EngineNode::removeShader(MissShaderId id) {
     if (!pipelinePool->deleteShader(id)) return false;
-
-    missShaderIds.insert(id);
-
-    auto iterator = missShaderIds.rbegin();
-    unsigned long end = iterator->id - 1;
-
-    unsigned long buffer = iterator->id;
-    while (end-- == (++iterator)->id) {
-        missShaderIds.erase(MissShaderId{buffer});
-        buffer = iterator->id;
-    }
-
+    removeId(missShaderIds, id);
     return true;
 }
 
@@ -730,18 +673,7 @@ ShaderResourceId EngineNode::addShaderResource(const ShaderResource &resource) {
 
 bool EngineNode::removeShaderResource(ShaderResourceId id) {
     if (!pipelinePool->deleteShaderResource(id)) return false;
-
-    shaderResourceIds.insert(id);
-
-    auto iterator = shaderResourceIds.rbegin();
-    unsigned long end = iterator->id - 1;
-
-    unsigned long buffer = iterator->id;
-    while (end-- == (++iterator)->id) {
-        shaderResourceIds.erase(ShaderResourceId{buffer});
-        buffer = iterator->id;
-    }
-
+    removeId(shaderResourceIds,  id);
     return true;
 }
 
