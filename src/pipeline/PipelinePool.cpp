@@ -68,28 +68,43 @@ MissShader *PipelinePool::getShader(MissShaderId id) {
 }
 
 bool PipelinePool::deleteShader(RayGeneratorShaderId id) {
-    bool shaderRemoved = rayGeneratorShaders.erase(id);
-    return shaderRemoved;
+    if(!rayGeneratorShaders.erase(id)) return false;
+    for(auto &p : pipelines){
+        p.second->removeShader(id);
+    }
+    return true;
 }
 
 bool PipelinePool::deleteShader(HitShaderId id) {
-    bool shaderRemoved = hitShaders.erase(id);
-    return shaderRemoved;
+    if(!hitShaders.erase(id)) return false;
+    for(auto &p : pipelines){
+        p.second->removeShader(id);
+    }
+    return true;
 }
 
 bool PipelinePool::deleteShader(OcclusionShaderId id) {
-    bool shaderRemoved = occlusionShaders.erase(id);
-    return shaderRemoved;
+    if(!occlusionShaders.erase(id)) return false;
+    for(auto &p : pipelines){
+        p.second->removeShader(id);
+    }
+    return true;
 }
 
 bool PipelinePool::deleteShader(PierceShaderId id) {
-    bool shaderRemoved = pierceShaders.erase(id);
-    return shaderRemoved;
+    if(!pierceShaders.erase(id)) return false;
+    for(auto &p : pipelines){
+        p.second->removeShader(id);
+    }
+    return true;
 }
 
 bool PipelinePool::deleteShader(MissShaderId id) {
-    bool shaderRemoved = missShaders.erase(id);
-    return shaderRemoved;
+    if(!missShaders.erase(id)) return false;
+    for(auto &p : pipelines){
+        p.second->removeShader(id);
+    }
+    return true;
 }
 
 void PipelinePool::storeShaderResource(std::unique_ptr<ShaderResource> shaderResource, ShaderResourceId id) {

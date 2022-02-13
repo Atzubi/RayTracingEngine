@@ -632,7 +632,6 @@ RayGeneratorShaderId EngineNode::addShader(const RayGeneratorShader &shader) {
 
 bool EngineNode::removeShader(RayGeneratorShaderId id) {
     if (!pipelinePool->deleteShader(id)) return false;
-    // TODO: remove shader from pipelines
 
     rayGeneratorShaderIds.insert(id);
 
@@ -650,7 +649,6 @@ bool EngineNode::removeShader(RayGeneratorShaderId id) {
 
 bool EngineNode::removeShader(HitShaderId id) {
     if (!pipelinePool->deleteShader(id)) return false;
-    // TODO: remove shader from pipelines
 
     hitShaderIds.insert(id);
 
@@ -668,7 +666,6 @@ bool EngineNode::removeShader(HitShaderId id) {
 
 bool EngineNode::removeShader(OcclusionShaderId id) {
     if (!pipelinePool->deleteShader(id)) return false;
-    // TODO: remove shader from pipelines
 
     occlusionShaderIds.insert(id);
 
@@ -686,7 +683,6 @@ bool EngineNode::removeShader(OcclusionShaderId id) {
 
 bool EngineNode::removeShader(PierceShaderId id) {
     if (!pipelinePool->deleteShader(id)) return false;
-    // TODO: remove shader from pipelines
 
     pierceShaderIds.insert(id);
 
@@ -704,7 +700,6 @@ bool EngineNode::removeShader(PierceShaderId id) {
 
 bool EngineNode::removeShader(MissShaderId id) {
     if (!pipelinePool->deleteShader(id)) return false;
-    // TODO: remove shader from pipelines
 
     missShaderIds.insert(id);
 
