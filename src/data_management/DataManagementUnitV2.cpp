@@ -41,6 +41,7 @@ Intersectable *DataManagementUnitV2::getBaseDataFragment(ObjectId id) {
         // object was not originally stored on this node, check cache
         if (objectCache.count(id) == 0) {
             // object is not currently in the cache
+            // TODO request object from network and store it in cache
             return nullptr;
         } else {
             // object was found in cache
@@ -57,6 +58,7 @@ Instance *DataManagementUnitV2::getInstanceDataFragment(InstanceId id) {
         // object was not originally stored on this node, check cache
         if (objectInstanceCache.count(id) == 0) {
             // object is not currently in the cache
+            // TODO request object from network and store it in cache
             return nullptr;
         } else {
             // object was found in cache

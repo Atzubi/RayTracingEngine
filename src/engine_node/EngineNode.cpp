@@ -37,7 +37,7 @@ PipelineId EngineNode::createPipeline(PipelineDescription &pipelineDescription) 
                 // create instances of objects
                 auto instance = std::make_unique<Instance>(*dmu, capsule);
                 instance->applyTransform(pipelineDescription.objectTransformations[c]);
-                //instances.push_back(instance.get());
+                instances.push_back(instance.get());
 
                 // manage instance ids
                 auto instanceId = objectInstanceIds.extract(objectInstanceIds.begin()).value();
@@ -51,7 +51,6 @@ PipelineId EngineNode::createPipeline(PipelineDescription &pipelineDescription) 
                 // add instances to engine node
                 // TODO spread over nodes
                 dmu->storeInstanceDataFragments(std::move(instance), instanceId);
-                instances.push_back(dmu->getInstanceDataFragment(instanceId));
 
                 // add instance location to map
                 objectInstanceIdDeviceMap[instanceId] = deviceId;

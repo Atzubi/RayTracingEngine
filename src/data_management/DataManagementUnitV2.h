@@ -22,6 +22,10 @@ private:
     std::unordered_map<ObjectId, std::unique_ptr<Intersectable>> objectCache;
     std::unordered_map<InstanceId, std::unique_ptr<Instance>> objectInstanceCache;
 
+    void cacheBaseData(std::unique_ptr<Intersectable> object, ObjectId id);
+
+    void cacheInstanceData(std::unique_ptr<Instance> instance, InstanceId id);
+
 public:
     DataManagementUnitV2();
 
@@ -38,10 +42,6 @@ public:
     bool deleteInstanceDataFragment(InstanceId id);
 
     Instance *getInstanceDataFragment(InstanceId id);
-
-    void cacheBaseData(std::unique_ptr<Intersectable> object, ObjectId id);
-
-    void cacheInstanceData(std::unique_ptr<Instance> instance, InstanceId id);
 };
 
 #endif //RAYTRACEENGINE_DATAMANAGEMENTUNITV2_H
