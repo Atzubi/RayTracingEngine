@@ -37,9 +37,7 @@ namespace {
             shaderResources.push_back(pipelinePool.getShaderResource(shaderResource));
         }
 
-        RayGeneratorShaderContainer rayGeneratorShaderContainer = {shader, shaderResources};
-
-        pipeline->addShader(shaderId, rayGeneratorShaderContainer);
+        pipeline->addShader(shaderId, {shader, shaderResources});
 
         return true;
     }
