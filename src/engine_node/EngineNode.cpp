@@ -6,8 +6,8 @@
 #include <functional>
 
 namespace {
-    template <class ID>
-    void removeId(std::set<ID> &set, ID id){
+    template<class ID>
+    void removeId(std::set<ID> &set, ID id) {
         static_assert(std::is_base_of<GenericId, ID>::value, "ID must inherit from GenericId");
         set.insert(id);
 
@@ -19,6 +19,29 @@ namespace {
             set.erase({buffer});
             buffer = iterator->id;
         }
+    }
+
+    template<class ID>
+    bool bindShader(PipelinePool &pipelinePool, PipelineId pipelineId, ID shaderId,
+                    const std::vector<ShaderResourceId> &resourceIds) {
+        static_assert(std::is_base_of<ShaderId, ID>::value, "ID must inherit from ShaderId");
+        auto pipeline = pipelinePool.getPipelineFragment(pipelineId);
+        auto shader = pipelinePool.getShader(shaderId);
+
+        if (pipeline == nullptr || shader == nullptr) return false;
+
+        std::vector<ShaderResource *> shaderResources;
+
+        shaderResources.reserve(resourceIds.size());
+        for (auto shaderResource: resourceIds) {
+            shaderResources.push_back(pipelinePool.getShaderResource(shaderResource));
+        }
+
+        RayGeneratorShaderContainer rayGeneratorShaderContainer = {shader, shaderResources};
+
+        pipeline->addShader(shaderId, rayGeneratorShaderContainer);
+
+        return true;
     }
 }
 
@@ -419,107 +442,27 @@ EngineNode::bindGeometryToPipeline(PipelineId pipelineId, const std::vector<Obje
 
 bool EngineNode::bindShaderToPipeline(PipelineId pipelineId, RayGeneratorShaderId shaderId,
                                       const std::vector<ShaderResourceId> &resourceIds) {
-    auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
-    auto shader = pipelinePool->getShader(shaderId);
-
-    if (pipeline == nullptr || shader == nullptr) return false;
-
-    std::vector<ShaderResource *> shaderResources;
-
-    shaderResources.reserve(resourceIds.size());
-    for (auto shaderResource: resourceIds) {
-        shaderResources.push_back(pipelinePool->getShaderResource(shaderResource));
-    }
-
-    RayGeneratorShaderContainer rayGeneratorShaderContainer = {shader, shaderResources};
-
-    pipeline->addShader(shaderId, rayGeneratorShaderContainer);
-
-    return true;
+    return bindShader(*pipelinePool, pipelineId, shaderId, resourceIds);
 }
 
 bool EngineNode::bindShaderToPipeline(PipelineId pipelineId, HitShaderId shaderId,
                                       const std::vector<ShaderResourceId> &resourceIds) {
-    auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
-    auto shader = pipelinePool->getShader(shaderId);
-
-    if (pipeline == nullptr || shader == nullptr) return false;
-
-    std::vector<ShaderResource *> shaderResources;
-
-    shaderResources.reserve(resourceIds.size());
-    for (auto shaderResource: resourceIds) {
-        shaderResources.push_back(pipelinePool->getShaderResource(shaderResource));
-    }
-
-    HitShaderContainer hitShaderContainer = {shader, shaderResources};
-
-    pipeline->addShader(shaderId, hitShaderContainer);
-
-    return true;
+    return bindShader(*pipelinePool, pipelineId, shaderId, resourceIds);
 }
 
 bool EngineNode::bindShaderToPipeline(PipelineId pipelineId, OcclusionShaderId shaderId,
                                       const std::vector<ShaderResourceId> &resourceIds) {
-    auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
-    auto shader = pipelinePool->getShader(shaderId);
-
-    if (pipeline == nullptr || shader == nullptr) return false;
-
-    std::vector<ShaderResource *> shaderResources;
-
-    shaderResources.reserve(resourceIds.size());
-    for (auto shaderResource: resourceIds) {
-        shaderResources.push_back(pipelinePool->getShaderResource(shaderResource));
-    }
-
-    OcclusionShaderContainer occlusionShaderContainer = {shader, shaderResources};
-
-    pipeline->addShader(shaderId, occlusionShaderContainer);
-
-    return true;
+    return bindShader(*pipelinePool, pipelineId, shaderId, resourceIds);
 }
 
 bool EngineNode::bindShaderToPipeline(PipelineId pipelineId, PierceShaderId shaderId,
                                       const std::vector<ShaderResourceId> &resourceIds) {
-    auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
-    auto shader = pipelinePool->getShader(shaderId);
-
-    if (pipeline == nullptr || shader == nullptr) return false;
-
-    std::vector<ShaderResource *> shaderResources;
-
-    shaderResources.reserve(resourceIds.size());
-    for (auto shaderResource: resourceIds) {
-        shaderResources.push_back(pipelinePool->getShaderResource(shaderResource));
-    }
-
-    PierceShaderContainer pierceShaderContainer = {shader, shaderResources};
-
-    pipeline->addShader(shaderId, pierceShaderContainer);
-
-    return true;
+    return bindShader(*pipelinePool, pipelineId, shaderId, resourceIds);
 }
 
 bool EngineNode::bindShaderToPipeline(PipelineId pipelineId, MissShaderId shaderId,
                                       const std::vector<ShaderResourceId> &resourceIds) {
-    auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
-    auto shader = pipelinePool->getShader(shaderId);
-
-    if (pipeline == nullptr || shader == nullptr) return false;
-
-    std::vector<ShaderResource *> shaderResources;
-
-    shaderResources.reserve(resourceIds.size());
-    for (auto shaderResource: resourceIds) {
-        shaderResources.push_back(pipelinePool->getShaderResource(shaderResource));
-    }
-
-    MissShaderContainer missShaderContainer = {shader, shaderResources};
-
-    pipeline->addShader(shaderId, missShaderContainer);
-
-    return true;
+    return bindShader(*pipelinePool, pipelineId, shaderId, resourceIds);
 }
 
 ObjectId EngineNode::addObject(const Intersectable &object) {
@@ -673,7 +616,7 @@ ShaderResourceId EngineNode::addShaderResource(const ShaderResource &resource) {
 
 bool EngineNode::removeShaderResource(ShaderResourceId id) {
     if (!pipelinePool->deleteShaderResource(id)) return false;
-    removeId(shaderResourceIds,  id);
+    removeId(shaderResourceIds, id);
     return true;
 }
 
