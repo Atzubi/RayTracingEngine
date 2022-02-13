@@ -13,9 +13,8 @@ void PipelinePool::storePipelineFragments(std::unique_ptr<PipelineImplement> pip
 }
 
 bool PipelinePool::deletePipelineFragment(PipelineId id) {
-    if (pipelines.count(id) == 0) return false;
-    pipelines.erase(id);
-    return true;
+    bool pipelineRemoved = pipelines.erase(id);
+    return pipelineRemoved;
 }
 
 void PipelinePool::addShader(RayGeneratorShaderId id, std::unique_ptr<RayGeneratorShader> shader) {
@@ -39,78 +38,58 @@ void PipelinePool::addShader(MissShaderId id, std::unique_ptr<MissShader> shader
 }
 
 RayGeneratorShader *PipelinePool::getShader(RayGeneratorShaderId id) {
-    if (rayGeneratorShaders.count(id) != 0) {
-        return rayGeneratorShaders.at(id).get();
-    }
-    return nullptr;
+    if (rayGeneratorShaders.count(id) == 0)
+        return nullptr;
+    return rayGeneratorShaders.at(id).get();
 }
 
 HitShader *PipelinePool::getShader(HitShaderId id) {
-    if (hitShaders.count(id) != 0) {
-        return hitShaders.at(id).get();
-    }
-    return nullptr;
+    if (hitShaders.count(id) == 0)
+        return nullptr;
+    return hitShaders.at(id).get();
 }
 
 OcclusionShader *PipelinePool::getShader(OcclusionShaderId id) {
-    if (occlusionShaders.count(id) != 0) {
-        return occlusionShaders.at(id).get();
-    }
-    return nullptr;
+    if (occlusionShaders.count(id) == 0)
+        return nullptr;
+    return occlusionShaders.at(id).get();
 }
 
 PierceShader *PipelinePool::getShader(PierceShaderId id) {
-    if (pierceShaders.count(id) != 0) {
-        return pierceShaders.at(id).get();
-    }
-    return nullptr;
+    if (pierceShaders.count(id) == 0)
+        return nullptr;
+    return pierceShaders.at(id).get();
 }
 
 MissShader *PipelinePool::getShader(MissShaderId id) {
-    if (missShaders.count(id) != 0) {
-        return missShaders.at(id).get();
-    }
-    return nullptr;
+    if (missShaders.count(id) == 0)
+        return nullptr;
+    return missShaders.at(id).get();
 }
 
 bool PipelinePool::deleteShader(RayGeneratorShaderId id) {
-    if (rayGeneratorShaders.count(id) != 0) {
-        rayGeneratorShaders.erase(id);
-        return true;
-    }
-    return false;
+    bool shaderRemoved = rayGeneratorShaders.erase(id);
+    return shaderRemoved;
 }
 
 bool PipelinePool::deleteShader(HitShaderId id) {
-    if (hitShaders.count(id) != 0) {
-        hitShaders.erase(id);
-        return true;
-    }
-    return false;
+    bool shaderRemoved = hitShaders.erase(id);
+    return shaderRemoved;
 }
 
 bool PipelinePool::deleteShader(OcclusionShaderId id) {
-    if (occlusionShaders.count(id) != 0) {
-        occlusionShaders.erase(id);
-        return true;
-    }
-    return false;
+    bool shaderRemoved = occlusionShaders.erase(id);
+    return shaderRemoved;
 }
 
 bool PipelinePool::deleteShader(PierceShaderId id) {
-    if (pierceShaders.count(id) != 0) {
-        pierceShaders.erase(id);
-        return true;
-    }
-    return false;
+    bool shaderRemoved = pierceShaders.erase(id);
+    return shaderRemoved;
 }
 
 bool PipelinePool::deleteShader(MissShaderId id) {
-    if (missShaders.count(id) != 0) {
-        missShaders.erase(id);
-        return true;
-    }
-    return false;
+    bool shaderRemoved = missShaders.erase(id);
+    return shaderRemoved;
 }
 
 void PipelinePool::storeShaderResource(std::unique_ptr<ShaderResource> shaderResource, ShaderResourceId id) {
@@ -133,12 +112,13 @@ void PipelinePool::runPipeline(PipelineId id) {
 }
 
 void PipelinePool::runPipelines() {
-    for (auto &p : pipelines) {
+    for (auto &p: pipelines) {
         p.second->run();
     }
 }
 
 PipelineImplement *PipelinePool::getPipelineFragment(PipelineId id) {
-    if (pipelines.count(id) == 0) return nullptr;
+    if (pipelines.count(id) == 0)
+        return nullptr;
     return pipelines[id].get();
 }
