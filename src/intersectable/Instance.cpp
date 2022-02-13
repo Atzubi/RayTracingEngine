@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <complex>
+#include <utility>
 #include "intersectable/Instance.h"
 #include "engine_node/EngineNode.h"
 
@@ -157,8 +158,8 @@ namespace {
     }
 }
 
-Instance::Instance(DataManagementUnitV2 &node, ObjectCapsule &objectCapsule) : baseObjectId(objectCapsule.id) {
-    dmu = &node;
+Instance::Instance(std::function<Intersectable *()> getBaseObject, ObjectCapsule &objectCapsule) : baseObjectId(objectCapsule.id) {
+    getBaseIntersectable = std::move(getBaseObject);
     objectCached = false;
     objectCache = nullptr;
     cost = objectCapsule.cost;
@@ -168,7 +169,7 @@ Instance::Instance(DataManagementUnitV2 &node, ObjectCapsule &objectCapsule) : b
 }
 
 void Instance::applyTransform(const Matrix4x4 &newTransform) {
-    boundingBox = dmu->getBaseDataFragment(baseObjectId)->getBoundaries();
+    boundingBox = getBaseIntersectable()->getBoundaries();
     transform.multiplyBy(newTransform);
     inverseTransform = transform.getInverse();
     createTransformedAABB(boundingBox, transform);
@@ -190,7 +191,7 @@ bool Instance::intersectFirst(IntersectionInfo &intersectionInfo, const Ray &ray
 
 inline Intersectable *Instance::getBaseObject() {
     if (!objectCached) {
-        objectCache = dmu->getBaseDataFragment(baseObjectId);
+        objectCache = getBaseIntersectable();
         objectCached = true;
     }
     return objectCache;

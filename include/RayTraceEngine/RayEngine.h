@@ -16,7 +16,6 @@
  */
 class EngineNode;
 
-
 /**
  * The interface of the ray tracing engine.
  * dmu:  Manages data used by the engine.

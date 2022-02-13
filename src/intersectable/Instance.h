@@ -8,13 +8,11 @@
 #include "utility/Id.h"
 #include "RayTraceEngine/BasicStructures.h"
 #include "RayTraceEngine/Intersectable.h"
-#include "data_management/DataManagementUnitV2.h"
-
-class DataManagementUnitV2;
+#include <functional>
 
 class Instance : public Intersectable {
 private:
-    DataManagementUnitV2 *dmu;
+    std::function<Intersectable *()> getBaseIntersectable;
 
     ObjectId baseObjectId;
     bool objectCached;
@@ -28,7 +26,7 @@ private:
     Intersectable *getBaseObject();
 
 public:
-    explicit Instance(DataManagementUnitV2 &node, ObjectCapsule &objectCapsule);
+    explicit Instance(std::function<Intersectable *()> getBaseObject, ObjectCapsule &objectCapsule);
 
     void applyTransform(const Matrix4x4 &newTransform);
 

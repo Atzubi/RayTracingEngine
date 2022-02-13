@@ -12,8 +12,6 @@
 #include "RayTraceEngine/Intersectable.h"
 #include "intersectable/Instance.h"
 
-class Instance;
-
 class DataManagementUnitV2 {
 private:
     std::unordered_map<ObjectId, std::unique_ptr<Intersectable>> objects;

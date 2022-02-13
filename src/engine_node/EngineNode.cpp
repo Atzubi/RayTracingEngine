@@ -3,6 +3,7 @@
 //
 
 #include "EngineNode.h"
+#include <functional>
 
 EngineNode::EngineNode() : deviceId(getDeviceId()) {
     dmu = std::make_unique<DataManagementUnitV2>();
@@ -35,7 +36,8 @@ PipelineId EngineNode::createPipeline(PipelineDescription &pipelineDescription) 
                 auto capsule = ObjectCapsule{ObjectId{i.id}, buffer.boundingBox, buffer.cost};
 
                 // create instances of objects
-                auto instance = std::make_unique<Instance>(*dmu, capsule);
+                auto instance = std::make_unique<Instance>(
+                        std::bind(&DataManagementUnitV2::getBaseDataFragment, dmu.get(), capsule.id), capsule);
                 instance->applyTransform(pipelineDescription.objectTransformations[c]);
                 instances.push_back(instance.get());
 
@@ -194,8 +196,8 @@ bool EngineNode::removePipeline(PipelineId id) {
 
 bool
 EngineNode::updatePipelineObjects(PipelineId pipelineId, const std::vector<InstanceId> &objectInstanceIDs,
-                                            const std::vector<Matrix4x4> &transforms,
-                                            const std::vector<ObjectParameter> &objectParameters) {
+                                  const std::vector<Matrix4x4> &transforms,
+                                  const std::vector<ObjectParameter> &objectParameters) {
     if (objectInstanceIDs.size() != transforms.size()) return false;
 
     for (unsigned long i = 0; i < objectInstanceIDs.size(); i++) {
@@ -217,7 +219,7 @@ EngineNode::updatePipelineObjects(PipelineId pipelineId, const std::vector<Insta
 
 bool
 EngineNode::updatePipelineShader(PipelineId pipelineId, RayGeneratorShaderId shaderId,
-                                           const std::vector<ShaderResourceId> &resourceIds) {
+                                 const std::vector<ShaderResourceId> &resourceIds) {
     auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
 
     if (pipeline == nullptr) return false;
@@ -233,7 +235,7 @@ EngineNode::updatePipelineShader(PipelineId pipelineId, RayGeneratorShaderId sha
 }
 
 bool EngineNode::updatePipelineShader(PipelineId pipelineId, HitShaderId shaderId,
-                                                const std::vector<ShaderResourceId> &resourceIds) {
+                                      const std::vector<ShaderResourceId> &resourceIds) {
     auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
 
     if (pipeline == nullptr) return false;
@@ -249,7 +251,7 @@ bool EngineNode::updatePipelineShader(PipelineId pipelineId, HitShaderId shaderI
 }
 
 bool EngineNode::updatePipelineShader(PipelineId pipelineId, OcclusionShaderId shaderId,
-                                                const std::vector<ShaderResourceId> &resourceIds) {
+                                      const std::vector<ShaderResourceId> &resourceIds) {
     auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
 
     if (pipeline == nullptr) return false;
@@ -265,7 +267,7 @@ bool EngineNode::updatePipelineShader(PipelineId pipelineId, OcclusionShaderId s
 }
 
 bool EngineNode::updatePipelineShader(PipelineId pipelineId, PierceShaderId shaderId,
-                                                const std::vector<ShaderResourceId> &resourceIds) {
+                                      const std::vector<ShaderResourceId> &resourceIds) {
     auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
 
     if (pipeline == nullptr) return false;
@@ -281,7 +283,7 @@ bool EngineNode::updatePipelineShader(PipelineId pipelineId, PierceShaderId shad
 }
 
 bool EngineNode::updatePipelineShader(PipelineId pipelineId, MissShaderId shaderId,
-                                                const std::vector<ShaderResourceId> &resourceIds) {
+                                      const std::vector<ShaderResourceId> &resourceIds) {
     auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
 
     if (pipeline == nullptr) return false;
@@ -354,9 +356,9 @@ bool EngineNode::removePipelineShader(PipelineId pipelineId, MissShaderId shader
 
 bool
 EngineNode::bindGeometryToPipeline(PipelineId pipelineId, const std::vector<ObjectId> &objectIDs,
-                                             const std::vector<Matrix4x4> &transforms,
-                                             const std::vector<ObjectParameter> &objectParameters,
-                                             std::vector<InstanceId> &instanceIDs) {
+                                   const std::vector<Matrix4x4> &transforms,
+                                   const std::vector<ObjectParameter> &objectParameters,
+                                   std::vector<InstanceId> &instanceIDs) {
     auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
     if (objectIDs.size() != transforms.size() || pipeline == nullptr) return false;
 
@@ -372,7 +374,8 @@ EngineNode::bindGeometryToPipeline(PipelineId pipelineId, const std::vector<Obje
                 auto capsule = ObjectCapsule{ObjectId{i}, buffer.boundingBox, buffer.cost};
 
                 // create instances of objects
-                auto instance = std::make_unique<Instance>(*dmu, capsule);
+                auto instance = std::make_unique<Instance>(
+                        std::bind(&DataManagementUnitV2::getBaseDataFragment, dmu.get(), capsule.id), capsule);
                 instance->applyTransform(transforms.at(i));
                 instances.push_back(instance.get());
 
@@ -407,7 +410,7 @@ EngineNode::bindGeometryToPipeline(PipelineId pipelineId, const std::vector<Obje
 }
 
 bool EngineNode::bindShaderToPipeline(PipelineId pipelineId, RayGeneratorShaderId shaderId,
-                                                const std::vector<ShaderResourceId> &resourceIds) {
+                                      const std::vector<ShaderResourceId> &resourceIds) {
     auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
     auto shader = pipelinePool->getShader(shaderId);
 
@@ -428,7 +431,7 @@ bool EngineNode::bindShaderToPipeline(PipelineId pipelineId, RayGeneratorShaderI
 }
 
 bool EngineNode::bindShaderToPipeline(PipelineId pipelineId, HitShaderId shaderId,
-                                                const std::vector<ShaderResourceId> &resourceIds) {
+                                      const std::vector<ShaderResourceId> &resourceIds) {
     auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
     auto shader = pipelinePool->getShader(shaderId);
 
@@ -449,7 +452,7 @@ bool EngineNode::bindShaderToPipeline(PipelineId pipelineId, HitShaderId shaderI
 }
 
 bool EngineNode::bindShaderToPipeline(PipelineId pipelineId, OcclusionShaderId shaderId,
-                                                const std::vector<ShaderResourceId> &resourceIds) {
+                                      const std::vector<ShaderResourceId> &resourceIds) {
     auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
     auto shader = pipelinePool->getShader(shaderId);
 
@@ -470,7 +473,7 @@ bool EngineNode::bindShaderToPipeline(PipelineId pipelineId, OcclusionShaderId s
 }
 
 bool EngineNode::bindShaderToPipeline(PipelineId pipelineId, PierceShaderId shaderId,
-                                                const std::vector<ShaderResourceId> &resourceIds) {
+                                      const std::vector<ShaderResourceId> &resourceIds) {
     auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
     auto shader = pipelinePool->getShader(shaderId);
 
@@ -491,7 +494,7 @@ bool EngineNode::bindShaderToPipeline(PipelineId pipelineId, PierceShaderId shad
 }
 
 bool EngineNode::bindShaderToPipeline(PipelineId pipelineId, MissShaderId shaderId,
-                                                const std::vector<ShaderResourceId> &resourceIds) {
+                                      const std::vector<ShaderResourceId> &resourceIds) {
     auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
     auto shader = pipelinePool->getShader(shaderId);
 
@@ -761,8 +764,8 @@ int EngineNode::runAllPipelines() {
 
 void
 EngineNode::updatePipelineCamera(PipelineId id, int resolutionX, int resolutionY,
-                                           const Vector3D &cameraPosition, const Vector3D &cameraDirection,
-                                           const Vector3D &cameraUp) {
+                                 const Vector3D &cameraPosition, const Vector3D &cameraDirection,
+                                 const Vector3D &cameraUp) {
     auto pipeline = pipelinePool->getPipelineFragment(id);
     pipeline->setResolution(resolutionX, resolutionY);
     pipeline->setCamera(cameraPosition, cameraDirection, cameraUp);
