@@ -158,8 +158,8 @@ namespace {
     }
 }
 
-Instance::Instance(std::function<Intersectable *()> getBaseObject, ObjectCapsule &objectCapsule) : baseObjectId(objectCapsule.id) {
-    getBaseIntersectable = std::move(getBaseObject);
+Instance::Instance(DataManagementUnitV2 *dataManagement, ObjectCapsule &objectCapsule) : baseObjectId(objectCapsule.id) {
+    dmu = dataManagement;
     objectCached = false;
     objectCache = nullptr;
     cost = objectCapsule.cost;
@@ -169,7 +169,7 @@ Instance::Instance(std::function<Intersectable *()> getBaseObject, ObjectCapsule
 }
 
 void Instance::applyTransform(const Matrix4x4 &newTransform) {
-    boundingBox = getBaseIntersectable()->getBoundaries();
+    boundingBox = dmu->getBaseDataFragment(baseObjectId)->getBoundaries();
     transform.multiplyBy(newTransform);
     inverseTransform = transform.getInverse();
     createTransformedAABB(boundingBox, transform);
@@ -191,7 +191,7 @@ bool Instance::intersectFirst(IntersectionInfo &intersectionInfo, const Ray &ray
 
 inline Intersectable *Instance::getBaseObject() {
     if (!objectCached) {
-        objectCache = getBaseIntersectable();
+        objectCache = dmu->getBaseDataFragment(baseObjectId);
         objectCached = true;
     }
     return objectCache;

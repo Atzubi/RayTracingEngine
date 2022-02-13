@@ -10,9 +10,11 @@
 #include "RayTraceEngine/Intersectable.h"
 #include <functional>
 
+class DataManagementUnitV2;
+
 class Instance : public Intersectable {
 private:
-    std::function<Intersectable *()> getBaseIntersectable;
+    DataManagementUnitV2 *dmu;
 
     ObjectId baseObjectId;
     bool objectCached;
@@ -26,7 +28,7 @@ private:
     Intersectable *getBaseObject();
 
 public:
-    explicit Instance(std::function<Intersectable *()> getBaseObject, ObjectCapsule &objectCapsule);
+    explicit Instance(DataManagementUnitV2 *dataManagement, ObjectCapsule &objectCapsule);
 
     void applyTransform(const Matrix4x4 &newTransform);
 

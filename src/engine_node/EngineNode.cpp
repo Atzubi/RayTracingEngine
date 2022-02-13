@@ -36,8 +36,7 @@ PipelineId EngineNode::createPipeline(PipelineDescription &pipelineDescription) 
                 auto capsule = ObjectCapsule{ObjectId{i.id}, buffer.boundingBox, buffer.cost};
 
                 // create instances of objects
-                auto instance = std::make_unique<Instance>(
-                        std::bind(&DataManagementUnitV2::getBaseDataFragment, dmu.get(), capsule.id), capsule);
+                auto instance = std::make_unique<Instance>(dmu.get(), capsule);
                 instance->applyTransform(pipelineDescription.objectTransformations[c]);
                 instances.push_back(instance.get());
 
@@ -374,8 +373,7 @@ EngineNode::bindGeometryToPipeline(PipelineId pipelineId, const std::vector<Obje
                 auto capsule = ObjectCapsule{ObjectId{i}, buffer.boundingBox, buffer.cost};
 
                 // create instances of objects
-                auto instance = std::make_unique<Instance>(
-                        std::bind(&DataManagementUnitV2::getBaseDataFragment, dmu.get(), capsule.id), capsule);
+                auto instance = std::make_unique<Instance>(dmu.get(), capsule);
                 instance->applyTransform(transforms.at(i));
                 instances.push_back(instance.get());
 
