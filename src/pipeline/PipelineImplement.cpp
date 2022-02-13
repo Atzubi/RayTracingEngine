@@ -2,16 +2,9 @@
 // Created by sebastian on 02.07.19.
 //
 
-#include <iostream>
-
-#include "data_management/DataManagementUnitV2.h"
 #include "pipeline/PipelineImplement.h"
-#include "RayTraceEngine/BasicStructures.h"
-#include "RayTraceEngine/Shader.h"
-#include "bvh/DBVHv2.h"
-#include "engine_node/EngineNode.h"
 
-PipelineImplement::PipelineImplement(EngineNode *engine, int width, int height, const Vector3D &cameraPosition,
+PipelineImplement::PipelineImplement(DataManagementUnitV2 *dataManagement, int width, int height, const Vector3D &cameraPosition,
                                      const Vector3D &cameraDirection, const Vector3D &cameraUp,
                                      const std::vector<RayGeneratorShaderPackage> &rayGeneratorShaders,
                                      const std::vector<OcclusionShaderPackage> &occlusionShaders,
@@ -19,7 +12,7 @@ PipelineImplement::PipelineImplement(EngineNode *engine, int width, int height, 
                                      const std::vector<PierceShaderPackage> &pierceShaders,
                                      const std::vector<MissShaderPackage> &missShaders,
                                      std::unique_ptr<DBVHNode> geometry) {
-    this->engineNode = engine;
+    this->dmu = dataManagement;
     this->pipelineInfo.width = width;
     this->pipelineInfo.height = height;
     this->pipelineInfo.cameraPosition = cameraPosition;
@@ -436,8 +429,8 @@ Texture *PipelineImplement::getResult() {
     return result.get();
 }
 
-void PipelineImplement::setEngine(EngineNode *engine) {
-    engineNode = engine;
+void PipelineImplement::setEngine(DataManagementUnitV2 *dataManagement) {
+    dmu = dataManagement;
 }
 
 

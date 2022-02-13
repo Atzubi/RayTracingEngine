@@ -14,16 +14,16 @@
 /**
  * Manages data movement within the engine.
  */
-class DataManagementUnitV2;
+class EngineNode;
 
 
 /**
  * The interface of the ray tracing engine.
- * dataManagementUnit:  Manages data used by the engine.
+ * dmu:  Manages data used by the engine.
  */
 class RayEngine {
 private:
-    std::unique_ptr<DataManagementUnitV2> dataManagementUnit;
+    std::unique_ptr<EngineNode> engineNode;
 
 public:
     /**

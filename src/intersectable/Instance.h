@@ -5,13 +5,16 @@
 #ifndef RAYTRACECORE_INSTANCE_H
 #define RAYTRACECORE_INSTANCE_H
 
+#include "utility/Id.h"
+#include "RayTraceEngine/BasicStructures.h"
 #include "RayTraceEngine/Intersectable.h"
+#include "data_management/DataManagementUnitV2.h"
 
-class EngineNode;
+class DataManagementUnitV2;
 
 class Instance : public Intersectable {
 private:
-    EngineNode *engineNode;
+    DataManagementUnitV2 *dmu;
 
     ObjectId baseObjectId;
     bool objectCached;
@@ -25,7 +28,7 @@ private:
     Intersectable *getBaseObject();
 
 public:
-    explicit Instance(EngineNode &node, ObjectCapsule &objectCapsule);
+    explicit Instance(DataManagementUnitV2 &node, ObjectCapsule &objectCapsule);
 
     void applyTransform(const Matrix4x4 &newTransform);
 

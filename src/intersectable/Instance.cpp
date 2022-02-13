@@ -157,8 +157,8 @@ namespace {
     }
 }
 
-Instance::Instance(EngineNode &node, ObjectCapsule &objectCapsule) : baseObjectId(objectCapsule.id) {
-    engineNode = &node;
+Instance::Instance(DataManagementUnitV2 &node, ObjectCapsule &objectCapsule) : baseObjectId(objectCapsule.id) {
+    dmu = &node;
     objectCached = false;
     objectCache = nullptr;
     cost = objectCapsule.cost;
@@ -168,7 +168,7 @@ Instance::Instance(EngineNode &node, ObjectCapsule &objectCapsule) : baseObjectI
 }
 
 void Instance::applyTransform(const Matrix4x4 &newTransform) {
-    boundingBox = engineNode->requestBaseData(baseObjectId)->getBoundaries();
+    boundingBox = dmu->getBaseDataFragment(baseObjectId)->getBoundaries();
     transform.multiplyBy(newTransform);
     inverseTransform = transform.getInverse();
     createTransformedAABB(boundingBox, transform);
@@ -190,7 +190,7 @@ bool Instance::intersectFirst(IntersectionInfo &intersectionInfo, const Ray &ray
 
 inline Intersectable *Instance::getBaseObject() {
     if (!objectCached) {
-        objectCache = engineNode->requestBaseData(baseObjectId);
+        objectCache = dmu->getBaseDataFragment(baseObjectId);
         objectCached = true;
     }
     return objectCache;

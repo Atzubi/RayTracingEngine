@@ -8,27 +8,8 @@
 #include <limits>
 #include <vector>
 #include "RayTraceEngine/Shader.h"
-
-class DataManagementUnitV2;
-
-class EngineNode;
-
-class RayGeneratorShader;
-
-class OcclusionShader;
-
-class HitShader;
-
-class PierceShader;
-
-class MissShader;
-
-class Intersectable;
-
-struct PipelineInfo;
-struct DBVHNode;
-struct Texture;
-struct Vector3D;
+#include "bvh/DBVHv2.h"
+#include "data_management/DataManagementUnitV2.h"
 
 struct RayGeneratorShaderContainer {
     RayGeneratorShader *rayGeneratorShader;
@@ -97,7 +78,7 @@ private:
         RayResource *rayResource;
     };
 
-    EngineNode *engineNode;
+    DataManagementUnitV2 *dmu;
 
     PipelineInfo pipelineInfo;
 
@@ -172,7 +153,7 @@ private:
     void anyHitTraversal();
 
 public:
-    PipelineImplement(EngineNode *engine, int width, int height, const Vector3D &cameraPosition,
+    PipelineImplement(DataManagementUnitV2 *dataManagement, int width, int height, const Vector3D &cameraPosition,
                       const Vector3D &cameraDirection, const Vector3D &cameraUp,
                       const std::vector<RayGeneratorShaderPackage> &rayGeneratorShaders,
                       const std::vector<OcclusionShaderPackage> &occlusionShaders,
@@ -225,7 +206,7 @@ public:
 
     std::unique_ptr<Intersectable> getGeometryAsObject();
 
-    void setEngine(EngineNode *engine);
+    void setEngine(DataManagementUnitV2 *dataManagement);
 };
 
 #endif //RAYTRACECORE_PIPELINEIMPLEMENT_H

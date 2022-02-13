@@ -10,6 +10,7 @@
 #include <limits>
 #include <utility>
 #include <cmath>
+#include <vector>
 
 /**
  * Contains x, y and z coordinates representing a vector in 3 dimensions.

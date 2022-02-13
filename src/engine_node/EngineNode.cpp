@@ -4,355 +4,777 @@
 
 #include "EngineNode.h"
 
-#include <utility>
-#include "data_management/DataManagementUnitV2.h"
-#include "RayTraceEngine/Intersectable.h"
-#include "pipeline/PipelineImplement.h"
-#include "intersectable/Instance.h"
-#include "bvh/DBVHv2.h"
+EngineNode::EngineNode() : deviceId(getDeviceId()) {
+    dmu = std::make_unique<DataManagementUnitV2>();
+    pipelinePool = std::make_unique<PipelinePool>();
 
-EngineNode::MemoryBlock::MemoryBlock() = default;
-
-EngineNode::MemoryBlock::~MemoryBlock() = default;
-
-void EngineNode::MemoryBlock::storeBaseDataFragments(std::unique_ptr<Intersectable> object, ObjectId id) {
-    objects[id] = std::move(object);
-}
-
-void EngineNode::MemoryBlock::storeInstanceDataFragments(std::unique_ptr<Instance> instance, InstanceId id) {
-    objectInstances[id] = std::move(instance);
-}
-
-void EngineNode::MemoryBlock::cacheBaseData(std::unique_ptr<Intersectable> object, ObjectId id) {
-    // TODO: implement cache eviction
-    objectCache[id] = std::move(object);
-}
-
-void EngineNode::MemoryBlock::cacheInstanceData(std::unique_ptr<Instance> instance, InstanceId id) {
-    // TODO: implement cache eviction
-    objectInstanceCache[id] = std::move(instance);
-}
-
-void EngineNode::MemoryBlock::storeShaderResource(std::unique_ptr<ShaderResource> shaderResource, ShaderResourceId id) {
-    shaderResources[id] = std::move(shaderResource);
-}
-
-bool EngineNode::MemoryBlock::deleteShaderResource(ShaderResourceId id) {
-    const bool objectRemoved = shaderResources.erase(id) != 0;
-    return objectRemoved;
-}
-
-bool EngineNode::MemoryBlock::deleteBaseDataFragment(ObjectId id) {
-    const bool objectRemoved = objects.erase(id) != 0;
-    return objectRemoved;
-}
-
-bool EngineNode::MemoryBlock::deleteInstanceDataFragment(InstanceId id) {
-    const bool objectRemoved = objectInstances.erase(id) != 0;
-    return objectRemoved;
-}
-
-Intersectable *EngineNode::MemoryBlock::getBaseDataFragment(ObjectId id) {
-    if (objects.count(id) == 0) {
-        // object was not originally stored on this node, check cache
-        if (objectCache.count(id) == 0) {
-            // object is not currently in the cache
-            return nullptr;
-        } else {
-            // object was found in cache
-            return objectCache[id].get();
-        }
-    } else {
-        // object was found in node
-        return objects[id].get();
-    }
-}
-
-Instance *EngineNode::MemoryBlock::getInstanceDataFragment(InstanceId id) {
-    if (objectInstances.count(id) == 0) {
-        // object was not originally stored on this node, check cache
-        if (objectInstanceCache.count(id) == 0) {
-            // object is not currently in the cache
-            return nullptr;
-        } else {
-            // object was found in cache
-            return objectInstanceCache[id].get();
-        }
-    } else {
-        // object was found in node
-        return objectInstances[id].get();
-    }
-}
-
-ShaderResource *EngineNode::MemoryBlock::getShaderResource(ShaderResourceId id) {
-    return shaderResources.at(id).get();
-}
-
-EngineNode::PipelineBlock::PipelineBlock() = default;
-
-EngineNode::PipelineBlock::~PipelineBlock() = default;
-
-void EngineNode::PipelineBlock::storePipelineFragments(std::unique_ptr<PipelineImplement> pipeline, PipelineId id) {
-    pipelines[id] = std::move(pipeline);
-}
-
-bool EngineNode::PipelineBlock::deletePipelineFragment(PipelineId id) {
-    if (pipelines.count(id) == 0) return false;
-    pipelines.erase(id);
-    return true;
-}
-
-void EngineNode::PipelineBlock::addShader(RayGeneratorShaderId id, std::unique_ptr<RayGeneratorShader> shader) {
-    rayGeneratorShaders[id] = std::move(shader);
-}
-
-void EngineNode::PipelineBlock::addShader(HitShaderId id, std::unique_ptr<HitShader> shader) {
-    hitShaders[id] = std::move(shader);
-}
-
-void EngineNode::PipelineBlock::addShader(OcclusionShaderId id, std::unique_ptr<OcclusionShader> shader) {
-    occlusionShaders[id] = std::move(shader);
-}
-
-void EngineNode::PipelineBlock::addShader(PierceShaderId id, std::unique_ptr<PierceShader> shader) {
-    pierceShaders[id] = std::move(shader);
-}
-
-void EngineNode::PipelineBlock::addShader(MissShaderId id, std::unique_ptr<MissShader> shader) {
-    missShaders[id] = std::move(shader);
-}
-
-RayGeneratorShader *EngineNode::PipelineBlock::getShader(RayGeneratorShaderId id) {
-    if (rayGeneratorShaders.count(id) != 0) {
-        return rayGeneratorShaders.at(id).get();
-    }
-    return nullptr;
-}
-
-HitShader *EngineNode::PipelineBlock::getShader(HitShaderId id) {
-    if (hitShaders.count(id) != 0) {
-        return hitShaders.at(id).get();
-    }
-    return nullptr;
-}
-
-OcclusionShader *EngineNode::PipelineBlock::getShader(OcclusionShaderId id) {
-    if (occlusionShaders.count(id) != 0) {
-        return occlusionShaders.at(id).get();
-    }
-    return nullptr;
-}
-
-PierceShader *EngineNode::PipelineBlock::getShader(PierceShaderId id) {
-    if (pierceShaders.count(id) != 0) {
-        return pierceShaders.at(id).get();
-    }
-    return nullptr;
-}
-
-MissShader *EngineNode::PipelineBlock::getShader(MissShaderId id) {
-    if (missShaders.count(id) != 0) {
-        return missShaders.at(id).get();
-    }
-    return nullptr;
-}
-
-bool EngineNode::PipelineBlock::deleteShader(RayGeneratorShaderId id) {
-    if (rayGeneratorShaders.count(id) != 0) {
-        rayGeneratorShaders.erase(id);
-        return true;
-    }
-    return false;
-}
-
-bool EngineNode::PipelineBlock::deleteShader(HitShaderId id) {
-    if (hitShaders.count(id) != 0) {
-        hitShaders.erase(id);
-        return true;
-    }
-    return false;
-}
-
-bool EngineNode::PipelineBlock::deleteShader(OcclusionShaderId id) {
-    if (occlusionShaders.count(id) != 0) {
-        occlusionShaders.erase(id);
-        return true;
-    }
-    return false;
-}
-
-bool EngineNode::PipelineBlock::deleteShader(PierceShaderId id) {
-    if (pierceShaders.count(id) != 0) {
-        pierceShaders.erase(id);
-        return true;
-    }
-    return false;
-}
-
-bool EngineNode::PipelineBlock::deleteShader(MissShaderId id) {
-    if (missShaders.count(id) != 0) {
-        missShaders.erase(id);
-        return true;
-    }
-    return false;
-}
-
-void EngineNode::PipelineBlock::runPipeline(PipelineId id) {
-    if (pipelines.count(id) == 1) {
-        pipelines[id]->run();
-    }
-}
-
-void EngineNode::PipelineBlock::runPipelines() {
-    for (auto &p : pipelines) {
-        p.second->run();
-    }
-}
-
-PipelineImplement *EngineNode::PipelineBlock::getPipelineFragment(PipelineId id) {
-    if (pipelines.count(id) == 0) return nullptr;
-    return pipelines[id].get();
-}
-
-EngineNode::EngineNode(DataManagementUnitV2 *DMU) {
-    dataManagementUnit = DMU;
-    memoryBlock = std::make_unique<MemoryBlock>();
-    pipelineBlock = std::make_unique<PipelineBlock>();
+    objectIds.insert(ObjectId{0});
+    rayGeneratorShaderIds.insert(RayGeneratorShaderId{0});
+    hitShaderIds.insert(HitShaderId{0});
+    occlusionShaderIds.insert(OcclusionShaderId{0});
+    pierceShaderIds.insert(PierceShaderId{0});
+    missShaderIds.insert(MissShaderId{0});
+    pipelineIds.insert(PipelineId{0});
+    objectInstanceIds.insert(InstanceId{0});
+    shaderResourceIds.insert(ShaderResourceId{0});
 }
 
 EngineNode::~EngineNode() = default;
 
-void EngineNode::storeBaseDataFragments(std::unique_ptr<Intersectable> object, ObjectId id) {
-    memoryBlock->storeBaseDataFragments(std::move(object), id);
-}
+PipelineId EngineNode::createPipeline(PipelineDescription &pipelineDescription) {
+    std::vector<Intersectable *> instances;
+    std::vector<InstanceId> instanceIds;
 
-void EngineNode::storeInstanceDataFragments(std::unique_ptr<Instance> instance, InstanceId id) {
-    memoryBlock->storeInstanceDataFragments(std::move(instance), id);
-}
+    // pull all objects required to create the pipeline
+    // only requires id, box and cost
+    int c = 0;
+    for (auto i: pipelineDescription.objectIDs) {
+        if (objectIdDeviceMap.count(i) == 1) {
+            if (objectIdDeviceMap[i].id == deviceId.id) {
+                auto buffer = dmu->getBaseDataFragment(i)->getCapsule();
+                auto capsule = ObjectCapsule{ObjectId{i.id}, buffer.boundingBox, buffer.cost};
 
-void EngineNode::cacheBaseData(std::unique_ptr<Intersectable> object, ObjectId id) {
-    memoryBlock->cacheBaseData(std::move(object), id);
-}
+                // create instances of objects
+                auto instance = std::make_unique<Instance>(*dmu, capsule);
+                instance->applyTransform(pipelineDescription.objectTransformations[c]);
+                //instances.push_back(instance.get());
 
-void EngineNode::cacheInstanceData(std::unique_ptr<Instance> instance, InstanceId id) {
-    memoryBlock->cacheInstanceData(std::move(instance), id);
-}
+                // manage instance ids
+                auto instanceId = objectInstanceIds.extract(objectInstanceIds.begin()).value();
+                if (objectInstanceIds.empty()) {
+                    objectInstanceIds.insert(InstanceId{instanceId.id + 1});
+                }
+                pipelineDescription.objectInstanceIDs->push_back(instanceId);
+                objectToInstanceMap[i].insert(instanceId);
+                instanceIds.push_back(instanceId);
 
-void EngineNode::storeShaderResource(std::unique_ptr<ShaderResource> shaderResource, ShaderResourceId id) {
-    memoryBlock->storeShaderResource(std::move(shaderResource), id);
-}
+                // add instances to engine node
+                // TODO spread over nodes
+                dmu->storeInstanceDataFragments(std::move(instance), instanceId);
+                instances.push_back(dmu->getInstanceDataFragment(instanceId));
 
-bool EngineNode::deleteShaderResource(ShaderResourceId id) {
-    return memoryBlock->deleteShaderResource(id);
-}
-
-void EngineNode::storePipelineFragments(std::unique_ptr<PipelineImplement> pipeline, PipelineId id) {
-    pipeline->setEngine(this);
-    pipelineBlock->storePipelineFragments(std::move(pipeline), id);
-}
-
-bool EngineNode::deletePipelineFragment(PipelineId id) {
-    return pipelineBlock->deletePipelineFragment(id);
-}
-
-Intersectable *EngineNode::requestBaseData(ObjectId id) {
-    auto fragment = memoryBlock->getBaseDataFragment(id);
-    if (fragment == nullptr) {
-        auto sharedFragment = dataManagementUnit->getBaseDataFragment(id);
-        memoryBlock->cacheBaseData(std::move(sharedFragment), id);
+                // add instance location to map
+                objectInstanceIdDeviceMap[instanceId] = deviceId;
+            } else {
+                // TODO request object from other engine nodes
+            }
+        } else {
+            // TODO error handling, object not found
+        }
+        c++;
     }
-    return memoryBlock->getBaseDataFragment(id);
-}
 
-Instance *EngineNode::requestInstanceData(InstanceId id) {
-    auto fragment = memoryBlock->getInstanceDataFragment(id);
-    if (fragment == nullptr) {
-        auto sharedFragment = dataManagementUnit->getInstanceDataFragment(id);
-        memoryBlock->cacheInstanceData(std::move(sharedFragment), id);
+    // build bvh on instances
+    auto root = std::make_unique<DBVHNode>();
+    DBVHv2::addObjects(*root, instances);
+
+    // get shader implementation from id
+    std::vector<RayGeneratorShaderPackage> pipelineRayGeneratorShaders;
+    for (const auto &shader: pipelineDescription.rayGeneratorShaders) {
+        RayGeneratorShaderContainer rayGeneratorShaderContainer;
+        std::vector<ShaderResource *> shaderResources;
+
+        for (auto resourceId: shader.shaderResourceIds) {
+            shaderResources.push_back(pipelinePool->getShaderResource(resourceId));
+        }
+
+        rayGeneratorShaderContainer.shaderResources = shaderResources;
+        rayGeneratorShaderContainer.rayGeneratorShader = pipelinePool->getShader(shader.shaderId);
+        pipelineRayGeneratorShaders.push_back({rayGeneratorShaderContainer, shader.shaderId});
     }
-    return memoryBlock->getInstanceDataFragment(id);
+
+    std::vector<OcclusionShaderPackage> pipelineOcclusionShaders;
+    for (const auto &shader: pipelineDescription.occlusionShaders) {
+        OcclusionShaderContainer occlusionShaderContainer;
+        std::vector<ShaderResource *> shaderResources;
+
+        for (auto resourceId: shader.shaderResourceIds) {
+            shaderResources.push_back(pipelinePool->getShaderResource(resourceId));
+        }
+
+        occlusionShaderContainer.shaderResources = shaderResources;
+        occlusionShaderContainer.occlusionShader = pipelinePool->getShader(shader.shaderId);
+        pipelineOcclusionShaders.push_back({occlusionShaderContainer, shader.shaderId});
+    }
+
+    std::vector<HitShaderPackage> pipelineHitShaders;
+    for (const auto &shader: pipelineDescription.hitShaders) {
+        HitShaderContainer hitShaderContainer;
+        std::vector<ShaderResource *> shaderResources;
+
+        for (auto resourceId: shader.shaderResourceIds) {
+            shaderResources.push_back(pipelinePool->getShaderResource(resourceId));
+        }
+
+        hitShaderContainer.shaderResources = shaderResources;
+        hitShaderContainer.hitShader = pipelinePool->getShader(shader.shaderId);
+        pipelineHitShaders.push_back({hitShaderContainer, shader.shaderId});
+    }
+
+    std::vector<PierceShaderPackage> pipelinePierceShaders;
+    for (const auto &shader: pipelineDescription.pierceShaders) {
+        PierceShaderContainer pierceShaderContainer;
+        std::vector<ShaderResource *> shaderResources;
+
+        for (auto resourceId: shader.shaderResourceIds) {
+            shaderResources.push_back(pipelinePool->getShaderResource(resourceId));
+        }
+
+        pierceShaderContainer.shaderResources = shaderResources;
+        pierceShaderContainer.pierceShader = pipelinePool->getShader(shader.shaderId);
+        pipelinePierceShaders.push_back({pierceShaderContainer, shader.shaderId});
+    }
+
+    std::vector<MissShaderPackage> pipelineMissShaders;
+    for (const auto &shader: pipelineDescription.missShaders) {
+        MissShaderContainer missShaderContainer;
+        std::vector<ShaderResource *> shaderResources;
+
+        for (auto resourceId: shader.shaderResourceIds) {
+            shaderResources.push_back(pipelinePool->getShaderResource(resourceId));
+        }
+
+        missShaderContainer.shaderResources = shaderResources;
+        missShaderContainer.missShader = pipelinePool->getShader(shader.shaderId);
+        pipelineMissShaders.push_back({missShaderContainer, shader.shaderId});
+    }
+
+    // create new pipeline and add bvh, shaders and description
+    auto pipeline = std::make_unique<PipelineImplement>(dmu.get(),
+                                                        pipelineDescription.resolutionX,
+                                                        pipelineDescription.resolutionY,
+                                                        pipelineDescription.cameraPosition,
+                                                        pipelineDescription.cameraDirection,
+                                                        pipelineDescription.cameraUp,
+                                                        pipelineRayGeneratorShaders,
+                                                        pipelineOcclusionShaders,
+                                                        pipelineHitShaders,
+                                                        pipelinePierceShaders,
+                                                        pipelineMissShaders, std::move(root));
+
+    auto pipelineId = pipelineIds.extract(pipelineIds.begin()).value();
+
+    // map instances to pipeline
+    pipelineToInstanceMap[pipelineId].insert(instanceIds.begin(), instanceIds.end());
+
+    pipelinePool->storePipelineFragments(std::move(pipeline), pipelineId);
+
+    if (pipelineIds.empty()) {
+        pipelineIds.insert(PipelineId{pipelineId.id + 1});
+    }
+
+    // broadcast pipeline to all engine nodes
+    // TODO
+
+    return PipelineId{pipelineId};
 }
 
-ShaderResource *EngineNode::getShaderResource(ShaderResourceId id) {
-    return memoryBlock->getShaderResource(id);
+bool EngineNode::removePipeline(PipelineId id) {
+    // TODO: broadcast remove to all nodes;
+    auto removed = pipelinePool->deletePipelineFragment(id);
+    if (removed) {
+        for (auto instance: pipelineToInstanceMap.at(id)) {
+            removePipelineObject(id, instance);
+        }
+
+        pipelineIds.insert(id);
+
+        auto iterator = pipelineIds.rbegin();
+        unsigned long end = iterator->id - 1;
+
+        unsigned long buffer = iterator->id;
+        while (end-- == (++iterator)->id) {
+            pipelineIds.erase(PipelineId{buffer});
+            buffer = iterator->id;
+        }
+
+        return true;
+    }
+    return false;
 }
 
-PipelineImplement *EngineNode::requestPipelineFragment(PipelineId id) {
-    return pipelineBlock->getPipelineFragment(id);
+bool
+EngineNode::updatePipelineObjects(PipelineId pipelineId, const std::vector<InstanceId> &objectInstanceIDs,
+                                            const std::vector<Matrix4x4> &transforms,
+                                            const std::vector<ObjectParameter> &objectParameters) {
+    if (objectInstanceIDs.size() != transforms.size()) return false;
+
+    for (unsigned long i = 0; i < objectInstanceIDs.size(); i++) {
+        if (objectInstanceIds.count(objectInstanceIDs.at(i)) == 1) {
+            if (objectInstanceIdDeviceMap[objectInstanceIDs.at(i)].id == deviceId.id) {
+                auto instance = dmu->getInstanceDataFragment(objectInstanceIDs.at(i));
+                if (instance == nullptr) continue;
+                instance->applyTransform(transforms.at(i));
+            } else {
+                // TODO: update instances on other nodes
+            }
+        } else {
+            // TODO error handling, object not found
+        }
+    }
+
+    return true;
 }
 
-void EngineNode::addShader(RayGeneratorShaderId id, std::unique_ptr<RayGeneratorShader> shader) {
-    pipelineBlock->addShader(id, std::move(shader));
+bool
+EngineNode::updatePipelineShader(PipelineId pipelineId, RayGeneratorShaderId shaderId,
+                                           const std::vector<ShaderResourceId> &resourceIds) {
+    auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
+
+    if (pipeline == nullptr) return false;
+
+    std::vector<ShaderResource *> shaderResources;
+
+    shaderResources.reserve(resourceIds.size());
+    for (auto shaderResource: resourceIds) {
+        shaderResources.push_back(pipelinePool->getShaderResource(shaderResource));
+    }
+
+    return pipeline->updateShader(shaderId, shaderResources);
 }
 
-void EngineNode::addShader(HitShaderId id, std::unique_ptr<HitShader>shader) {
-    pipelineBlock->addShader(id, std::move(shader));
+bool EngineNode::updatePipelineShader(PipelineId pipelineId, HitShaderId shaderId,
+                                                const std::vector<ShaderResourceId> &resourceIds) {
+    auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
+
+    if (pipeline == nullptr) return false;
+
+    std::vector<ShaderResource *> shaderResources;
+
+    shaderResources.reserve(resourceIds.size());
+    for (auto shaderResource: resourceIds) {
+        shaderResources.push_back(pipelinePool->getShaderResource(shaderResource));
+    }
+
+    return pipeline->updateShader(shaderId, shaderResources);
 }
 
-void EngineNode::addShader(OcclusionShaderId id, std::unique_ptr<OcclusionShader> shader) {
-    pipelineBlock->addShader(id, std::move(shader));
+bool EngineNode::updatePipelineShader(PipelineId pipelineId, OcclusionShaderId shaderId,
+                                                const std::vector<ShaderResourceId> &resourceIds) {
+    auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
+
+    if (pipeline == nullptr) return false;
+
+    std::vector<ShaderResource *> shaderResources;
+
+    shaderResources.reserve(resourceIds.size());
+    for (auto shaderResource: resourceIds) {
+        shaderResources.push_back(pipelinePool->getShaderResource(shaderResource));
+    }
+
+    return pipeline->updateShader(shaderId, shaderResources);
 }
 
-void EngineNode::addShader(PierceShaderId id, std::unique_ptr<PierceShader> shader) {
-    pipelineBlock->addShader(id, std::move(shader));
+bool EngineNode::updatePipelineShader(PipelineId pipelineId, PierceShaderId shaderId,
+                                                const std::vector<ShaderResourceId> &resourceIds) {
+    auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
+
+    if (pipeline == nullptr) return false;
+
+    std::vector<ShaderResource *> shaderResources;
+
+    shaderResources.reserve(resourceIds.size());
+    for (auto shaderResource: resourceIds) {
+        shaderResources.push_back(pipelinePool->getShaderResource(shaderResource));
+    }
+
+    return pipeline->updateShader(shaderId, shaderResources);
 }
 
-void EngineNode::addShader(MissShaderId id, std::unique_ptr<MissShader> shader) {
-    pipelineBlock->addShader(id, std::move(shader));
+bool EngineNode::updatePipelineShader(PipelineId pipelineId, MissShaderId shaderId,
+                                                const std::vector<ShaderResourceId> &resourceIds) {
+    auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
+
+    if (pipeline == nullptr) return false;
+
+    std::vector<ShaderResource *> shaderResources;
+
+    shaderResources.reserve(resourceIds.size());
+    for (auto shaderResource: resourceIds) {
+        shaderResources.push_back(pipelinePool->getShaderResource(shaderResource));
+    }
+
+    return pipeline->updateShader(shaderId, shaderResources);
 }
 
-RayGeneratorShader *EngineNode::getShader(RayGeneratorShaderId id) {
-    return pipelineBlock->getShader(id);
+bool EngineNode::removePipelineObject(PipelineId pipelineId, InstanceId objectInstanceId) {
+    if (objectInstanceIdDeviceMap.count(objectInstanceId) == 1) {
+        if (objectInstanceIdDeviceMap[objectInstanceId].id == deviceId.id) {
+            auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
+            auto geometry = pipeline->getGeometry();
+            auto instance = dmu->getInstanceDataFragment(objectInstanceId);
+            std::vector<Intersectable *> remove{instance};
+            DBVHv2::removeObjects(*geometry, remove);
+            return dmu->deleteInstanceDataFragment(objectInstanceId);
+        } else {
+            // TODO: delete instance on other nodes
+        }
+    }
+    return false;
 }
 
-HitShader *EngineNode::getShader(HitShaderId id) {
-    return pipelineBlock->getShader(id);
+bool EngineNode::removePipelineShader(PipelineId pipelineId, RayGeneratorShaderId shaderInstanceId) {
+    auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
+
+    if (pipeline == nullptr) return false;
+
+    return pipeline->removeShader(shaderInstanceId);
 }
 
-OcclusionShader *EngineNode::getShader(OcclusionShaderId id) {
-    return pipelineBlock->getShader(id);
+bool EngineNode::removePipelineShader(PipelineId pipelineId, HitShaderId shaderInstanceId) {
+    auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
+
+    if (pipeline == nullptr) return false;
+
+    return pipeline->removeShader(shaderInstanceId);
 }
 
-PierceShader *EngineNode::getShader(PierceShaderId id) {
-    return pipelineBlock->getShader(id);
+bool EngineNode::removePipelineShader(PipelineId pipelineId, OcclusionShaderId shaderInstanceId) {
+    auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
+
+    if (pipeline == nullptr) return false;
+
+    return pipeline->removeShader(shaderInstanceId);
 }
 
-MissShader *EngineNode::getShader(MissShaderId id) {
-    return pipelineBlock->getShader(id);
+bool EngineNode::removePipelineShader(PipelineId pipelineId, PierceShaderId shaderInstanceId) {
+    auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
+
+    if (pipeline == nullptr) return false;
+
+    return pipeline->removeShader(shaderInstanceId);
 }
 
-bool EngineNode::deleteShader(RayGeneratorShaderId id) {
-    return pipelineBlock->deleteShader(id);
+bool EngineNode::removePipelineShader(PipelineId pipelineId, MissShaderId shaderInstanceId) {
+    auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
+
+    if (pipeline == nullptr) return false;
+
+    return pipeline->removeShader(shaderInstanceId);
 }
 
-bool EngineNode::deleteShader(HitShaderId id) {
-    return pipelineBlock->deleteShader(id);
+bool
+EngineNode::bindGeometryToPipeline(PipelineId pipelineId, const std::vector<ObjectId> &objectIDs,
+                                             const std::vector<Matrix4x4> &transforms,
+                                             const std::vector<ObjectParameter> &objectParameters,
+                                             std::vector<InstanceId> &instanceIDs) {
+    auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
+    if (objectIDs.size() != transforms.size() || pipeline == nullptr) return false;
+
+    auto geometry = pipeline->getGeometry();
+
+    std::vector<Intersectable *> instances;
+    std::vector<InstanceId> instanceIds;
+
+    for (unsigned long i = 0; i < objectIDs.size(); i++) {
+        if (objectIdDeviceMap.count(objectIDs.at(i)) == 1) {
+            if (objectIdDeviceMap[objectIDs.at(i)].id == deviceId.id) {
+                auto buffer = dmu->getBaseDataFragment(objectIDs.at(i))->getCapsule();
+                auto capsule = ObjectCapsule{ObjectId{i}, buffer.boundingBox, buffer.cost};
+
+                // create instances of objects
+                auto instance = std::make_unique<Instance>(*dmu, capsule);
+                instance->applyTransform(transforms.at(i));
+                instances.push_back(instance.get());
+
+                // manage instance ids
+                auto instanceId = objectInstanceIds.extract(objectInstanceIds.begin()).value();
+                if (objectInstanceIds.empty()) {
+                    objectInstanceIds.insert(InstanceId{instanceId.id + 1});
+                }
+                instanceIDs.push_back(instanceId);
+                objectToInstanceMap[objectIDs.at((i))].insert(instanceId);
+                instanceIds.push_back(instanceId);
+
+                // add instances to engine node
+                // TODO spread over nodes
+                dmu->storeInstanceDataFragments(std::move(instance), instanceId);
+
+                // add instance location to map
+                objectInstanceIdDeviceMap[instanceId] = deviceId;
+            } else {
+                // TODO request object from other engine nodes
+            }
+        } else {
+            // TODO error handling, object not found
+        }
+    }
+
+    pipelineToInstanceMap[pipelineId].insert(instanceIds.begin(), instanceIds.end());
+
+    DBVHv2::addObjects(*geometry, instances);
+
+    return true;
 }
 
-bool EngineNode::deleteShader(OcclusionShaderId id) {
-    return pipelineBlock->deleteShader(id);
+bool EngineNode::bindShaderToPipeline(PipelineId pipelineId, RayGeneratorShaderId shaderId,
+                                                const std::vector<ShaderResourceId> &resourceIds) {
+    auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
+    auto shader = pipelinePool->getShader(shaderId);
+
+    if (pipeline == nullptr || shader == nullptr) return false;
+
+    std::vector<ShaderResource *> shaderResources;
+
+    shaderResources.reserve(resourceIds.size());
+    for (auto shaderResource: resourceIds) {
+        shaderResources.push_back(pipelinePool->getShaderResource(shaderResource));
+    }
+
+    RayGeneratorShaderContainer rayGeneratorShaderContainer = {shader, shaderResources};
+
+    pipeline->addShader(shaderId, rayGeneratorShaderContainer);
+
+    return true;
 }
 
-bool EngineNode::deleteShader(PierceShaderId id) {
-    return pipelineBlock->deleteShader(id);
+bool EngineNode::bindShaderToPipeline(PipelineId pipelineId, HitShaderId shaderId,
+                                                const std::vector<ShaderResourceId> &resourceIds) {
+    auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
+    auto shader = pipelinePool->getShader(shaderId);
+
+    if (pipeline == nullptr || shader == nullptr) return false;
+
+    std::vector<ShaderResource *> shaderResources;
+
+    shaderResources.reserve(resourceIds.size());
+    for (auto shaderResource: resourceIds) {
+        shaderResources.push_back(pipelinePool->getShaderResource(shaderResource));
+    }
+
+    HitShaderContainer hitShaderContainer = {shader, shaderResources};
+
+    pipeline->addShader(shaderId, hitShaderContainer);
+
+    return true;
 }
 
-bool EngineNode::deleteShader(MissShaderId id) {
-    return pipelineBlock->deleteShader(id);
+bool EngineNode::bindShaderToPipeline(PipelineId pipelineId, OcclusionShaderId shaderId,
+                                                const std::vector<ShaderResourceId> &resourceIds) {
+    auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
+    auto shader = pipelinePool->getShader(shaderId);
+
+    if (pipeline == nullptr || shader == nullptr) return false;
+
+    std::vector<ShaderResource *> shaderResources;
+
+    shaderResources.reserve(resourceIds.size());
+    for (auto shaderResource: resourceIds) {
+        shaderResources.push_back(pipelinePool->getShaderResource(shaderResource));
+    }
+
+    OcclusionShaderContainer occlusionShaderContainer = {shader, shaderResources};
+
+    pipeline->addShader(shaderId, occlusionShaderContainer);
+
+    return true;
 }
 
-void EngineNode::runPipeline(PipelineId id) {
-    pipelineBlock->runPipeline(id);
+bool EngineNode::bindShaderToPipeline(PipelineId pipelineId, PierceShaderId shaderId,
+                                                const std::vector<ShaderResourceId> &resourceIds) {
+    auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
+    auto shader = pipelinePool->getShader(shaderId);
+
+    if (pipeline == nullptr || shader == nullptr) return false;
+
+    std::vector<ShaderResource *> shaderResources;
+
+    shaderResources.reserve(resourceIds.size());
+    for (auto shaderResource: resourceIds) {
+        shaderResources.push_back(pipelinePool->getShaderResource(shaderResource));
+    }
+
+    PierceShaderContainer pierceShaderContainer = {shader, shaderResources};
+
+    pipeline->addShader(shaderId, pierceShaderContainer);
+
+    return true;
 }
 
-void EngineNode::runPipelines() {
-    pipelineBlock->runPipelines();
+bool EngineNode::bindShaderToPipeline(PipelineId pipelineId, MissShaderId shaderId,
+                                                const std::vector<ShaderResourceId> &resourceIds) {
+    auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
+    auto shader = pipelinePool->getShader(shaderId);
+
+    if (pipeline == nullptr || shader == nullptr) return false;
+
+    std::vector<ShaderResource *> shaderResources;
+
+    shaderResources.reserve(resourceIds.size());
+    for (auto shaderResource: resourceIds) {
+        shaderResources.push_back(pipelinePool->getShaderResource(shaderResource));
+    }
+
+    MissShaderContainer missShaderContainer = {shader, shaderResources};
+
+    pipeline->addShader(shaderId, missShaderContainer);
+
+    return true;
 }
 
-bool EngineNode::deleteBaseDataFragment(ObjectId id) {
-    return memoryBlock->deleteBaseDataFragment(id);
+ObjectId EngineNode::addObject(const Intersectable &object) {
+    auto buffer = objectIds.extract(objectIds.begin()).value();
+
+    objectIdDeviceMap[buffer] = deviceId;
+
+    // TODO: spread over nodes
+    auto clone = object.clone();
+    dmu->storeBaseDataFragments(std::move(clone), buffer);
+
+    if (objectIds.empty()) {
+        objectIds.insert(ObjectId{buffer.id + 1});
+    }
+
+    return buffer;
 }
 
-bool EngineNode::deleteInstanceDataFragment(InstanceId id) {
-    return memoryBlock->deleteInstanceDataFragment(id);
+bool EngineNode::removeObject(ObjectId id) {
+    if (!dmu->deleteBaseDataFragment(id)) return false;
+
+    // remove instances
+    for (auto instanceId: objectToInstanceMap.at(id)) {
+        for (auto &pipelineInstances: pipelineToInstanceMap) {
+            if (pipelineInstances.second.count(instanceId) != 0) {
+                removePipelineObject(pipelineInstances.first, instanceId);
+                pipelineInstances.second.erase(instanceId);
+                break;
+            }
+        }
+    }
+
+    objectIdDeviceMap.erase(id);
+
+    objectIds.insert(id);
+
+    auto iterator = objectIds.rbegin();
+    unsigned long end = iterator->id - 1;
+
+    unsigned long buffer = iterator->id;
+    while (end-- == (++iterator)->id) {
+        objectIds.erase(ObjectId{buffer});
+        buffer = iterator->id;
+    }
+
+    return true;
+}
+
+bool EngineNode::updateObject(ObjectId id, const Intersectable &object) {
+    if (dmu->deleteBaseDataFragment(id)) return false;
+    auto clone = object.clone();
+    dmu->storeBaseDataFragments(std::move(clone), id);
+    return true;
+}
+
+HitShaderId EngineNode::addShader(const HitShader &shader) {
+    auto shaderId = hitShaderIds.extract(hitShaderIds.begin()).value();
+
+    auto clone = shader.clone();
+    pipelinePool->addShader(shaderId, std::move(clone));
+
+    if (hitShaderIds.empty()) {
+        hitShaderIds.insert(HitShaderId{shaderId.id + 1});
+    }
+
+    return shaderId;
+}
+
+MissShaderId EngineNode::addShader(const MissShader &shader) {
+    auto shaderId = missShaderIds.extract(missShaderIds.begin()).value();
+
+    auto clone = shader.clone();
+    pipelinePool->addShader(shaderId, std::move(clone));
+
+    if (missShaderIds.empty()) {
+        missShaderIds.insert(MissShaderId{shaderId.id + 1});
+    }
+
+    return shaderId;
+}
+
+OcclusionShaderId EngineNode::addShader(const OcclusionShader &shader) {
+    auto shaderId = occlusionShaderIds.extract(occlusionShaderIds.begin()).value();
+
+    auto clone = shader.clone();
+    pipelinePool->addShader(shaderId, std::move(clone));
+
+    if (occlusionShaderIds.empty()) {
+        occlusionShaderIds.insert(OcclusionShaderId{shaderId.id + 1});
+    }
+
+    return shaderId;
+}
+
+PierceShaderId EngineNode::addShader(const PierceShader &shader) {
+    auto shaderId = pierceShaderIds.extract(pierceShaderIds.begin()).value();
+
+    auto clone = shader.clone();
+    pipelinePool->addShader(shaderId, std::move(clone));
+
+    if (pierceShaderIds.empty()) {
+        pierceShaderIds.insert(PierceShaderId{shaderId.id + 1});
+    }
+
+    return shaderId;
+}
+
+RayGeneratorShaderId EngineNode::addShader(const RayGeneratorShader &shader) {
+    auto shaderId = rayGeneratorShaderIds.extract(rayGeneratorShaderIds.begin()).value();
+
+    auto clone = shader.clone();
+    pipelinePool->addShader(shaderId, std::move(clone));
+
+    if (rayGeneratorShaderIds.empty()) {
+        rayGeneratorShaderIds.insert(RayGeneratorShaderId{shaderId.id + 1});
+    }
+
+    return shaderId;
+}
+
+bool EngineNode::removeShader(RayGeneratorShaderId id) {
+    if (!pipelinePool->deleteShader(id)) return false;
+    // TODO: remove shader from pipelines
+
+    rayGeneratorShaderIds.insert(id);
+
+    auto iterator = rayGeneratorShaderIds.rbegin();
+    unsigned long end = iterator->id - 1;
+
+    unsigned long buffer = iterator->id;
+    while (end-- == (++iterator)->id) {
+        rayGeneratorShaderIds.erase(RayGeneratorShaderId{buffer});
+        buffer = iterator->id;
+    }
+
+    return true;
+}
+
+bool EngineNode::removeShader(HitShaderId id) {
+    if (!pipelinePool->deleteShader(id)) return false;
+    // TODO: remove shader from pipelines
+
+    hitShaderIds.insert(id);
+
+    auto iterator = hitShaderIds.rbegin();
+    unsigned long end = iterator->id - 1;
+
+    unsigned long buffer = iterator->id;
+    while (end-- == (++iterator)->id) {
+        hitShaderIds.erase(HitShaderId{buffer});
+        buffer = iterator->id;
+    }
+
+    return true;
+}
+
+bool EngineNode::removeShader(OcclusionShaderId id) {
+    if (!pipelinePool->deleteShader(id)) return false;
+    // TODO: remove shader from pipelines
+
+    occlusionShaderIds.insert(id);
+
+    auto iterator = occlusionShaderIds.rbegin();
+    unsigned long end = iterator->id - 1;
+
+    unsigned long buffer = iterator->id;
+    while (end-- == (++iterator)->id) {
+        occlusionShaderIds.erase(OcclusionShaderId{buffer});
+        buffer = iterator->id;
+    }
+
+    return true;
+}
+
+bool EngineNode::removeShader(PierceShaderId id) {
+    if (!pipelinePool->deleteShader(id)) return false;
+    // TODO: remove shader from pipelines
+
+    pierceShaderIds.insert(id);
+
+    auto iterator = pierceShaderIds.rbegin();
+    unsigned long end = iterator->id - 1;
+
+    unsigned long buffer = iterator->id;
+    while (end-- == (++iterator)->id) {
+        pierceShaderIds.erase(PierceShaderId{buffer});
+        buffer = iterator->id;
+    }
+
+    return true;
+}
+
+bool EngineNode::removeShader(MissShaderId id) {
+    if (!pipelinePool->deleteShader(id)) return false;
+    // TODO: remove shader from pipelines
+
+    missShaderIds.insert(id);
+
+    auto iterator = missShaderIds.rbegin();
+    unsigned long end = iterator->id - 1;
+
+    unsigned long buffer = iterator->id;
+    while (end-- == (++iterator)->id) {
+        missShaderIds.erase(MissShaderId{buffer});
+        buffer = iterator->id;
+    }
+
+    return true;
+}
+
+ShaderResourceId EngineNode::addShaderResource(const ShaderResource &resource) {
+    auto shaderId = shaderResourceIds.extract(shaderResourceIds.begin()).value();
+
+    auto clone = resource.clone();
+    pipelinePool->storeShaderResource(std::move(clone), shaderId);
+
+    if (shaderResourceIds.empty()) {
+        shaderResourceIds.insert(ShaderResourceId{shaderId.id + 1});
+    }
+
+    return shaderId;
+}
+
+bool EngineNode::removeShaderResource(ShaderResourceId id) {
+    if (!pipelinePool->deleteShaderResource(id)) return false;
+
+    shaderResourceIds.insert(id);
+
+    auto iterator = shaderResourceIds.rbegin();
+    unsigned long end = iterator->id - 1;
+
+    unsigned long buffer = iterator->id;
+    while (end-- == (++iterator)->id) {
+        shaderResourceIds.erase(ShaderResourceId{buffer});
+        buffer = iterator->id;
+    }
+
+    return true;
+}
+
+int EngineNode::runPipeline(PipelineId id) {
+    pipelinePool->runPipeline(id);
+    return 0;
+}
+
+int EngineNode::runAllPipelines() {
+    pipelinePool->runPipelines();
+    return 0;
+}
+
+void
+EngineNode::updatePipelineCamera(PipelineId id, int resolutionX, int resolutionY,
+                                           const Vector3D &cameraPosition, const Vector3D &cameraDirection,
+                                           const Vector3D &cameraUp) {
+    auto pipeline = pipelinePool->getPipelineFragment(id);
+    pipeline->setResolution(resolutionX, resolutionY);
+    pipeline->setCamera(cameraPosition, cameraDirection, cameraUp);
+}
+
+Texture *EngineNode::getPipelineResult(PipelineId id) {
+    auto pipeline = pipelinePool->getPipelineFragment(id);
+    return pipeline->getResult();
+}
+
+DeviceId EngineNode::getDeviceId() {
+    // TODO
+    return DeviceId{0};
 }

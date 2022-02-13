@@ -5,189 +5,249 @@
 #ifndef RAYTRACEENGINE_ENGINENODE_H
 #define RAYTRACEENGINE_ENGINENODE_H
 
-#include "RayTraceEngine/Intersectable.h"
-#include "RayTraceEngine/Shader.h"
+#include "pipeline/PipelinePool.h"
+#include "data_management/DataManagementUnitV2.h"
+#include "bvh/DBVHv2.h"
+#include "utility/Id.h"
 #include "RayTraceEngine/Pipeline.h"
 #include <unordered_map>
-
-class Instance;
-
-class PipelineImplement;
-
-class DataManagementUnitV2;
-
-class ShaderResource;
-
-struct DBVHNode;
+#include <set>
 
 class EngineNode {
 private:
-    class MemoryBlock {
-    private:
-        std::unordered_map<ObjectId, std::unique_ptr<Intersectable>> objects;
-        std::unordered_map<InstanceId, std::unique_ptr<Instance>> objectInstances;
+    std::unique_ptr<DataManagementUnitV2> dmu;
+    std::unique_ptr<PipelinePool> pipelinePool;
 
-        std::unordered_map<ObjectId, std::unique_ptr<Intersectable>> objectCache;
-        std::unordered_map<InstanceId, std::unique_ptr<Instance>> objectInstanceCache;
+    DeviceId deviceId;
 
-        std::unordered_map<ShaderResourceId, std::unique_ptr<ShaderResource>> shaderResources;
+    // stored only in main DMU
+    std::set<ObjectId> objectIds;
+    std::set<InstanceId> objectInstanceIds;
+    std::set<RayGeneratorShaderId> rayGeneratorShaderIds;
+    std::set<HitShaderId> hitShaderIds;
+    std::set<OcclusionShaderId> occlusionShaderIds;
+    std::set<PierceShaderId> pierceShaderIds;
+    std::set<MissShaderId> missShaderIds;
+    std::set<ShaderResourceId> shaderResourceIds;
+    std::set<PipelineId> pipelineIds;
+    std::unordered_map<ObjectId, std::set<InstanceId>> objectToInstanceMap;
+    std::unordered_map<PipelineId, std::set<InstanceId>> pipelineToInstanceMap;
 
-    public:
-        MemoryBlock();
+    //std::unordered_map<int, PipelineImplement *> pipelines; // groups  pipeline information, copied to every node
 
-        ~MemoryBlock();
+    // maps ids to devices holding the data
+    std::unordered_map<ObjectId, DeviceId> objectIdDeviceMap;
+    std::unordered_map<InstanceId, DeviceId> objectInstanceIdDeviceMap;
+    std::unordered_map<DBVHNode *, DeviceId> pipelineTreeDeviceMap;
 
-        void storeBaseDataFragments(std::unique_ptr<Intersectable> object, ObjectId id);
-
-        bool deleteBaseDataFragment(ObjectId id);
-
-        Intersectable *getBaseDataFragment(ObjectId id);
-
-        void storeInstanceDataFragments(std::unique_ptr<Instance> instance, InstanceId id);
-
-        bool deleteInstanceDataFragment(InstanceId id);
-
-        Instance *getInstanceDataFragment(InstanceId id);
-
-        void cacheBaseData(std::unique_ptr<Intersectable> object, ObjectId id);
-
-        void cacheInstanceData(std::unique_ptr<Instance> instance, InstanceId id);
-
-        void storeShaderResource(std::unique_ptr<ShaderResource> shaderResource, ShaderResourceId id);
-
-        ShaderResource *getShaderResource(ShaderResourceId id);
-
-        bool deleteShaderResource(ShaderResourceId id);
-    };
-
-    class PipelineBlock {
-    private:
-        std::unordered_map<PipelineId, std::unique_ptr<PipelineImplement>> pipelines;
-        std::unordered_map<DBVHNode *, DBVHNode *> pipelineCache;
-
-        std::unordered_map<HitShaderId, std::unique_ptr<HitShader>> hitShaders;
-        std::unordered_map<MissShaderId, std::unique_ptr<MissShader>> missShaders;
-        std::unordered_map<OcclusionShaderId, std::unique_ptr<OcclusionShader>> occlusionShaders;
-        std::unordered_map<PierceShaderId, std::unique_ptr<PierceShader>> pierceShaders;
-        std::unordered_map<RayGeneratorShaderId, std::unique_ptr<RayGeneratorShader>> rayGeneratorShaders;
-
-    public:
-        PipelineBlock();
-
-        ~PipelineBlock();
-
-        void storePipelineFragments(std::unique_ptr<PipelineImplement> pipeline, PipelineId id);
-
-        bool deletePipelineFragment(PipelineId id);
-
-        PipelineImplement *getPipelineFragment(PipelineId id);
-
-        void addShader(RayGeneratorShaderId id, std::unique_ptr<RayGeneratorShader> shader);
-
-        void addShader(HitShaderId id, std::unique_ptr<HitShader> shader);
-
-        void addShader(OcclusionShaderId id, std::unique_ptr<OcclusionShader> shader);
-
-        void addShader(PierceShaderId id, std::unique_ptr<PierceShader> shader);
-
-        void addShader(MissShaderId id, std::unique_ptr<MissShader> shader);
-
-        RayGeneratorShader *getShader(RayGeneratorShaderId id);
-
-        HitShader *getShader(HitShaderId id);
-
-        OcclusionShader *getShader(OcclusionShaderId id);
-
-        PierceShader *getShader(PierceShaderId id);
-
-        MissShader *getShader(MissShaderId id);
-
-        bool deleteShader(RayGeneratorShaderId id);
-
-        bool deleteShader(HitShaderId id);
-
-        bool deleteShader(OcclusionShaderId id);
-
-        bool deleteShader(PierceShaderId id);
-
-        bool deleteShader(MissShaderId id);
-
-        void runPipeline(PipelineId id);
-
-        void runPipelines();
-    };
-
-    DataManagementUnitV2 *dataManagementUnit;
-
-    std::unique_ptr<MemoryBlock> memoryBlock;
-    std::unique_ptr<PipelineBlock> pipelineBlock;
+    DeviceId getDeviceId();
 
 public:
-    explicit EngineNode(DataManagementUnitV2 *DMU);
+    EngineNode();
 
     ~EngineNode();
 
-    void storeBaseDataFragments(std::unique_ptr<Intersectable> object, ObjectId id);
+    /*
+     * Adds a pipeline to the pipeline pool.
+     * return:          the id of the added pipeline
+     */
+    PipelineId createPipeline(PipelineDescription &pipelineDescription);
 
-    bool deleteBaseDataFragment(ObjectId id);
+    void updatePipelineCamera(PipelineId id, int resolutionX, int resolutionY, const Vector3D &cameraPosition,
+                              const Vector3D &cameraDirection, const Vector3D &cameraUp);
 
-    void storeInstanceDataFragments(std::unique_ptr<Instance> instance, InstanceId id);
+    Texture *getPipelineResult(PipelineId id);
 
-    bool deleteInstanceDataFragment(InstanceId id);
+    /*
+     * Removes a pipeline by id.
+     * return:          true if success, false otherwise
+     */
+    bool removePipeline(PipelineId id);
 
-    void cacheBaseData(std::unique_ptr<Intersectable> object, ObjectId id);
+    /*
+     * Binds a list of objects by id to a pipeline by id. These object will be used as geometry in the ray trace stage
+     * of the pipeline on execution.
+     * pipelineId:      the pipeline id the geometry gets bound to
+     * objectIDs:       the object ids of the new object instances
+     * position:        the relative position of the object in space
+     * orientation:     the relative orientation of the object in space
+     * newScaleFactor:  the relative scale of the object in space
+     * objectParameter: object specific information in addition to geometry
+     * return:          true if success, false otherwise, objectIDs will be overwritten with object instance ids
+     */
+    bool bindGeometryToPipeline(PipelineId pipelineId, const std::vector<ObjectId> &objectIDs,
+                                const std::vector<Matrix4x4> &transforms,
+                                const std::vector<ObjectParameter> &objectParameters,
+                                std::vector<InstanceId> &instanceIDs);
 
-    void cacheInstanceData(std::unique_ptr<Instance> instance, InstanceId id);
+    /*
+     * Binds a shader with its resources to a pipeline.
+     * pipelineId:      the pipeline id, the shader with its resources gets bound to
+     * shaderId:        the shader id
+     * shaderResourceIds:   the vector of shader resource ids that are associated with the shader
+     * return:          true if success, false otherwise, shaderId will be overwritten with shader instance id
+     */
+    bool bindShaderToPipeline(PipelineId pipelineId, RayGeneratorShaderId shaderId,
+                              const std::vector<ShaderResourceId> &shaderResourceIds);
 
-    void storeShaderResource(std::unique_ptr<ShaderResource> shaderResource, ShaderResourceId id);
+    bool bindShaderToPipeline(PipelineId pipelineId, HitShaderId shaderId,
+                              const std::vector<ShaderResourceId> &shaderResourceIds);
 
-    bool deleteShaderResource(ShaderResourceId id);
+    bool bindShaderToPipeline(PipelineId pipelineId, OcclusionShaderId shaderId,
+                              const std::vector<ShaderResourceId> &shaderResourceIds);
 
-    ShaderResource *getShaderResource(ShaderResourceId id);
+    bool bindShaderToPipeline(PipelineId pipelineId, PierceShaderId shaderId,
+                              const std::vector<ShaderResourceId> &shaderResourceIds);
 
-    void storePipelineFragments(std::unique_ptr<PipelineImplement> pipeline, PipelineId id);
+    bool bindShaderToPipeline(PipelineId pipelineId, MissShaderId shaderId,
+                              const std::vector<ShaderResourceId> &shaderResourceIds);
 
-    bool deletePipelineFragment(PipelineId id);
+    /*
+     * Changes existing object instance in pipeline.
+     * pipelineId:      the pipeline the object instance is associated with
+     * objectInstanceId:    the object instances id
+     * position:        the new position of the object
+     * orientation:     the new orientation of the object
+     * newScaleFactor:  the new scale of the object
+     * objectParameter: the new object parameters
+     * return:          true if success, false otherwise
+     */
+    bool updatePipelineObjects(PipelineId pipelineId, const std::vector<InstanceId> &objectInstanceIDs,
+                               const std::vector<Matrix4x4> &transforms,
+                               const std::vector<ObjectParameter> &objectParameters);
 
-    Intersectable *requestBaseData(ObjectId id);
+    /*
+     * Changes existing shader instance in pipeline
+     * pipelineId:      the pipeline the shader instance is associated with
+     * shaderInstanceId:    the shaders instance id
+     * shaderResourceIds:   the shaders new resources
+     * return:          true if success, false otherwise
+     */
+    bool updatePipelineShader(PipelineId pipelineId, RayGeneratorShaderId shaderId,
+                              const std::vector<ShaderResourceId> &shaderResourceIds);
 
-    Instance *requestInstanceData(InstanceId id);
+    bool updatePipelineShader(PipelineId pipelineId, HitShaderId shaderId,
+                              const std::vector<ShaderResourceId> &shaderResourceIds);
 
-    PipelineImplement *requestPipelineFragment(PipelineId id);
+    bool updatePipelineShader(PipelineId pipelineId, OcclusionShaderId shaderId,
+                              const std::vector<ShaderResourceId> &shaderResourceIds);
 
-    void addShader(RayGeneratorShaderId id, std::unique_ptr<RayGeneratorShader> shader);
+    bool updatePipelineShader(PipelineId pipelineId, PierceShaderId shaderId,
+                              const std::vector<ShaderResourceId> &shaderResourceIds);
 
-    void addShader(HitShaderId id, std::unique_ptr<HitShader> shader);
+    bool updatePipelineShader(PipelineId pipelineId, MissShaderId shaderId,
+                              const std::vector<ShaderResourceId> &shaderResourceIds);
 
-    void addShader(OcclusionShaderId id, std::unique_ptr<OcclusionShader> shader);
+    /*
+     * Removes a single object instance from the specified pipeline.
+     * pipelineId:      the pipeline the object instance is associated with
+     * objectInstanceId:    the objects instance id
+     * return:          true if success, false otherwise
+     */
+    bool removePipelineObject(PipelineId pipelineId, InstanceId objectInstanceId);
 
-    void addShader(PierceShaderId id, std::unique_ptr<PierceShader> shader);
+    /*
+     * Removes a single shader instance from the specified pipeline.
+     * pipelineId:      the pipeline the object instance is associated with
+     * shaderInstanceId:    the shaders instance id    objects.erase(id);
+     * return:          true if success, false otherwise
+     */
+    bool removePipelineShader(PipelineId pipelineId, RayGeneratorShaderId shaderId);
 
-    void addShader(MissShaderId id, std::unique_ptr<MissShader> shader);
+    bool removePipelineShader(PipelineId pipelineId, HitShaderId shaderId);
 
-    RayGeneratorShader *getShader(RayGeneratorShaderId id);
+    bool removePipelineShader(PipelineId pipelineId, OcclusionShaderId shaderId);
 
-    HitShader *getShader(HitShaderId id);
+    bool removePipelineShader(PipelineId pipelineId, PierceShaderId shaderId);
 
-    OcclusionShader *getShader(OcclusionShaderId id);
+    bool removePipelineShader(PipelineId pipelineId, MissShaderId shaderId);
 
-    PierceShader *getShader(PierceShaderId id);
+    /*
+     * Adds an object to the object pool.
+     * object:          the basic definition of the object
+     * return:          the id of the object
+     */
+    ObjectId addObject(const Intersectable &object);
 
-    MissShader *getShader(MissShaderId id);
+    /*
+     * Removes an object from the pool by id.
+     * return:          true if success, false otherwise
+     */
+    bool removeObject(ObjectId id);
 
-    bool deleteShader(RayGeneratorShaderId id);
+    /*
+     * Updates an objects mesh to a new mesh given by object.
+     * return:          true if success, false otherwise
+     */
+    bool updateObject(ObjectId id, const Intersectable &object);
 
-    bool deleteShader(HitShaderId id);
+    /*
+     * Adds a hit shader to the shader pool.
+     * shader:          the added shader
+     * return:          the id of the shader
+     */
+    HitShaderId addShader(const HitShader &shader);
 
-    bool deleteShader(OcclusionShaderId id);
+    /*
+     * Adds a miss shader to the shader pool.
+     * shader:          the added shader
+     * return:          the id of the shader
+     */
+    MissShaderId addShader(const MissShader &shader);
 
-    bool deleteShader(PierceShaderId id);
+    /*
+     * Adds an occlusion shader to the shader pool.
+     * shader:          the added shader
+     * return:          the id of the shader
+     */
+    OcclusionShaderId addShader(const OcclusionShader &shader);
 
-    bool deleteShader(MissShaderId id);
+    /*
+     * Adds a pierce shader to the shader pool.
+     * shader:          the added shader
+     * return:          the id of the shader
+     */
+    PierceShaderId addShader(const PierceShader &shader);
 
-    void runPipeline(PipelineId id);
+    /*
+     * Adds a ray generator shader to the shader pool.
+     * shader:          the added shader
+     * return:          the id of the shader
+     */
+    RayGeneratorShaderId addShader(const RayGeneratorShader &shader);
 
-    void runPipelines();
+    /*
+     * Removes the shader from the pool.
+     * id:              the id of the shader
+     * return:          true if success, false otherwise
+     */
+    bool removeShader(RayGeneratorShaderId id);
+
+    bool removeShader(HitShaderId id);
+
+    bool removeShader(OcclusionShaderId id);
+
+    bool removeShader(PierceShaderId id);
+
+    bool removeShader(MissShaderId id);
+
+    /*
+     * Adds shader related data to the pool.
+     * resource:        the data that is used by a shader
+     * return:          the id of the resource
+     */
+    ShaderResourceId addShaderResource(const ShaderResource &resource);
+
+    /*
+     * Removes the shader resource from the pool.
+     * id:              the id of the resource
+     * return:          true if success, false otherwise
+     */
+    bool removeShaderResource(ShaderResourceId id);
+
+    int runPipeline(PipelineId id);
+
+    int runAllPipelines();
 };
 
 #endif //RAYTRACEENGINE_ENGINENODE_H
