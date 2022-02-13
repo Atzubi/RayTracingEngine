@@ -20,7 +20,7 @@ private:
 
     DeviceId deviceId;
 
-    // stored only in main DMU
+    // stored only in main node
     std::set<ObjectId> objectIds;
     std::set<InstanceId> objectInstanceIds;
     std::set<RayGeneratorShaderId> rayGeneratorShaderIds;
@@ -32,8 +32,6 @@ private:
     std::set<PipelineId> pipelineIds;
     std::unordered_map<ObjectId, std::set<InstanceId>> objectToInstanceMap;
     std::unordered_map<PipelineId, std::set<InstanceId>> pipelineToInstanceMap;
-
-    //std::unordered_map<int, PipelineImplement *> pipelines; // groups  pipeline information, copied to every node
 
     // maps ids to devices holding the data
     std::unordered_map<ObjectId, DeviceId> objectIdDeviceMap;
