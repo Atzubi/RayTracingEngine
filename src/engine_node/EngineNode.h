@@ -85,19 +85,8 @@ public:
      * shaderResourceIds:   the vector of shader resource ids that are associated with the shader
      * return:          true if success, false otherwise, shaderId will be overwritten with shader instance id
      */
-    bool bindShaderToPipeline(PipelineId pipelineId, RayGeneratorShaderId shaderId,
-                              const std::vector<ShaderResourceId> &shaderResourceIds);
-
-    bool bindShaderToPipeline(PipelineId pipelineId, HitShaderId shaderId,
-                              const std::vector<ShaderResourceId> &shaderResourceIds);
-
-    bool bindShaderToPipeline(PipelineId pipelineId, OcclusionShaderId shaderId,
-                              const std::vector<ShaderResourceId> &shaderResourceIds);
-
-    bool bindShaderToPipeline(PipelineId pipelineId, PierceShaderId shaderId,
-                              const std::vector<ShaderResourceId> &shaderResourceIds);
-
-    bool bindShaderToPipeline(PipelineId pipelineId, MissShaderId shaderId,
+    template<class ID>
+    bool bindShaderToPipeline(PipelineId pipelineId, ID shaderId,
                               const std::vector<ShaderResourceId> &shaderResourceIds);
 
     /*

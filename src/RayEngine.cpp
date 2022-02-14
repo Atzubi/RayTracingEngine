@@ -51,27 +51,27 @@ bool RayEngine::updateObject(ObjectId id, const Intersectable &object) {
 
 bool RayEngine::bindShaderToPipeline(PipelineId pipelineId, RayGeneratorShaderId shaderId,
                                      std::vector<ShaderResourceId> &shaderResourceIds) {
-    return engineNode->bindShaderToPipeline(pipelineId, shaderId, shaderResourceIds);
+    return engineNode->bindShaderToPipeline<RayGeneratorShaderId>(pipelineId, shaderId, shaderResourceIds);
 }
 
 bool RayEngine::bindShaderToPipeline(PipelineId pipelineId, HitShaderId shaderId,
                                      std::vector<ShaderResourceId> &shaderResourceIds) {
-    return engineNode->bindShaderToPipeline(pipelineId, shaderId, shaderResourceIds);
+    return engineNode->bindShaderToPipeline<HitShaderId>(pipelineId, shaderId, shaderResourceIds);
 }
 
 bool RayEngine::bindShaderToPipeline(PipelineId pipelineId, OcclusionShaderId shaderId,
                                      std::vector<ShaderResourceId> &shaderResourceIds) {
-    return engineNode->bindShaderToPipeline(pipelineId, shaderId, shaderResourceIds);
+    return engineNode->bindShaderToPipeline<OcclusionShaderId>(pipelineId, shaderId, shaderResourceIds);
 }
 
 bool RayEngine::bindShaderToPipeline(PipelineId pipelineId, PierceShaderId shaderId,
                                      std::vector<ShaderResourceId> &shaderResourceIds) {
-    return engineNode->bindShaderToPipeline(pipelineId, shaderId, shaderResourceIds);
+    return engineNode->bindShaderToPipeline<PierceShaderId>(pipelineId, shaderId, shaderResourceIds);
 }
 
 bool RayEngine::bindShaderToPipeline(PipelineId pipelineId, MissShaderId shaderId,
                                      std::vector<ShaderResourceId> &shaderResourceIds) {
-    return engineNode->bindShaderToPipeline(pipelineId, shaderId, shaderResourceIds);
+    return engineNode->bindShaderToPipeline<MissShaderId>(pipelineId, shaderId, shaderResourceIds);
 }
 
 HitShaderId RayEngine::addShader(const HitShader &shader) {
