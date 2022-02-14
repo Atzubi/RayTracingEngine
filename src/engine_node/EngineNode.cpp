@@ -223,88 +223,6 @@ EngineNode::updatePipelineObjects(PipelineId pipelineId, const std::vector<Insta
     return true;
 }
 
-
-bool
-EngineNode::updatePipelineShader(PipelineId pipelineId, RayGeneratorShaderId shaderId,
-                                 const std::vector<ShaderResourceId> &resourceIds) {
-    auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
-
-    if (pipeline == nullptr) return false;
-
-    std::vector<ShaderResource *> shaderResources;
-
-    shaderResources.reserve(resourceIds.size());
-    for (auto shaderResource: resourceIds) {
-        shaderResources.push_back(pipelinePool->getShaderResource(shaderResource));
-    }
-
-    return pipeline->updateShader(shaderId, shaderResources);
-}
-
-bool EngineNode::updatePipelineShader(PipelineId pipelineId, HitShaderId shaderId,
-                                      const std::vector<ShaderResourceId> &resourceIds) {
-    auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
-
-    if (pipeline == nullptr) return false;
-
-    std::vector<ShaderResource *> shaderResources;
-
-    shaderResources.reserve(resourceIds.size());
-    for (auto shaderResource: resourceIds) {
-        shaderResources.push_back(pipelinePool->getShaderResource(shaderResource));
-    }
-
-    return pipeline->updateShader(shaderId, shaderResources);
-}
-
-bool EngineNode::updatePipelineShader(PipelineId pipelineId, OcclusionShaderId shaderId,
-                                      const std::vector<ShaderResourceId> &resourceIds) {
-    auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
-
-    if (pipeline == nullptr) return false;
-
-    std::vector<ShaderResource *> shaderResources;
-
-    shaderResources.reserve(resourceIds.size());
-    for (auto shaderResource: resourceIds) {
-        shaderResources.push_back(pipelinePool->getShaderResource(shaderResource));
-    }
-
-    return pipeline->updateShader(shaderId, shaderResources);
-}
-
-bool EngineNode::updatePipelineShader(PipelineId pipelineId, PierceShaderId shaderId,
-                                      const std::vector<ShaderResourceId> &resourceIds) {
-    auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
-
-    if (pipeline == nullptr) return false;
-
-    std::vector<ShaderResource *> shaderResources;
-
-    shaderResources.reserve(resourceIds.size());
-    for (auto shaderResource: resourceIds) {
-        shaderResources.push_back(pipelinePool->getShaderResource(shaderResource));
-    }
-
-    return pipeline->updateShader(shaderId, shaderResources);
-}
-
-bool EngineNode::updatePipelineShader(PipelineId pipelineId, MissShaderId shaderId,
-                                      const std::vector<ShaderResourceId> &resourceIds) {
-    auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
-
-    if (pipeline == nullptr) return false;
-
-    std::vector<ShaderResource *> shaderResources;
-
-    shaderResources.reserve(resourceIds.size());
-    for (auto shaderResource: resourceIds) {
-        shaderResources.push_back(pipelinePool->getShaderResource(shaderResource));
-    }
-
-    return pipeline->updateShader(shaderId, shaderResources);
-}
-
 bool EngineNode::removePipelineObject(PipelineId pipelineId, InstanceId objectInstanceId) {
     if (objectInstanceIdDeviceMap.count(objectInstanceId) == 1) {
         if (objectInstanceIdDeviceMap[objectInstanceId] == deviceId) {
@@ -322,46 +240,6 @@ bool EngineNode::removePipelineObject(PipelineId pipelineId, InstanceId objectIn
         }
     }
     return false;
-}
-
-bool EngineNode::removePipelineShader(PipelineId pipelineId, RayGeneratorShaderId shaderInstanceId) {
-    auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
-
-    if (pipeline == nullptr) return false;
-
-    return pipeline->removeShader(shaderInstanceId);
-}
-
-bool EngineNode::removePipelineShader(PipelineId pipelineId, HitShaderId shaderInstanceId) {
-    auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
-
-    if (pipeline == nullptr) return false;
-
-    return pipeline->removeShader(shaderInstanceId);
-}
-
-bool EngineNode::removePipelineShader(PipelineId pipelineId, OcclusionShaderId shaderInstanceId) {
-    auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
-
-    if (pipeline == nullptr) return false;
-
-    return pipeline->removeShader(shaderInstanceId);
-}
-
-bool EngineNode::removePipelineShader(PipelineId pipelineId, PierceShaderId shaderInstanceId) {
-    auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
-
-    if (pipeline == nullptr) return false;
-
-    return pipeline->removeShader(shaderInstanceId);
-}
-
-bool EngineNode::removePipelineShader(PipelineId pipelineId, MissShaderId shaderInstanceId) {
-    auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
-
-    if (pipeline == nullptr) return false;
-
-    return pipeline->removeShader(shaderInstanceId);
 }
 
 bool

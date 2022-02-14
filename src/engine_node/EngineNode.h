@@ -111,19 +111,9 @@ public:
      * shaderResourceIds:   the shaders new resources
      * return:          true if success, false otherwise
      */
-    bool updatePipelineShader(PipelineId pipelineId, RayGeneratorShaderId shaderId,
-                              const std::vector<ShaderResourceId> &shaderResourceIds);
-
-    bool updatePipelineShader(PipelineId pipelineId, HitShaderId shaderId,
-                              const std::vector<ShaderResourceId> &shaderResourceIds);
-
-    bool updatePipelineShader(PipelineId pipelineId, OcclusionShaderId shaderId,
-                              const std::vector<ShaderResourceId> &shaderResourceIds);
-
-    bool updatePipelineShader(PipelineId pipelineId, PierceShaderId shaderId,
-                              const std::vector<ShaderResourceId> &shaderResourceIds);
-
-    bool updatePipelineShader(PipelineId pipelineId, MissShaderId shaderId,
+    template<class ID>
+    requires isShaderId<ID>
+    bool updatePipelineShader(PipelineId pipelineId, ID shaderId,
                               const std::vector<ShaderResourceId> &shaderResourceIds);
 
     /*
@@ -140,15 +130,9 @@ public:
      * shaderInstanceId:    the shaders instance id    objects.erase(id);
      * return:          true if success, false otherwise
      */
-    bool removePipelineShader(PipelineId pipelineId, RayGeneratorShaderId shaderId);
-
-    bool removePipelineShader(PipelineId pipelineId, HitShaderId shaderId);
-
-    bool removePipelineShader(PipelineId pipelineId, OcclusionShaderId shaderId);
-
-    bool removePipelineShader(PipelineId pipelineId, PierceShaderId shaderId);
-
-    bool removePipelineShader(PipelineId pipelineId, MissShaderId shaderId);
+    template<class ID>
+    requires isShaderId<ID>
+    bool removePipelineShader(PipelineId pipelineId, ID shaderId);
 
     /*
      * Adds an object to the object pool.
