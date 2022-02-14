@@ -5,6 +5,27 @@
 #include "EngineNode.h"
 #include <functional>
 
+namespace {
+    template<class ID>
+    requires isShaderId<ID>
+    bool helpRemoveShader(PipelinePool &pipelinePool, ID id, IdContainer<ID> &ids) {
+        if (!pipelinePool.deleteShader(id)) return false;
+        ids.remove(id);
+        return true;
+    }
+
+    template<class ID, class Shader>
+    requires isShaderId<ID> && isShader<Shader>
+    ID helpAddShader(const Shader &shader, PipelinePool &pipelinePool, IdContainer<ID> &ids) {
+        auto shaderId = ids.next();
+
+        auto clone = shader.clone();
+        pipelinePool.addShader(shaderId, std::move(clone));
+
+        return shaderId;
+    }
+}
+
 EngineNode::EngineNode() : deviceId(getDeviceId()) {
     dmu = std::make_unique<DataManagementUnitV2>();
     pipelinePool = std::make_unique<PipelinePool>();
@@ -297,78 +318,43 @@ bool EngineNode::updateObject(ObjectId id, const Intersectable &object) {
 }
 
 HitShaderId EngineNode::addShader(const HitShader &shader) {
-    auto shaderId = hitShaderIds.next();
-
-    auto clone = shader.clone();
-    pipelinePool->addShader(shaderId, std::move(clone));
-
-    return shaderId;
+    return helpAddShader(shader, *pipelinePool, hitShaderIds);
 }
 
 MissShaderId EngineNode::addShader(const MissShader &shader) {
-    auto shaderId = missShaderIds.next();
-
-    auto clone = shader.clone();
-    pipelinePool->addShader(shaderId, std::move(clone));
-
-    return shaderId;
+    return helpAddShader(shader, *pipelinePool, missShaderIds);
 }
 
 OcclusionShaderId EngineNode::addShader(const OcclusionShader &shader) {
-    auto shaderId = occlusionShaderIds.next();
-
-    auto clone = shader.clone();
-    pipelinePool->addShader(shaderId, std::move(clone));
-
-    return shaderId;
+    return helpAddShader(shader, *pipelinePool, occlusionShaderIds);
 }
 
 PierceShaderId EngineNode::addShader(const PierceShader &shader) {
-    auto shaderId = pierceShaderIds.next();
-
-    auto clone = shader.clone();
-    pipelinePool->addShader(shaderId, std::move(clone));
-
-    return shaderId;
+    return helpAddShader(shader, *pipelinePool, pierceShaderIds);
 }
 
 RayGeneratorShaderId EngineNode::addShader(const RayGeneratorShader &shader) {
-    auto shaderId = rayGeneratorShaderIds.next();
-
-    auto clone = shader.clone();
-    pipelinePool->addShader(shaderId, std::move(clone));
-
-    return shaderId;
+    return helpAddShader(shader, *pipelinePool, rayGeneratorShaderIds);
 }
 
 bool EngineNode::removeShader(RayGeneratorShaderId id) {
-    if (!pipelinePool->deleteShader(id)) return false;
-    rayGeneratorShaderIds.remove(id);
-    return true;
+    return helpRemoveShader(*pipelinePool, id, rayGeneratorShaderIds);
 }
 
 bool EngineNode::removeShader(HitShaderId id) {
-    if (!pipelinePool->deleteShader(id)) return false;
-    hitShaderIds.remove(id);
-    return true;
+    return helpRemoveShader(*pipelinePool, id, hitShaderIds);
 }
 
 bool EngineNode::removeShader(OcclusionShaderId id) {
-    if (!pipelinePool->deleteShader(id)) return false;
-    occlusionShaderIds.remove(id);
-    return true;
+    return helpRemoveShader(*pipelinePool, id, occlusionShaderIds);
 }
 
 bool EngineNode::removeShader(PierceShaderId id) {
-    if (!pipelinePool->deleteShader(id)) return false;
-    pierceShaderIds.remove(id);
-    return true;
+    return helpRemoveShader(*pipelinePool, id, pierceShaderIds);
 }
 
 bool EngineNode::removeShader(MissShaderId id) {
-    if (!pipelinePool->deleteShader(id)) return false;
-    missShaderIds.remove(id);
-    return true;
+    return helpRemoveShader(*pipelinePool, id, missShaderIds);
 }
 
 ShaderResourceId EngineNode::addShaderResource(const ShaderResource &resource) {

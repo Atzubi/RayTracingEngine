@@ -38,12 +38,14 @@ struct MissShaderResourcePackage {
 class ShaderResource {
 public:
     [[nodiscard]] virtual std::unique_ptr<ShaderResource> clone() const = 0;
+
     virtual ~ShaderResource() = default;
 };
 
 class RayResource {
 public:
     [[nodiscard]] virtual std::unique_ptr<RayResource> clone() const = 0;
+
     virtual ~RayResource() = default;
 };
 
@@ -251,5 +253,10 @@ public:
 
     [[nodiscard]] virtual std::unique_ptr<MissShader> clone() const = 0;
 };
+
+template<class Shader>
+concept isShader = std::same_as<Shader, RayGeneratorShader> || std::same_as<Shader, HitShader> ||
+                   std::same_as<Shader, OcclusionShader> || std::same_as<Shader, PierceShader> ||
+                   std::same_as<Shader, MissShader>;
 
 #endif //RAYTRACECORE_SHADER_H
