@@ -28,6 +28,7 @@ jobs:
     
     - name: switch to gcc-10 on linux
       run: |
+        sudo apt update
         sudo apt install gcc-10 g++-10
       shell: bash
         
