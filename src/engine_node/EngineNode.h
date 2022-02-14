@@ -9,6 +9,7 @@
 #include "data_management/DataManagementUnitV2.h"
 #include "bvh/DBVHv2.h"
 #include "utility/Id.h"
+#include "utility/IdContainer.h"
 #include "RayTraceEngine/Pipeline.h"
 #include <unordered_map>
 #include <set>
@@ -21,15 +22,15 @@ private:
     DeviceId deviceId;
 
     // stored only in main node
-    std::set<ObjectId> objectIds;
-    std::set<InstanceId> objectInstanceIds;
-    std::set<RayGeneratorShaderId> rayGeneratorShaderIds;
-    std::set<HitShaderId> hitShaderIds;
-    std::set<OcclusionShaderId> occlusionShaderIds;
-    std::set<PierceShaderId> pierceShaderIds;
-    std::set<MissShaderId> missShaderIds;
-    std::set<ShaderResourceId> shaderResourceIds;
-    std::set<PipelineId> pipelineIds;
+    IdContainer<ObjectId> objectIds;
+    IdContainer<InstanceId> objectInstanceIds;
+    IdContainer<RayGeneratorShaderId> rayGeneratorShaderIds;
+    IdContainer<HitShaderId> hitShaderIds;
+    IdContainer<OcclusionShaderId> occlusionShaderIds;
+    IdContainer<PierceShaderId> pierceShaderIds;
+    IdContainer<MissShaderId> missShaderIds;
+    IdContainer<ShaderResourceId> shaderResourceIds;
+    IdContainer<PipelineId> pipelineIds;
     std::unordered_map<ObjectId, std::set<InstanceId>> objectToInstanceMap;
     std::unordered_map<PipelineId, std::set<InstanceId>> pipelineToInstanceMap;
 
@@ -100,7 +101,7 @@ public:
      * objectParameter: the new object parameters
      * return:          true if success, false otherwise
      */
-    bool updatePipelineObjects(PipelineId pipelineId, const std::vector<InstanceId> &objectInstanceIDs,
+    bool updatePipelineObjects(PipelineId pipelineId, const std::vector<InstanceId> &instanceIds,
                                const std::vector<Matrix4x4> &transforms,
                                const std::vector<ObjectParameter> &objectParameters);
 

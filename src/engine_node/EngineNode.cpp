@@ -5,36 +5,9 @@
 #include "EngineNode.h"
 #include <functional>
 
-namespace {
-    template<class ID>
-    void removeId(std::set<ID> &set, ID id) {
-        static_assert(std::is_base_of<GenericId, ID>::value, "ID must inherit from GenericId");
-        set.insert(id);
-
-        auto iterator = set.rbegin();
-        unsigned long end = iterator->id - 1;
-
-        unsigned long buffer = iterator->id;
-        while (end-- == (++iterator)->id) {
-            set.erase({buffer});
-            buffer = iterator->id;
-        }
-    }
-}
-
 EngineNode::EngineNode() : deviceId(getDeviceId()) {
     dmu = std::make_unique<DataManagementUnitV2>();
     pipelinePool = std::make_unique<PipelinePool>();
-
-    objectIds.insert(ObjectId{0});
-    rayGeneratorShaderIds.insert(RayGeneratorShaderId{0});
-    hitShaderIds.insert(HitShaderId{0});
-    occlusionShaderIds.insert(OcclusionShaderId{0});
-    pierceShaderIds.insert(PierceShaderId{0});
-    missShaderIds.insert(MissShaderId{0});
-    pipelineIds.insert(PipelineId{0});
-    objectInstanceIds.insert(InstanceId{0});
-    shaderResourceIds.insert(ShaderResourceId{0});
 }
 
 EngineNode::~EngineNode() = default;
@@ -58,10 +31,7 @@ PipelineId EngineNode::createPipeline(PipelineDescription &pipelineDescription) 
                 instances.push_back(instance.get());
 
                 // manage instance ids
-                auto instanceId = objectInstanceIds.extract(objectInstanceIds.begin()).value();
-                if (objectInstanceIds.empty()) {
-                    objectInstanceIds.insert(InstanceId{instanceId.id + 1});
-                }
+                auto instanceId = objectInstanceIds.next();
                 pipelineDescription.objectInstanceIDs->push_back(instanceId);
                 objectToInstanceMap[i].insert(instanceId);
                 instanceIds.push_back(instanceId);
@@ -169,16 +139,12 @@ PipelineId EngineNode::createPipeline(PipelineDescription &pipelineDescription) 
                                                         pipelinePierceShaders,
                                                         pipelineMissShaders, std::move(root));
 
-    auto pipelineId = pipelineIds.extract(pipelineIds.begin()).value();
+    auto pipelineId = pipelineIds.next();
 
     // map instances to pipeline
     pipelineToInstanceMap[pipelineId].insert(instanceIds.begin(), instanceIds.end());
 
     pipelinePool->storePipelineFragments(std::move(pipeline), pipelineId);
-
-    if (pipelineIds.empty()) {
-        pipelineIds.insert(PipelineId{pipelineId.id + 1});
-    }
 
     // broadcast pipeline to all engine nodes
     // TODO
@@ -194,22 +160,22 @@ bool EngineNode::removePipeline(PipelineId id) {
             removePipelineObject(id, instance);
         }
         pipelineToInstanceMap.erase(id);
-        removeId(pipelineIds, id);
+        pipelineIds.remove(id);
         return true;
     }
     return false;
 }
 
 bool
-EngineNode::updatePipelineObjects(PipelineId pipelineId, const std::vector<InstanceId> &objectInstanceIDs,
+EngineNode::updatePipelineObjects(PipelineId pipelineId, const std::vector<InstanceId> &instanceIds,
                                   const std::vector<Matrix4x4> &transforms,
                                   const std::vector<ObjectParameter> &objectParameters) {
-    if (objectInstanceIDs.size() != transforms.size()) return false;
+    if (instanceIds.size() != transforms.size()) return false;
 
-    for (unsigned long i = 0; i < objectInstanceIDs.size(); i++) {
-        if (objectInstanceIds.count(objectInstanceIDs.at(i)) == 1) {
-            if (objectInstanceIdDeviceMap[objectInstanceIDs.at(i)].id == deviceId.id) {
-                auto instance = dmu->getInstanceDataFragment(objectInstanceIDs.at(i));
+    for (unsigned long i = 0; i < instanceIds.size(); i++) {
+        if (objectInstanceIdDeviceMap.count(instanceIds.at(i)) == 1) {
+            if (objectInstanceIdDeviceMap[instanceIds.at(i)].id == deviceId.id) {
+                auto instance = dmu->getInstanceDataFragment(instanceIds.at(i));
                 if (instance == nullptr) continue;
                 instance->applyTransform(transforms.at(i));
             } else {
@@ -231,7 +197,7 @@ bool EngineNode::removePipelineObject(PipelineId pipelineId, InstanceId objectIn
             auto instance = dmu->getInstanceDataFragment(objectInstanceId);
             std::vector<Intersectable *> remove{instance};
             DBVHv2::removeObjects(*geometry, remove);
-            removeId(objectInstanceIds, objectInstanceId);
+            objectInstanceIds.remove(objectInstanceId);
             pipelineToInstanceMap.at(pipelineId).erase(objectInstanceId);
             objectInstanceIdDeviceMap.erase(objectInstanceId);
             return dmu->deleteInstanceDataFragment(objectInstanceId);
@@ -267,10 +233,7 @@ EngineNode::bindGeometryToPipeline(PipelineId pipelineId, const std::vector<Obje
                 instances.push_back(instance.get());
 
                 // manage instance ids
-                auto instanceId = objectInstanceIds.extract(objectInstanceIds.begin()).value();
-                if (objectInstanceIds.empty()) {
-                    objectInstanceIds.insert(InstanceId{instanceId.id + 1});
-                }
+                auto instanceId = objectInstanceIds.next();
                 instanceIDs.push_back(instanceId);
                 objectToInstanceMap[objectIDs.at((i))].insert(instanceId);
                 instanceIds.push_back(instanceId);
@@ -297,17 +260,13 @@ EngineNode::bindGeometryToPipeline(PipelineId pipelineId, const std::vector<Obje
 }
 
 ObjectId EngineNode::addObject(const Intersectable &object) {
-    auto buffer = objectIds.extract(objectIds.begin()).value();
+    auto buffer = objectIds.next();
 
     objectIdDeviceMap[buffer] = deviceId;
 
     // TODO: spread over nodes
     auto clone = object.clone();
     dmu->storeBaseDataFragments(std::move(clone), buffer);
-
-    if (objectIds.empty()) {
-        objectIds.insert(ObjectId{buffer.id + 1});
-    }
 
     return buffer;
 }
@@ -326,7 +285,7 @@ bool EngineNode::removeObject(ObjectId id) {
     }
 
     objectIdDeviceMap.erase(id);
-    removeId(objectIds, id);
+    objectIds.remove(id);
     return true;
 }
 
@@ -338,116 +297,92 @@ bool EngineNode::updateObject(ObjectId id, const Intersectable &object) {
 }
 
 HitShaderId EngineNode::addShader(const HitShader &shader) {
-    auto shaderId = hitShaderIds.extract(hitShaderIds.begin()).value();
+    auto shaderId = hitShaderIds.next();
 
     auto clone = shader.clone();
     pipelinePool->addShader(shaderId, std::move(clone));
-
-    if (hitShaderIds.empty()) {
-        hitShaderIds.insert(HitShaderId{shaderId.id + 1});
-    }
 
     return shaderId;
 }
 
 MissShaderId EngineNode::addShader(const MissShader &shader) {
-    auto shaderId = missShaderIds.extract(missShaderIds.begin()).value();
+    auto shaderId = missShaderIds.next();
 
     auto clone = shader.clone();
     pipelinePool->addShader(shaderId, std::move(clone));
-
-    if (missShaderIds.empty()) {
-        missShaderIds.insert(MissShaderId{shaderId.id + 1});
-    }
 
     return shaderId;
 }
 
 OcclusionShaderId EngineNode::addShader(const OcclusionShader &shader) {
-    auto shaderId = occlusionShaderIds.extract(occlusionShaderIds.begin()).value();
+    auto shaderId = occlusionShaderIds.next();
 
     auto clone = shader.clone();
     pipelinePool->addShader(shaderId, std::move(clone));
-
-    if (occlusionShaderIds.empty()) {
-        occlusionShaderIds.insert(OcclusionShaderId{shaderId.id + 1});
-    }
 
     return shaderId;
 }
 
 PierceShaderId EngineNode::addShader(const PierceShader &shader) {
-    auto shaderId = pierceShaderIds.extract(pierceShaderIds.begin()).value();
+    auto shaderId = pierceShaderIds.next();
 
     auto clone = shader.clone();
     pipelinePool->addShader(shaderId, std::move(clone));
-
-    if (pierceShaderIds.empty()) {
-        pierceShaderIds.insert(PierceShaderId{shaderId.id + 1});
-    }
 
     return shaderId;
 }
 
 RayGeneratorShaderId EngineNode::addShader(const RayGeneratorShader &shader) {
-    auto shaderId = rayGeneratorShaderIds.extract(rayGeneratorShaderIds.begin()).value();
+    auto shaderId = rayGeneratorShaderIds.next();
 
     auto clone = shader.clone();
     pipelinePool->addShader(shaderId, std::move(clone));
-
-    if (rayGeneratorShaderIds.empty()) {
-        rayGeneratorShaderIds.insert(RayGeneratorShaderId{shaderId.id + 1});
-    }
 
     return shaderId;
 }
 
 bool EngineNode::removeShader(RayGeneratorShaderId id) {
     if (!pipelinePool->deleteShader(id)) return false;
-    removeId(rayGeneratorShaderIds, id);
+    rayGeneratorShaderIds.remove(id);
     return true;
 }
 
 bool EngineNode::removeShader(HitShaderId id) {
     if (!pipelinePool->deleteShader(id)) return false;
-    removeId(hitShaderIds, id);
+    hitShaderIds.remove(id);
     return true;
 }
 
 bool EngineNode::removeShader(OcclusionShaderId id) {
     if (!pipelinePool->deleteShader(id)) return false;
-    removeId(occlusionShaderIds, id);
+    occlusionShaderIds.remove(id);
     return true;
 }
 
 bool EngineNode::removeShader(PierceShaderId id) {
     if (!pipelinePool->deleteShader(id)) return false;
-    removeId(pierceShaderIds, id);
+    pierceShaderIds.remove(id);
     return true;
 }
 
 bool EngineNode::removeShader(MissShaderId id) {
     if (!pipelinePool->deleteShader(id)) return false;
-    removeId(missShaderIds, id);
+    missShaderIds.remove(id);
     return true;
 }
 
 ShaderResourceId EngineNode::addShaderResource(const ShaderResource &resource) {
-    auto shaderId = shaderResourceIds.extract(shaderResourceIds.begin()).value();
+    auto shaderId = shaderResourceIds.next();
 
     auto clone = resource.clone();
     pipelinePool->storeShaderResource(std::move(clone), shaderId);
-
-    if (shaderResourceIds.empty()) {
-        shaderResourceIds.insert(ShaderResourceId{shaderId.id + 1});
-    }
 
     return shaderId;
 }
 
 bool EngineNode::removeShaderResource(ShaderResourceId id) {
     if (!pipelinePool->deleteShaderResource(id)) return false;
-    removeId(shaderResourceIds, id);
+    shaderResourceIds.remove(id);
     return true;
 }
 
