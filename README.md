@@ -8,16 +8,16 @@ The project is WIP, however the core functionality can already be tested. Check
 the setup section if you want to give it a try.
 	
 ## Milestones
-| Milestone                     | Status        |
-| ----------------------------- | ------------- |
-| Core Engine Structure         | Done!         |
-| Accelaration Structures       | Done!         |
-| Shader Support                | Done!         |
-| Distributed Data Management   | In Progress   |
-| Task Based Parallelisation    | In Progress   |
-| GPU Support                   | Pending       |
-| Distributed Computing         | Pending       |
-| Optimisation                  | Pending       |
+| Milestone                   | Status        |
+|-----------------------------| ------------- |
+| Core Engine Structure       | Done!         |
+| Acceleration Structures     | Done!         |
+| Shader Support              | Done!         |
+| Distributed Data Management | In Progress   |
+| Task Based Parallelisation  | In Progress   |
+| GPU Support                 | Pending       |
+| Distributed Computing       | Pending       |
+| Optimisation                | Pending       |
 
 ## Getting Started
 This project requires cmake 3.10 or higher.
