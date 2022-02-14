@@ -27,7 +27,7 @@ endif ()
 # installation directories
 include(GNUInstallDirs)
 
-include_directories(${CMAKE_SOURCE_DIR}/external)
+include_directories(${CMAKE_SOURCE_DIR}/external/header_only)
 include_directories(${CMAKE_SOURCE_DIR}/include)
 # this may also include the source tree for the examples which is undesirable
 include_directories(${CMAKE_SOURCE_DIR}/src)
