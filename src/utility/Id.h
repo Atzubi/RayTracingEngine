@@ -48,6 +48,12 @@ struct DeviceId: public ResourceId {};
 struct ObjectId: public ResourceId {};
 struct InstanceId: public ResourceId {};
 
+template <typename ID>
+concept isShaderId = std::derived_from<ID, ShaderId>;
+
+template <typename ID>
+concept isResourceId = std::derived_from<ID, ResourceId>;
+
 // Compiler macros
 DEFINE_STD_HASH_SPECIALIZATION(GenericId)
 DEFINE_STD_HASH_SPECIALIZATION(RayGeneratorShaderId)

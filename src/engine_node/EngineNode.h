@@ -86,6 +86,7 @@ public:
      * return:          true if success, false otherwise, shaderId will be overwritten with shader instance id
      */
     template<class ID>
+    requires isShaderId<ID>
     bool bindShaderToPipeline(PipelineId pipelineId, ID shaderId,
                               const std::vector<ShaderResourceId> &shaderResourceIds);
 
@@ -236,5 +237,7 @@ public:
 
     int runAllPipelines();
 };
+
+#include "engine_node/EngineNode.tpp"
 
 #endif //RAYTRACEENGINE_ENGINENODE_H

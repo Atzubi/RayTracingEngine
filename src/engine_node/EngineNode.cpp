@@ -418,42 +418,6 @@ EngineNode::bindGeometryToPipeline(PipelineId pipelineId, const std::vector<Obje
     return true;
 }
 
-template bool
-EngineNode::bindShaderToPipeline<RayGeneratorShaderId>(PipelineId pipelineId, RayGeneratorShaderId shaderId,
-                                                       const std::vector<ShaderResourceId> &shaderResourceIds);
-
-template bool EngineNode::bindShaderToPipeline<HitShaderId>(PipelineId pipelineId, HitShaderId shaderId,
-                                                            const std::vector<ShaderResourceId> &shaderResourceIds);
-
-template bool EngineNode::bindShaderToPipeline<OcclusionShaderId>(PipelineId pipelineId, OcclusionShaderId shaderId,
-                                                                  const std::vector<ShaderResourceId> &shaderResourceIds);
-
-template bool EngineNode::bindShaderToPipeline<MissShaderId>(PipelineId pipelineId, MissShaderId shaderId,
-                                                             const std::vector<ShaderResourceId> &shaderResourceIds);
-
-template bool EngineNode::bindShaderToPipeline<PierceShaderId>(PipelineId pipelineId, PierceShaderId shaderId,
-                                                               const std::vector<ShaderResourceId> &shaderResourceIds);
-
-template<class ID>
-bool EngineNode::bindShaderToPipeline(PipelineId pipelineId, ID shaderId,
-                                      const std::vector<ShaderResourceId> &resourceIds) {
-    auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
-    auto shader = pipelinePool->getShader(shaderId);
-
-    if (pipeline == nullptr || shader == nullptr) return false;
-
-    std::vector<ShaderResource *> shaderResources;
-
-    shaderResources.reserve(resourceIds.size());
-    for (auto shaderResource: resourceIds) {
-        shaderResources.push_back(pipelinePool->getShaderResource(shaderResource));
-    }
-
-    pipeline->addShader(shaderId, {shader, shaderResources});
-
-    return true;
-}
-
 ObjectId EngineNode::addObject(const Intersectable &object) {
     auto buffer = objectIds.extract(objectIds.begin()).value();
 
