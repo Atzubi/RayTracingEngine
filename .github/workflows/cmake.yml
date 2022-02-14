@@ -38,7 +38,7 @@ jobs:
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DATZUBI_RTENGINE_BUILD_EXAMPLES=0
       env:
        CC:  gcc-10
-       CXX: g++10
+       CXX: g++-10
 
     - name: Build
       # Build your program with the given configuration
