@@ -41,6 +41,10 @@ private:
 
     DeviceId getDeviceId();
 
+    void removeInstanceInPipeline(PipelineId pipelineId, InstanceId objectInstanceId);
+
+    bool removeInstanceInEngine(PipelineId pipelineId, InstanceId objectInstanceId);
+
 public:
     EngineNode();
 

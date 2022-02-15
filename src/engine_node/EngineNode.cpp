@@ -26,6 +26,21 @@ namespace {
     }
 }
 
+void EngineNode::removeInstanceInPipeline(PipelineId pipelineId, InstanceId objectInstanceId) {
+    auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
+    auto geometry = pipeline->getGeometry();
+    auto instance = dmu->getInstanceDataFragment(objectInstanceId);
+    std::vector<Intersectable *> remove{instance};
+    DBVHv2::removeObjects(*geometry, remove);
+}
+
+bool EngineNode::removeInstanceInEngine(PipelineId pipelineId, InstanceId objectInstanceId) {
+    objectInstanceIds.remove(objectInstanceId);
+    pipelineToInstanceMap.at(pipelineId).erase(objectInstanceId);
+    objectInstanceIdDeviceMap.erase(objectInstanceId);
+    return dmu->deleteInstanceDataFragment(objectInstanceId);
+}
+
 EngineNode::EngineNode() : deviceId(getDeviceId()) {
     dmu = std::make_unique<DataManagementUnitV2>();
     pipelinePool = std::make_unique<PipelinePool>();
@@ -211,22 +226,14 @@ EngineNode::updatePipelineObjects(PipelineId pipelineId, const std::vector<Insta
 }
 
 bool EngineNode::removePipelineObject(PipelineId pipelineId, InstanceId objectInstanceId) {
-    if (objectInstanceIdDeviceMap.count(objectInstanceId) == 1) {
-        if (objectInstanceIdDeviceMap[objectInstanceId] == deviceId) {
-            auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
-            auto geometry = pipeline->getGeometry();
-            auto instance = dmu->getInstanceDataFragment(objectInstanceId);
-            std::vector<Intersectable *> remove{instance};
-            DBVHv2::removeObjects(*geometry, remove);
-            objectInstanceIds.remove(objectInstanceId);
-            pipelineToInstanceMap.at(pipelineId).erase(objectInstanceId);
-            objectInstanceIdDeviceMap.erase(objectInstanceId);
-            return dmu->deleteInstanceDataFragment(objectInstanceId);
-        } else {
-            // TODO: delete instance on other nodes
-        }
+    if (objectInstanceIdDeviceMap.count(objectInstanceId) == 0) return false;
+    if (objectInstanceIdDeviceMap[objectInstanceId] == deviceId) {
+        removeInstanceInPipeline(pipelineId, objectInstanceId);
+        return removeInstanceInEngine(pipelineId, objectInstanceId);
+    } else {
+        // TODO: delete instance on other nodes
+        return false;
     }
-    return false;
 }
 
 bool
