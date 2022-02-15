@@ -55,6 +55,12 @@ private:
 
     PipelineId registerPipeline(std::unique_ptr<PipelineImplement> pipeline, std::vector<InstanceId> instanceIds);
 
+    std::unique_ptr<Instance>
+    createInstance(const Matrix4x4 &transform, std::vector<Intersectable *> &instances,
+                   const ObjectCapsule &capsule) const;
+
+    InstanceId createInstanceId(std::vector<InstanceId> &instanceIds, const ObjectId &objectId);
+
 public:
     EngineNode();
 

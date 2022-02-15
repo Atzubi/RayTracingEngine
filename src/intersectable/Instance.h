@@ -28,7 +28,7 @@ private:
     Intersectable *getBaseObject();
 
 public:
-    explicit Instance(DataManagementUnitV2 *dataManagement, ObjectCapsule &objectCapsule);
+    explicit Instance(DataManagementUnitV2 *dataManagement, const ObjectCapsule &objectCapsule);
 
     void applyTransform(const Matrix4x4 &newTransform);
 

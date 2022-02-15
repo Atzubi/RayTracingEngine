@@ -71,47 +71,46 @@ bool EngineNode::updateInstance(InstanceId instanceId, const Matrix4x4 &transfor
     return true;
 }
 
+std::unique_ptr<Instance> EngineNode::createInstance(const Matrix4x4 &transform, std::vector<Intersectable *> &instances,
+                                                     const ObjectCapsule &capsule) const {
+    auto instance = std::make_unique<Instance>(dmu.get(), capsule);
+    instance->applyTransform(transform);
+    instances.push_back(instance.get());
+    return instance;
+}
+InstanceId EngineNode::createInstanceId(std::vector<InstanceId> &instanceIds, const ObjectId &objectId) {
+    auto instanceId = objectInstanceIds.next();
+    objectToInstanceMap[objectId].insert(instanceId);
+    objectInstanceIdDeviceMap[instanceId] = deviceId;
+    instanceIds.push_back(instanceId);
+    return instanceId;
+}
+
+
 void EngineNode::createInstances(const std::vector<ObjectId> &objectIDs, const std::vector<Matrix4x4> &transforms,
                                  std::vector<Intersectable *> &instances, std::vector<InstanceId> &instanceIds) {
     for (unsigned long i = 0; i < objectIDs.size(); i++) {
         auto objectId = objectIDs.at(i);
-        if (objectIdDeviceMap.count(objectId) == 1) {
-            if (objectIdDeviceMap[objectId].id == deviceId.id) {
-                auto buffer = dmu->getBaseDataFragment(objectId)->getCapsule();
-                auto capsule = ObjectCapsule{ObjectId{i}, buffer.boundingBox, buffer.cost};
-
-                // create instances of objects
-                auto instance = std::make_unique<Instance>(dmu.get(), capsule);
-                instance->applyTransform(transforms.at(i));
-                instances.push_back(instance.get());
-
-                // manage instance ids
-                auto instanceId = objectInstanceIds.next();
-                objectToInstanceMap[objectId].insert(instanceId);
-                instanceIds.push_back(instanceId);
-
-                // add instances to engine node
-                // TODO spread over nodes
-                dmu->storeInstanceDataFragments(std::move(instance), instanceId);
-
-                // add instance location to map
-                objectInstanceIdDeviceMap[instanceId] = deviceId;
-            } else {
-                // TODO request object from other engine nodes
-            }
+        if (objectIdDeviceMap.count(objectId) == 0)
+            continue; // TODO error handling, object not found
+        if (objectIdDeviceMap[objectId] == deviceId) {
+            auto capsule = dmu->getBaseDataFragment(objectId)->getCapsule();
+            capsule.id = objectId;
+            auto instance = createInstance(transforms.at(i), instances, capsule);
+            InstanceId instanceId = createInstanceId(instanceIds, objectId);
+            // TODO spread over nodes
+            dmu->storeInstanceDataFragments(std::move(instance), instanceId);
         } else {
-            // TODO error handling, object not found
+            // TODO request object from other engine nodes
         }
     }
 }
 
 std::unique_ptr<PipelineImplement> EngineNode::createPipeline(const PipelineDescription &pipelineDescription,
-                                const std::vector<Intersectable *> &instances) {
-    // build bvh on instances
+                                                              const std::vector<Intersectable *> &instances) {
     auto root = std::make_unique<DBVHNode>();
     DBVHv2::addObjects(*root, instances);
 
-    // get shader implementation from id
     auto pipelineRayGeneratorShaders = getShaderPackages<RayGeneratorShaderId, RayGeneratorShader>(*pipelinePool,
                                                                                                    pipelineDescription.rayGeneratorShaders);
     auto pipelineOcclusionShaders = getShaderPackages<OcclusionShaderId, OcclusionShader>(*pipelinePool,
@@ -122,23 +121,22 @@ std::unique_ptr<PipelineImplement> EngineNode::createPipeline(const PipelineDesc
     auto pipelineMissShaders = getShaderPackages<MissShaderId, MissShader>(*pipelinePool,
                                                                            pipelineDescription.missShaders);
 
-    // create new pipeline and add bvh, shaders and description
     return std::make_unique<PipelineImplement>(dmu.get(),
-                                                        pipelineDescription.resolutionX,
-                                                        pipelineDescription.resolutionY,
-                                                        pipelineDescription.cameraPosition,
-                                                        pipelineDescription.cameraDirection,
-                                                        pipelineDescription.cameraUp,
-                                                        pipelineRayGeneratorShaders,
-                                                        pipelineOcclusionShaders,
-                                                        pipelineHitShaders,
-                                                        pipelinePierceShaders,
-                                                        pipelineMissShaders, std::move(root));
+                                               pipelineDescription.resolutionX,
+                                               pipelineDescription.resolutionY,
+                                               pipelineDescription.cameraPosition,
+                                               pipelineDescription.cameraDirection,
+                                               pipelineDescription.cameraUp,
+                                               pipelineRayGeneratorShaders,
+                                               pipelineOcclusionShaders,
+                                               pipelineHitShaders,
+                                               pipelinePierceShaders,
+                                               pipelineMissShaders, std::move(root));
 }
 
-PipelineId EngineNode::registerPipeline(std::unique_ptr<PipelineImplement> pipeline, std::vector<InstanceId> instanceIds) {
+PipelineId
+EngineNode::registerPipeline(std::unique_ptr<PipelineImplement> pipeline, std::vector<InstanceId> instanceIds) {
     auto pipelineId = pipelineIds.next();
-    // map instances to pipeline
     pipelineToInstanceMap[pipelineId].insert(instanceIds.begin(), instanceIds.end());
     pipelinePool->storePipelineFragments(std::move(pipeline), pipelineId);
     return pipelineId;

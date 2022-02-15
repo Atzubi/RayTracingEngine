@@ -122,8 +122,9 @@ namespace {
         info.distance = (ray.origin - info.position).getLength();
     }
 
-    inline bool overwriteClosestHit(IntersectionInfo &intersectionInfo, const Ray &ray, IntersectionInfo &info, bool hit,
-                             const Matrix4x4 &transform) {
+    inline bool
+    overwriteClosestHit(IntersectionInfo &intersectionInfo, const Ray &ray, IntersectionInfo &info, bool hit,
+                        const Matrix4x4 &transform) {
         if (!hit || info.distance >= intersectionInfo.distance) return false;
         reverseTransformHit(ray, info, transform);
         intersectionInfo = info;
@@ -131,7 +132,7 @@ namespace {
     }
 
     inline bool overwriteAnyHit(IntersectionInfo &intersectionInfo, const Ray &ray, IntersectionInfo &info, bool hit,
-                         const Matrix4x4 &transform) {
+                                const Matrix4x4 &transform) {
         if (!hit) return false;
         reverseTransformHit(ray, info, transform);
         intersectionInfo = info;
@@ -139,7 +140,7 @@ namespace {
     }
 
     inline bool overwriteAllHit(std::vector<IntersectionInfo> &intersectionInfo, const Ray &ray,
-                         std::vector<IntersectionInfo> &infos, bool hit, const Matrix4x4 &transform) {
+                                std::vector<IntersectionInfo> &infos, bool hit, const Matrix4x4 &transform) {
         if (!hit) return false;
         for (auto info: infos) {
             reverseTransformHit(ray, info, transform);
@@ -158,7 +159,8 @@ namespace {
     }
 }
 
-Instance::Instance(DataManagementUnitV2 *dataManagement, ObjectCapsule &objectCapsule) : baseObjectId(objectCapsule.id) {
+Instance::Instance(DataManagementUnitV2 *dataManagement, const ObjectCapsule &objectCapsule) : baseObjectId(
+        objectCapsule.id) {
     dmu = dataManagement;
     objectCached = false;
     objectCache = nullptr;
