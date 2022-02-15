@@ -25,6 +25,21 @@ namespace {
 
         return shaderId;
     }
+
+    template<class ID, class Shader>
+    requires isShaderId<ID> && isShader<Shader> && correspondsTo<ID, Shader>
+    auto getShaderPackages(PipelinePool &pipelinePool, const std::vector<ShaderResourcePackage<ID>> &shaders) {
+        std::vector<ShaderPackage<ID, Shader>> shaderPackages;
+        for (const auto &shader: shaders) {
+            std::vector<ShaderResource *> shaderResources;
+            for (auto resourceId: shader.shaderResourceIds) {
+                shaderResources.push_back(pipelinePool.getShaderResource(resourceId));
+            }
+            ShaderContainer<Shader> shaderContainer{pipelinePool.getShader(shader.shaderId), shaderResources};
+            shaderPackages.push_back({shaderContainer, shader.shaderId});
+        }
+        return shaderPackages;
+    }
 }
 
 void EngineNode::removeInstanceInPipeline(PipelineId pipelineId, InstanceId objectInstanceId) {
@@ -56,35 +71,23 @@ bool EngineNode::updateInstance(InstanceId instanceId, const Matrix4x4 &transfor
     return true;
 }
 
-EngineNode::EngineNode() : deviceId(getDeviceId()) {
-    dmu = std::make_unique<DataManagementUnitV2>();
-    pipelinePool = std::make_unique<PipelinePool>();
-}
-
-EngineNode::~EngineNode() = default;
-
-PipelineId EngineNode::createPipeline(PipelineDescription &pipelineDescription) {
-    std::vector<Intersectable *> instances;
-    std::vector<InstanceId> instanceIds;
-
-    // pull all objects required to create the pipeline
-    // only requires id, box and cost
-    int c = 0;
-    for (auto i: pipelineDescription.objectIDs) {
-        if (objectIdDeviceMap.count(i) == 1) {
-            if (objectIdDeviceMap[i].id == deviceId.id) {
-                auto buffer = dmu->getBaseDataFragment(i)->getCapsule();
-                auto capsule = ObjectCapsule{ObjectId{i.id}, buffer.boundingBox, buffer.cost};
+void EngineNode::createInstances(const std::vector<ObjectId> &objectIDs, const std::vector<Matrix4x4> &transforms,
+                                 std::vector<Intersectable *> &instances, std::vector<InstanceId> &instanceIds) {
+    for (unsigned long i = 0; i < objectIDs.size(); i++) {
+        auto objectId = objectIDs.at(i);
+        if (objectIdDeviceMap.count(objectId) == 1) {
+            if (objectIdDeviceMap[objectId].id == deviceId.id) {
+                auto buffer = dmu->getBaseDataFragment(objectId)->getCapsule();
+                auto capsule = ObjectCapsule{ObjectId{i}, buffer.boundingBox, buffer.cost};
 
                 // create instances of objects
                 auto instance = std::make_unique<Instance>(dmu.get(), capsule);
-                instance->applyTransform(pipelineDescription.objectTransformations[c]);
+                instance->applyTransform(transforms.at(i));
                 instances.push_back(instance.get());
 
                 // manage instance ids
                 auto instanceId = objectInstanceIds.next();
-                pipelineDescription.objectInstanceIDs->push_back(instanceId);
-                objectToInstanceMap[i].insert(instanceId);
+                objectToInstanceMap[objectId].insert(instanceId);
                 instanceIds.push_back(instanceId);
 
                 // add instances to engine node
@@ -99,86 +102,28 @@ PipelineId EngineNode::createPipeline(PipelineDescription &pipelineDescription) 
         } else {
             // TODO error handling, object not found
         }
-        c++;
     }
+}
 
+std::unique_ptr<PipelineImplement> EngineNode::createPipeline(const PipelineDescription &pipelineDescription,
+                                const std::vector<Intersectable *> &instances) {
     // build bvh on instances
     auto root = std::make_unique<DBVHNode>();
     DBVHv2::addObjects(*root, instances);
 
     // get shader implementation from id
-    std::vector<RayGeneratorShaderPackage> pipelineRayGeneratorShaders;
-    for (const auto &shader: pipelineDescription.rayGeneratorShaders) {
-        RayGeneratorShaderContainer rayGeneratorShaderContainer;
-        std::vector<ShaderResource *> shaderResources;
-
-        for (auto resourceId: shader.shaderResourceIds) {
-            shaderResources.push_back(pipelinePool->getShaderResource(resourceId));
-        }
-
-        rayGeneratorShaderContainer.shaderResources = shaderResources;
-        rayGeneratorShaderContainer.rayGeneratorShader = pipelinePool->getShader(shader.shaderId);
-        pipelineRayGeneratorShaders.push_back({rayGeneratorShaderContainer, shader.shaderId});
-    }
-
-    std::vector<OcclusionShaderPackage> pipelineOcclusionShaders;
-    for (const auto &shader: pipelineDescription.occlusionShaders) {
-        OcclusionShaderContainer occlusionShaderContainer;
-        std::vector<ShaderResource *> shaderResources;
-
-        for (auto resourceId: shader.shaderResourceIds) {
-            shaderResources.push_back(pipelinePool->getShaderResource(resourceId));
-        }
-
-        occlusionShaderContainer.shaderResources = shaderResources;
-        occlusionShaderContainer.occlusionShader = pipelinePool->getShader(shader.shaderId);
-        pipelineOcclusionShaders.push_back({occlusionShaderContainer, shader.shaderId});
-    }
-
-    std::vector<HitShaderPackage> pipelineHitShaders;
-    for (const auto &shader: pipelineDescription.hitShaders) {
-        HitShaderContainer hitShaderContainer;
-        std::vector<ShaderResource *> shaderResources;
-
-        for (auto resourceId: shader.shaderResourceIds) {
-            shaderResources.push_back(pipelinePool->getShaderResource(resourceId));
-        }
-
-        hitShaderContainer.shaderResources = shaderResources;
-        hitShaderContainer.hitShader = pipelinePool->getShader(shader.shaderId);
-        pipelineHitShaders.push_back({hitShaderContainer, shader.shaderId});
-    }
-
-    std::vector<PierceShaderPackage> pipelinePierceShaders;
-    for (const auto &shader: pipelineDescription.pierceShaders) {
-        PierceShaderContainer pierceShaderContainer;
-        std::vector<ShaderResource *> shaderResources;
-
-        for (auto resourceId: shader.shaderResourceIds) {
-            shaderResources.push_back(pipelinePool->getShaderResource(resourceId));
-        }
-
-        pierceShaderContainer.shaderResources = shaderResources;
-        pierceShaderContainer.pierceShader = pipelinePool->getShader(shader.shaderId);
-        pipelinePierceShaders.push_back({pierceShaderContainer, shader.shaderId});
-    }
-
-    std::vector<MissShaderPackage> pipelineMissShaders;
-    for (const auto &shader: pipelineDescription.missShaders) {
-        MissShaderContainer missShaderContainer;
-        std::vector<ShaderResource *> shaderResources;
-
-        for (auto resourceId: shader.shaderResourceIds) {
-            shaderResources.push_back(pipelinePool->getShaderResource(resourceId));
-        }
-
-        missShaderContainer.shaderResources = shaderResources;
-        missShaderContainer.missShader = pipelinePool->getShader(shader.shaderId);
-        pipelineMissShaders.push_back({missShaderContainer, shader.shaderId});
-    }
+    auto pipelineRayGeneratorShaders = getShaderPackages<RayGeneratorShaderId, RayGeneratorShader>(*pipelinePool,
+                                                                                                   pipelineDescription.rayGeneratorShaders);
+    auto pipelineOcclusionShaders = getShaderPackages<OcclusionShaderId, OcclusionShader>(*pipelinePool,
+                                                                                          pipelineDescription.occlusionShaders);
+    auto pipelineHitShaders = getShaderPackages<HitShaderId, HitShader>(*pipelinePool, pipelineDescription.hitShaders);
+    auto pipelinePierceShaders = getShaderPackages<PierceShaderId, PierceShader>(*pipelinePool,
+                                                                                 pipelineDescription.pierceShaders);
+    auto pipelineMissShaders = getShaderPackages<MissShaderId, MissShader>(*pipelinePool,
+                                                                           pipelineDescription.missShaders);
 
     // create new pipeline and add bvh, shaders and description
-    auto pipeline = std::make_unique<PipelineImplement>(dmu.get(),
+    return std::make_unique<PipelineImplement>(dmu.get(),
                                                         pipelineDescription.resolutionX,
                                                         pipelineDescription.resolutionY,
                                                         pipelineDescription.cameraPosition,
@@ -189,18 +134,36 @@ PipelineId EngineNode::createPipeline(PipelineDescription &pipelineDescription) 
                                                         pipelineHitShaders,
                                                         pipelinePierceShaders,
                                                         pipelineMissShaders, std::move(root));
+}
 
+PipelineId EngineNode::registerPipeline(std::unique_ptr<PipelineImplement> pipeline, std::vector<InstanceId> instanceIds) {
     auto pipelineId = pipelineIds.next();
-
     // map instances to pipeline
     pipelineToInstanceMap[pipelineId].insert(instanceIds.begin(), instanceIds.end());
-
     pipelinePool->storePipelineFragments(std::move(pipeline), pipelineId);
+    return pipelineId;
+}
 
-    // broadcast pipeline to all engine nodes
-    // TODO
+EngineNode::EngineNode() : deviceId(getDeviceId()) {
+    dmu = std::make_unique<DataManagementUnitV2>();
+    pipelinePool = std::make_unique<PipelinePool>();
+}
 
-    return PipelineId{pipelineId};
+EngineNode::~EngineNode() = default;
+
+PipelineId EngineNode::createPipeline(PipelineDescription &pipelineDescription) {
+    std::vector<Intersectable *> instances;
+    std::vector<InstanceId> instanceIds;
+
+    createInstances(pipelineDescription.objectIDs, pipelineDescription.objectTransformations, instances, instanceIds);
+    *pipelineDescription.objectInstanceIDs = instanceIds;
+
+    auto pipeline = createPipeline(pipelineDescription, instances);
+    auto pipelineId = registerPipeline(std::move(pipeline), instanceIds);
+
+    // TODO broadcast pipeline to all engine nodes
+
+    return pipelineId;
 }
 
 bool EngineNode::removePipeline(PipelineId id) {
@@ -258,36 +221,7 @@ EngineNode::bindGeometryToPipeline(PipelineId pipelineId, const std::vector<Obje
     std::vector<Intersectable *> instances;
     std::vector<InstanceId> instanceIds;
 
-    for (unsigned long i = 0; i < objectIDs.size(); i++) {
-        if (objectIdDeviceMap.count(objectIDs.at(i)) == 1) {
-            if (objectIdDeviceMap[objectIDs.at(i)].id == deviceId.id) {
-                auto buffer = dmu->getBaseDataFragment(objectIDs.at(i))->getCapsule();
-                auto capsule = ObjectCapsule{ObjectId{i}, buffer.boundingBox, buffer.cost};
-
-                // create instances of objects
-                auto instance = std::make_unique<Instance>(dmu.get(), capsule);
-                instance->applyTransform(transforms.at(i));
-                instances.push_back(instance.get());
-
-                // manage instance ids
-                auto instanceId = objectInstanceIds.next();
-                instanceIDs.push_back(instanceId);
-                objectToInstanceMap[objectIDs.at((i))].insert(instanceId);
-                instanceIds.push_back(instanceId);
-
-                // add instances to engine node
-                // TODO spread over nodes
-                dmu->storeInstanceDataFragments(std::move(instance), instanceId);
-
-                // add instance location to map
-                objectInstanceIdDeviceMap[instanceId] = deviceId;
-            } else {
-                // TODO request object from other engine nodes
-            }
-        } else {
-            // TODO error handling, object not found
-        }
-    }
+    createInstances(objectIDs, transforms, instances, instanceIds);
 
     pipelineToInstanceMap[pipelineId].insert(instanceIds.begin(), instanceIds.end());
 

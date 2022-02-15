@@ -10,28 +10,9 @@
 #include "Intersectable.h"
 #include "utility/Id.h"
 
-struct RayGeneratorShaderResourcePackage {
-    RayGeneratorShaderId shaderId;
-    std::vector<ShaderResourceId> shaderResourceIds;
-};
-
-struct HitShaderResourcePackage {
-    HitShaderId shaderId;
-    std::vector<ShaderResourceId> shaderResourceIds;
-};
-
-struct OcclusionShaderResourcePackage {
-    OcclusionShaderId shaderId;
-    std::vector<ShaderResourceId> shaderResourceIds;
-};
-
-struct PierceShaderResourcePackage {
-    PierceShaderId shaderId;
-    std::vector<ShaderResourceId> shaderResourceIds;
-};
-
-struct MissShaderResourcePackage {
-    MissShaderId shaderId;
+template<class ID> requires isShaderId<ID>
+struct ShaderResourcePackage {
+    ID shaderId;
     std::vector<ShaderResourceId> shaderResourceIds;
 };
 
@@ -258,5 +239,12 @@ template<class Shader>
 concept isShader = std::same_as<Shader, RayGeneratorShader> || std::same_as<Shader, HitShader> ||
                    std::same_as<Shader, OcclusionShader> || std::same_as<Shader, PierceShader> ||
                    std::same_as<Shader, MissShader>;
+
+template<typename ID, typename Shader>
+concept correspondsTo = std::same_as<ID, RayGeneratorShaderId> && std::same_as<Shader, RayGeneratorShader> ||
+                        std::same_as<ID, HitShaderId> && std::same_as<Shader, HitShader> ||
+                        std::same_as<ID, OcclusionShaderId> && std::same_as<Shader, OcclusionShader> ||
+                        std::same_as<ID, PierceShaderId> && std::same_as<Shader, PierceShader> ||
+                        std::same_as<ID, MissShaderId> && std::same_as<Shader, MissShader>;
 
 #endif //RAYTRACECORE_SHADER_H

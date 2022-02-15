@@ -11,54 +11,16 @@
 #include "bvh/DBVHv2.h"
 #include "data_management/DataManagementUnitV2.h"
 
-struct RayGeneratorShaderContainer {
-    RayGeneratorShader *rayGeneratorShader;
+template<class Shader> requires isShader<Shader>
+struct ShaderContainer {
+    Shader *shader;
     std::vector<ShaderResource *> shaderResources;
 };
 
-struct HitShaderContainer {
-    HitShader *hitShader;
-    std::vector<ShaderResource *> shaderResources;
-};
-
-struct OcclusionShaderContainer {
-    OcclusionShader *occlusionShader;
-    std::vector<ShaderResource *> shaderResources;
-};
-
-struct PierceShaderContainer {
-    PierceShader *pierceShader;
-    std::vector<ShaderResource *> shaderResources;
-};
-
-struct MissShaderContainer {
-    MissShader *missShader;
-    std::vector<ShaderResource *> shaderResources;
-};
-
-struct RayGeneratorShaderPackage {
-    RayGeneratorShaderContainer rayGeneratorShader;
-    RayGeneratorShaderId id;
-};
-
-struct HitShaderPackage {
-    HitShaderContainer hitShader;
-    HitShaderId id;
-};
-
-struct OcclusionShaderPackage {
-    OcclusionShaderContainer occlusionShader;
-    OcclusionShaderId id;
-};
-
-struct PierceShaderPackage {
-    PierceShaderContainer pierceShader;
-    PierceShaderId id;
-};
-
-struct MissShaderPackage {
-    MissShaderContainer missShader;
-    MissShaderId id;
+template<class ID, class Shader> requires isShaderId<ID> && isShader<Shader> && correspondsTo<ID, Shader>
+struct ShaderPackage {
+    ShaderContainer<Shader> shaderContainer;
+    ID id;
 };
 
 /**
@@ -82,11 +44,11 @@ private:
 
     PipelineInfo pipelineInfo;
 
-    std::unordered_map<RayGeneratorShaderId, RayGeneratorShaderContainer> rayGeneratorShaders;
-    std::unordered_map<OcclusionShaderId, OcclusionShaderContainer> occlusionShaders;
-    std::unordered_map<HitShaderId, HitShaderContainer> hitShaders;
-    std::unordered_map<PierceShaderId, PierceShaderContainer> pierceShaders;
-    std::unordered_map<MissShaderId, MissShaderContainer> missShaders;
+    std::unordered_map<RayGeneratorShaderId, ShaderContainer<RayGeneratorShader>> rayGeneratorShaders;
+    std::unordered_map<OcclusionShaderId, ShaderContainer<OcclusionShader>> occlusionShaders;
+    std::unordered_map<HitShaderId, ShaderContainer<HitShader>> hitShaders;
+    std::unordered_map<PierceShaderId, ShaderContainer<PierceShader>> pierceShaders;
+    std::unordered_map<MissShaderId, ShaderContainer<MissShader>> missShaders;
 
 
     std::unique_ptr<DBVHNode> geometry;
@@ -107,7 +69,7 @@ private:
                               RayGeneratorOutput &newRays);
 
     void
-    generateRays(const RayGeneratorShaderContainer &generator, std::vector<RayContainer> &rayContainers,
+    generateRays(const ShaderContainer<RayGeneratorShader> &generator, std::vector<RayContainer> &rayContainers,
                  int rayID, RayGeneratorOutput &rays);
 
     static Ray initRay(const std::vector<RayContainer> &rayContainers);
@@ -155,11 +117,11 @@ private:
 public:
     PipelineImplement(DataManagementUnitV2 *dataManagement, int width, int height, const Vector3D &cameraPosition,
                       const Vector3D &cameraDirection, const Vector3D &cameraUp,
-                      const std::vector<RayGeneratorShaderPackage> &rayGeneratorShaders,
-                      const std::vector<OcclusionShaderPackage> &occlusionShaders,
-                      const std::vector<HitShaderPackage> &hitShaders,
-                      const std::vector<PierceShaderPackage> &pierceShaders,
-                      const std::vector<MissShaderPackage> &missShaders,
+                      const std::vector<ShaderPackage<RayGeneratorShaderId, RayGeneratorShader>> &rayGeneratorShaders,
+                      const std::vector<ShaderPackage<OcclusionShaderId, OcclusionShader>> &occlusionShaders,
+                      const std::vector<ShaderPackage<HitShaderId, HitShader>> &hitShaders,
+                      const std::vector<ShaderPackage<PierceShaderId, PierceShader>> &pierceShaders,
+                      const std::vector<ShaderPackage<MissShaderId, MissShader>> &missShaders,
                       std::unique_ptr<DBVHNode> geometry);
 
     ~PipelineImplement();
@@ -172,15 +134,16 @@ public:
 
     void setCamera(const Vector3D &pos, const Vector3D &dir, const Vector3D &up);
 
-    void addShader(RayGeneratorShaderId shaderId, const RayGeneratorShaderContainer &rayGeneratorShaderContainer);
+    void
+    addShader(RayGeneratorShaderId shaderId, const ShaderContainer<RayGeneratorShader> &rayGeneratorShaderContainer);
 
-    void addShader(HitShaderId shaderId, const HitShaderContainer &hitShaderContainer);
+    void addShader(HitShaderId shaderId, const ShaderContainer<HitShader> &hitShaderContainer);
 
-    void addShader(OcclusionShaderId shaderId, const OcclusionShaderContainer &occlusionShaderContainer);
+    void addShader(OcclusionShaderId shaderId, const ShaderContainer<OcclusionShader> &occlusionShaderContainer);
 
-    void addShader(PierceShaderId shaderId, const PierceShaderContainer &pierceShaderContainer);
+    void addShader(PierceShaderId shaderId, const ShaderContainer<PierceShader> &pierceShaderContainer);
 
-    void addShader(MissShaderId shaderId, const MissShaderContainer &missShaderContainer);
+    void addShader(MissShaderId shaderId, const ShaderContainer<MissShader> &missShaderContainer);
 
     bool removeShader(RayGeneratorShaderId shaderId);
 

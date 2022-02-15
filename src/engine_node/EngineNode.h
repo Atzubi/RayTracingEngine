@@ -47,6 +47,14 @@ private:
 
     bool updateInstance(InstanceId instanceId, const Matrix4x4 &transform);
 
+    void createInstances(const std::vector<ObjectId> &objectIDs, const std::vector<Matrix4x4> &transforms,
+                         std::vector<Intersectable *> &instances, std::vector<InstanceId> &instanceIds);
+
+    std::unique_ptr<PipelineImplement>
+    createPipeline(const PipelineDescription &pipelineDescription, const std::vector<Intersectable *> &instances);
+
+    PipelineId registerPipeline(std::unique_ptr<PipelineImplement> pipeline, std::vector<InstanceId> instanceIds);
+
 public:
     EngineNode();
 

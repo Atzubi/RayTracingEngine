@@ -36,11 +36,11 @@ struct PipelineDescription {
     std::vector<ObjectId> objectIDs;
     std::vector<Matrix4x4> objectTransformations;
     std::vector<ObjectParameter> objectParameters;
-    std::vector<RayGeneratorShaderResourcePackage> rayGeneratorShaders;
-    std::vector<HitShaderResourcePackage> hitShaders;
-    std::vector<OcclusionShaderResourcePackage> occlusionShaders;
-    std::vector<PierceShaderResourcePackage> pierceShaders;
-    std::vector<MissShaderResourcePackage> missShaders;
+    std::vector<ShaderResourcePackage<RayGeneratorShaderId>> rayGeneratorShaders;
+    std::vector<ShaderResourcePackage<HitShaderId>> hitShaders;
+    std::vector<ShaderResourcePackage<OcclusionShaderId>> occlusionShaders;
+    std::vector<ShaderResourcePackage<PierceShaderId>> pierceShaders;
+    std::vector<ShaderResourcePackage<MissShaderId>> missShaders;
 
     std::vector<InstanceId> *objectInstanceIDs;
 };
