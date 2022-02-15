@@ -9,7 +9,8 @@ namespace {
     template<class ID>
     requires isShaderId<ID>
     bool helpRemoveShader(PipelinePool &pipelinePool, ID id, IdContainer<ID> &ids) {
-        if (!pipelinePool.deleteShader(id)) return false;
+        if (!pipelinePool.deleteShader(id))
+            return false;
         ids.remove(id);
         return true;
     }
@@ -39,6 +40,20 @@ bool EngineNode::removeInstanceInEngine(PipelineId pipelineId, InstanceId object
     pipelineToInstanceMap.at(pipelineId).erase(objectInstanceId);
     objectInstanceIdDeviceMap.erase(objectInstanceId);
     return dmu->deleteInstanceDataFragment(objectInstanceId);
+}
+
+bool EngineNode::updateInstance(InstanceId instanceId, const Matrix4x4 &transform) {
+    if (objectInstanceIdDeviceMap.count(instanceId) == 0)
+        return false;
+    if (objectInstanceIdDeviceMap[instanceId].id == deviceId.id) {
+        auto instance = dmu->getInstanceDataFragment(instanceId);
+        if (instance) {
+            instance->applyTransform(transform);
+        }
+    } else {
+        // TODO: update instances on other nodes
+    }
+    return true;
 }
 
 EngineNode::EngineNode() : deviceId(getDeviceId()) {
@@ -206,27 +221,20 @@ bool
 EngineNode::updatePipelineObjects(PipelineId pipelineId, const std::vector<InstanceId> &instanceIds,
                                   const std::vector<Matrix4x4> &transforms,
                                   const std::vector<ObjectParameter> &objectParameters) {
-    if (instanceIds.size() != transforms.size()) return false;
+    if (instanceIds.size() != transforms.size())
+        return false;
 
     for (unsigned long i = 0; i < instanceIds.size(); i++) {
-        if (objectInstanceIdDeviceMap.count(instanceIds.at(i)) == 1) {
-            if (objectInstanceIdDeviceMap[instanceIds.at(i)].id == deviceId.id) {
-                auto instance = dmu->getInstanceDataFragment(instanceIds.at(i));
-                if (instance == nullptr) continue;
-                instance->applyTransform(transforms.at(i));
-            } else {
-                // TODO: update instances on other nodes
-            }
-        } else {
-            // TODO error handling, object not found
-        }
+        if (!updateInstance(instanceIds.at(i), transforms.at(i)))
+            return false;
     }
 
     return true;
 }
 
 bool EngineNode::removePipelineObject(PipelineId pipelineId, InstanceId objectInstanceId) {
-    if (objectInstanceIdDeviceMap.count(objectInstanceId) == 0) return false;
+    if (objectInstanceIdDeviceMap.count(objectInstanceId) == 0)
+        return false;
     if (objectInstanceIdDeviceMap[objectInstanceId] == deviceId) {
         removeInstanceInPipeline(pipelineId, objectInstanceId);
         return removeInstanceInEngine(pipelineId, objectInstanceId);
@@ -242,7 +250,8 @@ EngineNode::bindGeometryToPipeline(PipelineId pipelineId, const std::vector<Obje
                                    const std::vector<ObjectParameter> &objectParameters,
                                    std::vector<InstanceId> &instanceIDs) {
     auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
-    if (objectIDs.size() != transforms.size() || pipeline == nullptr) return false;
+    if (objectIDs.size() != transforms.size() || pipeline == nullptr)
+        return false;
 
     auto geometry = pipeline->getGeometry();
 
@@ -300,7 +309,8 @@ ObjectId EngineNode::addObject(const Intersectable &object) {
 }
 
 bool EngineNode::removeObject(ObjectId id) {
-    if (!dmu->deleteBaseDataFragment(id)) return false;
+    if (!dmu->deleteBaseDataFragment(id))
+        return false;
 
     // remove instances
     for (auto instanceId: objectToInstanceMap.at(id)) {
@@ -318,7 +328,8 @@ bool EngineNode::removeObject(ObjectId id) {
 }
 
 bool EngineNode::updateObject(ObjectId id, const Intersectable &object) {
-    if (dmu->deleteBaseDataFragment(id)) return false;
+    if (dmu->deleteBaseDataFragment(id))
+        return false;
     auto clone = object.clone();
     dmu->storeBaseDataFragments(std::move(clone), id);
     return true;
@@ -374,7 +385,8 @@ ShaderResourceId EngineNode::addShaderResource(const ShaderResource &resource) {
 }
 
 bool EngineNode::removeShaderResource(ShaderResourceId id) {
-    if (!pipelinePool->deleteShaderResource(id)) return false;
+    if (!pipelinePool->deleteShaderResource(id))
+        return false;
     shaderResourceIds.remove(id);
     return true;
 }

@@ -45,6 +45,8 @@ private:
 
     bool removeInstanceInEngine(PipelineId pipelineId, InstanceId objectInstanceId);
 
+    bool updateInstance(InstanceId instanceId, const Matrix4x4 &transform);
+
 public:
     EngineNode();
 
