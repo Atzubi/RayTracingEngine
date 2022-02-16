@@ -21,6 +21,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update;
+        sudo apt-get install libsfml-dev;
+
     - name: Build
       env:
         CC: ${{ matrix.compiler.CC }}
@@ -30,10 +35,8 @@ jobs:
         INSTALL_PREFIX: ${{ github.workspace }}/install
         BUILD_TYPE: ${{ matrix.build-type }}
       run: |
-        sudo apt-get update
-        sudo apt-get install libsfml-dev;
-        cmake -B $BUILD_DIR -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DATZUBI_RTENGINE_BUILD_EXAMPLES=1;
-        cmake --build $BUILD_DIR --config $BUILD_TYPE;
+        cmake -B $BUILD_DIR -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DATZUBI_RTENGINE_BUILD_EXAMPLES=1
+        cmake --build $BUILD_DIR --config $BUILD_TYPE
   
 
   windows:
@@ -69,5 +72,36 @@ jobs:
           INSTALL_PREFIX: ${{ github.workspace }}/install
           BUILD_TYPE: ${{ matrix.build-type }}
         run: |
-          cmake -B $BUILD_DIR -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DATZUBI_RTENGINE_BUILD_EXAMPLES=0;
-          cmake --build $BUILD_DIR --config $BUILD_TYPE;
+          cmake -B $BUILD_DIR -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DATZUBI_RTENGINE_BUILD_EXAMPLES=0
+          cmake --build $BUILD_DIR --config $BUILD_TYPE
+  
+
+  macos:
+    name: ${{ matrix.os }}.${{ matrix.compiler.compiler }}.${{ matrix.build-type }}
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ linux ]
+        compiler:
+          - { compiler: xcode,  CC: cc,   CXX: c++ }
+        build-type: [ Release ]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Dependencies
+        run: |
+          brew update > /dev/null || true
+          brew install sfml
+
+      - name: Build
+        env:
+          CC: ${{ matrix.compiler.CC }}
+          CXX: ${{ matrix.compiler.CXX }}
+          SRC_DIR: ${{ github.workspace }}
+          BUILD_DIR: ${{ github.workspace }}/build
+          INSTALL_PREFIX: ${{ github.workspace }}/install
+          BUILD_TYPE: ${{ matrix.build-type }}
+        run: |
+          cmake -B $BUILD_DIR -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DATZUBI_RTENGINE_BUILD_EXAMPLES=1
+          cmake --build $BUILD_DIR --config $BUILD_TYPE
