@@ -58,7 +58,7 @@ jobs:
       - uses: msys2/setup-msys2@v2
         with:
           msystem: ${{ matrix.msys2.msystem }}
-          install: pacman-mirrors bash curl git base-devel mingw-w64-${{ matrix.msys2.arch }}-toolchain mingw-w64-${{ matrix.msys2.arch }}-gcc mingw-w64-${{ matrix.msys2.arch }}-clang mingw-w64-${{ matrix.msys2.arch }}-cmake mingw-w64-${{ matrix.msys2.arch }}-ninja mingw-w64-sfml
+          install: pacman-mirrors bash curl git base-devel mingw-w64-${{ matrix.msys2.arch }}-toolchain mingw-w64-${{ matrix.msys2.arch }}-gcc mingw-w64-${{ matrix.msys2.arch }}-clang mingw-w64-${{ matrix.msys2.arch }}-cmake mingw-w64-${{ matrix.msys2.arch }}-ninja mingw-w64-${{ matrix.msys2.arch }}-sfml
           update: true
       - name: Build
         env:
