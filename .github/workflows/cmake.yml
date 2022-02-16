@@ -31,8 +31,6 @@ jobs:
         INSTALL_PREFIX: ${{ github.workspace }}/install
         BUILD_TYPE: ${{ matrix.build-type }}
       run: |
-        cmake -E make_directory "${BUILD_DIR}";
-        cmake -E make_directory "${INSTALL_DIR}";
-        cmake -B ${BUILD_DIR} -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DATZUBI_RTENGINE_BUILD_EXAMPLES=0;
-        cmake --build ${BUILD_DIR} --config ${BUILD_TYPE};
+        cmake -B $BUILD_DIR -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DATZUBI_RTENGINE_BUILD_EXAMPLES=0;
+        cmake --build $BUILD_DIR --config $BUILD_TYPE;
       
