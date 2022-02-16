@@ -4,6 +4,6 @@ build/
 cmake-build-debug
 cmake-build-release
 CMakeFiles
-SFML-2.5.1
+examples/MinimalExample/SFML
 cmake-build-release-coverage
 cmake-build-debug-coverage
