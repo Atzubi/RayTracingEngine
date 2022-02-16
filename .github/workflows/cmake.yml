@@ -78,13 +78,14 @@ jobs:
 
   macos:
     name: ${{ matrix.os }}.${{ matrix.compiler.compiler }}.${{ matrix.build-type }}
-    runs-on: macos-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ linux ]
+        os: [ macos-latest ]
         compiler:
-          - { compiler: xcode,  CC: cc,   CXX: c++ }
+          - { compiler: gcc,  CC: gcc-10,   CXX: g++-10 }
+          #- { compiler: xcode,  CC: cc,   CXX: c++ }
         build-type: [ Release ]
 
     steps:
@@ -92,7 +93,7 @@ jobs:
       - name: Install Dependencies
         run: |
           brew update > /dev/null || true
-          brew install sfml
+          brew install gcc@10 sfml
 
       - name: Build
         env:
