@@ -30,7 +30,8 @@ jobs:
         INSTALL_PREFIX: ${{ github.workspace }}/install
         BUILD_TYPE: ${{ matrix.build-type }}
       run: |
-        cmake -B $BUILD_DIR -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DATZUBI_RTENGINE_BUILD_EXAMPLES=0;
+        sudo apt-get install libsfml-dev;
+        cmake -B $BUILD_DIR -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DATZUBI_RTENGINE_BUILD_EXAMPLES=1;
         cmake --build $BUILD_DIR --config $BUILD_TYPE;
   
 
@@ -43,7 +44,7 @@ jobs:
         os: [ windows-latest ]
         msys2:
           - { msystem: mingw64, arch: x86_64 }
-          - { msystem: mingw32, arch: i686 }
+          # - { msystem: mingw32, arch: i686 } # 32bit, no sfml package
         compiler:
           - { compiler: gcc,  CC: gcc,   CXX: g++ }
           - { compiler: clang, CC: clang, CXX: clang++ }
@@ -56,7 +57,7 @@ jobs:
       - uses: msys2/setup-msys2@v2
         with:
           msystem: ${{ matrix.msys2.msystem }}
-          install: pacman-mirrors bash curl git base-devel mingw-w64-${{ matrix.msys2.arch }}-toolchain mingw-w64-${{ matrix.msys2.arch }}-gcc mingw-w64-${{ matrix.msys2.arch }}-clang mingw-w64-${{ matrix.msys2.arch }}-openmp mingw-w64-${{ matrix.msys2.arch }}-cmake mingw-w64-${{ matrix.msys2.arch }}-ninja mingw-w64-${{ matrix.msys2.arch }}-libxml2 mingw-w64-${{ matrix.msys2.arch }}-pugixml mingw-w64-${{ matrix.msys2.arch }}-libjpeg-turbo mingw-w64-${{ matrix.msys2.arch }}-zlib
+          install: pacman-mirrors bash curl git base-devel mingw-w64-${{ matrix.msys2.arch }}-toolchain mingw-w64-${{ matrix.msys2.arch }}-gcc mingw-w64-${{ matrix.msys2.arch }}-clang mingw-w64-${{ matrix.msys2.arch }}-cmake mingw-w64-${{ matrix.msys2.arch }}-ninja mingw-w64-sfml
           update: true
       - name: Build
         env:
@@ -67,5 +68,5 @@ jobs:
           INSTALL_PREFIX: ${{ github.workspace }}/install
           BUILD_TYPE: ${{ matrix.build-type }}
         run: |
-          cmake -B $BUILD_DIR -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DATZUBI_RTENGINE_BUILD_EXAMPLES=0;
+          cmake -B $BUILD_DIR -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DATZUBI_RTENGINE_BUILD_EXAMPLES=1;
           cmake --build $BUILD_DIR --config $BUILD_TYPE;
