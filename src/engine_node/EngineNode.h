@@ -59,6 +59,12 @@ private:
     createInstance(const Matrix4x4 &transform, std::vector<Intersectable *> &instances,
                    const ObjectCapsule &capsule) const;
 
+    void getShaders(const PipelineDescription &pipelineDescription, PipelineInit &pipelineInit) const;
+
+    [[nodiscard]] PipelineInit initPipelineInit(const PipelineDescription &pipelineDescription) const;
+
+    void createPipelineBVH(const std::vector<Intersectable *> &instances, PipelineInit &pipelineInit) const;
+
     InstanceId createInstanceId(std::vector<InstanceId> &instanceIds, const ObjectId &objectId);
 
 public:

@@ -71,13 +71,15 @@ bool EngineNode::updateInstance(InstanceId instanceId, const Matrix4x4 &transfor
     return true;
 }
 
-std::unique_ptr<Instance> EngineNode::createInstance(const Matrix4x4 &transform, std::vector<Intersectable *> &instances,
-                                                     const ObjectCapsule &capsule) const {
+std::unique_ptr<Instance>
+EngineNode::createInstance(const Matrix4x4 &transform, std::vector<Intersectable *> &instances,
+                           const ObjectCapsule &capsule) const {
     auto instance = std::make_unique<Instance>(dmu.get(), capsule);
     instance->applyTransform(transform);
     instances.push_back(instance.get());
     return instance;
 }
+
 InstanceId EngineNode::createInstanceId(std::vector<InstanceId> &instanceIds, const ObjectId &objectId) {
     auto instanceId = objectInstanceIds.next();
     objectToInstanceMap[objectId].insert(instanceId);
@@ -108,30 +110,36 @@ void EngineNode::createInstances(const std::vector<ObjectId> &objectIDs, const s
 
 std::unique_ptr<PipelineImplement> EngineNode::createPipeline(const PipelineDescription &pipelineDescription,
                                                               const std::vector<Intersectable *> &instances) {
-    auto root = std::make_unique<DBVHNode>();
-    DBVHv2::addObjects(*root, instances);
+    PipelineInit pipelineInit = initPipelineInit(pipelineDescription);
+    createPipelineBVH(instances, pipelineInit);
+    getShaders(pipelineDescription, pipelineInit);
+    return std::make_unique<PipelineImplement>(pipelineInit);
+}
 
-    auto pipelineRayGeneratorShaders = getShaderPackages<RayGeneratorShaderId, RayGeneratorShader>(*pipelinePool,
+void EngineNode::createPipelineBVH(const std::vector<Intersectable *> &instances, PipelineInit &pipelineInit) const {
+    pipelineInit.geometry = std::make_unique<DBVHNode>();
+    DBVHv2::addObjects(*pipelineInit.geometry, instances);
+}
+
+PipelineInit EngineNode::initPipelineInit(const PipelineDescription &pipelineDescription) const {
+    PipelineInit pipelineInit;
+    pipelineInit.dataManagement = dmu.get();
+    pipelineInit.pipelineInfo = {pipelineDescription.resolutionX, pipelineDescription.resolutionY,
+                                 pipelineDescription.cameraPosition, pipelineDescription.cameraDirection,
+                                 pipelineDescription.cameraUp};
+    return pipelineInit;
+}
+
+void EngineNode::getShaders(const PipelineDescription &pipelineDescription, PipelineInit &pipelineInit) const {
+    pipelineInit.rayGeneratorShaders = getShaderPackages<RayGeneratorShaderId, RayGeneratorShader>(*pipelinePool,
                                                                                                    pipelineDescription.rayGeneratorShaders);
-    auto pipelineOcclusionShaders = getShaderPackages<OcclusionShaderId, OcclusionShader>(*pipelinePool,
+    pipelineInit.occlusionShaders = getShaderPackages<OcclusionShaderId, OcclusionShader>(*pipelinePool,
                                                                                           pipelineDescription.occlusionShaders);
-    auto pipelineHitShaders = getShaderPackages<HitShaderId, HitShader>(*pipelinePool, pipelineDescription.hitShaders);
-    auto pipelinePierceShaders = getShaderPackages<PierceShaderId, PierceShader>(*pipelinePool,
+    pipelineInit.hitShaders = getShaderPackages<HitShaderId, HitShader>(*pipelinePool, pipelineDescription.hitShaders);
+    pipelineInit.pierceShaders = getShaderPackages<PierceShaderId, PierceShader>(*pipelinePool,
                                                                                  pipelineDescription.pierceShaders);
-    auto pipelineMissShaders = getShaderPackages<MissShaderId, MissShader>(*pipelinePool,
+    pipelineInit.missShaders = getShaderPackages<MissShaderId, MissShader>(*pipelinePool,
                                                                            pipelineDescription.missShaders);
-
-    return std::make_unique<PipelineImplement>(dmu.get(),
-                                               pipelineDescription.resolutionX,
-                                               pipelineDescription.resolutionY,
-                                               pipelineDescription.cameraPosition,
-                                               pipelineDescription.cameraDirection,
-                                               pipelineDescription.cameraUp,
-                                               pipelineRayGeneratorShaders,
-                                               pipelineOcclusionShaders,
-                                               pipelineHitShaders,
-                                               pipelinePierceShaders,
-                                               pipelineMissShaders, std::move(root));
 }
 
 PipelineId

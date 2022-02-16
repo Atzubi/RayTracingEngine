@@ -23,6 +23,17 @@ struct ShaderPackage {
     ID id;
 };
 
+struct PipelineInit {
+    DataManagementUnitV2 *dataManagement;
+    PipelineInfo pipelineInfo;
+    std::vector<ShaderPackage<RayGeneratorShaderId, RayGeneratorShader>> rayGeneratorShaders;
+    std::vector<ShaderPackage<OcclusionShaderId, OcclusionShader>> occlusionShaders;
+    std::vector<ShaderPackage<HitShaderId, HitShader>> hitShaders;
+    std::vector<ShaderPackage<PierceShaderId, PierceShader>> pierceShaders;
+    std::vector<ShaderPackage<MissShaderId, MissShader>> missShaders;
+    std::unique_ptr<DBVHNode> geometry;
+};
+
 /**
  * Contains all the information needed that defines a pipeline.
  * PipelineImplement Model:
@@ -114,15 +125,12 @@ private:
 
     void anyHitTraversal();
 
+    void createResultBuffer();
+
+    void setShaders(const PipelineInit &pipelineInit);
+
 public:
-    PipelineImplement(DataManagementUnitV2 *dataManagement, int width, int height, const Vector3D &cameraPosition,
-                      const Vector3D &cameraDirection, const Vector3D &cameraUp,
-                      const std::vector<ShaderPackage<RayGeneratorShaderId, RayGeneratorShader>> &rayGeneratorShaders,
-                      const std::vector<ShaderPackage<OcclusionShaderId, OcclusionShader>> &occlusionShaders,
-                      const std::vector<ShaderPackage<HitShaderId, HitShader>> &hitShaders,
-                      const std::vector<ShaderPackage<PierceShaderId, PierceShader>> &pierceShaders,
-                      const std::vector<ShaderPackage<MissShaderId, MissShader>> &missShaders,
-                      std::unique_ptr<DBVHNode> geometry);
+    explicit PipelineImplement(PipelineInit &pipelineInit);
 
     ~PipelineImplement();
 
@@ -168,8 +176,6 @@ public:
     DBVHNode *getGeometry();
 
     std::unique_ptr<Intersectable> getGeometryAsObject();
-
-    void setEngine(DataManagementUnitV2 *dataManagement);
 };
 
 #endif //RAYTRACECORE_PIPELINEIMPLEMENT_H

@@ -4,48 +4,40 @@
 
 #include "pipeline/PipelineImplement.h"
 
-PipelineImplement::PipelineImplement(DataManagementUnitV2 *dataManagement, int width, int height,
-                                     const Vector3D &cameraPosition,
-                                     const Vector3D &cameraDirection, const Vector3D &cameraUp,
-                                     const std::vector<ShaderPackage<RayGeneratorShaderId, RayGeneratorShader>> &rayGeneratorShaders,
-                                     const std::vector<ShaderPackage<OcclusionShaderId, OcclusionShader>> &occlusionShaders,
-                                     const std::vector<ShaderPackage<HitShaderId, HitShader>> &hitShaders,
-                                     const std::vector<ShaderPackage<PierceShaderId, PierceShader>> &pierceShaders,
-                                     const std::vector<ShaderPackage<MissShaderId, MissShader>> &missShaders,
-                                     std::unique_ptr<DBVHNode> geometry) {
-    this->dmu = dataManagement;
-    this->pipelineInfo.width = width;
-    this->pipelineInfo.height = height;
-    this->pipelineInfo.cameraPosition = cameraPosition;
-    this->pipelineInfo.cameraDirection = cameraDirection;
-    this->pipelineInfo.cameraUp = cameraUp;
+PipelineImplement::PipelineImplement(PipelineInit &pipelineInit) {
+    dmu = pipelineInit.dataManagement;
+    pipelineInfo = pipelineInit.pipelineInfo;
+    setShaders(pipelineInit);
+    geometry = std::move(pipelineInit.geometry);
+    createResultBuffer();
+}
 
-    for (auto &shader: rayGeneratorShaders) {
-        this->rayGeneratorShaders[shader.id] = shader.shaderContainer;
+void PipelineImplement::setShaders(const PipelineInit &pipelineInit) {
+    for (auto &shader: pipelineInit.rayGeneratorShaders) {
+        rayGeneratorShaders[shader.id] = shader.shaderContainer;
     }
-    for (auto &shader: hitShaders) {
-        this->hitShaders[shader.id] = shader.shaderContainer;
+    for (auto &shader: pipelineInit.hitShaders) {
+        hitShaders[shader.id] = shader.shaderContainer;
     }
-    for (auto &shader: occlusionShaders) {
-        this->occlusionShaders[shader.id] = shader.shaderContainer;
+    for (auto &shader: pipelineInit.occlusionShaders) {
+        occlusionShaders[shader.id] = shader.shaderContainer;
     }
-    for (auto &shader: pierceShaders) {
-        this->pierceShaders[shader.id] = shader.shaderContainer;
+    for (auto &shader: pipelineInit.pierceShaders) {
+        pierceShaders[shader.id] = shader.shaderContainer;
     }
-    for (auto &shader: missShaders) {
-        this->missShaders[shader.id] = shader.shaderContainer;
+    for (auto &shader: pipelineInit.missShaders) {
+        missShaders[shader.id] = shader.shaderContainer;
     }
+}
 
-    this->geometry = std::move(geometry);
+void PipelineImplement::createResultBuffer() {
     result = std::make_unique<Texture>();
     result->name = "Render";
-    result->w = width;
-    result->h = height;
-    result->image = std::vector<unsigned char>(width * height * 3);
+    result->w = pipelineInfo.width;
+    result->h = pipelineInfo.height;
+    result->image = std::vector<unsigned char>(result->w * result->h * 3);
 
-    for (int i = 0; i < width * height * 3; i++) {
-        result->image[i] = 0;
-    }
+    resetResult();
 }
 
 PipelineImplement::~PipelineImplement() = default;
@@ -431,10 +423,6 @@ bool PipelineImplement::updateShader(MissShaderId shaderId, const std::vector<Sh
 
 Texture *PipelineImplement::getResult() {
     return result.get();
-}
-
-void PipelineImplement::setEngine(DataManagementUnitV2 *dataManagement) {
-    dmu = dataManagement;
 }
 
 
