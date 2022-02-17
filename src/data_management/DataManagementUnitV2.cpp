@@ -37,35 +37,20 @@ bool DataManagementUnitV2::deleteInstanceDataFragment(InstanceId id) {
 }
 
 Intersectable *DataManagementUnitV2::getBaseDataFragment(ObjectId id) {
-    if (objects.count(id) == 0) {
-        // object was not originally stored on this node, check cache
-        if (objectCache.count(id) == 0) {
-            // object is not currently in the cache
-            // TODO request object from network and store it in cache
-            return nullptr;
-        } else {
-            // object was found in cache
-            return objectCache[id].get();
-        }
-    } else {
-        // object was found in node
+    if (objects.count(id))
         return objects[id].get();
-    }
+    if (objectCache.count(id))
+        return objectCache[id].get();
+    // TODO request object from network and store it in cache
+    return nullptr;
 }
 
 Instance *DataManagementUnitV2::getInstanceDataFragment(InstanceId id) {
-    if (objectInstances.count(id) == 0) {
-        // object was not originally stored on this node, check cache
-        if (objectInstanceCache.count(id) == 0) {
-            // object is not currently in the cache
-            // TODO request object from network and store it in cache
-            return nullptr;
-        } else {
-            // object was found in cache
-            return objectInstanceCache[id].get();
-        }
-    } else {
-        // object was found in node
+    if (objectInstances.count(id))
         return objectInstances[id].get();
-    }
+    if (objectInstanceCache.count(id))
+        return objectInstanceCache[id].get();
+    // TODO request object from network and store it in cache
+    return nullptr;
+
 }
