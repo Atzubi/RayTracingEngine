@@ -8,7 +8,7 @@
 #include "utility/Id.h"
 #include "RayTraceEngine/BasicStructures.h"
 #include "RayTraceEngine/Intersectable.h"
-#include <functional>
+#include "RayTraceEngine/Matrix4x4.h"
 
 class DataManagementUnitV2;
 

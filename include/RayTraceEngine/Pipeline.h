@@ -8,6 +8,7 @@
 #include "RayTraceEngine/BasicStructures.h"
 #include "RayTraceEngine/Shader.h"
 #include "utility/Id.h"
+#include "RayTraceEngine/Matrix4x4.h"
 #include <vector>
 
 /**
