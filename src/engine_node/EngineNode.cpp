@@ -47,7 +47,7 @@ void EngineNode::removeInstanceInPipeline(PipelineId pipelineId, InstanceId obje
     auto geometry = pipeline->getGeometry();
     auto instance = dmu->getInstanceDataFragment(objectInstanceId);
     std::vector<Intersectable *> remove{instance};
-    DBVHv2::removeObjects(*geometry, remove);
+    geometry.removeObjects(remove);
 }
 
 bool EngineNode::removeInstanceInEngine(PipelineId pipelineId, InstanceId objectInstanceId) {
@@ -117,8 +117,7 @@ std::unique_ptr<PipelineImplement> EngineNode::createPipeline(const PipelineDesc
 }
 
 void EngineNode::createPipelineBVH(const std::vector<Intersectable *> &instances, PipelineInit &pipelineInit) const {
-    pipelineInit.geometry = std::make_unique<DBVHNode>();
-    DBVHv2::addObjects(*pipelineInit.geometry, instances);
+    pipelineInit.geometry = DBVHv2(instances);
 }
 
 PipelineInit EngineNode::initPipelineInit(const PipelineDescription &pipelineDescription) const {
@@ -231,7 +230,7 @@ EngineNode::bindGeometryToPipeline(PipelineId pipelineId, const std::vector<Obje
 
     pipelineToInstanceMap[pipelineId].insert(instanceIds.begin(), instanceIds.end());
 
-    DBVHv2::addObjects(*geometry, instances);
+    geometry.addObjects(instances);
 
     return true;
 }

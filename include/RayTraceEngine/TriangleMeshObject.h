@@ -6,8 +6,7 @@
 #define RAYTRACECORE_TRIANGLEMESHOBJECT_H
 
 #include "Intersectable.h"
-
-struct DBVHNode;
+#include "bvh/DBVHv2.h"
 
 /**
  * Contains all the information required to construct a 3d model based on a 3d triangle mesh.
@@ -34,7 +33,7 @@ private:
     Material material;
 
     std::vector<std::unique_ptr<Intersectable>> triangles;
-    std::unique_ptr<DBVHNode> structure;
+    DBVHv2 structure;
 
 public:
     /**

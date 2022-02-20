@@ -13,7 +13,6 @@
 class PipelinePool{
 private:
     std::unordered_map<PipelineId, std::unique_ptr<PipelineImplement>> pipelines;
-    std::unordered_map<DBVHNode *, DBVHNode *> pipelineCache;
 
     std::unordered_map<HitShaderId, std::unique_ptr<HitShader>> hitShaders;
     std::unordered_map<MissShaderId, std::unique_ptr<MissShader>> missShaders;

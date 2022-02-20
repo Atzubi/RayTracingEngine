@@ -42,10 +42,6 @@ namespace {
         return isEmpty(root);
     }
 
-    enum SplitOperation {
-        Default, DefaultWrongOrder, AllNewLeft, AllNewRight, SplitOldNew, DefaultOldLeft, DefaultWrongOrderOldLeft
-    };
-
     void refit(BoundingBox &target, BoundingBox resizeBy) {
         target.minCorner.x = std::min(target.minCorner.x, resizeBy.minCorner.x);
         target.minCorner.y = std::min(target.minCorner.y, resizeBy.minCorner.y);
@@ -115,27 +111,6 @@ namespace {
         return pLeft * objectCostLeft + pRight * objectCostRight;
     }
 
-    void setBoxesAndHitProbability(const DBVHNode &node, BoundingBox &leftChildBox, BoundingBox &rightChildBox,
-                                   double &pLeft,
-                                   double &pRight) {
-        pLeft = 0;
-        pRight = 0;
-        if (isNodeLeft(node)) {
-            leftChildBox = (node.leftChild)->boundingBox;
-            pLeft = (node.leftChild)->surfaceArea / leftChildBox.getSA();
-        } else {
-            leftChildBox = (node.leftLeaf)->getBoundaries();
-            pLeft = (node.leftLeaf)->getSurfaceArea() / leftChildBox.getSA();
-        }
-        if (isNodeRight(node)) {
-            rightChildBox = (node.rightChild)->boundingBox;
-            pRight = (node.rightChild)->surfaceArea / rightChildBox.getSA();
-        } else {
-            rightChildBox = (node.rightLeaf)->getBoundaries();
-            pRight = (node.rightLeaf)->getSurfaceArea() / rightChildBox.getSA();
-        }
-    }
-
     SplitOperation getBestSplitOperation(const double *SAHs) {
         double SAH = std::numeric_limits<double>::max();
         SplitOperation bestSAH = Default;
@@ -146,83 +121,6 @@ namespace {
             }
         }
         return bestSAH;
-    }
-
-    double computeSAHWithNewParent(const DBVHNode &node, const BoundingBox &aabbLeft, const BoundingBox &aabbRight,
-                                   double objectCostLeft, double objectCostRight, SplitOperation &newParent) {
-        BoundingBox leftChildBox;
-        BoundingBox rightChildBox;
-        double pLeft;
-        double pRight;
-        setBoxesAndHitProbability(node, leftChildBox, rightChildBox, pLeft, pRight);
-
-        BoundingBox oldLeft = leftChildBox;
-        BoundingBox oldLeftNewLeft = leftChildBox;
-        BoundingBox oldLeftNewRight = leftChildBox;
-        BoundingBox oldLeftNewLeftNewRight = leftChildBox;
-        BoundingBox oldLeftOldRight = leftChildBox;
-        BoundingBox oldLeftOldRightNewLeft = leftChildBox;
-        BoundingBox oldLeftOldRightNewRight = leftChildBox;
-        BoundingBox oldRightNewLeftNewRight = rightChildBox;
-        BoundingBox oldRightNewRight = rightChildBox;
-        BoundingBox oldRightNewLeft = rightChildBox;
-        BoundingBox oldRight = rightChildBox;
-        BoundingBox newLeftNewRight = aabbLeft;
-        BoundingBox newRight = aabbRight;
-        BoundingBox newLeft = aabbLeft;
-
-        refit(newLeftNewRight, newRight);
-        refit(oldLeftNewLeft, newLeft);
-        refit(oldLeftNewRight, newRight);
-        refit(oldLeftNewLeftNewRight, newLeftNewRight);
-        refit(oldLeftOldRight, oldRight);
-        refit(oldRightNewLeft, newLeft);
-        refit(oldRightNewRight, newRight);
-        refit(oldLeftOldRightNewLeft, oldRightNewLeft);
-        refit(oldLeftOldRightNewRight, oldRightNewRight);
-        refit(oldRightNewLeftNewRight, newLeftNewRight);
-
-        double SAHs[7];
-
-        SAHs[Default] = oldLeftNewLeft.getSA() * (objectCostLeft + pLeft) +
-                        oldRightNewRight.getSA() * (objectCostRight + pRight);
-        SAHs[DefaultWrongOrder] = oldLeftNewRight.getSA() * (objectCostRight + pLeft) +
-                                  oldRightNewLeft.getSA() * (objectCostLeft + pRight);
-        SAHs[AllNewLeft] = oldLeft.getSA() * pLeft +
-                           oldRightNewLeftNewRight.getSA() * (objectCostLeft + objectCostRight + pRight);
-        SAHs[AllNewRight] = oldLeftNewLeftNewRight.getSA() * (objectCostLeft + objectCostRight + pLeft) +
-                            oldRight.getSA() * pRight;
-        SAHs[SplitOldNew] = oldLeftOldRight.getSA() * (pLeft + pRight) +
-                            newLeftNewRight.getSA() * (objectCostLeft + objectCostRight);
-        SAHs[DefaultOldLeft] = oldLeftOldRightNewLeft.getSA() * (objectCostLeft + pLeft + pRight) +
-                               newRight.getSA() * objectCostRight;
-        SAHs[DefaultWrongOrderOldLeft] = oldLeftOldRightNewRight.getSA() * (objectCostRight + pLeft + pRight) +
-                                         newLeft.getSA() * objectCostLeft;
-
-
-        SplitOperation bestSAH = getBestSplitOperation(SAHs);
-
-        newParent = bestSAH;
-        return SAHs[bestSAH];
-    }
-
-    double
-    evaluateBucket(const DBVHNode &node, const std::vector<Intersectable *> &objects, const Vector3D &splittingPlane,
-                   SplitOperation &newParent) {
-        BoundingBox aabbLeft;
-        BoundingBox aabbRight;
-
-        double objectCostLeft = 0;
-        double objectCostRight = 0;
-
-        sortObjectsIntoBuckets(objects, splittingPlane, aabbLeft, aabbRight, objectCostLeft, objectCostRight);
-
-        if (!isEmptyLeft(node) && !isEmptyRight(node)) {
-            return computeSAHWithNewParent(node, aabbLeft, aabbRight, objectCostLeft, objectCostRight, newParent);
-        } else {
-            return computeSAH(aabbLeft, aabbRight, objectCostLeft, objectCostRight);
-
-        }
     }
 
     void split(std::vector<Intersectable *> &leftChild, std::vector<Intersectable *> &rightChild,
@@ -268,64 +166,11 @@ namespace {
         node.surfaceArea += leaf.getSurfaceArea();
     }
 
-    void refit(DBVHNode &node) {
-        node.boundingBox = BoundingBox();
-        node.surfaceArea = 0;
-        if (isNodeRight(node)) {
-            refitChild(node, *node.rightChild);
-            node.maxDepthRight = std::max(node.rightChild->maxDepthRight, node.rightChild->maxDepthLeft) + 1;
-        } else {
-            refitLeaf(node, *node.rightLeaf);
-        }
-        if (isNodeLeft(node)) {
-            refitChild(node, *node.leftChild);
-            node.maxDepthLeft = std::max(node.leftChild->maxDepthRight, node.leftChild->maxDepthLeft) + 1;
-        } else {
-            refitLeaf(node, *node.leftLeaf);
-        }
-        node.surfaceArea += node.boundingBox.getSA();
-    }
-
-    struct BoxSA {
-        BoundingBox box;
-        double sa = 0;
-    };
-
-    struct Rotations {
-        BoxSA left;
-        BoxSA right;
-        BoxSA leftLeft;
-        BoxSA leftRight;
-        BoxSA rightRight;
-        BoxSA rightLeft;
-        BoundingBox swapLeftLeftToRight;
-        BoundingBox swapLeftRightToRight;
-        BoundingBox swapRightLeftToLeft;
-        BoundingBox swapRightRightToLeft;
-    };
-
     BoundingBox createSwapBox(BoundingBox a, BoundingBox b) {
         return {{std::min(a.minCorner.x, b.minCorner.x), std::min(a.minCorner.y, b.minCorner.y), std::min(a.minCorner.z,
                                                                                                           b.minCorner.z)},
                 {std::max(a.maxCorner.x, b.maxCorner.x), std::max(a.maxCorner.y, b.maxCorner.y), std::max(a.maxCorner.z,
                                                                                                           b.maxCorner.z)}};
-    }
-
-    void fillRotationBoxes(BoxSA &left, BoxSA &right, const DBVHNode &node) {
-        if (isNodeLeft(node)) {
-            left.box = (node.leftChild)->boundingBox;
-            left.sa = (node.leftChild)->surfaceArea;
-        } else {
-            left.box = (node.leftLeaf)->getBoundaries();
-            left.sa = (node.leftLeaf)->getSurfaceArea();
-        }
-        if (isNodeRight(node)) {
-            right.box = (node.rightChild)->boundingBox;
-            right.sa = (node.rightChild)->surfaceArea;
-        } else {
-            right.box = (node.rightLeaf)->getBoundaries();
-            right.sa = (node.rightLeaf)->getSurfaceArea();
-        }
     }
 
     enum Rotation {
@@ -365,30 +210,6 @@ namespace {
                                      rotations.rightLeft.sa + rotations.swapRightRightToLeft.getSA();
     }
 
-    void fillRightRotationBoxes(const DBVHNode &node, Rotations &rotations) {
-        auto rightNode = node.rightChild.get();
-        rotations.right.box = rightNode->boundingBox;
-        rotations.right.sa = rightNode->surfaceArea;
-        fillRotationBoxes(rotations.rightLeft, rotations.rightRight, *rightNode);
-    }
-
-    bool getRotationsRight(DBVHNode &node, double *SAHs, Rotations &rotations) {
-        auto leftNode = node.leftLeaf;
-        rotations.left.box = leftNode->getBoundaries();
-        rotations.left.sa = leftNode->getSurfaceArea();
-
-        if (isNodeRight(node)) {
-            fillRightRotationBoxes(node, rotations);
-
-            rotations.swapRightLeftToLeft = createSwapBox(rotations.left.box, rotations.rightRight.box);
-            rotations.swapRightRightToLeft = createSwapBox(rotations.left.box, rotations.rightLeft.box);
-
-            computeSwapSAHsRight(node, SAHs, rotations);
-            return true;
-        } else {
-            return false;
-        }
-    }
 
     void getRotationsLeft(DBVHNode &node, double *SAHs, Rotations &rotations) {
         auto rightNode = node.rightLeaf;
@@ -399,39 +220,6 @@ namespace {
         rotations.swapLeftRightToRight = createSwapBox(rotations.right.box, rotations.leftLeft.box);
 
         computeSwapSAHsLeft(node, SAHs, rotations);
-    }
-
-    void getRotationsFull(const DBVHNode &node, double *SAHs, Rotations &rotations) {
-        fillRightRotationBoxes(node, rotations);
-
-        rotations.swapLeftLeftToRight = createSwapBox(rotations.right.box, rotations.leftRight.box);
-        rotations.swapLeftRightToRight = createSwapBox(rotations.right.box, rotations.leftLeft.box);
-        rotations.swapRightLeftToLeft = createSwapBox(rotations.left.box, rotations.rightRight.box);
-        rotations.swapRightRightToLeft = createSwapBox(rotations.left.box, rotations.rightLeft.box);
-
-        computeSwapSAHsFull(node, SAHs, rotations);
-    }
-
-    void getRotations(DBVHNode &node, double *SAHs, Rotations &rotations) {
-        auto leftNode = node.leftChild.get();
-        rotations.left.box = leftNode->boundingBox;
-        rotations.left.sa = leftNode->surfaceArea;
-        fillRotationBoxes(rotations.leftLeft, rotations.leftRight, *leftNode);
-
-        if (isNodeRight(node)) {
-            getRotationsFull(node, SAHs, rotations);
-        } else {
-            getRotationsLeft(node, SAHs, rotations);
-        }
-    }
-
-    bool getPossibleRotations(DBVHNode &node, double *SAHs, Rotations &rotations) {
-        if (isNodeLeft(node)) {
-            getRotations(node, SAHs, rotations);
-        } else {
-            return getRotationsRight(node, SAHs, rotations);
-        }
-        return true;
     }
 
     Rotation getBestSAH(const double *SAHs) {
@@ -451,204 +239,6 @@ namespace {
         return bestSAH;
     }
 
-    void setNodeLeftLeft(DBVHNode &node) {
-        if (isNodeLeft(*node.leftChild)) {
-            node.rightChild = std::move((node.leftChild)->leftChild);
-            node.maxDepthRight =
-                    std::max(node.rightChild->maxDepthLeft, node.rightChild->maxDepthRight) + 1;
-        } else {
-            node.rightLeaf = (node.leftChild)->leftLeaf;
-            node.maxDepthRight = 1;
-        }
-    }
-
-    void swapChildLeftLeft(DBVHNode &node, const Rotations &rotations) {
-        auto buffer = std::move(node.rightChild);
-        setNodeLeftLeft(node);
-        (node.leftChild)->boundingBox = rotations.swapLeftLeftToRight;
-        (node.leftChild)->maxDepthLeft = std::max(buffer->maxDepthLeft, buffer->maxDepthRight) + 1;
-        (node.leftChild)->leftChild = std::move(buffer);
-    }
-
-    void swapLeafLeftLeft(DBVHNode &node, const Rotations &rotations) {
-        auto buffer = node.rightLeaf;
-        setNodeLeftLeft(node);
-        (node.leftChild)->boundingBox = rotations.swapLeftLeftToRight;
-        (node.leftChild)->leftLeaf = buffer;
-        (node.leftChild)->maxDepthLeft = 1;
-    }
-
-    void setSurfaceAreaLeftLeft(DBVHNode &node, const Rotations &rotations, const double *SAHs) {
-        node.surfaceArea = SAHs[SwapLeftLeftToRight];
-        (node.leftChild)->surfaceArea =
-                rotations.right.sa + rotations.leftRight.sa + rotations.swapLeftLeftToRight.getSA();
-    }
-
-    void swapLeftLeftToRight(DBVHNode &node, const Rotations &rotations, const double *SAHs) {
-        if (isNodeRight(node)) {
-            swapChildLeftLeft(node, rotations);
-        } else {
-            swapLeafLeftLeft(node, rotations);
-        }
-        setSurfaceAreaLeftLeft(node, rotations, SAHs);
-    }
-
-    void setNodeLeftRight(DBVHNode &node) {
-        if (isNodeRight(*node.leftChild)) {
-            node.rightChild = std::move((node.leftChild)->rightChild);
-            node.maxDepthRight =
-                    std::max(node.rightChild->maxDepthLeft, node.rightChild->maxDepthRight) + 1;
-        } else {
-            node.rightLeaf = (node.leftChild)->rightLeaf;
-            node.maxDepthRight = 1;
-        }
-    }
-
-    void swapChildLeftRight(DBVHNode &node, const Rotations &rotations) {
-        auto buffer = std::move(node.rightChild);
-        setNodeLeftRight(node);
-        (node.leftChild)->boundingBox = rotations.swapLeftRightToRight;
-        (node.leftChild)->maxDepthRight = std::max(buffer->maxDepthLeft, buffer->maxDepthRight) + 1;
-        (node.leftChild)->rightChild = std::move(buffer);
-    }
-
-    void swapLeafLeftRight(DBVHNode &node, const Rotations &rotations) {
-        auto buffer = node.rightLeaf;
-        setNodeLeftRight(node);
-        (node.leftChild)->boundingBox = rotations.swapLeftRightToRight;
-        (node.leftChild)->rightLeaf = buffer;
-        (node.leftChild)->maxDepthRight = 1;
-    }
-
-    void setSurfaceAreaLeftRight(DBVHNode &node, const Rotations &rotations, const double *SAHs) {
-        node.surfaceArea = SAHs[SwapLeftRightToRight];
-        (node.leftChild)->surfaceArea =
-                rotations.right.sa + rotations.leftLeft.sa + rotations.swapLeftRightToRight.getSA();
-    }
-
-    void swapLeftRightToRight(DBVHNode &node, const Rotations &rotations, const double *SAHs) {
-        if (isNodeRight(node)) {
-            swapChildLeftRight(node, rotations);
-        } else {
-            swapLeafLeftRight(node, rotations);
-        }
-        setSurfaceAreaLeftRight(node, rotations, SAHs);
-    }
-
-    void setNodeRightLeft(DBVHNode &node) {
-        if (isNodeLeft(*node.rightChild)) {
-            node.leftChild = std::move((node.rightChild)->leftChild);
-            node.maxDepthLeft = std::max(node.leftChild->maxDepthLeft, node.leftChild->maxDepthRight) + 1;
-        } else {
-            node.leftLeaf = (node.rightChild)->leftLeaf;
-            node.maxDepthLeft = 1;
-        }
-    }
-
-    void swapChildRightLeft(DBVHNode &node, const Rotations &rotations) {
-        auto buffer = std::move(node.leftChild);
-        setNodeRightLeft(node);
-        (node.rightChild)->boundingBox = rotations.swapRightLeftToLeft;
-        (node.rightChild)->maxDepthLeft = std::max(buffer->maxDepthLeft, buffer->maxDepthRight) + 1;
-        (node.rightChild)->leftChild = std::move(buffer);
-    }
-
-    void swapLeafRightLeft(DBVHNode &node, const Rotations &rotations) {
-        auto buffer = node.leftLeaf;
-        setNodeRightLeft(node);
-        (node.rightChild)->boundingBox = rotations.swapRightLeftToLeft;
-        (node.rightChild)->leftLeaf = buffer;
-        (node.rightChild)->maxDepthLeft = 1;
-    }
-
-    void setSurfaceAreaRightLeft(DBVHNode &node, const Rotations &rotations, const double *SAHs) {
-        node.surfaceArea = SAHs[SwapRightLeftToLeft];
-        (node.rightChild)->surfaceArea =
-                rotations.left.sa + rotations.rightRight.sa + rotations.swapRightLeftToLeft.getSA();
-    }
-
-    void swapRightLeft(DBVHNode &node, const Rotations &rotations, const double *SAHs) {
-        if (isNodeLeft(node)) {
-            swapChildRightLeft(node, rotations);
-        } else {
-            swapLeafRightLeft(node, rotations);
-        }
-        setSurfaceAreaRightLeft(node, rotations, SAHs);
-    }
-
-    void setNodeRightRight(DBVHNode &node) {
-        if (isNodeRight(*node.rightChild)) {
-            node.leftChild = std::move((node.rightChild)->rightChild);
-            node.maxDepthLeft = std::max(node.leftChild->maxDepthLeft, node.leftChild->maxDepthRight) + 1;
-        } else {
-            node.leftLeaf = (node.rightChild)->rightLeaf;
-            node.maxDepthLeft = 1;
-        }
-    }
-
-    void swapChildRightRight(DBVHNode &node, const Rotations &rotations) {
-        auto buffer = std::move(node.leftChild);
-        setNodeRightRight(node);
-        (node.rightChild)->boundingBox = rotations.swapRightRightToLeft;
-        (node.rightChild)->maxDepthRight = std::max(buffer->maxDepthLeft, buffer->maxDepthRight) + 1;
-        (node.rightChild)->rightChild = std::move(buffer);
-    }
-
-    void swapLeafRightRight(DBVHNode &node, const Rotations &rotations) {
-        auto buffer = node.leftLeaf;
-        setNodeRightRight(node);
-        (node.rightChild)->boundingBox = rotations.swapRightRightToLeft;
-        (node.rightChild)->rightLeaf = buffer;
-        (node.rightChild)->maxDepthRight = 1;
-    }
-
-    void setSurfaceAreaRightRight(DBVHNode &node, const Rotations &rotations, const double *SAHs) {
-        node.surfaceArea = SAHs[SwapRightRightToLeft];
-        (node.rightChild)->surfaceArea =
-                rotations.left.sa + rotations.rightLeft.sa + rotations.swapRightRightToLeft.getSA();
-    }
-
-    void swapRightRight(DBVHNode &node, const Rotations &rotations, const double *SAHs) {
-        if (isNodeLeft(node)) {
-            swapChildRightRight(node, rotations);
-        } else {
-            swapLeafRightRight(node, rotations);
-        }
-        setSurfaceAreaRightRight(node, rotations, SAHs);
-    }
-
-    bool optimizeSAH(DBVHNode &node) {
-        Rotations rotations;
-        double SAHs[numberOfPossibleRotation];
-
-        if (!getPossibleRotations(node, SAHs, rotations)) return false;
-
-        SAHs[NoRotation] = node.surfaceArea;
-        Rotation bestSAH = getBestSAH(SAHs);
-
-        switch (bestSAH) {
-            case NoRotation:
-                return false;
-            case SwapLeftLeftToRight: {
-                swapLeftLeftToRight(node, rotations, SAHs);
-                break;
-            }
-            case SwapLeftRightToRight: {
-                swapLeftRightToRight(node, rotations, SAHs);
-                break;
-            }
-            case SwapRightLeftToLeft: {
-                swapRightLeft(node, rotations, SAHs);
-                break;
-            }
-            case SwapRightRightToLeft: {
-                swapRightRight(node, rotations, SAHs);
-                break;
-            }
-        }
-        return true;
-    }
-
     std::vector<Vector3D> createSplittingPlanes(BoundingBox &bBox) {
         std::vector<Vector3D> splittingPlanes(numberOfSplittingPlanes);
         int splitsPerDimension = numberOfSplittingPlanes / 3 + 1;
@@ -662,18 +252,6 @@ namespace {
         }
 
         return splittingPlanes;
-    }
-
-    std::vector<double> evaluateSplittingPlanes(const DBVHNode &node, const std::vector<Intersectable *> &objects,
-                                                const std::vector<Vector3D> &splittingPlanes,
-                                                std::vector<SplitOperation> &newParent) {
-        std::vector<double> SAH(numberOfSplittingPlanes);
-
-        for (int i = 0; i < numberOfSplittingPlanes; i++) {
-            SAH[i] = evaluateBucket(node, objects, splittingPlanes[i], newParent[i]);
-        }
-
-        return SAH;
     }
 
     int getBestSplittingPlane(const std::vector<double> &SAH) {
@@ -712,126 +290,9 @@ namespace {
         rightObjects = buffer;
     }
 
-
-    std::unique_ptr<DBVHNode> moveToNewNode(DBVHNode &node) {
-        auto newNode = std::make_unique<DBVHNode>();
-        *newNode = std::move(node);
-        return newNode;
-    }
-
-    void moveParentToNewParentsLeftChild(DBVHNode( &node)) {
-        auto newNode = moveToNewNode(node);
-        node.maxDepthLeft = std::max(newNode->maxDepthLeft, newNode->maxDepthRight) + 1;
-        node.boundingBox = newNode->boundingBox;
-        node.leftChild = std::move(newNode);
-        node.maxDepthRight = 0;
-    }
-
-    void
-    sortObjectsIntoBoxes(const SplitOperation splitOperation, const Vector3D &splittingPlane, DBVHNode &node,
-                         const std::vector<Intersectable *> &objects,
-                         std::vector<Intersectable *> &leftObjects,
-                         std::vector<Intersectable *> &rightObjects) {
-        switch (splitOperation) {
-            case Default:
-                split(leftObjects, rightObjects, objects, splittingPlane);
-                break;
-            case DefaultWrongOrder: {
-                split(leftObjects, rightObjects, objects, splittingPlane);
-                switchBoxOrder(leftObjects, rightObjects);
-                break;
-            }
-            case AllNewLeft: {
-                leftObjects = objects;
-                break;
-            }
-            case AllNewRight: {
-                rightObjects = objects;
-                break;
-            }
-            case SplitOldNew: {
-                moveParentToNewParentsLeftChild(node);
-                rightObjects = objects;
-                break;
-            }
-            case DefaultOldLeft: {
-                split(leftObjects, rightObjects, objects, splittingPlane);
-                moveParentToNewParentsLeftChild(node);
-                break;
-            }
-            case DefaultWrongOrderOldLeft: {
-                split(leftObjects, rightObjects, objects, splittingPlane);
-                switchBoxOrder(leftObjects, rightObjects);
-                moveParentToNewParentsLeftChild(node);
-                break;
-            }
-            default:
-                throw (std::out_of_range("Undefined split operation!"));
-        }
-    }
-
     void createLeftLeaf(DBVHNode &node, const std::vector<Intersectable *> &leftObjects) {
         node.leftLeaf = leftObjects.at(0);
         node.maxDepthLeft = 1;
-    }
-
-    void createLeftChild(DBVHNode &node) {
-        auto child = std::make_unique<DBVHNode>();
-        node.leftChild = std::move(child);
-        node.maxDepthLeft = 2;
-    }
-
-    void
-    createNewParentForLeftLeafs(DBVHNode &node, const std::vector<Intersectable *> &leftObjects) {
-        auto buffer = node.leftLeaf;
-        auto parent = std::make_unique<DBVHNode>();
-        parent->leftLeaf = buffer;
-        parent->rightLeaf = leftObjects.at(0);
-        parent->maxDepthLeft = 1;
-        parent->maxDepthRight = 1;
-        refit(*parent);
-        node.leftChild = std::move(parent);
-        node.maxDepthLeft = 2;
-    }
-
-    void createNewParentForLeftChildren(DBVHNode &node) {
-        auto buffer = node.leftLeaf;
-        auto parent = std::make_unique<DBVHNode>();
-        parent->leftLeaf = buffer;
-        parent->boundingBox = buffer->getBoundaries();
-        parent->surfaceArea = parent->boundingBox.getSA() * 2;
-        parent->maxDepthLeft = 1;
-        node.leftChild = std::move(parent);
-        node.maxDepthLeft = 2;
-    }
-
-    bool insertSingleObjectLeft(DBVHNode &node, const std::vector<Intersectable *> &leftObjects) {
-        if (isEmptyLeft(node)) {
-            createLeftLeaf(node, leftObjects);
-        } else if (isLeafLeft(node)) {
-            createNewParentForLeftLeafs(node, leftObjects);
-        } else {
-            return false;
-        }
-        return true;
-    }
-
-    void createChildNodeLeft(DBVHNode &node) {
-        if (isEmptyLeft(node)) {
-            createLeftChild(node);
-        } else if (isLeafLeft(node)) {
-            createNewParentForLeftChildren(node);
-        }
-    }
-
-    bool passObjectsToLeftChild(DBVHNode &node, const std::vector<Intersectable *> &leftObjects) {
-        if (leftObjects.size() == 1) {
-            return insertSingleObjectLeft(node, leftObjects);
-        } else if (!leftObjects.empty()) {
-            createChildNodeLeft(node);
-            return false;
-        }
-        return true;
     }
 
     void createRightLeaf(DBVHNode &node, const std::vector<Intersectable *> &rightObjects) {
@@ -839,288 +300,12 @@ namespace {
         node.maxDepthRight = 1;
     }
 
-    void createRightChild(DBVHNode &node) {
-        auto child = std::make_unique<DBVHNode>();
-        node.rightChild = std::move(child);
-        node.maxDepthRight = 2;
-    }
-
-    void createNewParentForRightLeafs(DBVHNode &node, const std::vector<Intersectable *> &rightObjects) {
-        auto buffer = node.rightLeaf;
-        auto parent = std::make_unique<DBVHNode>();
-        parent->leftLeaf = buffer;
-        parent->rightLeaf = rightObjects.at(0);
-        parent->maxDepthLeft = 1;
-        parent->maxDepthRight = 1;
-        refit(*parent);
-        node.rightChild = std::move(parent);
-        node.maxDepthRight = 2;
-    }
-
-    void createNewParentForRightChildren(DBVHNode &node) {
-        auto buffer = node.rightLeaf;
-        auto parent = std::make_unique<DBVHNode>();
-        parent->rightLeaf = buffer;
-        parent->boundingBox = buffer->getBoundaries();
-        parent->surfaceArea = parent->boundingBox.getSA() * 2;
-        parent->maxDepthRight = 1;
-        node.rightChild = std::move(parent);
-        node.maxDepthRight = 2;
-    }
-
-    bool
-    insertSingleObjectRight(DBVHNode &node, const std::vector<Intersectable *> &rightObjects) {
-        if (isEmptyRight(node)) {
-            createRightLeaf(node, rightObjects);
-        } else if (isLeafRight(node)) {
-            createNewParentForRightLeafs(node, rightObjects);
-        } else {
-            return false;
-        }
-        return true;
-    }
-
-    void createChildNodeRight(DBVHNode &node) {
-        if (isEmptyRight(node)) {
-            createRightChild(node);
-        } else if (isLeafRight(node)) {
-            createNewParentForRightChildren(node);
-        }
-    }
-
-    bool
-    passObjectsToRightChild(DBVHNode &node, const std::vector<Intersectable *> &rightObjects) {
-        if (rightObjects.size() == 1) {
-            return insertSingleObjectRight(node, rightObjects);
-        } else if (!rightObjects.empty()) {
-            createChildNodeRight(node);
-            return false;
-        }
-        return true;
-    }
-
-    void add(DBVHNode &currentNode, const std::vector<Intersectable *> &objects, const uint8_t depth) {
-        BoundingBox bBox = currentNode.boundingBox;
-        refit(bBox, objects, 0);
-
-        // create split buckets
-        auto splittingPlanes = createSplittingPlanes(bBox);
-
-        std::vector<SplitOperation> newParent(numberOfSplittingPlanes);
-
-        // evaluate split buckets
-        auto SAH = evaluateSplittingPlanes(currentNode, objects, splittingPlanes, newParent);
-
-        // choose best split bucket and split currentNode accordingly
-        int bestSplittingPlane = getBestSplittingPlane(SAH);
-
-        std::vector<Intersectable *> leftObjects;
-        std::vector<Intersectable *> rightObjects;
-
-        if (!bestSplittingPlaneExists(bestSplittingPlane)) {
-            splitEven(objects, leftObjects, rightObjects);
-        } else {
-            sortObjectsIntoBoxes(newParent[bestSplittingPlane], splittingPlanes[bestSplittingPlane], currentNode,
-                                 objects, leftObjects, rightObjects);
-        }
-
-        // pass objects to children
-        if (!passObjectsToLeftChild(currentNode, leftObjects)) {
-            add(*currentNode.leftChild, leftObjects, depth + 1);
-        }
-        if (!passObjectsToRightChild(currentNode, rightObjects)) {
-            add(*currentNode.rightChild, rightObjects, depth + 1);
-        }
-
-        // calculate surface area and tree depth going the tree back up
-        refit(currentNode);
-
-        // use tree rotations going the tree back up to optimize SAH
-        optimizeSAH(currentNode);
-    }
-
-    bool removeRightLeftGrandChild(DBVHNode &currentNode, DBVHNode &child,
-                                   const Intersectable &object) {
-        auto grandChild = child.leftLeaf;
-        if (*grandChild != object) return false;
-
-        if (isLeafRight(child)) {
-            currentNode.rightLeaf = child.rightLeaf;
-        } else {
-            currentNode.rightChild = std::move(child.rightChild);
-        }
-        refit(currentNode);
-        return true;
-    }
-
-    bool removeRightRightGrandChild(DBVHNode &currentNode, DBVHNode &child,
-                                    const Intersectable &object) {
-        auto grandChild = child.rightLeaf;
-        if (*grandChild != object) return false;
-
-        if (isLeafLeft(child)) {
-            currentNode.rightLeaf = child.leftLeaf;
-        } else {
-            currentNode.rightChild = std::move(child.leftChild);
-        }
-        refit(currentNode);
-        return true;
-    }
-
-    bool removeRightLeaf(DBVHNode &currentNode, const Intersectable &object) {
-        if (isLeafRight(currentNode)) return true;
-        auto child = std::move(currentNode.rightChild);
-        if (!contains(child->boundingBox, object.getBoundaries())) return false;
-
-        if (isLeafLeft(*child)) {
-            return removeRightLeftGrandChild(currentNode, *child, object);
-        }
-        if (isLeafRight(*child)) {
-            return removeRightRightGrandChild(currentNode, *child, object);
-        }
-        return false;
-    }
-
-    bool removeLeftLeftGrandChild(DBVHNode &currentNode, DBVHNode &child,
-                                  const Intersectable &object) {
-        auto grandChild = child.leftLeaf;
-        if (*grandChild != object) return false;
-
-        if (isLeafRight(child)) {
-            currentNode.leftLeaf = child.rightLeaf;
-        } else {
-            currentNode.leftChild = std::move(child.rightChild);
-        }
-        refit(currentNode);
-        return true;
-    }
-
-    bool removeLeftRightGrandChild(DBVHNode &currentNode, DBVHNode &child,
-                                   const Intersectable &object) {
-        auto grandChild = child.rightLeaf;
-        if (*grandChild != object) return false;
-
-        if (isLeafLeft(child)) {
-            currentNode.leftLeaf = child.leftLeaf;
-        } else {
-            currentNode.leftChild = std::move(child.leftChild);
-        }
-        refit(currentNode);
-        return true;
-    }
-
-    bool removeLeftLeaf(DBVHNode &currentNode, const Intersectable &object) {
-        if (isLeafLeft(currentNode)) return true;
-        auto child = std::move(currentNode.leftChild);
-        if (!contains(child->boundingBox, object.getBoundaries())) return false;
-
-        if (isLeafLeft(*child)) {
-            return removeLeftLeftGrandChild(currentNode, *child, object);
-        }
-        if (isLeafRight(*child)) {
-            return removeLeftRightGrandChild(currentNode, *child, object);
-        }
-        return false;
-    }
-
-    void remove(DBVHNode &currentNode, const Intersectable &object) {
-        // find object in tree by insertion
-        // remove object and refit nodes going the tree back up
-        if (!contains(currentNode.boundingBox, object.getBoundaries())) return;
-        if (removeLeftLeaf(currentNode, object) || removeRightLeaf(currentNode, object)) return;
-        remove(*currentNode.leftChild, object);
-        remove(*currentNode.rightChild, object);
-
-        refit(currentNode);
-        optimizeSAH(currentNode);
-    }
-
-    struct TraversalContainer {
-        const DBVHNode *node;
-        double distance;
-    };
-
     inline void intersectLeaf(const Ray &ray, IntersectionInfo &intersectionInfo, Intersectable &leaf, bool &hit) {
         IntersectionInfo info{false, std::numeric_limits<double>::max()};
         leaf.intersectFirst(info, ray);
         if (info.hit && info.distance < intersectionInfo.distance) {
             intersectionInfo = info;
             hit = true;
-        }
-    }
-
-    inline void getChildrenIntersections(const Ray &ray, const DBVHNode &node, IntersectionInfo &intersectionInfo,
-                                         double &distanceRight, double &distanceLeft, bool &right, bool &left,
-                                         bool &hit) {
-        if (isNodeRight(node)) {
-            // TODO request child if missing
-            auto rightChild = node.rightChild.get();
-            right = rayBoxIntersection(rightChild->boundingBox.minCorner, rightChild->boundingBox.maxCorner, ray,
-                                       distanceRight);
-        } else {
-            // TODO request leaf if missing
-            intersectLeaf(ray, intersectionInfo, *node.rightLeaf, hit);
-        }
-        if (isNodeLeft(node)) {
-            // TODO request child if missing
-            auto leftChild = node.leftChild.get();
-            left = rayBoxIntersection(leftChild->boundingBox.minCorner, leftChild->boundingBox.maxCorner, ray,
-                                      distanceLeft);
-        } else {
-            // TODO request leaf if missing
-            intersectLeaf(ray, intersectionInfo, *node.leftLeaf, hit);
-        }
-    }
-
-    inline void
-    pushIntersectionsOnStack(const DBVHNode &node, double distanceRight, double distanceLeft, bool right, bool left,
-                             TraversalContainer *stack, uint64_t &stackPointer) {
-        if (right && left) {
-            if (distanceRight < distanceLeft) {
-                stack[stackPointer++] = {node.leftChild.get(), distanceLeft};
-                stack[stackPointer++] = {node.rightChild.get(), distanceRight};
-            } else {
-                stack[stackPointer++] = {node.rightChild.get(), distanceRight};
-                stack[stackPointer++] = {node.leftChild.get(), distanceLeft};
-            }
-        } else if (right) {
-            stack[stackPointer++] = {node.rightChild.get(), distanceRight};
-        } else if (left) {
-            stack[stackPointer++] = {node.leftChild.get(), distanceLeft};
-        }
-    }
-
-    bool processTraversalStack(IntersectionInfo &intersectionInfo, const Ray &ray, TraversalContainer *stack) {
-        bool hit = false;
-        uint64_t stackPointer = 1;
-        while (stackPointer != 0) {
-            stackPointer--;
-            if (stack[stackPointer].distance < intersectionInfo.distance) {
-                auto node = stack[stackPointer].node;
-
-                double distanceRight = 0;
-                double distanceLeft = 0;
-                bool right = false;
-                bool left = false;
-
-                getChildrenIntersections(ray, *node, intersectionInfo, distanceRight, distanceLeft, right, left, hit);
-
-                pushIntersectionsOnStack(*node, distanceRight, distanceLeft, right, left, stack, stackPointer);
-            }
-        }
-        return hit;
-    }
-
-    bool traverseFirst(const DBVHNode &root, IntersectionInfo &intersectionInfo, const Ray &ray) {
-        if (root.maxDepthRight >= 64 || root.maxDepthLeft >= 64) {
-            std::vector<TraversalContainer> stack(
-                    root.maxDepthRight > root.maxDepthLeft ? root.maxDepthRight + 1 : root.maxDepthLeft + 1);
-            stack[0] = {&root, 0};
-            return processTraversalStack(intersectionInfo, ray, stack.data());
-        } else {
-            TraversalContainer stack[64];
-            stack[0] = {&root, 0};
-            return processTraversalStack(intersectionInfo, ray, stack);
         }
     }
 
@@ -1132,53 +317,6 @@ namespace {
         }
     }
 
-    inline bool
-    getChildrenIntersection(IntersectionInfo &intersectionInfo, const Ray &ray, const DBVHNode **stack,
-                            uint64_t &stackPointer) {
-        bool hit = false;
-        auto node = stack[stackPointer];
-        if (isNodeRight(*node)) {
-            // TODO request child if missing
-            intersectChild(ray, stack, stackPointer, node->rightChild.get());
-        } else {
-            // TODO request leaf if missing
-            intersectLeaf(ray, intersectionInfo, *node->rightLeaf, hit);
-        }
-        if (isNodeLeft(*node) && !hit) {
-            // TODO request child if missing
-            intersectChild(ray, stack, stackPointer, node->leftChild.get());
-        } else {
-            // TODO request leaf if missing
-            intersectLeaf(ray, intersectionInfo, *node->leftLeaf, hit);
-        }
-        return hit;
-    }
-
-    bool processTraversalStack(IntersectionInfo &intersectionInfo, const Ray &ray, const DBVHNode **stack) {
-        uint64_t stackPointer = 1;
-        while (stackPointer != 0) {
-            stackPointer--;
-
-            if (getChildrenIntersection(intersectionInfo, ray, stack, stackPointer))
-                return true;
-        }
-        return false;
-    }
-
-    bool traverseAny(const DBVHNode &root, IntersectionInfo &intersectionInfo, const Ray &ray) {
-        if (root.maxDepthRight >= 64 || root.maxDepthLeft >= 64) {
-            std::vector<const DBVHNode *> stack(
-                    root.maxDepthRight > root.maxDepthLeft ? root.maxDepthRight + 1 :
-                    root.maxDepthLeft + 1);
-            stack[0] = &root;
-            return processTraversalStack(intersectionInfo, ray, stack.data());
-        } else {
-            const DBVHNode *stack[64];
-            stack[0] = &root;
-            return processTraversalStack(intersectionInfo, ray, stack);
-        }
-    }
-
     inline void intersectLeaf(std::vector<IntersectionInfo> &intersectionInfo, const Ray &ray, Intersectable &leaf) {
         IntersectionInfo info{false, std::numeric_limits<double>::max()};
         leaf.intersectFirst(info, ray);
@@ -1186,52 +324,6 @@ namespace {
             intersectionInfo.push_back(info);
         }
     }
-
-    inline void
-    getChildrenIntersection(std::vector<IntersectionInfo> &intersectionInfo, const Ray &ray, const DBVHNode **stack,
-                            uint64_t &stackPointer) {
-        auto node = stack[stackPointer - 1];
-        if (isNodeRight(*node)) {
-            // TODO request child if missing
-            intersectChild(ray, stack, stackPointer, node->rightChild.get());
-        } else {
-            // TODO request leaf if missing
-            intersectLeaf(intersectionInfo, ray, *node->rightLeaf);
-        }
-        if (isNodeLeft(*node)) {
-            // TODO request child if missing
-            intersectChild(ray, stack, stackPointer, node->leftChild.get());
-        } else {
-            // TODO request leaf if missing
-            intersectLeaf(intersectionInfo, ray, *node->leftLeaf);
-        }
-    }
-
-    void processTraversalStack(std::vector<IntersectionInfo> &intersectionInfo, const Ray &ray,
-                               const DBVHNode **stack) {
-        uint64_t stackPointer = 1;
-        while (stackPointer != 0) {
-            stackPointer--;
-
-            getChildrenIntersection(intersectionInfo, ray, stack, stackPointer);
-        }
-    }
-
-    bool traverseALl(const DBVHNode &root, std::vector<IntersectionInfo> &intersectionInfo, const Ray &ray) {
-        if (root.maxDepthRight >= 64 || root.maxDepthLeft >= 64) {
-            std::vector<const DBVHNode *> stack(
-                    root.maxDepthRight > root.maxDepthLeft ? root.maxDepthRight + 1 :
-                    root.maxDepthLeft + 1);
-            stack[0] = &root;
-            processTraversalStack(intersectionInfo, ray, stack.data());
-        } else {
-            const DBVHNode *stack[64];
-            stack[0] = &root;
-            processTraversalStack(intersectionInfo, ray, stack);
-        }
-        return false;
-    }
-
 
     void removeLastChild(DBVHNode &root) {
         root.maxDepthLeft = 0;
@@ -1254,56 +346,6 @@ namespace {
         root.surfaceArea = root.leftLeaf->getSurfaceArea();
     }
 
-    void replaceRootWithChild(DBVHNode &root, DBVHNode &child) {
-        if (isLeafLeft(child)) {
-            root.leftLeaf = child.leftLeaf;
-        } else {
-            root.leftChild = std::move(child.leftChild);
-        }
-        if (isLeafRight(child)) {
-            root.rightLeaf = child.rightLeaf;
-        } else {
-            root.rightChild = std::move(child.rightChild);
-        }
-
-        root.maxDepthLeft = child.maxDepthLeft;
-        root.maxDepthRight = child.maxDepthRight;
-        root.boundingBox = child.boundingBox;
-        root.surfaceArea = child.surfaceArea;
-    }
-
-    void replaceRootWithRightChild(DBVHNode &root) {
-        replaceRootWithChild(root, *root.rightChild);
-    }
-
-    void replaceRootWithLeftChild(DBVHNode &root) {
-        replaceRootWithChild(root, *root.leftChild);
-    }
-
-    bool removeSpecialCases(DBVHNode &root, const Intersectable &object) {
-        if (isLastElement(root)) {
-            if (*root.leftLeaf == object) {
-                removeLastChild(root);
-                return true;
-            }
-        } else if (isLeafLeft(root) && *root.leftLeaf == object) {
-            if (isLeafRight(root)) {
-                removeSecondToLastChildLeft(root);
-            } else {
-                replaceRootWithRightChild(root);
-            }
-            return true;
-        } else if (isLeafRight(root) && *root.rightLeaf == object) {
-            if (isLeafLeft(root)) {
-                removeSecondToLastChildRight(root);
-            } else {
-                replaceRootWithLeftChild(root);
-            }
-            return true;
-        }
-        return false;
-    }
-
     bool addFirstAndOnlyElement(DBVHNode &root, const std::vector<Intersectable *> &objects) {
         if (!isEmpty(root) || objects.size() != 1) return false;
         refit(root.boundingBox, objects, 0);
@@ -1311,68 +353,1040 @@ namespace {
         root.maxDepthLeft = 1;
         return true;
     }
+}
 
-    bool addOntoSingleElement(DBVHNode &root, const std::vector<Intersectable *> &objects) {
-        if (!isLastElement(root)) return false;
-        std::vector<Intersectable *> newObjects{objects};     // TODO: make more efficient
-        newObjects.push_back(root.leftLeaf);
-        root.maxDepthLeft = 0;
-        add(root, newObjects, 1);
-        return true;
+inline void DBVHv2::getChildrenIntersections(const Ray &ray, const DBVHNode &node, IntersectionInfo &intersectionInfo,
+                                             double &distanceRight, double &distanceLeft, bool &right, bool &left,
+                                             bool &hit) {
+    if (isNodeRight(node)) {
+        // TODO request child if missing
+        auto &rightChild = tree.at(node.rightPosition);
+        right = rayBoxIntersection(rightChild.boundingBox.minCorner, rightChild.boundingBox.maxCorner, ray,
+                                   distanceRight);
+    } else {
+        // TODO request leaf if missing
+        intersectLeaf(ray, intersectionInfo, *node.rightLeaf, hit);
+    }
+    if (isNodeLeft(node)) {
+        // TODO request child if missing
+        auto &leftChild = tree.at(node.leftPosition);
+        left = rayBoxIntersection(leftChild.boundingBox.minCorner, leftChild.boundingBox.maxCorner, ray,
+                                  distanceLeft);
+    } else {
+        // TODO request leaf if missing
+        intersectLeaf(ray, intersectionInfo, *node.leftLeaf, hit);
     }
 }
 
-void DBVHv2::addObjects(DBVHNode &root, const std::vector<Intersectable *> &objects) {
-    if (objects.empty() || addFirstAndOnlyElement(root, objects) || addOntoSingleElement(root, objects))
-        return;
-
-    add(root, objects, 1);
+inline void
+DBVHv2::pushIntersectionsOnStack(const DBVHNode &node, double distanceRight, double distanceLeft, bool right, bool left,
+                                 TraversalContainer *stack, uint64_t &stackPointer) {
+    if (right && left) {
+        if (distanceRight < distanceLeft) {
+            stack[stackPointer++] = {&tree.at(node.leftPosition), distanceLeft};
+            stack[stackPointer++] = {&tree.at(node.rightPosition), distanceRight};
+        } else {
+            stack[stackPointer++] = {&tree.at(node.rightPosition), distanceRight};
+            stack[stackPointer++] = {&tree.at(node.leftPosition), distanceLeft};
+        }
+    } else if (right) {
+        stack[stackPointer++] = {&tree.at(node.rightPosition), distanceRight};
+    } else if (left) {
+        stack[stackPointer++] = {&tree.at(node.leftPosition), distanceLeft};
+    }
 }
 
-void DBVHv2::removeObjects(DBVHNode &root, const std::vector<Intersectable *> &objects) {
+bool DBVHv2::processTraversalStack(IntersectionInfo &intersectionInfo, const Ray &ray, TraversalContainer *stack) {
+    bool hit = false;
+    uint64_t stackPointer = 1;
+    while (stackPointer != 0) {
+        stackPointer--;
+        if (stack[stackPointer].distance < intersectionInfo.distance) {
+            auto node = stack[stackPointer].node;
+
+            double distanceRight = 0;
+            double distanceLeft = 0;
+            bool right = false;
+            bool left = false;
+
+            getChildrenIntersections(ray, *node, intersectionInfo, distanceRight, distanceLeft, right, left, hit);
+
+            pushIntersectionsOnStack(*node, distanceRight, distanceLeft, right, left, stack, stackPointer);
+        }
+    }
+    return hit;
+}
+
+bool DBVHv2::traverseFirst(const DBVHNode &root, IntersectionInfo &intersectionInfo, const Ray &ray) {
+    if (root.maxDepthRight >= 64 || root.maxDepthLeft >= 64) {
+        std::vector<TraversalContainer> stack(
+                root.maxDepthRight > root.maxDepthLeft ? root.maxDepthRight + 1 : root.maxDepthLeft + 1);
+        stack[0] = {&root, 0};
+        return processTraversalStack(intersectionInfo, ray, stack.data());
+    } else {
+        TraversalContainer stack[64];
+        stack[0] = {&root, 0};
+        return processTraversalStack(intersectionInfo, ray, stack);
+    }
+}
+
+inline bool
+DBVHv2::getChildrenIntersection(IntersectionInfo &intersectionInfo, const Ray &ray, const DBVHNode **stack,
+                                uint64_t &stackPointer) {
+    bool hit = false;
+    auto node = stack[stackPointer];
+    if (isNodeRight(*node)) {
+        // TODO request child if missing
+        intersectChild(ray, stack, stackPointer, &tree.at(node->rightPosition));
+    } else {
+        // TODO request leaf if missing
+        intersectLeaf(ray, intersectionInfo, *node->rightLeaf, hit);
+    }
+    if (isNodeLeft(*node) && !hit) {
+        // TODO request child if missing
+        intersectChild(ray, stack, stackPointer, &tree.at(node->leftPosition));
+    } else {
+        // TODO request leaf if missing
+        intersectLeaf(ray, intersectionInfo, *node->leftLeaf, hit);
+    }
+    return hit;
+}
+
+bool DBVHv2::processTraversalStack(IntersectionInfo &intersectionInfo, const Ray &ray, const DBVHNode **stack) {
+    uint64_t stackPointer = 1;
+    while (stackPointer != 0) {
+        stackPointer--;
+
+        if (getChildrenIntersection(intersectionInfo, ray, stack, stackPointer))
+            return true;
+    }
+    return false;
+}
+
+bool DBVHv2::traverseAny(const DBVHNode &root, IntersectionInfo &intersectionInfo, const Ray &ray) {
+    if (root.maxDepthRight >= 64 || root.maxDepthLeft >= 64) {
+        std::vector<const DBVHNode *> stack(
+                root.maxDepthRight > root.maxDepthLeft ? root.maxDepthRight + 1 :
+                root.maxDepthLeft + 1);
+        stack[0] = &root;
+        return processTraversalStack(intersectionInfo, ray, stack.data());
+    } else {
+        const DBVHNode *stack[64];
+        stack[0] = &root;
+        return processTraversalStack(intersectionInfo, ray, stack);
+    }
+}
+
+inline void
+DBVHv2::getChildrenIntersection(std::vector<IntersectionInfo> &intersectionInfo, const Ray &ray, const DBVHNode **stack,
+                                uint64_t &stackPointer) {
+    auto node = stack[stackPointer - 1];
+    if (isNodeRight(*node)) {
+        // TODO request child if missing
+        intersectChild(ray, stack, stackPointer, &tree.at(node->rightPosition));
+    } else {
+        // TODO request leaf if missing
+        intersectLeaf(intersectionInfo, ray, *node->rightLeaf);
+    }
+    if (isNodeLeft(*node)) {
+        // TODO request child if missing
+        intersectChild(ray, stack, stackPointer, &tree.at(node->leftPosition));
+    } else {
+        // TODO request leaf if missing
+        intersectLeaf(intersectionInfo, ray, *node->leftLeaf);
+    }
+}
+
+void
+DBVHv2::processTraversalStack(std::vector<IntersectionInfo> &intersectionInfo, const Ray &ray, const DBVHNode **stack) {
+    uint64_t stackPointer = 1;
+    while (stackPointer != 0) {
+        stackPointer--;
+
+        getChildrenIntersection(intersectionInfo, ray, stack, stackPointer);
+    }
+}
+
+bool DBVHv2::traverseALl(const DBVHNode &root, std::vector<IntersectionInfo> &intersectionInfo, const Ray &ray) {
+    if (root.maxDepthRight >= 64 || root.maxDepthLeft >= 64) {
+        std::vector<const DBVHNode *> stack(
+                root.maxDepthRight > root.maxDepthLeft ? root.maxDepthRight + 1 :
+                root.maxDepthLeft + 1);
+        stack[0] = &root;
+        processTraversalStack(intersectionInfo, ray, stack.data());
+    } else {
+        const DBVHNode *stack[64];
+        stack[0] = &root;
+        processTraversalStack(intersectionInfo, ray, stack);
+    }
+    return false;
+}
+
+void DBVHv2::fillRotationBoxes(BoxSA &left, BoxSA &right, const DBVHNode &node) {
+    if (isNodeLeft(node)) {
+        auto &leftChild = tree.at(node.leftPosition);
+        left.box = leftChild.boundingBox;
+        left.sa = leftChild.surfaceArea;
+    } else {
+        left.box = (node.leftLeaf)->getBoundaries();
+        left.sa = (node.leftLeaf)->getSurfaceArea();
+    }
+    if (isNodeRight(node)) {
+        auto &rightChild = tree.at(node.rightPosition);
+        right.box = rightChild.boundingBox;
+        right.sa = rightChild.surfaceArea;
+    } else {
+        right.box = (node.rightLeaf)->getBoundaries();
+        right.sa = (node.rightLeaf)->getSurfaceArea();
+    }
+}
+
+void DBVHv2::fillRightRotationBoxes(const DBVHNode &node, Rotations &rotations) {
+    auto &rightNode = tree.at(node.rightPosition);
+    rotations.right.box = rightNode.boundingBox;
+    rotations.right.sa = rightNode.surfaceArea;
+    fillRotationBoxes(rotations.rightLeft, rotations.rightRight, rightNode);
+}
+
+bool DBVHv2::getRotationsRight(DBVHNode &node, double *SAHs, Rotations &rotations) {
+    auto leftNode = node.leftLeaf;
+    rotations.left.box = leftNode->getBoundaries();
+    rotations.left.sa = leftNode->getSurfaceArea();
+
+    if (isNodeRight(node)) {
+        fillRightRotationBoxes(node, rotations);
+
+        rotations.swapRightLeftToLeft = createSwapBox(rotations.left.box, rotations.rightRight.box);
+        rotations.swapRightRightToLeft = createSwapBox(rotations.left.box, rotations.rightLeft.box);
+
+        computeSwapSAHsRight(node, SAHs, rotations);
+        return true;
+    } else {
+        return false;
+    }
+}
+
+void DBVHv2::getRotationsFull(const DBVHNode &node, double *SAHs, Rotations &rotations) {
+    fillRightRotationBoxes(node, rotations);
+
+    rotations.swapLeftLeftToRight = createSwapBox(rotations.right.box, rotations.leftRight.box);
+    rotations.swapLeftRightToRight = createSwapBox(rotations.right.box, rotations.leftLeft.box);
+    rotations.swapRightLeftToLeft = createSwapBox(rotations.left.box, rotations.rightRight.box);
+    rotations.swapRightRightToLeft = createSwapBox(rotations.left.box, rotations.rightLeft.box);
+
+    computeSwapSAHsFull(node, SAHs, rotations);
+}
+
+void DBVHv2::getRotations(DBVHNode &node, double *SAHs, Rotations &rotations) {
+    auto &leftNode = tree.at(node.leftPosition);
+    rotations.left.box = leftNode.boundingBox;
+    rotations.left.sa = leftNode.surfaceArea;
+    fillRotationBoxes(rotations.leftLeft, rotations.leftRight, leftNode);
+
+    if (isNodeRight(node)) {
+        getRotationsFull(node, SAHs, rotations);
+    } else {
+        getRotationsLeft(node, SAHs, rotations);
+    }
+}
+
+bool DBVHv2::getPossibleRotations(DBVHNode &node, double *SAHs, Rotations &rotations) {
+    if (isNodeLeft(node)) {
+        getRotations(node, SAHs, rotations);
+    } else {
+        return getRotationsRight(node, SAHs, rotations);
+    }
+    return true;
+}
+
+void DBVHv2::setNodeLeftLeft(DBVHNode &node) {
+    auto &leftChild = tree.at(node.leftPosition);
+    if (isNodeLeft(leftChild)) {
+        node.rightPosition = leftChild.leftPosition;
+        auto &rightChild = tree.at(node.rightPosition);
+        node.maxDepthRight = std::max(rightChild.maxDepthLeft, rightChild.maxDepthRight) + 1;
+    } else {
+        node.rightLeaf = leftChild.leftLeaf;
+        node.maxDepthRight = 1;
+    }
+}
+
+void DBVHv2::swapChildLeftLeft(DBVHNode &node, const Rotations &rotations) {
+    auto buffer = node.rightPosition;
+    auto &rightChild = tree.at(buffer);
+    setNodeLeftLeft(node);
+    auto &leftChild = tree.at(node.leftPosition);
+    leftChild.boundingBox = rotations.swapLeftLeftToRight;
+    leftChild.maxDepthLeft = std::max(rightChild.maxDepthLeft, rightChild.maxDepthRight) + 1;
+    leftChild.leftPosition = buffer;
+}
+
+void DBVHv2::swapLeafLeftLeft(DBVHNode &node, const Rotations &rotations) {
+    auto buffer = node.rightLeaf;
+    setNodeLeftLeft(node);
+    auto &leftChild = tree.at(node.leftPosition);
+    leftChild.boundingBox = rotations.swapLeftLeftToRight;
+    leftChild.leftLeaf = buffer;
+    leftChild.maxDepthLeft = 1;
+}
+
+void DBVHv2::setSurfaceAreaLeftLeft(DBVHNode &node, const Rotations &rotations, const double *SAHs) {
+    node.surfaceArea = SAHs[SwapLeftLeftToRight];
+    tree.at(node.leftPosition).surfaceArea =
+            rotations.right.sa + rotations.leftRight.sa + rotations.swapLeftLeftToRight.getSA();
+}
+
+void DBVHv2::swapLeftLeftToRight(DBVHNode &node, const Rotations &rotations, const double *SAHs) {
+    if (isNodeRight(node)) {
+        swapChildLeftLeft(node, rotations);
+    } else {
+        swapLeafLeftLeft(node, rotations);
+    }
+    setSurfaceAreaLeftLeft(node, rotations, SAHs);
+}
+
+void DBVHv2::setNodeLeftRight(DBVHNode &node) {
+    auto &leftChild = tree.at(node.leftPosition);
+    if (isNodeRight(leftChild)) {
+        node.rightPosition = leftChild.rightPosition;
+        auto &rightChild = tree.at(node.rightPosition);
+        node.maxDepthRight = std::max(rightChild.maxDepthLeft, rightChild.maxDepthRight) + 1;
+    } else {
+        node.rightLeaf = leftChild.rightLeaf;
+        node.maxDepthRight = 1;
+    }
+}
+
+void DBVHv2::swapChildLeftRight(DBVHNode &node, const Rotations &rotations) {
+    auto buffer = node.rightPosition;
+    auto &rightChild = tree.at(buffer);
+    setNodeLeftRight(node);
+    auto &leftChild = tree.at(node.leftPosition);
+    leftChild.boundingBox = rotations.swapLeftRightToRight;
+    leftChild.maxDepthRight = std::max(rightChild.maxDepthLeft, rightChild.maxDepthRight) + 1;
+    leftChild.rightPosition = buffer;
+}
+
+void DBVHv2::swapLeafLeftRight(DBVHNode &node, const Rotations &rotations) {
+    auto buffer = node.rightLeaf;
+    setNodeLeftRight(node);
+    auto &leftChild = tree.at(node.leftPosition);
+    leftChild.boundingBox = rotations.swapLeftRightToRight;
+    leftChild.rightLeaf = buffer;
+    leftChild.maxDepthRight = 1;
+}
+
+void DBVHv2::setSurfaceAreaLeftRight(DBVHNode &node, const Rotations &rotations, const double *SAHs) {
+    node.surfaceArea = SAHs[SwapLeftRightToRight];
+    tree.at(node.leftPosition).surfaceArea =
+            rotations.right.sa + rotations.leftLeft.sa + rotations.swapLeftRightToRight.getSA();
+}
+
+void DBVHv2::swapLeftRightToRight(DBVHNode &node, const Rotations &rotations, const double *SAHs) {
+    if (isNodeRight(node)) {
+        swapChildLeftRight(node, rotations);
+    } else {
+        swapLeafLeftRight(node, rotations);
+    }
+    setSurfaceAreaLeftRight(node, rotations, SAHs);
+}
+
+void DBVHv2::setNodeRightLeft(DBVHNode &node) {
+    auto &rightChild = tree.at(node.rightPosition);
+    if (isNodeLeft(rightChild)) {
+        node.leftPosition = rightChild.leftPosition;
+        auto &leftChild = tree.at(node.leftPosition);
+        node.maxDepthLeft = std::max(leftChild.maxDepthLeft, leftChild.maxDepthRight) + 1;
+    } else {
+        node.leftLeaf = rightChild.leftLeaf;
+        node.maxDepthLeft = 1;
+    }
+}
+
+void DBVHv2::swapChildRightLeft(DBVHNode &node, const Rotations &rotations) {
+    auto buffer = node.leftPosition;
+    auto &leftChild = tree.at(buffer);
+    setNodeRightLeft(node);
+    auto &rightChild = tree.at(node.rightPosition);
+    rightChild.boundingBox = rotations.swapRightLeftToLeft;
+    rightChild.maxDepthLeft = std::max(leftChild.maxDepthLeft, leftChild.maxDepthRight) + 1;
+    rightChild.leftPosition = buffer;
+}
+
+void DBVHv2::swapLeafRightLeft(DBVHNode &node, const Rotations &rotations) {
+    auto buffer = node.leftLeaf;
+    setNodeRightLeft(node);
+    auto &rightChild = tree.at(node.rightPosition);
+    rightChild.boundingBox = rotations.swapRightLeftToLeft;
+    rightChild.leftLeaf = buffer;
+    rightChild.maxDepthLeft = 1;
+}
+
+void DBVHv2::setSurfaceAreaRightLeft(DBVHNode &node, const Rotations &rotations, const double *SAHs) {
+    node.surfaceArea = SAHs[SwapRightLeftToLeft];
+    tree.at(node.rightPosition).surfaceArea =
+            rotations.left.sa + rotations.rightRight.sa + rotations.swapRightLeftToLeft.getSA();
+}
+
+void DBVHv2::swapRightLeft(DBVHNode &node, const Rotations &rotations, const double *SAHs) {
+    if (isNodeLeft(node)) {
+        swapChildRightLeft(node, rotations);
+    } else {
+        swapLeafRightLeft(node, rotations);
+    }
+    setSurfaceAreaRightLeft(node, rotations, SAHs);
+}
+
+void DBVHv2::setNodeRightRight(DBVHNode &node) {
+    auto &rightChild = tree.at(node.rightPosition);
+    if (isNodeRight(rightChild)) {
+        node.leftPosition = rightChild.rightPosition;
+        auto leftChild = tree.at(node.leftPosition);
+        node.maxDepthLeft = std::max(leftChild.maxDepthLeft, leftChild.maxDepthRight) + 1;
+    } else {
+        node.leftLeaf = rightChild.rightLeaf;
+        node.maxDepthLeft = 1;
+    }
+}
+
+void DBVHv2::swapChildRightRight(DBVHNode &node, const Rotations &rotations) {
+    auto buffer = node.leftPosition;
+    auto &leftChild = tree.at(buffer);
+    setNodeRightRight(node);
+    auto &rightChild = tree.at(node.rightPosition);
+    rightChild.boundingBox = rotations.swapRightRightToLeft;
+    rightChild.maxDepthRight = std::max(leftChild.maxDepthLeft, leftChild.maxDepthRight) + 1;
+    rightChild.rightPosition = buffer;
+}
+
+void DBVHv2::swapLeafRightRight(DBVHNode &node, const Rotations &rotations) {
+    auto buffer = node.leftLeaf;
+    setNodeRightRight(node);
+    auto &rightChild = tree.at(node.rightPosition);
+    (rightChild).boundingBox = rotations.swapRightRightToLeft;
+    (rightChild).rightLeaf = buffer;
+    (rightChild).maxDepthRight = 1;
+}
+
+void DBVHv2::setSurfaceAreaRightRight(DBVHNode &node, const Rotations &rotations, const double *SAHs) {
+    node.surfaceArea = SAHs[SwapRightRightToLeft];
+    tree.at(node.rightPosition).surfaceArea =
+            rotations.left.sa + rotations.rightLeft.sa + rotations.swapRightRightToLeft.getSA();
+}
+
+void DBVHv2::swapRightRight(DBVHNode &node, const Rotations &rotations, const double *SAHs) {
+    if (isNodeLeft(node)) {
+        swapChildRightRight(node, rotations);
+    } else {
+        swapLeafRightRight(node, rotations);
+    }
+    setSurfaceAreaRightRight(node, rotations, SAHs);
+}
+
+bool DBVHv2::optimizeSAH(DBVHNode &node) {
+    Rotations rotations;
+    double SAHs[numberOfPossibleRotation];
+
+    if (!getPossibleRotations(node, SAHs, rotations)) return false;
+
+    SAHs[NoRotation] = node.surfaceArea;
+    Rotation bestSAH = getBestSAH(SAHs);
+
+    switch (bestSAH) {
+        case NoRotation:
+            return false;
+        case SwapLeftLeftToRight: {
+            swapLeftLeftToRight(node, rotations, SAHs);
+            break;
+        }
+        case SwapLeftRightToRight: {
+            swapLeftRightToRight(node, rotations, SAHs);
+            break;
+        }
+        case SwapRightLeftToLeft: {
+            swapRightLeft(node, rotations, SAHs);
+            break;
+        }
+        case SwapRightRightToLeft: {
+            swapRightRight(node, rotations, SAHs);
+            break;
+        }
+    }
+    return true;
+}
+
+void DBVHv2::refit(DBVHNode &node) {
+    node.boundingBox = BoundingBox();
+    node.surfaceArea = 0;
+    if (isNodeRight(node)) {
+        auto &rightChild = tree.at(node.rightPosition);
+        refitChild(node, rightChild);
+        node.maxDepthRight = std::max(rightChild.maxDepthRight, rightChild.maxDepthLeft) + 1;
+    } else {
+        refitLeaf(node, *node.rightLeaf);
+    }
+    if (isNodeLeft(node)) {
+        auto &leftChild = tree.at(node.leftPosition);
+        refitChild(node, leftChild);
+        node.maxDepthLeft = std::max(leftChild.maxDepthRight, leftChild.maxDepthLeft) + 1;
+    } else {
+        refitLeaf(node, *node.leftLeaf);
+    }
+    node.surfaceArea += node.boundingBox.getSA();
+}
+
+bool DBVHv2::removeRightLeftGrandChild(DBVHNode &currentNode, DBVHNode &child, const Intersectable &object) {
+    auto grandChild = child.leftLeaf;
+    if (*grandChild != object) return false;
+
+    if (isLeafRight(child)) {
+        currentNode.rightLeaf = child.rightLeaf;
+    } else {
+        currentNode.rightPosition = child.rightPosition;
+    }
+    refit(currentNode);
+    return true;
+}
+
+bool DBVHv2::removeRightRightGrandChild(DBVHNode &currentNode, DBVHNode &child, const Intersectable &object) {
+    auto grandChild = child.rightLeaf;
+    if (*grandChild != object) return false;
+
+    if (isLeafLeft(child)) {
+        currentNode.rightLeaf = child.leftLeaf;
+    } else {
+        currentNode.rightPosition = child.leftPosition;
+    }
+    refit(currentNode);
+    return true;
+}
+
+bool DBVHv2::removeLeftLeftGrandChild(DBVHNode &currentNode, DBVHNode &child, const Intersectable &object) {
+    auto grandChild = child.leftLeaf;
+    if (*grandChild != object) return false;
+
+    if (isLeafRight(child)) {
+        currentNode.leftLeaf = child.rightLeaf;
+    } else {
+        currentNode.leftPosition = child.rightPosition;
+    }
+    refit(currentNode);
+    return true;
+}
+
+bool DBVHv2::removeLeftRightGrandChild(DBVHNode &currentNode, DBVHNode &child, const Intersectable &object) {
+    auto grandChild = child.rightLeaf;
+    if (*grandChild != object) return false;
+
+    if (isLeafLeft(child)) {
+        currentNode.leftLeaf = child.leftLeaf;
+    } else {
+        currentNode.leftPosition = child.leftPosition;
+    }
+    refit(currentNode);
+    return true;
+}
+
+bool DBVHv2::removeRightLeaf(DBVHNode &currentNode, const Intersectable &object) {
+    if (isLeafRight(currentNode)) return true;
+    auto &child = tree.at(currentNode.rightPosition);
+    if (!contains(child.boundingBox, object.getBoundaries())) return false;
+
+    bool removed = false;
+    if (isLeafLeft(child)) {
+        removed = removeRightLeftGrandChild(currentNode, child, object);
+    }
+    if (isLeafRight(child) && !removed) {
+        removed = removeRightRightGrandChild(currentNode, child, object);
+    }
+    if (removed) {
+        tree.remove(currentNode.rightPosition);
+    }
+    return removed;
+}
+
+bool DBVHv2::removeLeftLeaf(DBVHNode &currentNode, const Intersectable &object) {
+    if (isLeafLeft(currentNode)) return true;
+    auto &child = tree.at(currentNode.leftPosition);
+    if (!contains(child.boundingBox, object.getBoundaries())) return false;
+
+    bool removed = false;
+    if (isLeafLeft(child)) {
+        removed = removeLeftLeftGrandChild(currentNode, child, object);
+    }
+    if (isLeafRight(child) && !removed) {
+        removed = removeLeftRightGrandChild(currentNode, child, object);
+    }
+    if (removed) {
+        tree.remove(currentNode.leftPosition);
+    }
+    return removed;
+}
+
+void DBVHv2::remove(DBVHNode &currentNode, const Intersectable &object) {
+    // find object in tree by insertion
+    // remove object and refit nodes going the tree back up
+    if (!contains(currentNode.boundingBox, object.getBoundaries())) return;
+    if (removeLeftLeaf(currentNode, object) || removeRightLeaf(currentNode, object)) return;
+    remove(tree.at(currentNode.leftPosition), object);
+    remove(tree.at(currentNode.rightPosition), object);
+
+    refit(currentNode);
+    optimizeSAH(currentNode);
+}
+
+void DBVHv2::replaceRootWithChild(DBVHNode &child) {
+    auto &root = tree.at(rootPosition);
+    if (isLeafLeft(child)) {
+        root.leftLeaf = child.leftLeaf;
+    } else {
+        tree.remove(root.leftPosition);
+        root.leftPosition = child.leftPosition;
+    }
+    if (isLeafRight(child)) {
+        root.rightLeaf = child.rightLeaf;
+    } else {
+        tree.remove(root.rightPosition);
+        root.rightPosition = child.rightPosition;
+    }
+
+    root.maxDepthLeft = child.maxDepthLeft;
+    root.maxDepthRight = child.maxDepthRight;
+    root.boundingBox = child.boundingBox;
+    root.surfaceArea = child.surfaceArea;
+}
+
+bool DBVHv2::removeSpecialCases(const Intersectable &object) {
+    auto &root = tree.at(rootPosition);
+    if (isLastElement(root)) {
+        if (*root.leftLeaf == object) {
+            removeLastChild(root);
+            return true;
+        }
+    } else if (isLeafLeft(root) && *root.leftLeaf == object) {
+        if (isLeafRight(root)) {
+            removeSecondToLastChildLeft(root);
+        } else {
+            replaceRootWithChild(tree.at(root.rightPosition));
+        }
+        return true;
+    } else if (isLeafRight(root) && *root.rightLeaf == object) {
+        if (isLeafLeft(root)) {
+            removeSecondToLastChildRight(root);
+        } else {
+            replaceRootWithChild(tree.at(root.leftPosition));
+        }
+        return true;
+    }
+    return false;
+}
+
+void DBVHv2::moveParentToNewParentsLeftChild(DBVHNode &node) {
+    auto newNodePosition = tree.newNode();
+    auto &newNode = tree.at(newNodePosition);
+    *(&newNode) = node; // to copy the content of node rather than the reference
+    node.maxDepthLeft = std::max(newNode.maxDepthLeft, newNode.maxDepthRight) + 1;
+    node.boundingBox = newNode.boundingBox;
+    node.leftPosition = newNodePosition;
+    node.maxDepthRight = 0;
+}
+
+void DBVHv2::sortObjectsIntoBoxes(const SplitOperation splitOperation, const Vector3D &splittingPlane, DBVHNode &node,
+                                  const std::vector<Intersectable *> &objects,
+                                  std::vector<Intersectable *> &leftObjects,
+                                  std::vector<Intersectable *> &rightObjects) {
+    switch (splitOperation) {
+        case Default:
+            split(leftObjects, rightObjects, objects, splittingPlane);
+            break;
+        case DefaultWrongOrder: {
+            split(leftObjects, rightObjects, objects, splittingPlane);
+            switchBoxOrder(leftObjects, rightObjects);
+            break;
+        }
+        case AllNewLeft: {
+            leftObjects = objects;
+            break;
+        }
+        case AllNewRight: {
+            rightObjects = objects;
+            break;
+        }
+        case SplitOldNew: {
+            moveParentToNewParentsLeftChild(node);
+            rightObjects = objects;
+            break;
+        }
+        case DefaultOldLeft: {
+            split(leftObjects, rightObjects, objects, splittingPlane);
+            moveParentToNewParentsLeftChild(node);
+            break;
+        }
+        case DefaultWrongOrderOldLeft: {
+            split(leftObjects, rightObjects, objects, splittingPlane);
+            switchBoxOrder(leftObjects, rightObjects);
+            moveParentToNewParentsLeftChild(node);
+            break;
+        }
+        default:
+            throw (std::out_of_range("Undefined split operation!"));
+    }
+}
+
+void DBVHv2::createLeftChild(uint64_t nodePosition) {
+    auto childPosition = tree.newNode();
+    auto &node = tree.at(nodePosition);
+    node.leftPosition = childPosition;
+    node.maxDepthLeft = 2;
+}
+
+void DBVHv2::createNewParentForLeftLeafs(uint64_t nodePosition, const std::vector<Intersectable *> &leftObjects) {
+    auto parentPosition = tree.newNode();
+    auto &node = tree.at(nodePosition);
+    auto buffer = node.leftLeaf;
+    auto &parent = tree.at(parentPosition);
+    parent.leftLeaf = buffer;
+    parent.rightLeaf = leftObjects.at(0);
+    parent.maxDepthLeft = 1;
+    parent.maxDepthRight = 1;
+    refit(parent);
+    node.leftPosition = parentPosition;
+    node.maxDepthLeft = 2;
+}
+
+void DBVHv2::createNewParentForLeftChildren(uint64_t nodePosition) {
+    auto parentPosition = tree.newNode();
+    auto &node = tree.at(nodePosition);
+    auto buffer = node.leftLeaf;
+    auto &parent = tree.at(parentPosition);
+    parent.leftLeaf = buffer;
+    parent.boundingBox = buffer->getBoundaries();
+    parent.surfaceArea = parent.boundingBox.getSA() * 2;
+    parent.maxDepthLeft = 1;
+    node.leftPosition = parentPosition;
+    node.maxDepthLeft = 2;
+}
+
+bool DBVHv2::insertSingleObjectLeft(uint64_t nodePosition, const std::vector<Intersectable *> &leftObjects) {
+    auto &node = tree.at(nodePosition);
+    if (isEmptyLeft(node)) {
+        createLeftLeaf(node, leftObjects);
+    } else if (isLeafLeft(node)) {
+        createNewParentForLeftLeafs(nodePosition, leftObjects);
+    } else {
+        return false;
+    }
+    return true;
+}
+
+void DBVHv2::createChildNodeLeft(uint64_t nodePosition) {
+    auto &node = tree.at(nodePosition);
+    if (isEmptyLeft(node)) {
+        createLeftChild(nodePosition);
+    } else if (isLeafLeft(node)) {
+        createNewParentForLeftChildren(nodePosition);
+    }
+}
+
+bool DBVHv2::passObjectsToLeftChild(uint64_t nodePosition, const std::vector<Intersectable *> &leftObjects) {
+    if (leftObjects.size() == 1) {
+        return insertSingleObjectLeft(nodePosition, leftObjects);
+    } else if (!leftObjects.empty()) {
+        createChildNodeLeft(nodePosition);
+        return false;
+    }
+    return true;
+}
+
+void DBVHv2::createRightChild(uint64_t nodePosition) {
+    auto childPosition = tree.newNode();
+    auto &node = tree.at(nodePosition);
+    node.rightPosition = childPosition;
+    node.maxDepthRight = 2;
+}
+
+void DBVHv2::createNewParentForRightLeafs(uint64_t nodePosition, const std::vector<Intersectable *> &rightObjects) {
+    auto parentPosition = tree.newNode();
+    auto &node = tree.at(nodePosition);
+    auto buffer = node.rightLeaf;
+    auto &parent = tree.at(parentPosition);
+    parent.leftLeaf = buffer;
+    parent.rightLeaf = rightObjects.at(0);
+    parent.maxDepthLeft = 1;
+    parent.maxDepthRight = 1;
+    refit(parent);
+    node.rightPosition = parentPosition;
+    node.maxDepthRight = 2;
+}
+
+void DBVHv2::createNewParentForRightChildren(uint64_t nodePosition) {
+    auto parentPosition = tree.newNode();
+    auto &node = tree.at(nodePosition);
+    auto buffer = node.rightLeaf;
+    auto &parent = tree.at(parentPosition);
+    parent.rightLeaf = buffer;
+    parent.boundingBox = buffer->getBoundaries();
+    parent.surfaceArea = parent.boundingBox.getSA() * 2;
+    parent.maxDepthRight = 1;
+    node.rightPosition = parentPosition;
+    node.maxDepthRight = 2;
+}
+
+bool DBVHv2::insertSingleObjectRight(uint64_t nodePosition, const std::vector<Intersectable *> &rightObjects) {
+    auto &node = tree.at(nodePosition);
+    if (isEmptyRight(node)) {
+        createRightLeaf(node, rightObjects);
+    } else if (isLeafRight(node)) {
+        createNewParentForRightLeafs(nodePosition, rightObjects);
+    } else {
+        return false;
+    }
+    return true;
+}
+
+void DBVHv2::createChildNodeRight(uint64_t nodePosition) {
+    auto &node = tree.at(nodePosition);
+    if (isEmptyRight(node)) {
+        createRightChild(nodePosition);
+    } else if (isLeafRight(node)) {
+        createNewParentForRightChildren(nodePosition);
+    }
+}
+
+bool DBVHv2::passObjectsToRightChild(uint64_t nodePosition, const std::vector<Intersectable *> &rightObjects) {
+    if (rightObjects.size() == 1) {
+        return insertSingleObjectRight(nodePosition, rightObjects);
+    } else if (!rightObjects.empty()) {
+        createChildNodeRight(nodePosition);
+        return false;
+    }
+    return true;
+}
+
+void DBVHv2::setBoxesAndHitProbability(const DBVHNode &node, BoundingBox &leftChildBox, BoundingBox &rightChildBox,
+                                       double &pLeft, double &pRight) {
+    pLeft = 0;
+    pRight = 0;
+    if (isNodeLeft(node)) {
+        auto &leftChild = tree.at(node.leftPosition);
+        leftChildBox = leftChild.boundingBox;
+        pLeft = leftChild.surfaceArea / leftChildBox.getSA();
+    } else {
+        leftChildBox = (node.leftLeaf)->getBoundaries();
+        pLeft = (node.leftLeaf)->getSurfaceArea() / leftChildBox.getSA();
+    }
+    if (isNodeRight(node)) {
+        auto &rightChild = tree.at(node.rightPosition);
+        rightChildBox = rightChild.boundingBox;
+        pRight = rightChild.surfaceArea / rightChildBox.getSA();
+    } else {
+        rightChildBox = (node.rightLeaf)->getBoundaries();
+        pRight = (node.rightLeaf)->getSurfaceArea() / rightChildBox.getSA();
+    }
+}
+
+double DBVHv2::computeSAHWithNewParent(const DBVHNode &node, const BoundingBox &aabbLeft, const BoundingBox &aabbRight,
+                                       double objectCostLeft, double objectCostRight, SplitOperation &newParent) {
+    BoundingBox leftChildBox;
+    BoundingBox rightChildBox;
+    double pLeft;
+    double pRight;
+    setBoxesAndHitProbability(node, leftChildBox, rightChildBox, pLeft, pRight);
+
+    BoundingBox oldLeft = leftChildBox;
+    BoundingBox oldLeftNewLeft = leftChildBox;
+    BoundingBox oldLeftNewRight = leftChildBox;
+    BoundingBox oldLeftNewLeftNewRight = leftChildBox;
+    BoundingBox oldLeftOldRight = leftChildBox;
+    BoundingBox oldLeftOldRightNewLeft = leftChildBox;
+    BoundingBox oldLeftOldRightNewRight = leftChildBox;
+    BoundingBox oldRightNewLeftNewRight = rightChildBox;
+    BoundingBox oldRightNewRight = rightChildBox;
+    BoundingBox oldRightNewLeft = rightChildBox;
+    BoundingBox oldRight = rightChildBox;
+    BoundingBox newLeftNewRight = aabbLeft;
+    BoundingBox newRight = aabbRight;
+    BoundingBox newLeft = aabbLeft;
+
+    ::refit(newLeftNewRight, newRight);
+    ::refit(oldLeftNewLeft, newLeft);
+    ::refit(oldLeftNewRight, newRight);
+    ::refit(oldLeftNewLeftNewRight, newLeftNewRight);
+    ::refit(oldLeftOldRight, oldRight);
+    ::refit(oldRightNewLeft, newLeft);
+    ::refit(oldRightNewRight, newRight);
+    ::refit(oldLeftOldRightNewLeft, oldRightNewLeft);
+    ::refit(oldLeftOldRightNewRight, oldRightNewRight);
+    ::refit(oldRightNewLeftNewRight, newLeftNewRight);
+
+    double SAHs[7];
+
+    SAHs[Default] = oldLeftNewLeft.getSA() * (objectCostLeft + pLeft) +
+                    oldRightNewRight.getSA() * (objectCostRight + pRight);
+    SAHs[DefaultWrongOrder] = oldLeftNewRight.getSA() * (objectCostRight + pLeft) +
+                              oldRightNewLeft.getSA() * (objectCostLeft + pRight);
+    SAHs[AllNewLeft] = oldLeft.getSA() * pLeft +
+                       oldRightNewLeftNewRight.getSA() * (objectCostLeft + objectCostRight + pRight);
+    SAHs[AllNewRight] = oldLeftNewLeftNewRight.getSA() * (objectCostLeft + objectCostRight + pLeft) +
+                        oldRight.getSA() * pRight;
+    SAHs[SplitOldNew] = oldLeftOldRight.getSA() * (pLeft + pRight) +
+                        newLeftNewRight.getSA() * (objectCostLeft + objectCostRight);
+    SAHs[DefaultOldLeft] = oldLeftOldRightNewLeft.getSA() * (objectCostLeft + pLeft + pRight) +
+                           newRight.getSA() * objectCostRight;
+    SAHs[DefaultWrongOrderOldLeft] = oldLeftOldRightNewRight.getSA() * (objectCostRight + pLeft + pRight) +
+                                     newLeft.getSA() * objectCostLeft;
+
+
+    SplitOperation bestSAH = getBestSplitOperation(SAHs);
+
+    newParent = bestSAH;
+    return SAHs[bestSAH];
+}
+
+double DBVHv2::evaluateBucket(const DBVHNode &node, const std::vector<Intersectable *> &objects,
+                              const Vector3D &splittingPlane, SplitOperation &newParent) {
+    BoundingBox aabbLeft;
+    BoundingBox aabbRight;
+
+    double objectCostLeft = 0;
+    double objectCostRight = 0;
+
+    sortObjectsIntoBuckets(objects, splittingPlane, aabbLeft, aabbRight, objectCostLeft, objectCostRight);
+
+    if (!isEmptyLeft(node) && !isEmptyRight(node)) {
+        return computeSAHWithNewParent(node, aabbLeft, aabbRight, objectCostLeft, objectCostRight, newParent);
+    } else {
+        return computeSAH(aabbLeft, aabbRight, objectCostLeft, objectCostRight);
+
+    }
+}
+
+std::vector<double> DBVHv2::evaluateSplittingPlanes(const DBVHNode &node, const std::vector<Intersectable *> &objects,
+                                                    const std::vector<Vector3D> &splittingPlanes,
+                                                    std::vector<SplitOperation> &newParent) {
+    std::vector<double> SAH(numberOfSplittingPlanes);
+
+    for (int i = 0; i < numberOfSplittingPlanes; i++) {
+        SAH[i] = evaluateBucket(node, objects, splittingPlanes[i], newParent[i]);
+    }
+
+    return SAH;
+}
+
+void DBVHv2::add(uint64_t nodePosition, const std::vector<Intersectable *> &objects, uint8_t depth) {
+    auto &currentNode = tree.at(nodePosition);
+    BoundingBox bBox = currentNode.boundingBox;
+    ::refit(bBox, objects, 0);
+
+    // create split buckets
+    auto splittingPlanes = createSplittingPlanes(bBox);
+
+    std::vector<SplitOperation> newParent(numberOfSplittingPlanes);
+
+    // evaluate split buckets
+    auto SAH = evaluateSplittingPlanes(currentNode, objects, splittingPlanes, newParent);
+
+    // choose best split bucket and split currentNode accordingly
+    int bestSplittingPlane = getBestSplittingPlane(SAH);
+
+    std::vector<Intersectable *> leftObjects;
+    std::vector<Intersectable *> rightObjects;
+
+    if (!bestSplittingPlaneExists(bestSplittingPlane)) {
+        splitEven(objects, leftObjects, rightObjects);
+    } else {
+        sortObjectsIntoBoxes(newParent[bestSplittingPlane], splittingPlanes[bestSplittingPlane], currentNode,
+                             objects, leftObjects, rightObjects);
+    }
+
+    // pass objects to children
+    if (!passObjectsToLeftChild(nodePosition, leftObjects)) {
+        add(tree.at(nodePosition).leftPosition, leftObjects, depth + 1);
+    }
+    if (!passObjectsToRightChild(nodePosition, rightObjects)) {
+        add(tree.at(nodePosition).rightPosition, rightObjects, depth + 1);
+    }
+
+    // calculate surface area and tree depth going the tree back up
+    refit(tree.at(nodePosition));
+
+    // use tree rotations going the tree back up to optimize SAH
+    optimizeSAH(tree.at(nodePosition));
+}
+
+bool DBVHv2::addOntoSingleElement(const std::vector<Intersectable *> &objects) {
+    auto &root = tree.at(rootPosition);
+    if (!isLastElement(root)) return false;
+    std::vector<Intersectable *> newObjects{objects};     // TODO: make more efficient
+    newObjects.push_back(root.leftLeaf);
+    root.maxDepthLeft = 0;
+    add(rootPosition, newObjects, 1);
+    return true;
+}
+
+DBVHv2::DBVHv2() : rootPosition(tree.newNode()) {
+
+}
+
+DBVHv2::DBVHv2(const std::vector<Intersectable *> &objects) : rootPosition(tree.newNode()) {
+    addObjects(objects);
+}
+
+void DBVHv2::addObjects(const std::vector<Intersectable *> &objects) {
+    auto &root = tree.at(rootPosition);
+    if (objects.empty() || addFirstAndOnlyElement(root, objects) || addOntoSingleElement(objects))
+        return;
+
+    add(rootPosition, objects, 1);
+}
+
+void DBVHv2::removeObjects(const std::vector<Intersectable *> &objects) {
+    auto &root = tree.at(rootPosition);
     for (const auto &object: objects) {
         if (isEmpty(root)) return;
-        if (!removeSpecialCases(root, *object)) {
+        if (!removeSpecialCases(*object)) {
             remove(root, *object);
         }
     }
 }
 
-bool DBVHv2::intersectFirst(const DBVHNode &root, IntersectionInfo &intersectionInfo, const Ray &ray) {
+bool DBVHv2::intersectFirst(IntersectionInfo &intersectionInfo, const Ray &ray) {
+    auto &root = tree.at(rootPosition);
     if (isEmpty(root)) return false;
-    bool hit;
 
     if (isLastElement(root)) {
-        hit = root.leftLeaf->intersectFirst(intersectionInfo, ray);
+        return root.leftLeaf->intersectFirst(intersectionInfo, ray);
     } else {
-        hit = traverseFirst(root, intersectionInfo, ray);
+        return traverseFirst(root, intersectionInfo, ray);
     }
-
-    return hit;
 }
 
-bool DBVHv2::intersectAny(const DBVHNode &root, IntersectionInfo &intersectionInfo, const Ray &ray) {
+bool DBVHv2::intersectAny(IntersectionInfo &intersectionInfo, const Ray &ray) {
+    auto &root = tree.at(rootPosition);
     if (isEmpty(root)) return false;
-    bool hit;
 
     if (isLastElement(root)) {
-        hit = root.leftLeaf->intersectAny(intersectionInfo, ray);
+        return root.leftLeaf->intersectAny(intersectionInfo, ray);
     } else {
-        hit = traverseAny(root, intersectionInfo, ray);
+        return traverseAny(root, intersectionInfo, ray);
     }
-
-    return hit;
 }
 
-bool DBVHv2::intersectAll(const DBVHNode &root, std::vector<IntersectionInfo> &intersectionInfo, const Ray &ray) {
+bool DBVHv2::intersectAll(std::vector<IntersectionInfo> &intersectionInfo, const Ray &ray) {
+    auto &root = tree.at(rootPosition);
     if (isEmpty(root)) return false;
-    bool hit;
 
     if (isLastElement(root)) {
-        hit = root.leftLeaf->intersectAll(intersectionInfo, ray);
+        return root.leftLeaf->intersectAll(intersectionInfo, ray);
     } else {
-        hit = traverseALl(root, intersectionInfo, ray);
+        return traverseALl(root, intersectionInfo, ray);
     }
+}
 
-    return hit;
+BoundingBox DBVHv2::getBoundaries() const {
+    return tree.at(rootPosition).boundingBox;
+}
+
+double DBVHv2::getSurfaceArea() const {
+    return tree.at(rootPosition).surfaceArea;
 }

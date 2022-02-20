@@ -1,4 +1,4 @@
-add_library(RayTraceEngine SHARED RayEngine.cpp pipeline/PipelineImplement.cpp intersectable/TriangleMeshObject.cpp intersectable/Instance.cpp "engine_node/EngineNode.h" "engine_node/EngineNode.cpp" "bvh/DBVHv2.h" "data_management/DataManagementUnitV2.h" "data_management/DataManagementUnitV2.cpp" "bvh/DBVHv2.cpp" pipeline/PipelinePool.h pipeline/PipelinePool.cpp utility/IdContainer.h)
+add_library(RayTraceEngine SHARED RayEngine.cpp pipeline/PipelineImplement.cpp intersectable/TriangleMeshObject.cpp intersectable/Instance.cpp "engine_node/EngineNode.h" "engine_node/EngineNode.cpp" "bvh/DBVHv2.h" "data_management/DataManagementUnitV2.h" "data_management/DataManagementUnitV2.cpp" "bvh/DBVHv2.cpp" pipeline/PipelinePool.h pipeline/PipelinePool.cpp utility/IdContainer.h flat_tree/FlatTree.h cache/Cache.h cache/Cache.cpp flat_tree/FlatTree.cpp bvh/DBVHNode.h bvh/DBVHNode.cpp)
 
 target_include_directories(RayTraceEngine PRIVATE .)
 set_target_properties(RayTraceEngine PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION 1)

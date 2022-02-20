@@ -31,7 +31,7 @@ struct PipelineInit {
     std::vector<ShaderPackage<HitShaderId, HitShader>> hitShaders;
     std::vector<ShaderPackage<PierceShaderId, PierceShader>> pierceShaders;
     std::vector<ShaderPackage<MissShaderId, MissShader>> missShaders;
-    std::unique_ptr<DBVHNode> geometry;
+    DBVHv2 geometry;
 };
 
 /**
@@ -61,8 +61,7 @@ private:
     std::unordered_map<PierceShaderId, ShaderContainer<PierceShader>> pierceShaders;
     std::unordered_map<MissShaderId, ShaderContainer<MissShader>> missShaders;
 
-
-    std::unique_ptr<DBVHNode> geometry;
+    DBVHv2 geometry;
 
     std::unique_ptr<Texture> result;
 
@@ -173,7 +172,7 @@ public:
 
     bool updateShader(MissShaderId shaderId, const std::vector<ShaderResource *> &shaderResources);
 
-    DBVHNode *getGeometry();
+    DBVHv2 &getGeometry();
 
     std::unique_ptr<Intersectable> getGeometryAsObject();
 };

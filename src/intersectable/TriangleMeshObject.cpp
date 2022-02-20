@@ -176,28 +176,26 @@ TriangleMeshObject::TriangleMeshObject(const std::vector<Vertex> *vertices, cons
         triangles.push_back(std::move(triangle));
     }
 
-
-    structure = std::make_unique<DBVHNode>();
-    DBVHv2::addObjects(*structure, objects);
+    structure = DBVHv2(objects);
 }
 
 TriangleMeshObject::~TriangleMeshObject() = default;
 
 BoundingBox TriangleMeshObject::getBoundaries() const {
-    return structure->boundingBox;
+    return structure.getBoundaries();
 }
 
 bool TriangleMeshObject::intersectFirst(IntersectionInfo &intersectionInfo, const Ray &ray) {
-    return DBVHv2::intersectFirst(*structure, intersectionInfo, ray);
+    return structure.intersectFirst(intersectionInfo, ray);
 
 }
 
 bool TriangleMeshObject::intersectAny(IntersectionInfo &intersectionInfo, const Ray &ray) {
-    return DBVHv2::intersectAny(*structure, intersectionInfo, ray);
+    return structure.intersectAny(intersectionInfo, ray);
 }
 
 bool TriangleMeshObject::intersectAll(std::vector<IntersectionInfo> &intersectionInfo, const Ray &ray) {
-    return DBVHv2::intersectAll(*structure, intersectionInfo, ray);
+    return structure.intersectAll(intersectionInfo, ray);
 }
 
 std::unique_ptr<Intersectable> TriangleMeshObject::clone() const {
@@ -206,7 +204,7 @@ std::unique_ptr<Intersectable> TriangleMeshObject::clone() const {
 }
 
 double TriangleMeshObject::getSurfaceArea() const {
-    return structure->surfaceArea;
+    return structure.getSurfaceArea();
 }
 
 bool TriangleMeshObject::operator==(const Intersectable &object) const {

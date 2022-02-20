@@ -8,7 +8,7 @@ PipelineImplement::PipelineImplement(PipelineInit &pipelineInit) {
     dmu = pipelineInit.dataManagement;
     pipelineInfo = pipelineInit.pipelineInfo;
     setShaders(pipelineInit);
-    geometry = std::move(pipelineInit.geometry);
+    geometry = pipelineInit.geometry;
     createResultBuffer();
 }
 
@@ -53,8 +53,8 @@ void PipelineImplement::setCamera(const Vector3D &pos, const Vector3D &dir, cons
     pipelineInfo.cameraUp = up;
 }
 
-DBVHNode *PipelineImplement::getGeometry() {
-    return geometry.get();
+DBVHv2 &PipelineImplement::getGeometry() {
+    return geometry;
 }
 
 std::unique_ptr<Intersectable> PipelineImplement::getGeometryAsObject() {
@@ -248,7 +248,7 @@ void PipelineImplement::processRaysAnyHit(std::vector<RayContainer> &rayContaine
     while (!rayContainers.empty()) {
         Ray ray = initRay(rayContainers);
         IntersectionInfo info{false, std::numeric_limits<double>::max()};
-        if (DBVHv2::intersectAny(*geometry, info, ray)) {
+        if (geometry.intersectAny(info, ray)) {
             info.rayOrigin = rayContainers.back().rayOrigin;
             info.rayDirection = rayContainers.back().rayDirection;
         }
@@ -261,7 +261,7 @@ void PipelineImplement::processRaysFirstHit(std::vector<RayContainer> &rayContai
     while (!rayContainers.empty()) {
         Ray ray = initRay(rayContainers);
         IntersectionInfo info{false, std::numeric_limits<double>::max()};
-        if (DBVHv2::intersectFirst(*geometry, info, ray)) {
+        if (geometry.intersectFirst(info, ray)) {
             info.rayOrigin = rayContainers.back().rayOrigin;
             info.rayDirection = rayContainers.back().rayDirection;
         }
@@ -274,7 +274,7 @@ void PipelineImplement::processRaysAllHits(std::vector<RayContainer> &rayContain
     while (!rayContainers.empty()) {
         Ray ray = initRay(rayContainers);
         std::vector<IntersectionInfo> infos;
-        DBVHv2::intersectAll(*geometry, infos, ray);
+        geometry.intersectAll(infos, ray);
 
         processAllHitInformation(ray, rayContainers, infos, newRays);
     }
