@@ -41,7 +41,7 @@ private:
 
     FlatTree tree;
     uint64_t rootPosition;
-    Cache<DBVHNode *, DBVHNode> cache;
+    //Cache<DBVHNode *, DBVHNode> cache;
 
     void replaceRootWithChild(DBVHNode &child);
 
