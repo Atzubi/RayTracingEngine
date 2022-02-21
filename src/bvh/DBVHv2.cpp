@@ -360,7 +360,7 @@ inline void DBVHv2::getChildrenIntersections(const Ray &ray, const DBVHNode &nod
                                              bool &hit) {
     if (isNodeRight(node)) {
         // TODO request child if missing
-        auto &rightChild = node.rightChild;
+        auto rightChild = node.rightChild;
         right = rayBoxIntersection(rightChild->boundingBox.minCorner, rightChild->boundingBox.maxCorner, ray,
                                    distanceRight);
     } else {
@@ -369,7 +369,7 @@ inline void DBVHv2::getChildrenIntersections(const Ray &ray, const DBVHNode &nod
     }
     if (isNodeLeft(node)) {
         // TODO request child if missing
-        auto &leftChild = node.leftChild;
+        auto leftChild = node.leftChild;
         left = rayBoxIntersection(leftChild->boundingBox.minCorner, leftChild->boundingBox.maxCorner, ray,
                                   distanceLeft);
     } else {
