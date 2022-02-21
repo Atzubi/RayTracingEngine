@@ -32,14 +32,12 @@ struct Rotations {
     BoundingBox swapRightRightToLeft;
 };
 
-struct TraversalContainer {
-    const DBVHNode *node;
-    double distance;
-};
-
 class DBVHv2 {
 private:
-
+    struct TraversalContainer {
+        const DBVHNode *node;
+        double distance;
+    };
 
     FlatTree tree;
     DBVHNode *root;
