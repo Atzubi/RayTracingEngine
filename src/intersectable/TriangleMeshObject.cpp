@@ -176,7 +176,7 @@ TriangleMeshObject::TriangleMeshObject(const std::vector<Vertex> *vertices, cons
         triangles.push_back(std::move(triangle));
     }
 
-    structure = DBVHv2(objects);
+    structure = std::move(DBVHv2(objects));
 }
 
 TriangleMeshObject::~TriangleMeshObject() = default;

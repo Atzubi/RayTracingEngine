@@ -44,7 +44,7 @@ namespace {
 
 void EngineNode::removeInstanceInPipeline(PipelineId pipelineId, InstanceId objectInstanceId) {
     auto pipeline = pipelinePool->getPipelineFragment(pipelineId);
-    auto geometry = pipeline->getGeometry();
+    auto &geometry = pipeline->getGeometry();
     auto instance = dmu->getInstanceDataFragment(objectInstanceId);
     std::vector<Intersectable *> remove{instance};
     geometry.removeObjects(remove);
@@ -221,7 +221,7 @@ EngineNode::bindGeometryToPipeline(PipelineId pipelineId, const std::vector<Obje
     if (objectIDs.size() != transforms.size() || pipeline == nullptr)
         return false;
 
-    auto geometry = pipeline->getGeometry();
+    auto &geometry = pipeline->getGeometry();
 
     std::vector<Intersectable *> instances;
     std::vector<InstanceId> instanceIds;

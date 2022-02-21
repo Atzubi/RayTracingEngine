@@ -6,18 +6,17 @@
 #define RAYTRACEENGINE_DBVHNODE_H
 
 #include "RayTraceEngine/Intersectable.h"
-#include <cstdint>
 
 struct DBVHNode {
     uint8_t maxDepthLeft = 0;
     union {
-        uint64_t leftPosition;
+        DBVHNode *leftChild;
         Intersectable *leftLeaf = nullptr;
     };
 
     uint8_t maxDepthRight = 0;
     union {
-        uint64_t rightPosition;
+        DBVHNode *rightChild;
         Intersectable *rightLeaf = nullptr;
     };
 

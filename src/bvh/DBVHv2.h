@@ -40,40 +40,42 @@ private:
     };
 
     FlatTree tree;
-    uint64_t rootPosition;
+    DBVHNode *root;
     //Cache<DBVHNode *, DBVHNode> cache;
 
     void replaceRootWithChild(DBVHNode &child);
 
     bool removeSpecialCases(const Intersectable &object);
 
-    bool traverseALl(const DBVHNode &root, std::vector<IntersectionInfo> &intersectionInfo, const Ray &ray);
+    bool traverseALl(std::vector<IntersectionInfo> &intersectionInfo, const Ray &ray);
 
-    void processTraversalStack(std::vector<IntersectionInfo> &intersectionInfo, const Ray &ray, const DBVHNode **stack);
+    static void
+    processTraversalStack(std::vector<IntersectionInfo> &intersectionInfo, const Ray &ray, const DBVHNode **stack);
 
-    inline void
+    static inline void
     getChildrenIntersection(std::vector<IntersectionInfo> &intersectionInfo, const Ray &ray, const DBVHNode **stack,
                             uint64_t &stackPointer);
 
-    bool traverseAny(const DBVHNode &root, IntersectionInfo &intersectionInfo, const Ray &ray);
+    bool traverseAny(IntersectionInfo &intersectionInfo, const Ray &ray);
 
-    bool processTraversalStack(IntersectionInfo &intersectionInfo, const Ray &ray, const DBVHNode **stack);
+    static bool processTraversalStack(IntersectionInfo &intersectionInfo, const Ray &ray, const DBVHNode **stack);
 
-    inline bool
+    static inline bool
     getChildrenIntersection(IntersectionInfo &intersectionInfo, const Ray &ray, const DBVHNode **stack,
                             uint64_t &stackPointer);
 
-    bool traverseFirst(const DBVHNode &root, IntersectionInfo &intersectionInfo, const Ray &ray);
+    bool traverseFirst(IntersectionInfo &intersectionInfo, const Ray &ray);
 
-    bool processTraversalStack(IntersectionInfo &intersectionInfo, const Ray &ray, TraversalContainer *stack);
+    static bool processTraversalStack(IntersectionInfo &intersectionInfo, const Ray &ray, TraversalContainer *stack);
 
-    inline void
+    static inline void
     pushIntersectionsOnStack(const DBVHNode &node, double distanceRight, double distanceLeft, bool right, bool left,
                              TraversalContainer *stack, uint64_t &stackPointer);
 
-    inline void getChildrenIntersections(const Ray &ray, const DBVHNode &node, IntersectionInfo &intersectionInfo,
-                                         double &distanceRight, double &distanceLeft, bool &right, bool &left,
-                                         bool &hit);
+    static inline void
+    getChildrenIntersections(const Ray &ray, const DBVHNode &node, IntersectionInfo &intersectionInfo,
+                             double &distanceRight, double &distanceLeft, bool &right, bool &left,
+                             bool &hit);
 
     void remove(DBVHNode &currentNode, const Intersectable &object);
 
@@ -81,58 +83,61 @@ private:
 
     bool removeRightLeaf(DBVHNode &currentNode, const Intersectable &object);
 
-    bool removeLeftRightGrandChild(DBVHNode &currentNode, DBVHNode &child, const Intersectable &object);
+    static bool removeLeftRightGrandChild(DBVHNode &currentNode, DBVHNode &child, const Intersectable &object);
 
-    bool removeLeftLeftGrandChild(DBVHNode &currentNode, DBVHNode &child, const Intersectable &object);
+    static bool removeLeftLeftGrandChild(DBVHNode &currentNode, DBVHNode &child, const Intersectable &object);
 
-    bool removeRightRightGrandChild(DBVHNode &currentNode, DBVHNode &child, const Intersectable &object);
+    static bool removeRightRightGrandChild(DBVHNode &currentNode, DBVHNode &child, const Intersectable &object);
 
-    bool removeRightLeftGrandChild(DBVHNode &currentNode, DBVHNode &child, const Intersectable &object);
+    static bool removeRightLeftGrandChild(DBVHNode &currentNode, DBVHNode &child, const Intersectable &object);
 
-    void refit(DBVHNode &node);
+    static void refit(DBVHNode &node);
 
-    void add(uint64_t nodePosition, const std::vector<Intersectable *> &objects, uint8_t depth);
+    void add(DBVHNode &currentNode, const std::vector<Intersectable *> &objects, uint8_t depth);
 
-    std::vector<double> evaluateSplittingPlanes(const DBVHNode &node, const std::vector<Intersectable *> &objects,
-                                                const std::vector<Vector3D> &splittingPlanes,
-                                                std::vector<SplitOperation> &newParent);
+    static std::vector<double>
+    evaluateSplittingPlanes(const DBVHNode &node, const std::vector<Intersectable *> &objects,
+                            const std::vector<Vector3D> &splittingPlanes,
+                            std::vector<SplitOperation> &newParent);
 
-    double
+    static double
     evaluateBucket(const DBVHNode &node, const std::vector<Intersectable *> &objects, const Vector3D &splittingPlane,
                    SplitOperation &newParent);
 
-    double computeSAHWithNewParent(const DBVHNode &node, const BoundingBox &aabbLeft, const BoundingBox &aabbRight,
-                                   double objectCostLeft, double objectCostRight, SplitOperation &newParent);
+    static double
+    computeSAHWithNewParent(const DBVHNode &node, const BoundingBox &aabbLeft, const BoundingBox &aabbRight,
+                            double objectCostLeft, double objectCostRight, SplitOperation &newParent);
 
-    void
-    setBoxesAndHitProbability(const DBVHNode &node, BoundingBox &leftChildBox, BoundingBox &rightChildBox, double &pLeft,
+    static void
+    setBoxesAndHitProbability(const DBVHNode &node, BoundingBox &leftChildBox, BoundingBox &rightChildBox,
+                              double &pLeft,
                               double &pRight);
 
     bool addOntoSingleElement(const std::vector<Intersectable *> &objects);
 
-    void createNewParentForRightChildren(uint64_t nodePosition);
+    void createNewParentForRightChildren(DBVHNode &node);
 
-    bool passObjectsToRightChild(uint64_t nodePosition, const std::vector<Intersectable *> &rightObjects);
+    bool passObjectsToRightChild(DBVHNode &node, const std::vector<Intersectable *> &rightObjects);
 
-    void createNewParentForRightLeafs(uint64_t nodePosition, const std::vector<Intersectable *> &rightObjects);
+    void createNewParentForRightLeafs(DBVHNode &node, const std::vector<Intersectable *> &rightObjects);
 
-    void createRightChild(uint64_t nodePosition);
+    void createRightChild(DBVHNode &node);
 
-    void createChildNodeRight(uint64_t nodePosition);
+    void createChildNodeRight(DBVHNode &node);
 
-    bool insertSingleObjectRight(uint64_t nodePosition, const std::vector<Intersectable *> &rightObjects);
+    bool insertSingleObjectRight(DBVHNode &node, const std::vector<Intersectable *> &rightObjects);
 
-    bool passObjectsToLeftChild(uint64_t nodePosition, const std::vector<Intersectable *> &leftObjects);
+    bool passObjectsToLeftChild(DBVHNode &node, const std::vector<Intersectable *> &leftObjects);
 
-    void createChildNodeLeft(uint64_t nodePosition);
+    void createChildNodeLeft(DBVHNode &node);
 
-    bool insertSingleObjectLeft(uint64_t nodePosition, const std::vector<Intersectable *> &leftObjects);
+    bool insertSingleObjectLeft(DBVHNode &node, const std::vector<Intersectable *> &leftObjects);
 
-    void createNewParentForLeftChildren(uint64_t nodePosition);
+    void createNewParentForLeftChildren(DBVHNode &node);
 
-    void createNewParentForLeftLeafs(uint64_t nodePosition, const std::vector<Intersectable *> &leftObjects);
+    void createNewParentForLeftLeafs(DBVHNode &node, const std::vector<Intersectable *> &leftObjects);
 
-    void createLeftChild(uint64_t nodePosition);
+    void createLeftChild(DBVHNode &node);
 
     void moveParentToNewParentsLeftChild(DBVHNode( &node));
 
@@ -141,62 +146,66 @@ private:
                               std::vector<Intersectable *> &leftObjects,
                               std::vector<Intersectable *> &rightObjects);
 
-    bool optimizeSAH(DBVHNode &node);
+    static bool optimizeSAH(DBVHNode &node);
 
-    void swapRightRight(DBVHNode &node, const Rotations &rotations, const double *SAHs);
+    static void swapRightRight(DBVHNode &node, const Rotations &rotations, const double *SAHs);
 
-    void setSurfaceAreaRightRight(DBVHNode &node, const Rotations &rotations, const double *SAHs);
+    static void setSurfaceAreaRightRight(DBVHNode &node, const Rotations &rotations, const double *SAHs);
 
-    void swapLeafRightRight(DBVHNode &node, const Rotations &rotations);
+    static void swapLeafRightRight(DBVHNode &node, const Rotations &rotations);
 
-    void swapChildRightRight(DBVHNode &node, const Rotations &rotations);
+    static void swapChildRightRight(DBVHNode &node, const Rotations &rotations);
 
-    void setNodeRightRight(DBVHNode &node);
+    static void setNodeRightRight(DBVHNode &node);
 
-    void swapRightLeft(DBVHNode &node, const Rotations &rotations, const double *SAHs);
+    static void swapRightLeft(DBVHNode &node, const Rotations &rotations, const double *SAHs);
 
-    void setSurfaceAreaRightLeft(DBVHNode &node, const Rotations &rotations, const double *SAHs);
+    static void setSurfaceAreaRightLeft(DBVHNode &node, const Rotations &rotations, const double *SAHs);
 
-    void swapLeafRightLeft(DBVHNode &node, const Rotations &rotations);
+    static void swapLeafRightLeft(DBVHNode &node, const Rotations &rotations);
 
-    void swapChildRightLeft(DBVHNode &node, const Rotations &rotations);
+    static void swapChildRightLeft(DBVHNode &node, const Rotations &rotations);
 
-    void setNodeRightLeft(DBVHNode &node);
+    static void setNodeRightLeft(DBVHNode &node);
 
-    void swapLeftRightToRight(DBVHNode &node, const Rotations &rotations, const double *SAHs);
+    static void swapLeftRightToRight(DBVHNode &node, const Rotations &rotations, const double *SAHs);
 
-    void setSurfaceAreaLeftRight(DBVHNode &node, const Rotations &rotations, const double *SAHs);
+    static void setSurfaceAreaLeftRight(DBVHNode &node, const Rotations &rotations, const double *SAHs);
 
-    void swapLeafLeftRight(DBVHNode &node, const Rotations &rotations);
+    static void swapLeafLeftRight(DBVHNode &node, const Rotations &rotations);
 
-    void swapChildLeftRight(DBVHNode &node, const Rotations &rotations);
+    static void swapChildLeftRight(DBVHNode &node, const Rotations &rotations);
 
-    void setNodeLeftRight(DBVHNode &node);
+    static void setNodeLeftRight(DBVHNode &node);
 
-    void swapLeftLeftToRight(DBVHNode &node, const Rotations &rotations, const double *SAHs);
+    static void swapLeftLeftToRight(DBVHNode &node, const Rotations &rotations, const double *SAHs);
 
-    void setSurfaceAreaLeftLeft(DBVHNode &node, const Rotations &rotations, const double *SAHs);
+    static void setSurfaceAreaLeftLeft(DBVHNode &node, const Rotations &rotations, const double *SAHs);
 
-    void swapLeafLeftLeft(DBVHNode &node, const Rotations &rotations);
+    static void swapLeafLeftLeft(DBVHNode &node, const Rotations &rotations);
 
-    void swapChildLeftLeft(DBVHNode &node, const Rotations &rotations);
+    static void swapChildLeftLeft(DBVHNode &node, const Rotations &rotations);
 
-    void setNodeLeftLeft(DBVHNode &node);
+    static void setNodeLeftLeft(DBVHNode &node);
 
-    bool getPossibleRotations(DBVHNode &node, double *SAHs, Rotations &rotations);
+    static bool getPossibleRotations(DBVHNode &node, double *SAHs, Rotations &rotations);
 
-    void getRotations(DBVHNode &node, double *SAHs, Rotations &rotations);
+    static void getRotations(DBVHNode &node, double *SAHs, Rotations &rotations);
 
-    void getRotationsFull(const DBVHNode &node, double *SAHs, Rotations &rotations);
+    static void getRotationsFull(const DBVHNode &node, double *SAHs, Rotations &rotations);
 
-    bool getRotationsRight(DBVHNode &node, double *SAHs, Rotations &rotations);
+    static bool getRotationsRight(DBVHNode &node, double *SAHs, Rotations &rotations);
 
-    void fillRightRotationBoxes(const DBVHNode &node, Rotations &rotations);
+    static void fillRightRotationBoxes(const DBVHNode &node, Rotations &rotations);
 
-    void fillRotationBoxes(BoxSA &left, BoxSA &right, const DBVHNode &node);
+    static void fillRotationBoxes(BoxSA &left, BoxSA &right, const DBVHNode &node);
 
 public:
     DBVHv2();
+
+    DBVHv2(DBVHv2 &&other) noexcept;
+
+    DBVHv2 &operator=(DBVHv2 &&other) noexcept;
 
     explicit DBVHv2(const std::vector<Intersectable *> &objects);
 

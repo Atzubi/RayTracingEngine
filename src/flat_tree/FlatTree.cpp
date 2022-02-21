@@ -4,21 +4,38 @@
 
 #include "flat_tree/FlatTree.h"
 
-uint64_t FlatTree::newNode() {
-    DBVHNode node;
-    flatTree.push_back(node);
-    return flatTree.size() - 1;
+FlatTree::FlatTree(uint64_t blockSize) : blockSize(blockSize), position(0) {
+
 }
 
-const DBVHNode & FlatTree::at(uint64_t node) const {
-    return flatTree.at(node);
+FlatTree::FlatTree(FlatTree &&other) noexcept: blockSize(other.blockSize), flatTree(std::move(other.flatTree)),
+                                               positionMap(std::move(other.positionMap)), position(other.position) {
+
 }
 
-DBVHNode &FlatTree::at(uint64_t node) {
-    return flatTree.at(node);
+FlatTree &FlatTree::operator=(FlatTree &&other) noexcept {
+    blockSize = other.blockSize;
+    flatTree = std::move(other.flatTree);
+    positionMap = std::move(other.positionMap);
+    position = other.position;
+    return *this;
 }
 
-void FlatTree::remove(uint64_t node) {
-    flatTree[node] = flatTree.back();
-    flatTree.pop_back();
+DBVHNode *FlatTree::newNode() {
+    if (position % blockSize == 0) {
+        flatTree.emplace_back(Array<DBVHNode>(blockSize));
+    }
+    auto block = position / blockSize;
+    auto pos = position % blockSize;
+    auto &node = flatTree.at(block).at(pos);
+    node = DBVHNode();
+    positionMap[&node] = position++;
+    return &node;
+}
+
+void FlatTree::remove(DBVHNode &node) {
+    auto index = positionMap.at(&node);
+    auto block = index / blockSize;
+    auto pos = index % blockSize;
+    flatTree.at(block).at(pos) = flatTree.back().at(position--);
 }

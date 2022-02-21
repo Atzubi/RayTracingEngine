@@ -4,11 +4,10 @@
 
 #include "pipeline/PipelineImplement.h"
 
-PipelineImplement::PipelineImplement(PipelineInit &pipelineInit) {
+PipelineImplement::PipelineImplement(PipelineInit &pipelineInit) :geometry(std::move(pipelineInit.geometry)) {
     dmu = pipelineInit.dataManagement;
     pipelineInfo = pipelineInit.pipelineInfo;
     setShaders(pipelineInit);
-    geometry = pipelineInit.geometry;
     createResultBuffer();
 }
 

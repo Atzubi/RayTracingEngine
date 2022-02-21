@@ -57,7 +57,7 @@ int main() {
         auto texture = stbi_load(("../Data/Basketball/" + material.map_Kd.name).c_str(),
                                  &(material.map_Kd.w), &(material.map_Kd.h), &comp,
                                  STBI_rgb);
-        if(texture) {
+        if (texture) {
             material.map_Kd.image.reserve(comp * material.map_Kd.w * material.map_Kd.h);
             for (int i = 0; i < comp * material.map_Kd.w * material.map_Kd.h; i++) {
                 material.map_Kd.image.push_back(texture[i]);
@@ -75,14 +75,14 @@ int main() {
 
         // copy vertex list
         for (auto &item: m.Vertices) {
-            TriangleMeshObject::Vertex vertex = {item.Position.X,
-                                                 item.Position.Y,
-                                                 item.Position.Z,
-                                                 item.Normal.X,
-                                                 item.Normal.Y,
-                                                 item.Normal.Z,
-                                                 item.TextureCoordinate.X,
-                                                 item.TextureCoordinate.Y};
+            TriangleMeshObject::Vertex vertex = {{item.Position.X,
+                                                         item.Position.Y,
+                                                         item.Position.Z},
+                                                 {item.Normal.X,
+                                                         item.Normal.Y,
+                                                         item.Normal.Z},
+                                                 {item.TextureCoordinate.X,
+                                                         item.TextureCoordinate.Y}};
             vertices.push_back(vertex);
         }
 
@@ -121,7 +121,7 @@ int main() {
 
     // instanced objects have their own transformation, create one for each instance
     std::vector<Matrix4x4> transforms;
-    for (int i = 0; i < objectIDs.size(); i++) {
+    for (unsigned long i = 0; i < objectIDs.size(); i++) {
         // identity matrix, no transformation
         Matrix4x4 transform = Matrix4x4::getIdentity();
 
@@ -152,8 +152,8 @@ int main() {
     pipelineDescription.objectTransformations = transforms;
 
     // add shaders to the pipeline
-    pipelineDescription.rayGeneratorShaders.push_back({rayGeneratorShaderID});
-    pipelineDescription.hitShaders.push_back({hitShaderID});
+    pipelineDescription.rayGeneratorShaders.push_back({rayGeneratorShaderID, {}});
+    pipelineDescription.hitShaders.push_back({hitShaderID, {}});
 
     // add pipeline to the engine
     auto pipelineID = rayEngine.createPipeline(pipelineDescription);
