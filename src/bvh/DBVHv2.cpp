@@ -7,6 +7,11 @@
 #include "DBVHv2.h"
 
 namespace {
+    struct TraversalContainer {
+        const DBVHNode *node;
+        double distance;
+    };
+
     constexpr int numberOfSplittingPlanes = 9;
     constexpr int numberOfPossibleRotation = 5;
 
@@ -143,17 +148,6 @@ namespace {
                aabb1.maxCorner.y >= aabb2.maxCorner.y &&
                aabb1.minCorner.z <= aabb2.minCorner.z &&
                aabb1.maxCorner.z >= aabb2.maxCorner.z;
-    }
-
-    bool rayBoxIntersection(const Vector3D &min, const Vector3D &max, const Ray &ray, double &distance) {
-        Vector3D v1 = (min - ray.origin) * ray.dirfrac;
-        Vector3D v2 = (max - ray.origin) * ray.dirfrac;
-
-        double tMin = std::max(std::max(std::min(v1.x, v2.x), std::min(v1.y, v2.y)), std::min(v1.z, v2.z));
-        double tMax = std::min(std::min(std::max(v1.x, v2.x), std::max(v1.y, v2.y)), std::max(v1.z, v2.z));
-
-        distance = tMin;
-        return tMax >= 0 && tMin <= tMax;
     }
 
     void refitChild(DBVHNode &node, DBVHNode &child) {
@@ -309,6 +303,17 @@ namespace {
         }
     }
 
+    inline bool rayBoxIntersection(const Vector3D &min, const Vector3D &max, const Ray &ray, double &distance) {
+        Vector3D v1 = (min - ray.origin) * ray.dirfrac;
+        Vector3D v2 = (max - ray.origin) * ray.dirfrac;
+
+        double tMin = std::max(std::max(std::min(v1.x, v2.x), std::min(v1.y, v2.y)), std::min(v1.z, v2.z));
+        double tMax = std::min(std::min(std::max(v1.x, v2.x), std::max(v1.y, v2.y)), std::max(v1.z, v2.z));
+
+        distance = tMin;
+        return tMax >= 0 && tMin <= tMax;
+    }
+
     inline void intersectChild(const Ray &ray, const DBVHNode **stack, uint64_t &stackPointer, const DBVHNode *child) {
         double distance = 0;
         if (rayBoxIntersection((child->boundingBox.minCorner),
@@ -323,6 +328,169 @@ namespace {
         if (info.hit) {
             intersectionInfo.push_back(info);
         }
+    }
+
+    inline void getChildrenIntersections(const Ray &ray, const DBVHNode &node, IntersectionInfo &intersectionInfo,
+                                         double &distanceRight, double &distanceLeft, bool &right, bool &left,
+                                         bool &hit) {
+        if (isNodeRight(node)) {
+            // TODO request child if missing
+            auto rightChild = node.rightChild;
+            right = rayBoxIntersection(rightChild->boundingBox.minCorner, rightChild->boundingBox.maxCorner, ray,
+                                       distanceRight);
+        } else {
+            // TODO request leaf if missing
+            intersectLeaf(ray, intersectionInfo, *node.rightLeaf, hit);
+        }
+        if (isNodeLeft(node)) {
+            // TODO request child if missing
+            auto leftChild = node.leftChild;
+            left = rayBoxIntersection(leftChild->boundingBox.minCorner, leftChild->boundingBox.maxCorner, ray,
+                                      distanceLeft);
+        } else {
+            // TODO request leaf if missing
+            intersectLeaf(ray, intersectionInfo, *node.leftLeaf, hit);
+        }
+    }
+
+    inline void
+    pushIntersectionsOnStack(const DBVHNode &node, double distanceRight, double distanceLeft, bool right, bool left,
+                             TraversalContainer *stack, uint64_t &stackPointer) {
+        if (right && left) {
+            if (distanceRight < distanceLeft) {
+                stack[stackPointer++] = {node.leftChild, distanceLeft};
+                stack[stackPointer++] = {node.rightChild, distanceRight};
+            } else {
+                stack[stackPointer++] = {node.rightChild, distanceRight};
+                stack[stackPointer++] = {node.leftChild, distanceLeft};
+            }
+        } else if (right) {
+            stack[stackPointer++] = {node.rightChild, distanceRight};
+        } else if (left) {
+            stack[stackPointer++] = {node.leftChild, distanceLeft};
+        }
+    }
+
+    bool processTraversalStack(IntersectionInfo &intersectionInfo, const Ray &ray, TraversalContainer *stack) {
+        bool hit = false;
+        uint64_t stackPointer = 1;
+        while (stackPointer != 0) {
+            stackPointer--;
+            if (stack[stackPointer].distance < intersectionInfo.distance) {
+                auto node = stack[stackPointer].node;
+
+                double distanceRight = 0;
+                double distanceLeft = 0;
+                bool right = false;
+                bool left = false;
+
+                getChildrenIntersections(ray, *node, intersectionInfo, distanceRight, distanceLeft, right, left, hit);
+
+                pushIntersectionsOnStack(*node, distanceRight, distanceLeft, right, left, stack, stackPointer);
+            }
+        }
+        return hit;
+    }
+
+    bool traverseFirst(DBVHNode &root, IntersectionInfo &intersectionInfo, const Ray &ray) {
+        if (root.maxDepthRight >= 64 || root.maxDepthLeft >= 64) {
+            std::vector<TraversalContainer> stack(
+                    root.maxDepthRight > root.maxDepthLeft ? root.maxDepthRight + 1 : root.maxDepthLeft + 1);
+            stack[0] = {&root, 0};
+            return processTraversalStack(intersectionInfo, ray, stack.data());
+        } else {
+            TraversalContainer stack[64];
+            stack[0] = {&root, 0};
+            return processTraversalStack(intersectionInfo, ray, stack);
+        }
+    }
+
+    inline bool getChildrenIntersection(IntersectionInfo &intersectionInfo, const Ray &ray, const DBVHNode **stack,
+                                        uint64_t &stackPointer) {
+        bool hit = false;
+        auto node = stack[stackPointer];
+        if (isNodeRight(*node)) {
+            // TODO request child if missing
+            intersectChild(ray, stack, stackPointer, node->rightChild);
+        } else {
+            // TODO request leaf if missing
+            intersectLeaf(ray, intersectionInfo, *node->rightLeaf, hit);
+        }
+        if (isNodeLeft(*node) && !hit) {
+            // TODO request child if missing
+            intersectChild(ray, stack, stackPointer, node->leftChild);
+        } else {
+            // TODO request leaf if missing
+            intersectLeaf(ray, intersectionInfo, *node->leftLeaf, hit);
+        }
+        return hit;
+    }
+
+    bool processTraversalStack(IntersectionInfo &intersectionInfo, const Ray &ray, const DBVHNode **stack) {
+        uint64_t stackPointer = 1;
+        while (stackPointer != 0) {
+            stackPointer--;
+
+            if (getChildrenIntersection(intersectionInfo, ray, stack, stackPointer))
+                return true;
+        }
+        return false;
+    }
+
+    bool traverseAny(DBVHNode &root, IntersectionInfo &intersectionInfo, const Ray &ray) {
+        if (root.maxDepthRight >= 64 || root.maxDepthLeft >= 64) {
+            std::vector<const DBVHNode *> stack(
+                    root.maxDepthRight > root.maxDepthLeft ? root.maxDepthRight + 1 : root.maxDepthLeft + 1);
+            stack[0] = &root;
+            return processTraversalStack(intersectionInfo, ray, stack.data());
+        } else {
+            const DBVHNode *stack[64];
+            stack[0] = &root;
+            return processTraversalStack(intersectionInfo, ray, stack);
+        }
+    }
+
+    inline void
+    getChildrenIntersection(std::vector<IntersectionInfo> &intersectionInfo, const Ray &ray, const DBVHNode **stack,
+                            uint64_t &stackPointer) {
+        auto node = stack[stackPointer - 1];
+        if (isNodeRight(*node)) {
+            // TODO request child if missing
+            intersectChild(ray, stack, stackPointer, node->rightChild);
+        } else {
+            // TODO request leaf if missing
+            intersectLeaf(intersectionInfo, ray, *node->rightLeaf);
+        }
+        if (isNodeLeft(*node)) {
+            // TODO request child if missing
+            intersectChild(ray, stack, stackPointer, node->leftChild);
+        } else {
+            // TODO request leaf if missing
+            intersectLeaf(intersectionInfo, ray, *node->leftLeaf);
+        }
+    }
+
+    void processTraversalStack(std::vector<IntersectionInfo> &intersectionInfo, const Ray &ray, const DBVHNode **stack) {
+        uint64_t stackPointer = 1;
+        while (stackPointer != 0) {
+            stackPointer--;
+
+            getChildrenIntersection(intersectionInfo, ray, stack, stackPointer);
+        }
+    }
+
+    bool traverseALl(DBVHNode &root, std::vector<IntersectionInfo> &intersectionInfo, const Ray &ray) {
+        if (root.maxDepthRight >= 64 || root.maxDepthLeft >= 64) {
+            std::vector<const DBVHNode *> stack(
+                    root.maxDepthRight > root.maxDepthLeft ? root.maxDepthRight + 1 : root.maxDepthLeft + 1);
+            stack[0] = &root;
+            processTraversalStack(intersectionInfo, ray, stack.data());
+        } else {
+            const DBVHNode *stack[64];
+            stack[0] = &root;
+            processTraversalStack(intersectionInfo, ray, stack);
+        }
+        return false;
     }
 
     void removeLastChild(DBVHNode &root) {
@@ -353,171 +521,6 @@ namespace {
         root.maxDepthLeft = 1;
         return true;
     }
-}
-
-inline void DBVHv2::getChildrenIntersections(const Ray &ray, const DBVHNode &node, IntersectionInfo &intersectionInfo,
-                                             double &distanceRight, double &distanceLeft, bool &right, bool &left,
-                                             bool &hit) {
-    if (isNodeRight(node)) {
-        // TODO request child if missing
-        auto rightChild = node.rightChild;
-        right = rayBoxIntersection(rightChild->boundingBox.minCorner, rightChild->boundingBox.maxCorner, ray,
-                                   distanceRight);
-    } else {
-        // TODO request leaf if missing
-        intersectLeaf(ray, intersectionInfo, *node.rightLeaf, hit);
-    }
-    if (isNodeLeft(node)) {
-        // TODO request child if missing
-        auto leftChild = node.leftChild;
-        left = rayBoxIntersection(leftChild->boundingBox.minCorner, leftChild->boundingBox.maxCorner, ray,
-                                  distanceLeft);
-    } else {
-        // TODO request leaf if missing
-        intersectLeaf(ray, intersectionInfo, *node.leftLeaf, hit);
-    }
-}
-
-inline void
-DBVHv2::pushIntersectionsOnStack(const DBVHNode &node, double distanceRight, double distanceLeft, bool right, bool left,
-                                 TraversalContainer *stack, uint64_t &stackPointer) {
-    if (right && left) {
-        if (distanceRight < distanceLeft) {
-            stack[stackPointer++] = {node.leftChild, distanceLeft};
-            stack[stackPointer++] = {node.rightChild, distanceRight};
-        } else {
-            stack[stackPointer++] = {node.rightChild, distanceRight};
-            stack[stackPointer++] = {node.leftChild, distanceLeft};
-        }
-    } else if (right) {
-        stack[stackPointer++] = {node.rightChild, distanceRight};
-    } else if (left) {
-        stack[stackPointer++] = {node.leftChild, distanceLeft};
-    }
-}
-
-bool DBVHv2::processTraversalStack(IntersectionInfo &intersectionInfo, const Ray &ray, TraversalContainer *stack) {
-    bool hit = false;
-    uint64_t stackPointer = 1;
-    while (stackPointer != 0) {
-        stackPointer--;
-        if (stack[stackPointer].distance < intersectionInfo.distance) {
-            auto node = stack[stackPointer].node;
-
-            double distanceRight = 0;
-            double distanceLeft = 0;
-            bool right = false;
-            bool left = false;
-
-            getChildrenIntersections(ray, *node, intersectionInfo, distanceRight, distanceLeft, right, left, hit);
-
-            pushIntersectionsOnStack(*node, distanceRight, distanceLeft, right, left, stack, stackPointer);
-        }
-    }
-    return hit;
-}
-
-bool DBVHv2::traverseFirst(IntersectionInfo &intersectionInfo, const Ray &ray) {
-    if (root->maxDepthRight >= 64 || root->maxDepthLeft >= 64) {
-        std::vector<TraversalContainer> stack(
-                root->maxDepthRight > root->maxDepthLeft ? root->maxDepthRight + 1 : root->maxDepthLeft + 1);
-        stack[0] = {root, 0};
-        return processTraversalStack(intersectionInfo, ray, stack.data());
-    } else {
-        TraversalContainer stack[64];
-        stack[0] = {root, 0};
-        return processTraversalStack(intersectionInfo, ray, stack);
-    }
-}
-
-inline bool
-DBVHv2::getChildrenIntersection(IntersectionInfo &intersectionInfo, const Ray &ray, const DBVHNode **stack,
-                                uint64_t &stackPointer) {
-    bool hit = false;
-    auto node = stack[stackPointer];
-    if (isNodeRight(*node)) {
-        // TODO request child if missing
-        intersectChild(ray, stack, stackPointer, node->rightChild);
-    } else {
-        // TODO request leaf if missing
-        intersectLeaf(ray, intersectionInfo, *node->rightLeaf, hit);
-    }
-    if (isNodeLeft(*node) && !hit) {
-        // TODO request child if missing
-        intersectChild(ray, stack, stackPointer, node->leftChild);
-    } else {
-        // TODO request leaf if missing
-        intersectLeaf(ray, intersectionInfo, *node->leftLeaf, hit);
-    }
-    return hit;
-}
-
-bool DBVHv2::processTraversalStack(IntersectionInfo &intersectionInfo, const Ray &ray, const DBVHNode **stack) {
-    uint64_t stackPointer = 1;
-    while (stackPointer != 0) {
-        stackPointer--;
-
-        if (getChildrenIntersection(intersectionInfo, ray, stack, stackPointer))
-            return true;
-    }
-    return false;
-}
-
-bool DBVHv2::traverseAny(IntersectionInfo &intersectionInfo, const Ray &ray) {
-    if (root->maxDepthRight >= 64 || root->maxDepthLeft >= 64) {
-        std::vector<const DBVHNode *> stack(
-                root->maxDepthRight > root->maxDepthLeft ? root->maxDepthRight + 1 : root->maxDepthLeft + 1);
-        stack[0] = root;
-        return processTraversalStack(intersectionInfo, ray, stack.data());
-    } else {
-        const DBVHNode *stack[64];
-        stack[0] = root;
-        return processTraversalStack(intersectionInfo, ray, stack);
-    }
-}
-
-inline void
-DBVHv2::getChildrenIntersection(std::vector<IntersectionInfo> &intersectionInfo, const Ray &ray, const DBVHNode **stack,
-                                uint64_t &stackPointer) {
-    auto node = stack[stackPointer - 1];
-    if (isNodeRight(*node)) {
-        // TODO request child if missing
-        intersectChild(ray, stack, stackPointer, node->rightChild);
-    } else {
-        // TODO request leaf if missing
-        intersectLeaf(intersectionInfo, ray, *node->rightLeaf);
-    }
-    if (isNodeLeft(*node)) {
-        // TODO request child if missing
-        intersectChild(ray, stack, stackPointer, node->leftChild);
-    } else {
-        // TODO request leaf if missing
-        intersectLeaf(intersectionInfo, ray, *node->leftLeaf);
-    }
-}
-
-void
-DBVHv2::processTraversalStack(std::vector<IntersectionInfo> &intersectionInfo, const Ray &ray, const DBVHNode **stack) {
-    uint64_t stackPointer = 1;
-    while (stackPointer != 0) {
-        stackPointer--;
-
-        getChildrenIntersection(intersectionInfo, ray, stack, stackPointer);
-    }
-}
-
-bool DBVHv2::traverseALl(std::vector<IntersectionInfo> &intersectionInfo, const Ray &ray) {
-    if (root->maxDepthRight >= 64 || root->maxDepthLeft >= 64) {
-        std::vector<const DBVHNode *> stack(
-                root->maxDepthRight > root->maxDepthLeft ? root->maxDepthRight + 1 : root->maxDepthLeft + 1);
-        stack[0] = root;
-        processTraversalStack(intersectionInfo, ray, stack.data());
-    } else {
-        const DBVHNode *stack[64];
-        stack[0] = root;
-        processTraversalStack(intersectionInfo, ray, stack);
-    }
-    return false;
 }
 
 void DBVHv2::fillRotationBoxes(BoxSA &left, BoxSA &right, const DBVHNode &node) {
@@ -1316,33 +1319,30 @@ void DBVHv2::removeObjects(const std::vector<Intersectable *> &objects) {
 }
 
 bool DBVHv2::intersectFirst(IntersectionInfo &intersectionInfo, const Ray &ray) {
-    if (isEmpty(*root)) return false;
-
-    if (isLastElement(*root)) {
+    if (isEmpty(*root))
+        return false;
+    if (isLastElement(*root))
         return root->leftLeaf->intersectFirst(intersectionInfo, ray);
-    } else {
-        return traverseFirst(intersectionInfo, ray);
-    }
+
+    return traverseFirst(*root, intersectionInfo, ray);
 }
 
 bool DBVHv2::intersectAny(IntersectionInfo &intersectionInfo, const Ray &ray) {
-    if (isEmpty(*root)) return false;
-
-    if (isLastElement(*root)) {
+    if (isEmpty(*root))
+        return false;
+    if (isLastElement(*root))
         return root->leftLeaf->intersectAny(intersectionInfo, ray);
-    } else {
-        return traverseAny(intersectionInfo, ray);
-    }
+
+    return traverseAny(*root, intersectionInfo, ray);
 }
 
 bool DBVHv2::intersectAll(std::vector<IntersectionInfo> &intersectionInfo, const Ray &ray) {
-    if (isEmpty(*root)) return false;
-
-    if (isLastElement(*root)) {
+    if (isEmpty(*root))
+        return false;
+    if (isLastElement(*root))
         return root->leftLeaf->intersectAll(intersectionInfo, ray);
-    } else {
-        return traverseALl(intersectionInfo, ray);
-    }
+
+    return traverseALl(*root, intersectionInfo, ray);
 }
 
 BoundingBox DBVHv2::getBoundaries() const {

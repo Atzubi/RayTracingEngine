@@ -34,11 +34,6 @@ struct Rotations {
 
 class DBVHv2 {
 private:
-    struct TraversalContainer {
-        const DBVHNode *node;
-        double distance;
-    };
-
     FlatTree tree;
     DBVHNode *root;
     //Cache<DBVHNode *, DBVHNode> cache;
@@ -46,36 +41,6 @@ private:
     void replaceRootWithChild(DBVHNode &child);
 
     bool removeSpecialCases(const Intersectable &object);
-
-    bool traverseALl(std::vector<IntersectionInfo> &intersectionInfo, const Ray &ray);
-
-    static void
-    processTraversalStack(std::vector<IntersectionInfo> &intersectionInfo, const Ray &ray, const DBVHNode **stack);
-
-    static inline void
-    getChildrenIntersection(std::vector<IntersectionInfo> &intersectionInfo, const Ray &ray, const DBVHNode **stack,
-                            uint64_t &stackPointer);
-
-    bool traverseAny(IntersectionInfo &intersectionInfo, const Ray &ray);
-
-    static bool processTraversalStack(IntersectionInfo &intersectionInfo, const Ray &ray, const DBVHNode **stack);
-
-    static inline bool
-    getChildrenIntersection(IntersectionInfo &intersectionInfo, const Ray &ray, const DBVHNode **stack,
-                            uint64_t &stackPointer);
-
-    bool traverseFirst(IntersectionInfo &intersectionInfo, const Ray &ray);
-
-    static bool processTraversalStack(IntersectionInfo &intersectionInfo, const Ray &ray, TraversalContainer *stack);
-
-    static inline void
-    pushIntersectionsOnStack(const DBVHNode &node, double distanceRight, double distanceLeft, bool right, bool left,
-                             TraversalContainer *stack, uint64_t &stackPointer);
-
-    static inline void
-    getChildrenIntersections(const Ray &ray, const DBVHNode &node, IntersectionInfo &intersectionInfo,
-                             double &distanceRight, double &distanceLeft, bool &right, bool &left,
-                             bool &hit);
 
     void remove(DBVHNode &currentNode, const Intersectable &object);
 
