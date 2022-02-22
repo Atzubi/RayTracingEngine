@@ -78,7 +78,7 @@ public:
 
         n = shaderInputInfo->normal;
 
-        v = (shaderInputInfo->rayOrigin - pipelineInfo.cameraPosition) * -1;
+        v = (shaderInputInfo->position - pipelineInfo.cameraPosition) * -1;
         l.normalize();
         n.normalize();
         v.normalize();
