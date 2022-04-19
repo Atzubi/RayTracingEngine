@@ -175,10 +175,10 @@ int main() {
     // translate from texture to sfml
     for (int x = 0; x < resolutionX; x++) {
         for (int y = 0; y < resolutionY; y++) {
-            pixels[(x + y * resolutionY) * channelCount + 0] = texture->image[(x + y * resolutionY) * 3 + 0];
-            pixels[(x + y * resolutionY) * channelCount + 1] = texture->image[(x + y * resolutionY) * 3 + 1];
-            pixels[(x + y * resolutionY) * channelCount + 2] = texture->image[(x + y * resolutionY) * 3 + 2];
-            pixels[(x + y * resolutionY) * channelCount + 3] = fullOpacity;
+            pixels[(x + y * resolutionX) * channelCount + 0] = texture->image[(x + y * resolutionX) * 3 + 0];
+            pixels[(x + y * resolutionX) * channelCount + 1] = texture->image[(x + y * resolutionX) * 3 + 1];
+            pixels[(x + y * resolutionX) * channelCount + 2] = texture->image[(x + y * resolutionX) * 3 + 2];
+            pixels[(x + y * resolutionX) * channelCount + 3] = fullOpacity;
         }
     }
 
