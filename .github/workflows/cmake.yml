@@ -9,14 +9,14 @@ on:
 jobs:
   linux:
     name: ${{ matrix.os }}.${{ matrix.compiler.compiler }}.${{ matrix.build-type }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
         os: [ linux ]
         compiler:
           - { compiler: gcc,  CC: gcc-13,   CXX: g++-13 }
-          - { compiler: clang, CC: clang-17, CXX: clang++-17 }
+          - { compiler: clang, CC: clang-18, CXX: clang++-18 }
         build-type: [ Release ]
 
     steps:
@@ -84,7 +84,7 @@ jobs:
       matrix:
         os: [ macos-latest ]
         compiler:
-          - { compiler: gcc,  CC: gcc-10,   CXX: g++-10 }
+          - { compiler: gcc,  CC: gcc-13,   CXX: g++-13 }
           #- { compiler: xcode,  CC: cc,   CXX: c++ }
         build-type: [ Release ]
 
