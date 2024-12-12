@@ -15,8 +15,8 @@ jobs:
       matrix:
         os: [ linux ]
         compiler:
-          - { compiler: gcc,  CC: gcc-10,   CXX: g++-10 }
-          - { compiler: clang, CC: clang-10, CXX: clang++-10 }
+          - { compiler: gcc,  CC: gcc-13,   CXX: g++-13 }
+          - { compiler: clang, CC: clang-17, CXX: clang++-17 }
         build-type: [ Release ]
 
     steps:
