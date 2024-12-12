@@ -2,13 +2,9 @@ cmake_minimum_required(VERSION 3.20)
 
 project(RayTraceEngine VERSION 1.0.0 LANGUAGES CXX DESCRIPTION "This library provides a toolset for raytracing on cpu and gpu")
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-
-if (NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Release)
-endif ()
 
 set(ATZUBI_RTENGINE_IS_MAIN_PROJECT OFF)
 if (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
@@ -46,7 +42,7 @@ target_include_directories(RayTraceEngine INTERFACE
 # examples
 option(ATZUBI_RTENGINE_BUILD_EXAMPLES "Build example programs" 0)
 if (ATZUBI_RTENGINE_BUILD_EXAMPLES)
-    add_subdirectory(Examples/MinimalExample example/MinimalExample)
+    add_subdirectory(examples/MinimalExample)
 endif ()
 
 option(ATZUBI_RTENGINE_INSTALL "Generate the install target" ${ATZUBI_RTENGINE_IS_MAIN_PROJECT})

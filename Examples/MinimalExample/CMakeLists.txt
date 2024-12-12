@@ -19,16 +19,23 @@ add_custom_command(TARGET MinimalExample POST_BUILD
 
 if (WIN32)
     add_custom_command(TARGET MinimalExample POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${CMAKE_BINARY_DIR}/lib/RayTraceEngine.dll"
-            $<TARGET_FILE_DIR:MinimalExample>
-            COMMENT "Copying RayTraceEngine.dll..."
-            )
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_CURRENT_SOURCE_DIR}/Data/"
+        "${CMAKE_CURRENT_BINARY_DIR}/Data"
+        COMMENT "Copying data..."
+        )
 
     add_custom_command(TARGET MinimalExample POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_directory
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:RayTraceEngine>
+            $<TARGET_FILE_DIR:MinimalExample>
+            COMMENT "Copying RayTraceEngine.dll..."
+        )
+
+    add_custom_command(TARGET MinimalExample POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
             "${CMAKE_CURRENT_SOURCE_DIR}/SFML/bin"
             $<TARGET_FILE_DIR:MinimalExample>
             COMMENT "Copying SFML dlls..."
-            )
+        )
 endif ()
