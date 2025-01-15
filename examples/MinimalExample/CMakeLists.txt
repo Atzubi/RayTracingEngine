@@ -1,13 +1,8 @@
 add_executable(MinimalExample main.cpp)
 
-if (WIN32)
-    set(SFML_DIR "${CMAKE_CURRENT_SOURCE_DIR}/SFML/lib/cmake/SFML")
-endif ()
-
 find_package(SFML 2 COMPONENTS graphics REQUIRED)
 
-target_link_libraries(MinimalExample RayTraceEngine)
-target_link_libraries(MinimalExample sfml-graphics)
+target_link_libraries(MinimalExample RayTraceEngine sfml-graphics)
 include_directories(${SFML_INCLUDE_DIR})
 
 add_custom_command(TARGET MinimalExample POST_BUILD
@@ -34,7 +29,7 @@ if (WIN32)
 
     add_custom_command(TARGET MinimalExample POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "${CMAKE_CURRENT_SOURCE_DIR}/SFML/bin"
+            "${SFML_DIR}/../../../bin"
             $<TARGET_FILE_DIR:MinimalExample>
             COMMENT "Copying SFML dlls..."
         )
