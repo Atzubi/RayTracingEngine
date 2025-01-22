@@ -12,7 +12,7 @@ set_target_properties(RayTraceEngine PROPERTIES VERSION ${PROJECT_VERSION} SOVER
 # For MacOS Framework
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     message(STATUS "MacOS detected, PUBLIC_HEADER has been set.")
-    set_target_properties(RayTraceEngine PROPERTIES PUBLIC_HEADER "include/RayTraceEngine/RayTraceCore.h;include/RayTraceEngine/RayEngine.h;include/RayTraceEngine/MissShader.h;include/RayTraceEngine/HitShader.h;include/RayTraceEngine/OcclusionShader.h;include/RayTraceEngine/PierceShader.h;include/RayTraceEngine/RayGeneratorShader.h;include/RayTraceEngine/Object.h;include/RayTraceEngine/Pipeline.h;include/RayTraceEngine/Shader.h;include/RayTraceEngine/BasicStructures.h;include/RayTraceEngine/TriangleMeshObject.h")
+    set_target_properties(RayTraceEngine PROPERTIES PUBLIC_HEADER "include/RayTraceEngine/RayTraceCore.h;include/RayTraceEngine/RayEngine.h;include/RayTraceEngine/MissShader.h;include/RayTraceEngine/HitShader.h;include/RayTraceEngine/OcclusionShader.h;include/RayTraceEngine/PierceShader.h;include/RayTraceEngine/RayGeneratorShader.h;include/RayTraceEngine/Object.h;include/RayTraceEngine/Pipeline.h;include/RayTraceEngine/Shader.h;include/RayTraceEngine/BasicStructures.h;include/RayTraceEngine/TriangleMeshObject.h;include/RayTraceEngine/Scene.h")
 endif ()
 
 # For Linux Framework

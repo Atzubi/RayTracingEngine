@@ -1,57 +1,40 @@
-//
-// Created by sebastian on 13.11.19.
-//
+#pragma once
 
-#ifndef RAYTRACECORE_SHADER_H
-#define RAYTRACECORE_SHADER_H
-
+#include "Intersectable.h"
 #include <cstdint>
 #include <vector>
-#include "Intersectable.h"
-#include "utility/Id.h"
 
-template<class ID> requires isShaderId<ID>
-struct ShaderResourcePackage {
-    ID shaderId;
-    std::vector<ShaderResourceId> shaderResourceIds;
-};
-
-class ShaderResource {
-public:
+class ShaderResource
+{
+  public:
     [[nodiscard]] virtual std::unique_ptr<ShaderResource> clone() const = 0;
 
     virtual ~ShaderResource() = default;
 };
 
-class RayResource {
-public:
-    [[nodiscard]] virtual std::unique_ptr<RayResource> clone() const = 0;
-
-    virtual ~RayResource() = default;
+struct ShaderResourceDescription
+{
 };
 
-/**
- * Container passed to shaders, containing the basic information about the pipeline.
- * width:           Horizontal resolution.
- * height:          Vertical resolution.
- * cameraPosition:  Position of the virtual camera.
- * cameraDirection: Direction of the virtual camera facing forwards.
- * cameraUp:        Direction of the virtual camera facing upwards.
- */
-struct PipelineInfo {
-    int width{}, height{};
-    Vector3D cameraPosition{};
-    Vector3D cameraDirection{};
-    Vector3D cameraUp{};
+class ShaderResourceHandle
+{
+};
+
+struct ShaderDescription
+{
+};
+
+class ShaderHandle
+{
 };
 
 /**
  * Container outputted by the ray generator shader.
- * id:              Original id of the ray, this will be passed to potential child rays. This is equivalent to the pixel id.
- * rayOrigin:       Vector of origins of rays.
- * rayDirection:    Vector of directions of rays.
+ * id:              Original id of the ray, this will be passed to potential child rays. This is equivalent to the pixel
+ * id. rayOrigin:       Vector of origins of rays. rayDirection:    Vector of directions of rays.
  */
-struct RayGeneratorOutput {
+struct RayGeneratorOutput
+{
     std::vector<GeneratorRay> rays;
 };
 
@@ -60,7 +43,8 @@ struct RayGeneratorOutput {
  * rayOrigin:       The origin of the ray.
  * rayDirection:    The direction of the ray.
  */
-struct OcclusionShaderInput {
+struct OcclusionShaderInput
+{
     Vector3D rayOrigin;
     Vector3D rayDirection;
 };
@@ -69,8 +53,9 @@ struct OcclusionShaderInput {
  * Container used as input by the hit shader.
  * intersectionInfo:    Contains details about the intersection.
  */
-struct HitShaderInput {
-    IntersectionInfo *intersectionInfo;
+struct HitShaderInput
+{
+    IntersectionInfo* intersectionInfo;
 };
 
 /**
@@ -78,7 +63,8 @@ struct HitShaderInput {
  * rayOrigin:       The origin of the ray.
  * rayDirection:    The direction of the ray.
  */
-struct MissShaderInput {
+struct MissShaderInput
+{
     Vector3D rayOrigin;
     Vector3D rayDirection;
 };
@@ -87,14 +73,16 @@ struct MissShaderInput {
  * Container used as input by the pierce shader.
  * intersectionInfo:    Vector of intersection information containers, one for each intersection.
  */
-struct PierceShaderInput {
+struct PierceShaderInput
+{
     std::vector<IntersectionInfo> intersectionInfo;
 };
 
 /**
  * Container outputted by shaders. The color is represented as 24 bit rgb.
  */
-struct ShaderOutput {
+struct ShaderOutput
+{
     uint8_t color[3];
 };
 
@@ -102,8 +90,9 @@ struct ShaderOutput {
  * Template for the Ray Generator Shader to be implemented. On pipeline execution it is called to generate the rays used
  * for ray tracing.
  */
-class RayGeneratorShader {
-public:
+class RayGeneratorShader
+{
+  public:
     /**
      * Shading method. This will be called on pipeline execution. Its result is then passed to the ray tracing engine.
      * @param id            Id of the ray (family) being generated.
@@ -111,23 +100,24 @@ public:
      * @param dataInput     Currently unused.
      * @return
      */
-    virtual void
-    shade(uint64_t id, const PipelineInfo &pipelineInfo, const std::vector<ShaderResource *> &shaderResource,
-          RayGeneratorOutput &rayGeneratorOutput) const = 0;
+    virtual void Shade(uint64_t                            id,
+                       const std::vector<ShaderResource*>& shaderResource,
+                       RayGeneratorOutput&                 rayGeneratorOutput) const = 0;
 
     /**
      * Destructor.
      */
     virtual ~RayGeneratorShader() = default;
 
-    [[nodiscard]] virtual std::unique_ptr<RayGeneratorShader> clone() const = 0;
+    [[nodiscard]] virtual std::unique_ptr<RayGeneratorShader> Clone() const = 0;
 };
 
 /**
  * Template for the Occlusion Shader to be implemented. It is called on pipeline execution whenever a ray hits anything.
  */
-class OcclusionShader {
-public:
+class OcclusionShader
+{
+  public:
     /**
      * Shading method. This will be called for every ray that intersects with any geometry.
      * @param id            Id of the current ray.
@@ -138,24 +128,26 @@ public:
      * of the current ray.
      * @return              Returns colour information that will be added to the rays corresponding pixel.
      */
-    virtual ShaderOutput
-    shade(uint64_t id, const PipelineInfo &pipelineInfo, const OcclusionShaderInput &shaderInput,
-          const std::vector<ShaderResource *> &shaderResource,
-          RayResource *&rayResource, RayGeneratorOutput &newRays) const = 0;
+    virtual ShaderOutput Shade(uint64_t                            id,
+                               const OcclusionShaderInput&         shaderInput,
+                               const std::vector<ShaderResource*>& shaderResource,
+                               RayGeneratorOutput&                 newRays) const = 0;
 
     /**
      * Destructor.
      */
     virtual ~OcclusionShader() = default;
 
-    [[nodiscard]] virtual std::unique_ptr<OcclusionShader> clone() const = 0;
+    [[nodiscard]] virtual std::unique_ptr<OcclusionShader> Clone() const = 0;
 };
 
 /**
- * Template for the Pierce Shader to be implemented. It is called on pipeline execution for every object that is hit by a ray.
+ * Template for the Pierce Shader to be implemented. It is called on pipeline execution for every object that is hit by
+ * a ray.
  */
-class PierceShader {
-public:
+class PierceShader
+{
+  public:
     /**
      * Shading method. This will be called for every ray and every intersection with the geometry.
      * @param id            Id of the current ray.
@@ -166,24 +158,26 @@ public:
      * of the current ray.
      * @return              Returns colour information that will be added to the rays corresponding pixel.
      */
-    virtual ShaderOutput
-    shade(uint64_t id, const PipelineInfo &pipelineInfo, const PierceShaderInput &shaderInput,
-          const std::vector<ShaderResource *> &shaderResource,
-          RayResource *&rayResource, RayGeneratorOutput &newRays) const = 0;
+    virtual ShaderOutput Shade(uint64_t                            id,
+                               const PierceShaderInput&            shaderInput,
+                               const std::vector<ShaderResource*>& shaderResource,
+                               RayGeneratorOutput&                 newRays) const = 0;
 
     /**
      * Destructor.
      */
     virtual ~PierceShader() = default;
 
-    [[nodiscard]] virtual std::unique_ptr<PierceShader> clone() const = 0;
+    [[nodiscard]] virtual std::unique_ptr<PierceShader> Clone() const = 0;
 };
 
 /**
- * Template for the Hit Shader to be implemented. It is called on pipeline execution for the closest object hit by a ray.
+ * Template for the Hit Shader to be implemented. It is called on pipeline execution for the closest object hit by a
+ * ray.
  */
-class HitShader {
-public:
+class HitShader
+{
+  public:
     /**
      * Shading Method. This will be called for the closest intersection for all rays that intersect anything.
      * @param id            Id of the current ray.
@@ -194,24 +188,25 @@ public:
      * of the current ray.
      * @return              Returns colour information that will be added to the rays corresponding pixel.
      */
-    virtual ShaderOutput
-    shade(uint64_t id, const PipelineInfo &pipelineInfo, const HitShaderInput &shaderInput,
-          const std::vector<ShaderResource *> &shaderResource,
-          RayResource *&rayResource, RayGeneratorOutput &newRays) const = 0;
+    virtual ShaderOutput Shade(uint64_t                            id,
+                               const HitShaderInput&               shaderInput,
+                               const std::vector<ShaderResource*>& shaderResource,
+                               RayGeneratorOutput&                 newRays) const = 0;
 
     /**
      * Destructor.
      */
     virtual ~HitShader() = default;
 
-    [[nodiscard]] virtual std::unique_ptr<HitShader> clone() const = 0;
+    [[nodiscard]] virtual std::unique_ptr<HitShader> Clone() const = 0;
 };
 
 /**
  * Template for the Miss Shader to be implemented. It is called on pipeline execution whenever a ray hits no geometry.
  */
-class MissShader {
-public:
+class MissShader
+{
+  public:
     /**
      * Shading method. It is called for every ray that does not intersect with any geometry.
      * @param id            Id of the current ray.
@@ -222,29 +217,20 @@ public:
      * of the current ray.
      * @return              Returns colour information that will be added to the rays corresponding pixel.
      */
-    virtual ShaderOutput
-    shade(uint64_t id, const PipelineInfo &pipelineInfo, const MissShaderInput &shaderInput,
-          const std::vector<ShaderResource *> &shaderResource,
-          RayResource *&rayResource, RayGeneratorOutput &newRays) const = 0;
+    virtual ShaderOutput Shade(uint64_t                            id,
+                               const MissShaderInput&              shaderInput,
+                               const std::vector<ShaderResource*>& shaderResource,
+                               RayGeneratorOutput&                 newRays) const = 0;
 
     /**
      * Destructor.
      */
     virtual ~MissShader() = default;
 
-    [[nodiscard]] virtual std::unique_ptr<MissShader> clone() const = 0;
+    [[nodiscard]] virtual std::unique_ptr<MissShader> Clone() const = 0;
 };
 
-template<class Shader>
-concept isShader = std::same_as<Shader, RayGeneratorShader> || std::same_as<Shader, HitShader> ||
-                   std::same_as<Shader, OcclusionShader> || std::same_as<Shader, PierceShader> ||
-                   std::same_as<Shader, MissShader>;
-
-template<typename ID, typename Shader>
-concept correspondsTo = std::same_as<ID, RayGeneratorShaderId> && std::same_as<Shader, RayGeneratorShader> ||
-                        std::same_as<ID, HitShaderId> && std::same_as<Shader, HitShader> ||
-                        std::same_as<ID, OcclusionShaderId> && std::same_as<Shader, OcclusionShader> ||
-                        std::same_as<ID, PierceShaderId> && std::same_as<Shader, PierceShader> ||
-                        std::same_as<ID, MissShaderId> && std::same_as<Shader, MissShader>;
-
-#endif //RAYTRACECORE_SHADER_H
+template <class Shader>
+concept isShader =
+    std::same_as<Shader, RayGeneratorShader> || std::same_as<Shader, HitShader> ||
+    std::same_as<Shader, OcclusionShader> || std::same_as<Shader, PierceShader> || std::same_as<Shader, MissShader>;

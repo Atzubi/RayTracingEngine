@@ -1,15 +1,9 @@
-//
-// Created by sebastian on 13.11.19.
-//
+#pragma once
 
-#ifndef RAYTRACECORE_OBJECT_H
-#define RAYTRACECORE_OBJECT_H
-
-#include <vector>
+#include "BasicStructures.h"
+#include "Matrix4x4.h"
 #include <cstdint>
 #include <memory>
-#include "BasicStructures.h"
-#include "utility/Id.h"
 
 /**
  * Container outputted by the ray tracing engine.
@@ -22,38 +16,34 @@
  * texture:         (Interpolated) texture coordinates.
  * material:        The intersected geometries material.
  */
-struct IntersectionInfo {
-    bool hit;
-    double distance;
-    Vector3D rayOrigin;
-    Vector3D rayDirection;
-    Vector3D normal;
-    Vector3D position;
-    Vector2D texture;
-    Material *material;
-};
-
-struct ObjectCapsule {
-    ObjectId id;
-    BoundingBox boundingBox;
-    double cost = -1;
+struct IntersectionInfo
+{
+    bool      hit;
+    double    distance;
+    Vector3D  rayOrigin;
+    Vector3D  rayDirection;
+    Vector3D  normal;
+    Vector3D  position;
+    Vector2D  texture;
+    Material* material;
 };
 
 /**
  * Base class for all geometry object that the ray tracing engine can work with.
  */
-class Intersectable {
-public:
+class IIntersectable
+{
+  public:
     /**
      * Default destructor.
      */
-    virtual ~Intersectable() = default;
+    virtual ~IIntersectable() = default;
 
     /**
      * Creates a clone of this object.
      * @return  Pointer to a new clone.
      */
-    [[nodiscard]] virtual std::unique_ptr<Intersectable> clone() const = 0;
+    [[nodiscard]] virtual std::unique_ptr<IIntersectable> clone() const = 0;
 
     /**
      * Computes the axis aligned bounding box of this object.
@@ -67,7 +57,7 @@ public:
      * @param ray               The ray that is used for the intersection calculation.
      * @return                  Returns true if there is an intersection, false otherwise.
      */
-    virtual bool intersectFirst(IntersectionInfo &intersectionInfo, const Ray &ray) = 0;
+    virtual bool intersectFirst(IntersectionInfo& intersectionInfo, const Ray& ray) = 0;
 
     /**
      * Computes the first intersection of a ray with this object.
@@ -75,7 +65,7 @@ public:
      * @param ray               The ray that is used for the intersection calculation.
      * @return                  Returns true if there is an intersection, false otherwise.
      */
-    virtual bool intersectAny(IntersectionInfo &intersectionInfo, const Ray &ray) = 0;
+    virtual bool intersectAny(IntersectionInfo& intersectionInfo, const Ray& ray) = 0;
 
     /**
      * Computes all intersections of a ray with this object.
@@ -84,7 +74,7 @@ public:
      * @param ray               The ray that is used for the intersection calculation.
      * @return                  Returns true if there is at least one intersection, false otherwise.
      */
-    virtual bool intersectAll(std::vector<IntersectionInfo> &intersectionInfo, const Ray &ray) = 0;
+    virtual bool intersectAll(std::vector<IntersectionInfo>& intersectionInfo, const Ray& ray) = 0;
 
     /**
      * Computes the effective surface area of this object.
@@ -92,16 +82,23 @@ public:
      */
     [[nodiscard]] virtual double getSurfaceArea() const = 0;
 
-    [[nodiscard]] virtual ObjectCapsule getCapsule() const = 0;
-
     /**
      * Tests whether the object in question is identical to this object.
      * @param object    Another object.
      * @return          True if they are equal, false otherwise.
      */
-    virtual bool operator==(const Intersectable &object) const = 0;
+    virtual bool operator==(const IIntersectable& object) const = 0;
 
-    virtual bool operator!=(const Intersectable &object) const = 0;
+    virtual bool operator!=(const IIntersectable& object) const = 0;
 };
 
-#endif //RAYTRACECORE_OBJECT_H
+class IntersectableObjectHandle
+{
+};
+
+struct IntersectableDescription
+{
+    const IntersectableObjectHandle& intersectable;
+    Matrix4x4                        transform;
+    ObjectParameter                  objectParameters;
+};
