@@ -3,6 +3,7 @@
 #include "RayTraceEngine/RayEngine.h"
 #include "cache/Cache.h"
 #include <memory>
+#include <type_traits>
 #include <unordered_set>
 
 template <typename T> struct PtrHasher

@@ -130,7 +130,7 @@ struct Vector3D
         z /= scalar;
     }
 
-    [[nodiscard]] double getLength() const { return sqrt(x * x + y * y + z * z); }
+    [[nodiscard]] double getLength() const { return std::sqrt(x * x + y * y + z * z); }
 
     void normalize()
     {

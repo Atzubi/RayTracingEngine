@@ -1,12 +1,8 @@
-//
-// Created by sebastian on 13.11.19.
-//
-
-#ifndef RAYTRACECORE_BASICSTRUCTURES_H
-#define RAYTRACECORE_BASICSTRUCTURES_H
+#pragma once
 
 #include "RayTraceEngine/Vector3D.h"
 #include <cmath>
+#include <cstdint>
 #include <iostream>
 #include <limits>
 #include <string>
@@ -125,5 +121,3 @@ struct Ray
 {
     Vector3D origin, direction, dirfrac;
 };
-
-#endif // RAYTRACECORE_BASICSTRUCTURES_H
