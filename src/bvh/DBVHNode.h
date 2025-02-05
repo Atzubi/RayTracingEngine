@@ -1,27 +1,23 @@
-//
-// Created by Sebastian on 19.02.2022.
-//
-
-#ifndef RAYTRACEENGINE_DBVHNODE_H
-#define RAYTRACEENGINE_DBVHNODE_H
+#pragma once
 
 #include "RayTraceEngine/Intersectable.h"
 
-struct DBVHNode {
+struct DBVHNode
+{
     uint8_t maxDepthLeft = 0;
-    union {
-        DBVHNode *leftChild;
-        Intersectable *leftLeaf = nullptr;
+    union
+    {
+        DBVHNode*       leftChild;
+        IIntersectable* leftLeaf = nullptr;
     };
 
     uint8_t maxDepthRight = 0;
-    union {
-        DBVHNode *rightChild;
-        Intersectable *rightLeaf = nullptr;
+    union
+    {
+        DBVHNode*       rightChild;
+        IIntersectable* rightLeaf = nullptr;
     };
 
     BoundingBox boundingBox;
-    double surfaceArea = 0;
+    double      surfaceArea = 0;
 };
-
-#endif //RAYTRACEENGINE_DBVHNODE_H

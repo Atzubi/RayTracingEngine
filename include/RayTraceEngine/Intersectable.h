@@ -2,6 +2,7 @@
 
 #include "BasicStructures.h"
 #include "Matrix4x4.h"
+
 #include <cstdint>
 #include <memory>
 
@@ -43,13 +44,13 @@ class IIntersectable
      * Creates a clone of this object.
      * @return  Pointer to a new clone.
      */
-    [[nodiscard]] virtual std::unique_ptr<IIntersectable> clone() const = 0;
+    [[nodiscard]] virtual std::unique_ptr<IIntersectable> Clone() const = 0;
 
     /**
      * Computes the axis aligned bounding box of this object.
      * @return An axis aligned bounding box of this object.
      */
-    [[nodiscard]] virtual BoundingBox getBoundaries() const = 0;
+    [[nodiscard]] virtual BoundingBox GetBoundaries() const = 0;
 
     /**
      * Computes the first intersection of a ray with this object.
@@ -57,7 +58,7 @@ class IIntersectable
      * @param ray               The ray that is used for the intersection calculation.
      * @return                  Returns true if there is an intersection, false otherwise.
      */
-    virtual bool intersectFirst(IntersectionInfo& intersectionInfo, const Ray& ray) = 0;
+    virtual bool IntersectFirst(IntersectionInfo& intersectionInfo, const Ray& ray) const = 0;
 
     /**
      * Computes the first intersection of a ray with this object.
@@ -65,7 +66,7 @@ class IIntersectable
      * @param ray               The ray that is used for the intersection calculation.
      * @return                  Returns true if there is an intersection, false otherwise.
      */
-    virtual bool intersectAny(IntersectionInfo& intersectionInfo, const Ray& ray) = 0;
+    virtual bool IntersectAny(IntersectionInfo& intersectionInfo, const Ray& ray) const = 0;
 
     /**
      * Computes all intersections of a ray with this object.
@@ -74,13 +75,13 @@ class IIntersectable
      * @param ray               The ray that is used for the intersection calculation.
      * @return                  Returns true if there is at least one intersection, false otherwise.
      */
-    virtual bool intersectAll(std::vector<IntersectionInfo>& intersectionInfo, const Ray& ray) = 0;
+    virtual bool IntersectAll(std::vector<IntersectionInfo>& intersectionInfo, const Ray& ray) const = 0;
 
     /**
      * Computes the effective surface area of this object.
      * @return The surface area of this object.
      */
-    [[nodiscard]] virtual double getSurfaceArea() const = 0;
+    [[nodiscard]] virtual double GetSurfaceArea() const = 0;
 
     /**
      * Tests whether the object in question is identical to this object.
@@ -92,13 +93,13 @@ class IIntersectable
     virtual bool operator!=(const IIntersectable& object) const = 0;
 };
 
-class IntersectableObjectHandle
+struct IntersectableObjectDescription
 {
+    IIntersectable& intersectable;
 };
 
-struct IntersectableDescription
+class IntersectableObjectHandle
 {
-    const IntersectableObjectHandle& intersectable;
-    Matrix4x4                        transform;
-    ObjectParameter                  objectParameters;
+  public:
+    virtual ~IntersectableObjectHandle() = default;
 };

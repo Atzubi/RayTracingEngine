@@ -1,49 +1,68 @@
-//
-// Created by sebastian on 21.07.21.
-//
+#pragma once
 
-#ifndef RAYTRACECORE_PIPELINE_H
-#define RAYTRACECORE_PIPELINE_H
-
-#include "RayTraceEngine/BasicStructures.h"
-#include "RayTraceEngine/Shader.h"
-#include "utility/Id.h"
-#include "RayTraceEngine/Matrix4x4.h"
+#include "BasicStructures.h"
+#include "Scene.h"
+#include "Shader.h"
 #include <vector>
 
-/**
- * Description of a pipeline for initialization.
- * resolutionX:             Horizontal resolution.
- * resolutionY:             Vertical resolution.
- * cameraPosition:          Position of the virtual camera.
- * cameraDirection:         Direction of the virtual camera facing forwards.
- * cameraUp:                Direction of the virtual camera facing upwards.
- * objectIDs:               Ids of the objects in the engines object pool.
- * objectTransformations:   Transformation information for the objects.
- * objectParameters:        Additional parameters for the objects.
- * rayGeneratorShaderIDs:   Ids of the ray generator shaders used in this pipeline.
- * occlusionShaderIDs:      Ids of the occlusion shaders used in this pipeline.
- * hitShaderIDs:            Ids of the hit shaders used in the pipeline.
- * pierceShaderIDs:         Ids of the pierce shaders used in this pipeline.
- * missShaderIDs:           Ids of the miss shaders used in this pipeline.
- * objectInstanceIDs:       Will be filled with the ids of the resulting object instances.
- */
-struct PipelineDescription {
-    int resolutionX;
-    int resolutionY;
-    Vector3D cameraPosition;
-    Vector3D cameraDirection;
-    Vector3D cameraUp;
-    std::vector<ObjectId> objectIDs;
-    std::vector<Matrix4x4> objectTransformations;
-    std::vector<ObjectParameter> objectParameters;
-    std::vector<ShaderResourcePackage<RayGeneratorShaderId>> rayGeneratorShaders;
-    std::vector<ShaderResourcePackage<HitShaderId>> hitShaders;
-    std::vector<ShaderResourcePackage<OcclusionShaderId>> occlusionShaders;
-    std::vector<ShaderResourcePackage<PierceShaderId>> pierceShaders;
-    std::vector<ShaderResourcePackage<MissShaderId>> missShaders;
-
-    std::vector<InstanceId> *objectInstanceIDs;
+struct GeneratorShaderResourcePackage
+{
+    GeneratorShaderHandle*             shader;
+    std::vector<ShaderResourceHandle*> resources;
 };
 
-#endif //RAYTRACECORE_PIPELINE_H
+struct HitShaderResourcePackage
+{
+    HitShaderHandle*                   shader;
+    std::vector<ShaderResourceHandle*> resources;
+};
+
+struct PierceShaderResourcePackage
+{
+    PierceShaderHandle*                shader;
+    std::vector<ShaderResourceHandle*> resources;
+};
+
+struct OcclusionShaderResourcePackage
+{
+    OcclusionShaderHandle*             shader;
+    std::vector<ShaderResourceHandle*> resources;
+};
+
+struct MissShaderResourcePackage
+{
+    MissShaderHandle*                  shader;
+    std::vector<ShaderResourceHandle*> resources;
+};
+
+struct RenderTargetDescription
+{
+    std::uint32_t width;
+    std::uint32_t height;
+};
+
+class RenderTargetHandle
+{
+  public:
+    virtual TextureView GetAsTexture() const = 0;
+
+    virtual ~RenderTargetHandle() = default;
+};
+
+struct PipelineDescription
+{
+    SceneHandle*                   scene;
+    GeneratorShaderResourcePackage generatorShader;
+    HitShaderResourcePackage       hitShader;
+    PierceShaderResourcePackage    pierceShader;
+    OcclusionShaderResourcePackage occlusionShader;
+    MissShaderResourcePackage      missShader;
+};
+
+class PipelineHandle
+{
+  public:
+    virtual void Run(RenderTargetHandle& target) const = 0;
+
+    virtual ~PipelineHandle() = default;
+};

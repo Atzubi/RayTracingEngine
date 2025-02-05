@@ -5,24 +5,25 @@
 #ifndef RAYTRACECORE_BASICSTRUCTURES_H
 #define RAYTRACECORE_BASICSTRUCTURES_H
 
-#include <iostream>
-#include <string>
-#include <limits>
-#include <utility>
-#include <cmath>
-#include <vector>
 #include "RayTraceEngine/Vector3D.h"
-
+#include <cmath>
+#include <iostream>
+#include <limits>
+#include <string>
+#include <utility>
+#include <vector>
 
 /**
  * Contains x and y coordinates representing a vector in 2 dimensions.
  */
-struct Vector2D {
+struct Vector2D
+{
     double x;
     double y;
 };
 
-struct GeneratorRay {
+struct GeneratorRay
+{
     Vector3D rayOrigin;
     Vector3D rayDirection;
 };
@@ -33,7 +34,8 @@ struct GeneratorRay {
  *                  bigger boxes that cripple general rendering performance but speed up reconstructing the data
  *                  structure on an object update (animations)
  */
-struct ObjectParameter {
+struct ObjectParameter
+{
     double bounding;
 };
 
@@ -42,17 +44,21 @@ struct ObjectParameter {
  * minCorner:   The corner with minimum values.
  * maxCorner:   The corner with maximum values.
  */
-struct BoundingBox {
-    Vector3D minCorner = {std::numeric_limits<double>::max(), std::numeric_limits<double>::max(),
+struct BoundingBox
+{
+    Vector3D minCorner = {std::numeric_limits<double>::max(),
+                          std::numeric_limits<double>::max(),
                           std::numeric_limits<double>::max()};
     Vector3D maxCorner = {-std::numeric_limits<double>::max(),
-                          -std::numeric_limits<double>::max(), -std::numeric_limits<double>::max()};
+                          -std::numeric_limits<double>::max(),
+                          -std::numeric_limits<double>::max()};
 
     /**
      * Computes the surface area of the axis aligned bounding box.
      * @return  The surface area divided by two.
      */
-    [[nodiscard]] double getSA() const {
+    [[nodiscard]] double getSA() const
+    {
         return (maxCorner.x - minCorner.x) * (maxCorner.y - minCorner.y) +
                (maxCorner.x - minCorner.x) * (maxCorner.z - minCorner.z) +
                (maxCorner.y - minCorner.y) * (maxCorner.z - minCorner.z);
@@ -66,17 +72,19 @@ struct BoundingBox {
  * h:       The vertical resolution of the texture.
  * image:   Byte sized rgb values. Every 3 chars define the color of pixel.
  */
-struct Texture {
-    std::string name;
-    int w;
-    int h;
-    std::vector<unsigned char> image;
+struct TextureView
+{
+    std::string                 name;
+    std::uint32_t               w;
+    std::uint32_t               h;
+    std::vector<unsigned char>* image;
 };
 
 /**
  * Material of an object.
  */
-struct Material {
+struct Material
+{
     // Material Name
     std::string name;
     // Ambient Color
@@ -94,17 +102,17 @@ struct Material {
     // Illumination
     int illum;
     // Ambient Texture Map
-    Texture map_Ka;
+    TextureView map_Ka;
     // Diffuse Texture Map
-    Texture map_Kd;
+    TextureView map_Kd;
     // Specular Texture Map
-    Texture map_Ks;
+    TextureView map_Ks;
     // Specular Hightlight Map
-    Texture map_Ns;
+    TextureView map_Ns;
     // Alpha Texture Map
-    Texture map_d;
+    TextureView map_d;
     // Bump Map
-    Texture map_bump;
+    TextureView map_bump;
 };
 
 /**
@@ -113,8 +121,9 @@ struct Material {
  * direction:   Direction of the ray.
  * dirfrac:     1/direction of the ray. (Performance optimization)
  */
-struct Ray {
+struct Ray
+{
     Vector3D origin, direction, dirfrac;
 };
 
-#endif //RAYTRACECORE_BASICSTRUCTURES_H
+#endif // RAYTRACECORE_BASICSTRUCTURES_H

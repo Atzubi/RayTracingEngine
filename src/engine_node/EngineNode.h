@@ -1,254 +1,93 @@
-//
-// Created by Sebastian on 28.10.2021.
-//
+#pragma once
 
-#ifndef RAYTRACEENGINE_ENGINENODE_H
-#define RAYTRACEENGINE_ENGINENODE_H
+#include "RayTraceEngine/RayEngine.h"
+#include "cache/Cache.h"
+#include <memory>
+#include <unordered_set>
 
-#include "pipeline/PipelinePool.h"
-#include "data_management/DataManagementUnitV2.h"
-#include "bvh/DBVHv2.h"
-#include "utility/Id.h"
-#include "utility/IdContainer.h"
-#include "RayTraceEngine/Pipeline.h"
-#include <unordered_map>
-#include <set>
-
-class EngineNode {
-private:
-    std::unique_ptr<DataManagementUnitV2> dmu;
-    std::unique_ptr<PipelinePool> pipelinePool;
-
-    DeviceId deviceId;
-
-    // stored only in main node
-    IdContainer<ObjectId> objectIds;
-    IdContainer<InstanceId> objectInstanceIds;
-    IdContainer<RayGeneratorShaderId> rayGeneratorShaderIds;
-    IdContainer<HitShaderId> hitShaderIds;
-    IdContainer<OcclusionShaderId> occlusionShaderIds;
-    IdContainer<PierceShaderId> pierceShaderIds;
-    IdContainer<MissShaderId> missShaderIds;
-    IdContainer<ShaderResourceId> shaderResourceIds;
-    IdContainer<PipelineId> pipelineIds;
-    std::unordered_map<ObjectId, std::set<InstanceId>> objectToInstanceMap;
-    std::unordered_map<PipelineId, std::set<InstanceId>> pipelineToInstanceMap;
-
-    // maps ids to devices holding the data
-    std::unordered_map<ObjectId, DeviceId> objectIdDeviceMap;
-    std::unordered_map<InstanceId, DeviceId> objectInstanceIdDeviceMap;
-    std::unordered_map<DBVHNode *, DeviceId> pipelineTreeDeviceMap;
-
-    DeviceId getDeviceId();
-
-    void removeInstanceInPipeline(PipelineId pipelineId, InstanceId objectInstanceId);
-
-    bool removeInstanceInEngine(PipelineId pipelineId, InstanceId objectInstanceId);
-
-    bool updateInstance(InstanceId instanceId, const Matrix4x4 &transform);
-
-    void createInstances(const std::vector<ObjectId> &objectIDs, const std::vector<Matrix4x4> &transforms,
-                         std::vector<Intersectable *> &instances, std::vector<InstanceId> &instanceIds);
-
-    std::unique_ptr<PipelineImplement>
-    createPipeline(const PipelineDescription &pipelineDescription, const std::vector<Intersectable *> &instances);
-
-    PipelineId registerPipeline(std::unique_ptr<PipelineImplement> pipeline, std::vector<InstanceId> instanceIds);
-
-    std::unique_ptr<Instance>
-    createInstance(const Matrix4x4 &transform, std::vector<Intersectable *> &instances,
-                   const ObjectCapsule &capsule) const;
-
-    void getShaders(const PipelineDescription &pipelineDescription, PipelineInit &pipelineInit) const;
-
-    [[nodiscard]] PipelineInit initPipelineInit(const PipelineDescription &pipelineDescription) const;
-
-    void createPipelineBVH(const std::vector<Intersectable *> &instances, PipelineInit &pipelineInit) const;
-
-    InstanceId createInstanceId(std::vector<InstanceId> &instanceIds, const ObjectId &objectId);
-
-public:
-    EngineNode();
-
-    ~EngineNode();
-
-    /*
-     * Adds a pipeline to the pipeline pool.
-     * return:          the id of the added pipeline
-     */
-    PipelineId createPipeline(PipelineDescription &pipelineDescription);
-
-    void updatePipelineCamera(PipelineId id, int resolutionX, int resolutionY, const Vector3D &cameraPosition,
-                              const Vector3D &cameraDirection, const Vector3D &cameraUp);
-
-    Texture *getPipelineResult(PipelineId id);
-
-    /*
-     * Removes a pipeline by id.
-     * return:          true if success, false otherwise
-     */
-    bool removePipeline(PipelineId id);
-
-    /*
-     * Binds a list of objects by id to a pipeline by id. These object will be used as geometry in the ray trace stage
-     * of the pipeline on execution.
-     * pipelineId:      the pipeline id the geometry gets bound to
-     * objectIDs:       the object ids of the new object instances
-     * position:        the relative position of the object in space
-     * orientation:     the relative orientation of the object in space
-     * newScaleFactor:  the relative scale of the object in space
-     * objectParameter: object specific information in addition to geometry
-     * return:          true if success, false otherwise, objectIDs will be overwritten with object instance ids
-     */
-    bool bindGeometryToPipeline(PipelineId pipelineId, const std::vector<ObjectId> &objectIDs,
-                                const std::vector<Matrix4x4> &transforms,
-                                const std::vector<ObjectParameter> &objectParameters,
-                                std::vector<InstanceId> &instanceIDs);
-
-    /*
-     * Binds a shader with its resources to a pipeline.
-     * pipelineId:      the pipeline id, the shader with its resources gets bound to
-     * shaderId:        the shader id
-     * shaderResourceIds:   the vector of shader resource ids that are associated with the shader
-     * return:          true if success, false otherwise, shaderId will be overwritten with shader instance id
-     */
-    template<class ID>
-    requires isShaderId<ID>
-    bool bindShaderToPipeline(PipelineId pipelineId, ID shaderId,
-                              const std::vector<ShaderResourceId> &shaderResourceIds);
-
-    /*
-     * Changes existing object instance in pipeline.
-     * pipelineId:      the pipeline the object instance is associated with
-     * objectInstanceId:    the object instances id
-     * position:        the new position of the object
-     * orientation:     the new orientation of the object
-     * newScaleFactor:  the new scale of the object
-     * objectParameter: the new object parameters
-     * return:          true if success, false otherwise
-     */
-    bool updatePipelineObjects(PipelineId pipelineId, const std::vector<InstanceId> &instanceIds,
-                               const std::vector<Matrix4x4> &transforms,
-                               const std::vector<ObjectParameter> &objectParameters);
-
-    /*
-     * Changes existing shader instance in pipeline
-     * pipelineId:      the pipeline the shader instance is associated with
-     * shaderInstanceId:    the shaders instance id
-     * shaderResourceIds:   the shaders new resources
-     * return:          true if success, false otherwise
-     */
-    template<class ID>
-    requires isShaderId<ID>
-    bool updatePipelineShader(PipelineId pipelineId, ID shaderId,
-                              const std::vector<ShaderResourceId> &shaderResourceIds);
-
-    /*
-     * Removes a single object instance from the specified pipeline.
-     * pipelineId:      the pipeline the object instance is associated with
-     * objectInstanceId:    the objects instance id
-     * return:          true if success, false otherwise
-     */
-    bool removePipelineObject(PipelineId pipelineId, InstanceId objectInstanceId);
-
-    /*
-     * Removes a single shader instance from the specified pipeline.
-     * pipelineId:      the pipeline the object instance is associated with
-     * shaderInstanceId:    the shaders instance id    objects.erase(id);
-     * return:          true if success, false otherwise
-     */
-    template<class ID>
-    requires isShaderId<ID>
-    bool removePipelineShader(PipelineId pipelineId, ID shaderId);
-
-    /*
-     * Adds an object to the object pool.
-     * object:          the basic definition of the object
-     * return:          the id of the object
-     */
-    ObjectId addObject(const Intersectable &object);
-
-    /*
-     * Removes an object from the pool by id.
-     * return:          true if success, false otherwise
-     */
-    bool removeObject(ObjectId id);
-
-    /*
-     * Updates an objects mesh to a new mesh given by object.
-     * return:          true if success, false otherwise
-     */
-    bool updateObject(ObjectId id, const Intersectable &object);
-
-    /*
-     * Adds a hit shader to the shader pool.
-     * shader:          the added shader
-     * return:          the id of the shader
-     */
-    HitShaderId addShader(const HitShader &shader);
-
-    /*
-     * Adds a miss shader to the shader pool.
-     * shader:          the added shader
-     * return:          the id of the shader
-     */
-    MissShaderId addShader(const MissShader &shader);
-
-    /*
-     * Adds an occlusion shader to the shader pool.
-     * shader:          the added shader
-     * return:          the id of the shader
-     */
-    OcclusionShaderId addShader(const OcclusionShader &shader);
-
-    /*
-     * Adds a pierce shader to the shader pool.
-     * shader:          the added shader
-     * return:          the id of the shader
-     */
-    PierceShaderId addShader(const PierceShader &shader);
-
-    /*
-     * Adds a ray generator shader to the shader pool.
-     * shader:          the added shader
-     * return:          the id of the shader
-     */
-    RayGeneratorShaderId addShader(const RayGeneratorShader &shader);
-
-    /*
-     * Removes the shader from the pool.
-     * id:              the id of the shader
-     * return:          true if success, false otherwise
-     */
-    bool removeShader(RayGeneratorShaderId id);
-
-    bool removeShader(HitShaderId id);
-
-    bool removeShader(OcclusionShaderId id);
-
-    bool removeShader(PierceShaderId id);
-
-    bool removeShader(MissShaderId id);
-
-    /*
-     * Adds shader related data to the pool.
-     * resource:        the data that is used by a shader
-     * return:          the id of the resource
-     */
-    ShaderResourceId addShaderResource(const ShaderResource &resource);
-
-    /*
-     * Removes the shader resource from the pool.
-     * id:              the id of the resource
-     * return:          true if success, false otherwise
-     */
-    bool removeShaderResource(ShaderResourceId id);
-
-    int runPipeline(PipelineId id);
-
-    int runAllPipelines();
+template <typename T> struct PtrHasher
+{
+    std::hash<const T*> hash;
+    using is_transparent = void;
+    std::size_t operator()(const std::unique_ptr<T>& ptr) const { return hash(ptr.get()); }
+    std::size_t operator()(const T* ptr) const { return hash(ptr); }
 };
 
-#include "engine_node/EngineNode.tpp"
+template <typename T> struct PtrEqual
+{
+    using is_transparent = void;
+    bool operator()(const std::unique_ptr<T>& lhs, const T* rhs) const { return lhs.get() == rhs; }
+    bool operator()(const T* lhs, const std::unique_ptr<T>& rhs) const { return lhs == rhs.get(); }
+    bool operator()(const std::unique_ptr<T>& lhs, const std::unique_ptr<T>& rhs) const
+    {
+        return lhs.get() == rhs.get();
+    }
+};
 
-#endif //RAYTRACEENGINE_ENGINENODE_H
+template <typename T> struct PtrLess
+{
+    std::less<T*> equal;
+    using is_transparent = void;
+    bool operator()(const std::unique_ptr<T>& lhs, const T* rhs) const { return equal(lhs.get(), rhs); }
+    bool operator()(const T* lhs, const std::unique_ptr<T>& rhs) const { return equal(lhs, rhs.get()); }
+    bool operator()(const std::unique_ptr<T>& lhs, const std::unique_ptr<T>& rhs) const
+    {
+        return equal(lhs.get(), rhs.get());
+    }
+};
+
+class RayEngine::EngineNode
+{
+  public:
+    std::unique_ptr<IntersectableObjectHandle> CreateIntersectableObject(const IntersectableObjectDescription& desc);
+
+    std::unique_ptr<SceneHandle> CreateScene(const SceneDescription& desc);
+
+    std::unique_ptr<ShaderResourceHandle> CreateShaderResource(const ShaderResourceDescription& desc);
+
+    std::unique_ptr<GeneratorShaderHandle> CreateShader(const GeneratorShaderDescription& desc);
+    std::unique_ptr<HitShaderHandle>       CreateShader(const HitShaderDescription& desc);
+    std::unique_ptr<PierceShaderHandle>    CreateShader(const PierceShaderDescription& desc);
+    std::unique_ptr<OcclusionShaderHandle> CreateShader(const OcclusionShaderDescription& desc);
+    std::unique_ptr<MissShaderHandle>      CreateShader(const MissShaderDescription& desc);
+
+    std::unique_ptr<RenderTargetHandle> CreateRenderTarget(const RenderTargetDescription& desc);
+
+    std::unique_ptr<PipelineHandle> CreatePipeline(const PipelineDescription& desc);
+
+  private:
+    void FetchIntersectable();
+    void FetchShaderResource();
+
+    void DeleteIntersectable(const IIntersectable* intersectable);
+    void DeleteShaderResource(const IShaderResource* shaderResource);
+    void DeleteShader(const IRayGeneratorShader* shader);
+    void DeleteShader(const IHitShader* shader);
+    void DeleteShader(const IPierceShader* shader);
+    void DeleteShader(const IOcclusionShader* shader);
+    void DeleteShader(const IMissShader* shader);
+    void DeleteRenderTarget(const std::vector<unsigned char>* renderTarget);
+
+    // TODO replace intersectables and shader resources with caches
+    // Cache<Key, T> cache_;
+
+    // Resources
+    std::unordered_set<std::unique_ptr<IIntersectable>, PtrHasher<IIntersectable>, PtrEqual<IIntersectable>>
+        intersectables_;
+    std::unordered_set<std::unique_ptr<IShaderResource>, PtrHasher<IShaderResource>, PtrEqual<IShaderResource>>
+        shaderResources_;
+    std::unordered_set<std::unique_ptr<IRayGeneratorShader>,
+                       PtrHasher<IRayGeneratorShader>,
+                       PtrEqual<IRayGeneratorShader>>
+                                                                                                 generatorShaders_;
+    std::unordered_set<std::unique_ptr<IHitShader>, PtrHasher<IHitShader>, PtrEqual<IHitShader>> hitShaders_;
+    std::unordered_set<std::unique_ptr<IPierceShader>, PtrHasher<IPierceShader>, PtrEqual<IPierceShader>>
+        pierceShaders_;
+    std::unordered_set<std::unique_ptr<IOcclusionShader>, PtrHasher<IOcclusionShader>, PtrEqual<IOcclusionShader>>
+                                                                                                    occlusionShaders_;
+    std::unordered_set<std::unique_ptr<IMissShader>, PtrHasher<IMissShader>, PtrEqual<IMissShader>> missShaders_;
+    std::unordered_set<std::unique_ptr<std::vector<unsigned char>>,
+                       PtrHasher<std::vector<unsigned char>>,
+                       PtrEqual<std::vector<unsigned char>>>
+        renderTargets_;
+};

@@ -1,32 +1,25 @@
-//
-// Created by Sebastian on 19.02.2022.
-//
-
-#ifndef RAYTRACEENGINE_FLATTREE_H
-#define RAYTRACEENGINE_FLATTREE_H
-
-#include <vector>
-#include <unordered_map>
-#include "bvh/DBVHNode.h"
+#pragma once
 #include "../external/header_only/Array/Array.h"
+#include "bvh/DBVHNode.h"
+#include <unordered_map>
+#include <vector>
 
-class FlatTree {
-public:
-    uint64_t blockSize;
-    std::vector<Array<DBVHNode>> flatTree;
-    std::unordered_map<DBVHNode *, uint64_t> positionMap;
-    uint64_t position;
+class FlatTree
+{
+  public:
+    uint64_t                                blockSize;
+    std::vector<Array<DBVHNode>>            flatTree;
+    std::unordered_map<DBVHNode*, uint64_t> positionMap;
+    uint64_t                                position;
 
-public:
+  public:
     explicit FlatTree(uint64_t blockSize);
 
-    FlatTree(FlatTree &&other) noexcept;
+    FlatTree(FlatTree&& other) noexcept;
 
-    FlatTree &operator=(FlatTree &&other) noexcept;
+    FlatTree& operator=(FlatTree&& other) noexcept;
 
-    DBVHNode *newNode();
+    DBVHNode* newNode();
 
-    void remove(DBVHNode &node);
+    void remove(DBVHNode& node);
 };
-
-#endif //RAYTRACEENGINE_FLATTREE_H

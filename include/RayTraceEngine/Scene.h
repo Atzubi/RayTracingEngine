@@ -1,6 +1,14 @@
 #pragma once
 
 #include "Intersectable.h"
+#include <span>
+
+struct IntersectableDescription
+{
+    const IntersectableObjectHandle& intersectable;
+    Matrix4x4                        transform;
+    ObjectParameter                  objectParameters;
+};
 
 struct SceneDescription
 {
@@ -10,11 +18,17 @@ struct SceneDescription
 class InstanceHandle
 {
   public:
-    void Update(Matrix4x4 transform);
+    virtual void Transform(const Matrix4x4& transform) = 0;
+
+    virtual Matrix4x4 GetTransform() const = 0;
+
+    virtual ~InstanceHandle() = default;
 };
 
 class SceneHandle
 {
   public:
-    InstanceHandle AddIntersectable(const IntersectableDescription& desc);
+    virtual std::span<const std::unique_ptr<InstanceHandle>> GetInstanceHandles() const = 0;
+
+    virtual ~SceneHandle() = default;
 };

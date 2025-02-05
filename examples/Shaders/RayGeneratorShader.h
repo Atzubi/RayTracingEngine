@@ -1,49 +1,57 @@
-//
-// Created by sebastian on 02.07.19.
-//
-
-#ifndef RAYTRACECORE_RAYGENERATORSHADER_H
-#define RAYTRACECORE_RAYGENERATORSHADER_H
-
+#include "RayTraceEngine/Shader.h"
 #include <cmath>
-#include "RayEngine.h"
+
+struct ViewportInfo : public IShaderResource
+{
+    std::uint32_t viewPortWidth;
+    std::uint32_t viewPortHeight;
+
+    Vector3D cameraPosition;
+    Vector3D cameraUp;
+    Vector3D cameraDirection;
+
+    std::unique_ptr<IShaderResource> Clone() const override
+    {
+        auto clone             = std::make_unique<ViewportInfo>();
+        clone->viewPortWidth   = viewPortWidth;
+        clone->viewPortHeight  = viewPortHeight;
+        clone->cameraPosition  = cameraPosition;
+        clone->cameraUp        = cameraUp;
+        clone->cameraDirection = cameraDirection;
+        return clone;
+    }
+};
 
 /**
  * Default implementation of a ray generator shader. It generates a view frustum given a camera position and resolution.
  */
-class BasicRayGeneratorShader : public RayGeneratorShader {
-public:
-    BasicRayGeneratorShader() {
+class BasicRayGeneratorShader : public IRayGeneratorShader
+{
+  public:
+    BasicRayGeneratorShader() {}
 
-    }
+    BasicRayGeneratorShader(const BasicRayGeneratorShader& copy) {}
 
-    BasicRayGeneratorShader(const BasicRayGeneratorShader &copy) {
-
-    }
-
-    [[nodiscard]] std::unique_ptr<RayGeneratorShader> clone() const override {
+    [[nodiscard]] std::unique_ptr<IRayGeneratorShader> Clone() const override
+    {
         return std::make_unique<BasicRayGeneratorShader>(*this);
     }
 
-    void shade(uint64_t id, const PipelineInfo &pipelineInfo, const std::vector<ShaderResource *> &shaderResource,
-               RayGeneratorOutput &rayGeneratorOutput) const override {
-        int64_t x = (((int64_t) id) % pipelineInfo.width) - (pipelineInfo.width) / 2;
-        int64_t y = -(((int64_t) id) / pipelineInfo.height) + (pipelineInfo.height) / 2;
+    void Shade(uint64_t                             id,
+               const std::vector<IShaderResource*>& shaderResource,
+               RayGeneratorOutput&                  rayGeneratorOutput) const override
+    {
+        ViewportInfo* info = dynamic_cast<ViewportInfo*>(shaderResource[0]);
+        int64_t       x    = (((int64_t)id) % info->viewPortHeight) - (info->viewPortWidth) / 2;
+        int64_t       y    = -(((int64_t)id) / info->viewPortWidth) + (info->viewPortHeight) / 2;
 
-        Vector3D camRight = pipelineInfo.cameraUp.cross(pipelineInfo.cameraDirection);
+        Vector3D camRight = info->cameraUp.cross(info->cameraDirection);
         camRight.normalize();
-        Vector3D rayDirection = pipelineInfo.cameraDirection + (camRight * (x / (pipelineInfo.width + 0.0)) +
-                                                       (pipelineInfo.cameraUp * (y / (pipelineInfo.height + 0.0))));
+        Vector3D rayDirection = info->cameraDirection + (camRight * (x / (info->viewPortWidth + 0.0)) +
+                                                         (info->cameraUp * (y / (info->viewPortHeight + 0.0))));
         rayDirection.normalize();
 
-        GeneratorRay generatorRay = {pipelineInfo.cameraPosition, rayDirection};
+        GeneratorRay generatorRay = {info->cameraPosition, rayDirection};
         rayGeneratorOutput.rays.push_back(generatorRay);
     }
-
-    void *getAssociatedData() {
-        return nullptr;
-    }
 };
-
-
-#endif //RAYTRACECORE_RAYGENERATORSHADER_H

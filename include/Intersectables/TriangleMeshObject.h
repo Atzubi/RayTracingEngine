@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../src/bvh/DBVHv2.h"
 #include "RayTraceEngine/Intersectable.h"
 
 /**
@@ -41,7 +42,7 @@ class TriangleMeshObject : public IIntersectable
      * Computes the axis aligned bounding box of this object.
      * @return An axis aligned bounding box of this object.
      */
-    [[nodiscard]] BoundingBox getBoundaries() const override;
+    [[nodiscard]] BoundingBox GetBoundaries() const override;
 
     /**
      * Computes the first intersection of a ray with this object.
@@ -49,7 +50,7 @@ class TriangleMeshObject : public IIntersectable
      * @param ray               The ray that is used for the intersection calculation.
      * @return                  Returns true if there is an intersection, false otherwise.
      */
-    bool intersectFirst(IntersectionInfo& intersectionInfo, const Ray& ray) override;
+    bool IntersectFirst(IntersectionInfo& intersectionInfo, const Ray& ray) const override;
 
     /**
      * Computes the first intersection of a ray with this object.
@@ -57,7 +58,7 @@ class TriangleMeshObject : public IIntersectable
      * @param ray               The ray that is used for the intersection calculation.
      * @return                  Returns true if there is an intersection, false otherwise.
      */
-    bool intersectAny(IntersectionInfo& intersectionInfo, const Ray& ray) override;
+    bool IntersectAny(IntersectionInfo& intersectionInfo, const Ray& ray) const override;
 
     /**
      * Computes all intersections of a ray with this object.
@@ -66,21 +67,19 @@ class TriangleMeshObject : public IIntersectable
      * @param ray               The ray that is used for the intersection calculation.
      * @return                  Returns true if there is at least one intersection, false otherwise.
      */
-    bool intersectAll(std::vector<IntersectionInfo>& intersectionInfo, const Ray& ray) override;
+    bool IntersectAll(std::vector<IntersectionInfo>& intersectionInfo, const Ray& ray) const override;
 
     /**
      * Makes a perfect clone of this object.
      * @return  Pointer to the new clone.
      */
-    [[nodiscard]] std::unique_ptr<IIntersectable> clone() const override;
+    [[nodiscard]] std::unique_ptr<IIntersectable> Clone() const override;
 
     /**
      * Computes the effective surface area of this object.
      * @return The surface area of this object.
      */
-    [[nodiscard]] double getSurfaceArea() const override;
-
-    [[nodiscard]] ObjectCapsule getCapsule() const override;
+    [[nodiscard]] double GetSurfaceArea() const override;
 
     /**
      * Tests whether the object in question is identical to this object.
@@ -92,16 +91,17 @@ class TriangleMeshObject : public IIntersectable
     bool operator!=(const IIntersectable& object) const override;
 
   private:
-    // friend class Triangle;
-    //
-    // std::vector<Vertex> vertices;
-    // std::vector<uint64_t> indices;
-    // Material material;
-    //
-    // std::vector<std::unique_ptr<IIntersectable>> triangles;
-    // DBVHv2 structure;
+    friend class Triangle;
 
-    class TrianglMeshImpl;
+    std::vector<Vertex>   vertices;
+    std::vector<uint64_t> indices;
+    Material              material;
 
-    std::unique_ptr<TrianglMeshImpl> impl_;
+    std::vector<std::unique_ptr<IIntersectable>> triangles;
+    DBVHv2                                       structure;
+
+    // TODO
+    // class TrianglMeshImpl;
+    //
+    // std::unique_ptr<TrianglMeshImpl> impl_;
 };

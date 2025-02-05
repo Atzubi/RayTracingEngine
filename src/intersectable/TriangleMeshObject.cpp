@@ -1,14 +1,12 @@
-//
-// Created by sebastian on 13.11.19.
-//
-
-#include <cmath>
-#include "RayTraceEngine/TriangleMeshObject.h"
+#include "Intersectables/TriangleMeshObject.h"
 #include "bvh/DBVHv2.h"
+#include <cmath>
 
-class Triangle : public Intersectable {
-private:
-    void setTexture(IntersectionInfo &intersectionInfo, double_t u, double_t v, double_t w) const {
+class Triangle : public IIntersectable
+{
+  private:
+    void setTexture(IntersectionInfo& intersectionInfo, double_t u, double_t v, double_t w) const
+    {
         Vector2D texture1 = mesh->vertices[mesh->indices[pos]].texture;
         Vector2D texture2 = mesh->vertices[mesh->indices[pos + 1]].texture;
         Vector2D texture3 = mesh->vertices[mesh->indices[pos + 2]].texture;
@@ -17,7 +15,8 @@ private:
         intersectionInfo.texture.y = w * texture1.y + u * texture2.y + v * texture3.y;
     }
 
-    void setNormal(IntersectionInfo &intersectionInfo, double_t u, double_t v, double_t w) const {
+    void setNormal(IntersectionInfo& intersectionInfo, double_t u, double_t v, double_t w) const
+    {
         Vector3D normal1 = mesh->vertices[mesh->indices[pos]].normal;
         Vector3D normal2 = mesh->vertices[mesh->indices[pos + 1]].normal;
         Vector3D normal3 = mesh->vertices[mesh->indices[pos + 2]].normal;
@@ -26,27 +25,31 @@ private:
         intersectionInfo.normal.normalize();
     }
 
-    void setIntersection(IntersectionInfo &intersectionInfo, const Ray &ray, double_t u, double_t v, double t,
-                         double_t w) const {
+    void setIntersection(IntersectionInfo& intersectionInfo,
+                         const Ray&        ray,
+                         double_t          u,
+                         double_t          v,
+                         double            t,
+                         double_t          w) const
+    {
         intersectionInfo.position = ray.origin + (ray.direction * t);
         intersectionInfo.distance = (ray.origin - intersectionInfo.position).getLength();
         setNormal(intersectionInfo, u, v, w);
         setTexture(intersectionInfo, u, v, w);
         intersectionInfo.material = &mesh->material;
-        intersectionInfo.hit = true;
+        intersectionInfo.hit      = true;
     }
 
-public:
-    TriangleMeshObject *mesh{};
-    uint64_t pos{};
+  public:
+    TriangleMeshObject* mesh{};
+    uint64_t            pos{};
 
     Triangle() = default;
 
-    [[nodiscard]] std::unique_ptr<Intersectable> clone() const override {
-        return nullptr;
-    }
+    [[nodiscard]] std::unique_ptr<IIntersectable> Clone() const override { return nullptr; }
 
-    [[nodiscard]] BoundingBox getBoundaries() const override {
+    [[nodiscard]] BoundingBox GetBoundaries() const override
+    {
         Vector3D vertex1 = mesh->vertices[mesh->indices[pos]].position;
         Vector3D vertex2 = mesh->vertices[mesh->indices[pos + 1]].position;
         Vector3D vertex3 = mesh->vertices[mesh->indices[pos + 2]].position;
@@ -61,7 +64,8 @@ public:
         return {front, back};
     }
 
-    bool intersectFirst(IntersectionInfo &intersectionInfo, const Ray &ray) override {
+    bool IntersectFirst(IntersectionInfo& intersectionInfo, const Ray& ray) const override
+    {
         Vector3D vertex1 = mesh->vertices[mesh->indices[pos]].position;
         Vector3D vertex2 = mesh->vertices[mesh->indices[pos + 1]].position;
         Vector3D vertex3 = mesh->vertices[mesh->indices[pos + 2]].position;
@@ -70,35 +74,39 @@ public:
         Vector3D e2 = vertex3 - vertex1;
 
         Vector3D pvec = ray.direction.cross(e2);
-        double_t det = (pvec * e1).sum();
+        double_t det  = (pvec * e1).sum();
 
         double_t epsilon = 0.000001f;
 
-        if (det < epsilon && det > -epsilon) {
+        if (det < epsilon && det > -epsilon)
+        {
             intersectionInfo.hit = false;
             return false;
         }
 
         double_t invDet = 1.0 / det;
-        Vector3D tvec = ray.origin - vertex1;
-        double_t u = invDet * (tvec * pvec).sum();
+        Vector3D tvec   = ray.origin - vertex1;
+        double_t u      = invDet * (tvec * pvec).sum();
 
-        if (u < 0.0f || u > 1.0f) {
+        if (u < 0.0f || u > 1.0f)
+        {
             intersectionInfo.hit = false;
             return false;
         }
 
         Vector3D qvec = tvec.cross(e1);
-        double_t v = invDet * (qvec * ray.direction).sum();
+        double_t v    = invDet * (qvec * ray.direction).sum();
 
-        if (v < 0.0f || u + v > 1.0f) {
+        if (v < 0.0f || u + v > 1.0f)
+        {
             intersectionInfo.hit = false;
             return false;
         }
 
         double t = invDet * (e2 * qvec).sum();
 
-        if (t <= epsilon) {
+        if (t <= epsilon)
+        {
             intersectionInfo.hit = false;
             return false;
         }
@@ -109,31 +117,30 @@ public:
         return true;
     }
 
-    bool intersectAny(IntersectionInfo &intersectionInfo, const Ray &ray) override {
-        return intersectFirst(intersectionInfo, ray);
+    bool IntersectAny(IntersectionInfo& intersectionInfo, const Ray& ray) const override
+    {
+        return IntersectFirst(intersectionInfo, ray);
     }
 
-    bool intersectAll(std::vector<IntersectionInfo> &intersectionInfo, const Ray &ray) override {
+    bool IntersectAll(std::vector<IntersectionInfo>& intersectionInfo, const Ray& ray) const override
+    {
         IntersectionInfo info{false, std::numeric_limits<double>::max()};
-        bool hit = intersectFirst(info, ray);
+        bool             hit = IntersectFirst(info, ray);
         intersectionInfo.push_back(info);
         return hit;
     }
 
-    [[nodiscard]] double getSurfaceArea() const override {
-        return getBoundaries().getSA();
-    }
+    [[nodiscard]] double GetSurfaceArea() const override { return GetBoundaries().getSA(); }
 
-    [[nodiscard]] ObjectCapsule getCapsule() const override {
-        ObjectCapsule capsule{{0}, getBoundaries(), getSurfaceArea()};
-        return capsule;
-    }
-
-    bool operator==(const Intersectable &object) const override {
-        const auto *triangle = dynamic_cast<const Triangle *>(&object);
-        if (triangle == nullptr) {
+    bool operator==(const IIntersectable& object) const override
+    {
+        const auto* triangle = dynamic_cast<const Triangle*>(&object);
+        if (triangle == nullptr)
+        {
             return false;
-        } else {
+        }
+        else
+        {
             Vector3D vertex1 = mesh->vertices[mesh->indices[pos]].position;
             Vector3D vertex2 = mesh->vertices[mesh->indices[pos + 1]].position;
             Vector3D vertex3 = mesh->vertices[mesh->indices[pos + 2]].position;
@@ -142,36 +149,36 @@ public:
             Vector3D otherVertex2 = triangle->mesh->vertices[triangle->mesh->indices[pos + 1]].position;
             Vector3D otherVertex3 = triangle->mesh->vertices[triangle->mesh->indices[pos + 2]].position;
 
-            return otherVertex1.x == vertex1.x && otherVertex1.y == vertex1.y &&
-                   otherVertex1.z == vertex1.z && otherVertex2.x == vertex2.x &&
-                   otherVertex2.y == vertex2.y && otherVertex2.z == vertex2.z &&
-                   otherVertex3.x == vertex3.x && otherVertex3.y == vertex3.y &&
-                   otherVertex3.z == vertex3.z;
+            return otherVertex1.x == vertex1.x && otherVertex1.y == vertex1.y && otherVertex1.z == vertex1.z &&
+                   otherVertex2.x == vertex2.x && otherVertex2.y == vertex2.y && otherVertex2.z == vertex2.z &&
+                   otherVertex3.x == vertex3.x && otherVertex3.y == vertex3.y && otherVertex3.z == vertex3.z;
         }
     }
 
-    bool operator!=(const Intersectable &object) const override {
-        return !operator==(object);
-    }
+    bool operator!=(const IIntersectable& object) const override { return !operator==(object); }
 
     ~Triangle() override = default;
 };
 
-TriangleMeshObject::TriangleMeshObject(const std::vector<Vertex> *vertices, const std::vector<uint64_t> *indices,
-                                       const Material *material) {
-    if (indices->size() % 3 != 0) {
+TriangleMeshObject::TriangleMeshObject(const std::vector<Vertex>*   vertices,
+                                       const std::vector<uint64_t>* indices,
+                                       const Material*              material)
+{
+    if (indices->size() % 3 != 0)
+    {
         throw std::invalid_argument("Invalid Index Count");
     }
 
     this->vertices = *vertices;
-    this->indices = *indices;
+    this->indices  = *indices;
     this->material = *material;
 
-    std::vector<Intersectable *> objects;
-    for (unsigned long i = 0; i < indices->size() / 3; i++) {
-        auto triangle = std::make_unique<Triangle>();
+    std::vector<IIntersectable*> objects;
+    for (unsigned long i = 0; i < indices->size() / 3; i++)
+    {
+        auto triangle  = std::make_unique<Triangle>();
         triangle->mesh = this;
-        triangle->pos = i * 3;
+        triangle->pos  = i * 3;
         objects.push_back(triangle.get());
         triangles.push_back(std::move(triangle));
     }
@@ -181,42 +188,35 @@ TriangleMeshObject::TriangleMeshObject(const std::vector<Vertex> *vertices, cons
 
 TriangleMeshObject::~TriangleMeshObject() = default;
 
-BoundingBox TriangleMeshObject::getBoundaries() const {
-    return structure.getBoundaries();
+BoundingBox TriangleMeshObject::GetBoundaries() const { return structure.GetBoundaries(); }
+
+bool TriangleMeshObject::IntersectFirst(IntersectionInfo& intersectionInfo, const Ray& ray) const
+{
+    return structure.IntersectFirst(intersectionInfo, ray);
 }
 
-bool TriangleMeshObject::intersectFirst(IntersectionInfo &intersectionInfo, const Ray &ray) {
-    return structure.intersectFirst(intersectionInfo, ray);
-
+bool TriangleMeshObject::IntersectAny(IntersectionInfo& intersectionInfo, const Ray& ray) const
+{
+    return structure.IntersectAny(intersectionInfo, ray);
 }
 
-bool TriangleMeshObject::intersectAny(IntersectionInfo &intersectionInfo, const Ray &ray) {
-    return structure.intersectAny(intersectionInfo, ray);
+bool TriangleMeshObject::IntersectAll(std::vector<IntersectionInfo>& intersectionInfo, const Ray& ray) const
+{
+    return structure.IntersectAll(intersectionInfo, ray);
 }
 
-bool TriangleMeshObject::intersectAll(std::vector<IntersectionInfo> &intersectionInfo, const Ray &ray) {
-    return structure.intersectAll(intersectionInfo, ray);
-}
-
-std::unique_ptr<Intersectable> TriangleMeshObject::clone() const {
+std::unique_ptr<IIntersectable> TriangleMeshObject::Clone() const
+{
     // TODO
     return std::make_unique<TriangleMeshObject>(&vertices, &indices, &material);
 }
 
-double TriangleMeshObject::getSurfaceArea() const {
-    return structure.getSurfaceArea();
-}
+double TriangleMeshObject::GetSurfaceArea() const { return structure.GetSurfaceArea(); }
 
-bool TriangleMeshObject::operator==(const Intersectable &object) const {
+bool TriangleMeshObject::operator==(const IIntersectable& object) const
+{
     // TODO
     return false;
 }
 
-bool TriangleMeshObject::operator!=(const Intersectable &object) const {
-    return !operator==(object);
-}
-
-ObjectCapsule TriangleMeshObject::getCapsule() const {
-    ObjectCapsule capsule{{0}, getBoundaries(), getSurfaceArea()};
-    return capsule;
-}
+bool TriangleMeshObject::operator!=(const IIntersectable& object) const { return !operator==(object); }

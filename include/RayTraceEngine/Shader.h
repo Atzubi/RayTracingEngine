@@ -1,31 +1,17 @@
 #pragma once
 
 #include "Intersectable.h"
+
 #include <cstdint>
+#include <memory>
 #include <vector>
 
-class ShaderResource
+class IShaderResource
 {
   public:
-    [[nodiscard]] virtual std::unique_ptr<ShaderResource> clone() const = 0;
+    [[nodiscard]] virtual std::unique_ptr<IShaderResource> Clone() const = 0;
 
-    virtual ~ShaderResource() = default;
-};
-
-struct ShaderResourceDescription
-{
-};
-
-class ShaderResourceHandle
-{
-};
-
-struct ShaderDescription
-{
-};
-
-class ShaderHandle
-{
+    virtual ~IShaderResource() = default;
 };
 
 /**
@@ -83,14 +69,14 @@ struct PierceShaderInput
  */
 struct ShaderOutput
 {
-    uint8_t color[3];
+    std::uint8_t color[3];
 };
 
 /**
  * Template for the Ray Generator Shader to be implemented. On pipeline execution it is called to generate the rays used
  * for ray tracing.
  */
-class RayGeneratorShader
+class IRayGeneratorShader
 {
   public:
     /**
@@ -100,22 +86,22 @@ class RayGeneratorShader
      * @param dataInput     Currently unused.
      * @return
      */
-    virtual void Shade(uint64_t                            id,
-                       const std::vector<ShaderResource*>& shaderResource,
-                       RayGeneratorOutput&                 rayGeneratorOutput) const = 0;
+    virtual void Shade(uint64_t                             id,
+                       const std::vector<IShaderResource*>& shaderResource,
+                       RayGeneratorOutput&                  rayGeneratorOutput) const = 0;
+
+    [[nodiscard]] virtual std::unique_ptr<IRayGeneratorShader> Clone() const = 0;
 
     /**
      * Destructor.
      */
-    virtual ~RayGeneratorShader() = default;
-
-    [[nodiscard]] virtual std::unique_ptr<RayGeneratorShader> Clone() const = 0;
+    virtual ~IRayGeneratorShader() = default;
 };
 
 /**
  * Template for the Occlusion Shader to be implemented. It is called on pipeline execution whenever a ray hits anything.
  */
-class OcclusionShader
+class IOcclusionShader
 {
   public:
     /**
@@ -128,24 +114,24 @@ class OcclusionShader
      * of the current ray.
      * @return              Returns colour information that will be added to the rays corresponding pixel.
      */
-    virtual ShaderOutput Shade(uint64_t                            id,
-                               const OcclusionShaderInput&         shaderInput,
-                               const std::vector<ShaderResource*>& shaderResource,
-                               RayGeneratorOutput&                 newRays) const = 0;
+    virtual ShaderOutput Shade(uint64_t                             id,
+                               const OcclusionShaderInput&          shaderInput,
+                               const std::vector<IShaderResource*>& shaderResource,
+                               RayGeneratorOutput&                  newRays) const = 0;
+
+    [[nodiscard]] virtual std::unique_ptr<IOcclusionShader> Clone() const = 0;
 
     /**
      * Destructor.
      */
-    virtual ~OcclusionShader() = default;
-
-    [[nodiscard]] virtual std::unique_ptr<OcclusionShader> Clone() const = 0;
+    virtual ~IOcclusionShader() = default;
 };
 
 /**
  * Template for the Pierce Shader to be implemented. It is called on pipeline execution for every object that is hit by
  * a ray.
  */
-class PierceShader
+class IPierceShader
 {
   public:
     /**
@@ -158,24 +144,24 @@ class PierceShader
      * of the current ray.
      * @return              Returns colour information that will be added to the rays corresponding pixel.
      */
-    virtual ShaderOutput Shade(uint64_t                            id,
-                               const PierceShaderInput&            shaderInput,
-                               const std::vector<ShaderResource*>& shaderResource,
-                               RayGeneratorOutput&                 newRays) const = 0;
+    virtual ShaderOutput Shade(uint64_t                             id,
+                               const PierceShaderInput&             shaderInput,
+                               const std::vector<IShaderResource*>& shaderResource,
+                               RayGeneratorOutput&                  newRays) const = 0;
+
+    [[nodiscard]] virtual std::unique_ptr<IPierceShader> Clone() const = 0;
 
     /**
      * Destructor.
      */
-    virtual ~PierceShader() = default;
-
-    [[nodiscard]] virtual std::unique_ptr<PierceShader> Clone() const = 0;
+    virtual ~IPierceShader() = default;
 };
 
 /**
  * Template for the Hit Shader to be implemented. It is called on pipeline execution for the closest object hit by a
  * ray.
  */
-class HitShader
+class IHitShader
 {
   public:
     /**
@@ -188,23 +174,23 @@ class HitShader
      * of the current ray.
      * @return              Returns colour information that will be added to the rays corresponding pixel.
      */
-    virtual ShaderOutput Shade(uint64_t                            id,
-                               const HitShaderInput&               shaderInput,
-                               const std::vector<ShaderResource*>& shaderResource,
-                               RayGeneratorOutput&                 newRays) const = 0;
+    virtual ShaderOutput Shade(uint64_t                             id,
+                               const HitShaderInput&                shaderInput,
+                               const std::vector<IShaderResource*>& shaderResource,
+                               RayGeneratorOutput&                  newRays) const = 0;
+
+    [[nodiscard]] virtual std::unique_ptr<IHitShader> Clone() const = 0;
 
     /**
      * Destructor.
      */
-    virtual ~HitShader() = default;
-
-    [[nodiscard]] virtual std::unique_ptr<HitShader> Clone() const = 0;
+    virtual ~IHitShader() = default;
 };
 
 /**
  * Template for the Miss Shader to be implemented. It is called on pipeline execution whenever a ray hits no geometry.
  */
-class MissShader
+class IMissShader
 {
   public:
     /**
@@ -217,20 +203,86 @@ class MissShader
      * of the current ray.
      * @return              Returns colour information that will be added to the rays corresponding pixel.
      */
-    virtual ShaderOutput Shade(uint64_t                            id,
-                               const MissShaderInput&              shaderInput,
-                               const std::vector<ShaderResource*>& shaderResource,
-                               RayGeneratorOutput&                 newRays) const = 0;
+    virtual ShaderOutput Shade(uint64_t                             id,
+                               const MissShaderInput&               shaderInput,
+                               const std::vector<IShaderResource*>& shaderResource,
+                               RayGeneratorOutput&                  newRays) const = 0;
+
+    [[nodiscard]] virtual std::unique_ptr<IMissShader> Clone() const = 0;
 
     /**
      * Destructor.
      */
-    virtual ~MissShader() = default;
+    virtual ~IMissShader() = default;
+};
 
-    [[nodiscard]] virtual std::unique_ptr<MissShader> Clone() const = 0;
+struct ShaderResourceDescription
+{
+    IShaderResource* shaderResouce;
+};
+
+class ShaderResourceHandle
+{
+  public:
+    virtual ~ShaderResourceHandle() = default;
+};
+
+struct GeneratorShaderDescription
+{
+    IRayGeneratorShader* generatorShader;
+};
+
+class GeneratorShaderHandle
+{
+  public:
+    virtual ~GeneratorShaderHandle() = default;
+};
+
+struct HitShaderDescription
+{
+    IHitShader* hitShader;
+};
+
+class HitShaderHandle
+{
+  public:
+    virtual ~HitShaderHandle() = default;
+};
+
+struct PierceShaderDescription
+{
+    IPierceShader* pierceShader;
+};
+
+class PierceShaderHandle
+{
+  public:
+    virtual ~PierceShaderHandle() = default;
+};
+
+struct OcclusionShaderDescription
+{
+    IOcclusionShader* occlusionShader;
+};
+
+class OcclusionShaderHandle
+{
+  public:
+    virtual ~OcclusionShaderHandle() = default;
+};
+
+struct MissShaderDescription
+{
+    IMissShader* missShader;
+};
+
+class MissShaderHandle
+{
+  public:
+    virtual ~MissShaderHandle() = default;
 };
 
 template <class Shader>
 concept isShader =
-    std::same_as<Shader, RayGeneratorShader> || std::same_as<Shader, HitShader> ||
-    std::same_as<Shader, OcclusionShader> || std::same_as<Shader, PierceShader> || std::same_as<Shader, MissShader>;
+    std::same_as<Shader, IRayGeneratorShader> || std::same_as<Shader, IHitShader> ||
+    std::same_as<Shader, IOcclusionShader> || std::same_as<Shader, IPierceShader> || std::same_as<Shader, IMissShader>;

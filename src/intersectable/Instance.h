@@ -1,58 +1,44 @@
-//
-// Created by sebastian on 22.07.21.
-//
+#pragma once
 
-#ifndef RAYTRACECORE_INSTANCE_H
-#define RAYTRACECORE_INSTANCE_H
-
-#include "utility/Id.h"
 #include "RayTraceEngine/BasicStructures.h"
 #include "RayTraceEngine/Intersectable.h"
 #include "RayTraceEngine/Matrix4x4.h"
 
+#include <functional>
+
 class DataManagementUnitV2;
 
-class Instance : public Intersectable {
-private:
-    DataManagementUnitV2 *dmu;
+class Instance : public IIntersectable
+{
+  public:
+    explicit Instance(const IIntersectable* intersectible, std::function<void()> fetchCallBack);
 
-    ObjectId baseObjectId;
-    bool objectCached;
-    Intersectable *objectCache;
+    void ApplyTransform(const Matrix4x4& newTransform);
 
-    double cost;
-    BoundingBox boundingBox{};
-    Matrix4x4 transform{};
-    Matrix4x4 inverseTransform{};
+    Matrix4x4 GetTransform() const;
 
-    Intersectable *getBaseObject();
+    [[nodiscard]] std::unique_ptr<IIntersectable> Clone() const override;
 
-public:
-    explicit Instance(DataManagementUnitV2 *dataManagement, const ObjectCapsule &objectCapsule);
+    [[nodiscard]] BoundingBox GetBoundaries() const override;
 
-    void applyTransform(const Matrix4x4 &newTransform);
+    bool IntersectFirst(IntersectionInfo& intersectionInfo, const Ray& ray) const override;
 
-    void invalidateCache();
+    bool IntersectAny(IntersectionInfo& intersectionInfo, const Ray& ray) const override;
 
-    ~Instance() override;
+    bool IntersectAll(std::vector<IntersectionInfo>& intersectionInfo, const Ray& ray) const override;
 
-    [[nodiscard]] std::unique_ptr<Intersectable> clone() const override;
+    [[nodiscard]] double GetSurfaceArea() const override;
 
-    [[nodiscard]] BoundingBox getBoundaries() const override;
+    bool operator==(const IIntersectable& object) const override;
 
-    bool intersectFirst(IntersectionInfo &intersectionInfo, const Ray &ray) override;
+    bool operator!=(const IIntersectable& object) const override;
 
-    bool intersectAny(IntersectionInfo &intersectionInfo, const Ray &ray) override;
+  private:
+    const IIntersectable* intersectible_;
+    std::function<void()> fetchCallBack_;
 
-    bool intersectAll(std::vector<IntersectionInfo> &intersectionInfo, const Ray &ray) override;
-
-    [[nodiscard]] double getSurfaceArea() const override;
-
-    [[nodiscard]] ObjectCapsule getCapsule() const override;
-
-    bool operator==(const Intersectable &object) const override;
-
-    bool operator!=(const Intersectable &object) const override;
+    double      cost_;
+    BoundingBox boundingBox_{};
+    Matrix4x4   transform_{};
+    Matrix4x4   inverseTransform_{};
 };
-
-#endif //RAYTRACECORE_INSTANCE_H
