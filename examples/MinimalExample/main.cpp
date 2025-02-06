@@ -102,7 +102,7 @@ int main()
         }
 
         // create a triangle mesh object
-        TriangleMeshObject triangleMeshObject(&vertices, &indices, &material);
+        TriangleMeshObject triangleMeshObject(std::move(vertices), std::move(indices), std::move(material));
 
         // add the object to engine
         auto handle = rayEngine.CreateIntersectableObject({triangleMeshObject});

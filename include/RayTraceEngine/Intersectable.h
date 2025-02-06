@@ -19,14 +19,14 @@
  */
 struct IntersectionInfo
 {
-    bool      hit;
-    double    distance;
-    Vector3D  rayOrigin;
-    Vector3D  rayDirection;
-    Vector3D  normal;
-    Vector3D  position;
-    Vector2D  texture;
-    Material* material;
+    bool            hit;
+    double          distance;
+    Vector3D        rayOrigin;
+    Vector3D        rayDirection;
+    Vector3D        normal;
+    Vector3D        position;
+    Vector2D        texture;
+    const Material* material;
 };
 
 /**

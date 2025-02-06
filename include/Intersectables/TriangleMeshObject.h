@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../src/bvh/DBVHv2.h"
 #include "RayTraceEngine/Intersectable.h"
 
 /**
@@ -29,9 +28,7 @@ class TriangleMeshObject : public IIntersectable
      * @param indices   Vector of indices for the vertices. Every 3 indices define one triangle.
      * @param material  The objects material.
      */
-    TriangleMeshObject(const std::vector<Vertex>*   vertices,
-                       const std::vector<uint64_t>* indices,
-                       const Material*              material);
+    TriangleMeshObject(std::vector<Vertex> vertices, std::vector<std::uint64_t> indices, Material material);
 
     /**
      * Destructor, cleans up this object on deletion.
@@ -91,17 +88,17 @@ class TriangleMeshObject : public IIntersectable
     bool operator!=(const IIntersectable& object) const override;
 
   private:
-    friend class Triangle;
-
-    std::vector<Vertex>   vertices;
-    std::vector<uint64_t> indices;
-    Material              material;
-
-    std::vector<std::unique_ptr<IIntersectable>> triangles;
-    DBVHv2                                       structure;
+    // friend class Triangle;
+    //
+    // std::vector<Vertex>   vertices;
+    // std::vector<uint64_t> indices;
+    // Material              material;
+    //
+    // std::vector<std::unique_ptr<IIntersectable>> triangles;
+    // DBVHv2                                       structure;
 
     // TODO
-    // class TrianglMeshImpl;
-    //
-    // std::unique_ptr<TrianglMeshImpl> impl_;
+    class TrianglMeshImpl;
+
+    std::unique_ptr<TrianglMeshImpl> impl_;
 };
