@@ -6,18 +6,6 @@
 #include <type_traits>
 #include <unordered_set>
 
-template <typename T> struct PtrLess
-{
-    std::less<T*> equal;
-    using is_transparent = void;
-    bool operator()(const std::unique_ptr<T>& lhs, const T* rhs) const { return equal(lhs.get(), rhs); }
-    bool operator()(const T* lhs, const std::unique_ptr<T>& rhs) const { return equal(lhs, rhs.get()); }
-    bool operator()(const std::unique_ptr<T>& lhs, const std::unique_ptr<T>& rhs) const
-    {
-        return equal(lhs.get(), rhs.get());
-    }
-};
-
 class RayEngine::EngineNode
 {
   public:
