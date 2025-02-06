@@ -1,4 +1,5 @@
 #include "pipeline/PipelineImplement.h"
+#include <cstring>
 
 void PipelineImplement::Run(std::vector<unsigned char>&     buffer,
                             const TextureView&              texture,
@@ -13,7 +14,7 @@ void PipelineImplement::Run(std::vector<unsigned char>&     buffer,
     {
         return;
     }
-    memset(buffer.data(), 0, buffer.size());
+    std::memset(buffer.data(), 0, buffer.size());
 
     std::vector<RayContainer> rayContainers;
     RayGeneratorOutput        rays;
