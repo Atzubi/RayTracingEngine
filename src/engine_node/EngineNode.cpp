@@ -362,25 +362,51 @@ void RayEngine::EngineNode::FetchShaderResource()
 
 void RayEngine::EngineNode::DeleteIntersectable(const IIntersectable* intersectable)
 {
-    intersectables_.erase(intersectable);
+    intersectables_.erase(std::ranges::find_if(intersectables_,
+                                               [intersectable](const std::unique_ptr<IIntersectable>& ptr)
+                                               { return ptr.get() == intersectable; }));
 }
 
 void RayEngine::EngineNode::DeleteShaderResource(const IShaderResource* shaderResource)
 {
-    shaderResources_.erase(shaderResource);
+    shaderResources_.erase(std::ranges::find_if(shaderResources_,
+                                                [shaderResource](const std::unique_ptr<IShaderResource>& ptr)
+                                                { return ptr.get() == shaderResource; }));
 }
 
-void RayEngine::EngineNode::DeleteShader(const IRayGeneratorShader* shader) { generatorShaders_.erase(shader); }
+void RayEngine::EngineNode::DeleteShader(const IRayGeneratorShader* shader)
+{
+    generatorShaders_.erase(std::ranges::find_if(
+        generatorShaders_, [shader](const std::unique_ptr<IRayGeneratorShader>& ptr) { return ptr.get() == shader; }));
+}
 
-void RayEngine::EngineNode::DeleteShader(const IHitShader* shader) { hitShaders_.erase(shader); }
+void RayEngine::EngineNode::DeleteShader(const IHitShader* shader)
+{
+    hitShaders_.erase(std::ranges::find_if(
+        hitShaders_, [shader](const std::unique_ptr<IHitShader>& ptr) { return ptr.get() == shader; }));
+}
 
-void RayEngine::EngineNode::DeleteShader(const IPierceShader* shader) { pierceShaders_.erase(shader); }
+void RayEngine::EngineNode::DeleteShader(const IPierceShader* shader)
+{
+    pierceShaders_.erase(std::ranges::find_if(
+        pierceShaders_, [shader](const std::unique_ptr<IPierceShader>& ptr) { return ptr.get() == shader; }));
+}
 
-void RayEngine::EngineNode::DeleteShader(const IOcclusionShader* shader) { occlusionShaders_.erase(shader); }
+void RayEngine::EngineNode::DeleteShader(const IOcclusionShader* shader)
+{
+    occlusionShaders_.erase(std::ranges::find_if(
+        occlusionShaders_, [shader](const std::unique_ptr<IOcclusionShader>& ptr) { return ptr.get() == shader; }));
+}
 
-void RayEngine::EngineNode::DeleteShader(const IMissShader* shader) { missShaders_.erase(shader); }
+void RayEngine::EngineNode::DeleteShader(const IMissShader* shader)
+{
+    missShaders_.erase(std::ranges::find_if(
+        missShaders_, [shader](const std::unique_ptr<IMissShader>& ptr) { return ptr.get() == shader; }));
+}
 
 void RayEngine::EngineNode::DeleteRenderTarget(const std::vector<unsigned char>* renderTarget)
 {
-    renderTargets_.erase(renderTarget);
+    renderTargets_.erase(std::ranges::find_if(renderTargets_,
+                                              [renderTarget](const std::unique_ptr<std::vector<unsigned char>>& ptr)
+                                              { return ptr.get() == renderTarget; }));
 }

@@ -6,25 +6,6 @@
 #include <type_traits>
 #include <unordered_set>
 
-template <typename T> struct PtrHasher
-{
-    std::hash<const T*> hash;
-    using is_transparent = void;
-    std::size_t operator()(const std::unique_ptr<T>& ptr) const { return hash(ptr.get()); }
-    std::size_t operator()(const T* ptr) const { return hash(ptr); }
-};
-
-template <typename T> struct PtrEqual
-{
-    using is_transparent = void;
-    bool operator()(const std::unique_ptr<T>& lhs, const T* rhs) const { return lhs.get() == rhs; }
-    bool operator()(const T* lhs, const std::unique_ptr<T>& rhs) const { return lhs == rhs.get(); }
-    bool operator()(const std::unique_ptr<T>& lhs, const std::unique_ptr<T>& rhs) const
-    {
-        return lhs.get() == rhs.get();
-    }
-};
-
 template <typename T> struct PtrLess
 {
     std::less<T*> equal;
@@ -73,22 +54,12 @@ class RayEngine::EngineNode
     // Cache<Key, T> cache_;
 
     // Resources
-    std::unordered_set<std::unique_ptr<IIntersectable>, PtrHasher<IIntersectable>, PtrEqual<IIntersectable>>
-        intersectables_;
-    std::unordered_set<std::unique_ptr<IShaderResource>, PtrHasher<IShaderResource>, PtrEqual<IShaderResource>>
-        shaderResources_;
-    std::unordered_set<std::unique_ptr<IRayGeneratorShader>,
-                       PtrHasher<IRayGeneratorShader>,
-                       PtrEqual<IRayGeneratorShader>>
-                                                                                                 generatorShaders_;
-    std::unordered_set<std::unique_ptr<IHitShader>, PtrHasher<IHitShader>, PtrEqual<IHitShader>> hitShaders_;
-    std::unordered_set<std::unique_ptr<IPierceShader>, PtrHasher<IPierceShader>, PtrEqual<IPierceShader>>
-        pierceShaders_;
-    std::unordered_set<std::unique_ptr<IOcclusionShader>, PtrHasher<IOcclusionShader>, PtrEqual<IOcclusionShader>>
-                                                                                                    occlusionShaders_;
-    std::unordered_set<std::unique_ptr<IMissShader>, PtrHasher<IMissShader>, PtrEqual<IMissShader>> missShaders_;
-    std::unordered_set<std::unique_ptr<std::vector<unsigned char>>,
-                       PtrHasher<std::vector<unsigned char>>,
-                       PtrEqual<std::vector<unsigned char>>>
-        renderTargets_;
+    std::unordered_set<std::unique_ptr<IIntersectable>>             intersectables_;
+    std::unordered_set<std::unique_ptr<IShaderResource>>            shaderResources_;
+    std::unordered_set<std::unique_ptr<IRayGeneratorShader>>        generatorShaders_;
+    std::unordered_set<std::unique_ptr<IHitShader>>                 hitShaders_;
+    std::unordered_set<std::unique_ptr<IPierceShader>>              pierceShaders_;
+    std::unordered_set<std::unique_ptr<IOcclusionShader>>           occlusionShaders_;
+    std::unordered_set<std::unique_ptr<IMissShader>>                missShaders_;
+    std::unordered_set<std::unique_ptr<std::vector<unsigned char>>> renderTargets_;
 };
