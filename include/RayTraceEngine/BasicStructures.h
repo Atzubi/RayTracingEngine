@@ -1,12 +1,9 @@
 #pragma once
 
 #include "RayTraceEngine/Vector3D.h"
-#include <cmath>
+
 #include <cstdint>
-#include <iostream>
 #include <limits>
-#include <string>
-#include <utility>
 #include <vector>
 
 /**
@@ -14,8 +11,8 @@
  */
 struct Vector2D
 {
-    double x;
-    double y;
+    float x;
+    float y;
 };
 
 struct GeneratorRay
@@ -32,7 +29,7 @@ struct GeneratorRay
  */
 struct ObjectParameter
 {
-    double bounding;
+    float bounding;
 };
 
 /**
@@ -42,18 +39,18 @@ struct ObjectParameter
  */
 struct BoundingBox
 {
-    Vector3D minCorner = {std::numeric_limits<double>::max(),
-                          std::numeric_limits<double>::max(),
-                          std::numeric_limits<double>::max()};
-    Vector3D maxCorner = {-std::numeric_limits<double>::max(),
-                          -std::numeric_limits<double>::max(),
-                          -std::numeric_limits<double>::max()};
+    Vector3D minCorner = {std::numeric_limits<float>::max(),
+                          std::numeric_limits<float>::max(),
+                          std::numeric_limits<float>::max()};
+    Vector3D maxCorner = {-std::numeric_limits<float>::max(),
+                          -std::numeric_limits<float>::max(),
+                          -std::numeric_limits<float>::max()};
 
     /**
      * Computes the surface area of the axis aligned bounding box.
      * @return  The surface area divided by two.
      */
-    [[nodiscard]] double getSA() const
+    [[nodiscard]] float GetSA() const
     {
         return (maxCorner.x - minCorner.x) * (maxCorner.y - minCorner.y) +
                (maxCorner.x - minCorner.x) * (maxCorner.z - minCorner.z) +

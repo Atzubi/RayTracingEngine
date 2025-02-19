@@ -91,15 +91,15 @@ class BasicHitShader : public IHitShader
         n = shaderInputInfo->normal;
 
         v = (shaderInputInfo->position - dynamic_cast<CameraInfo*>(shaderResource[0])->cameraPosition) * -1;
-        l.normalize();
-        n.normalize();
-        v.normalize();
+        l.Normalize();
+        n.Normalize();
+        v.Normalize();
 
         nl = fmax(n.x * l.x + n.y * l.y + n.z * l.z, 0);
 
         r = (n * 2 * nl) - l;
 
-        r.normalize();
+        r.Normalize();
 
         double_t dot = fmax(v.x * r.x + v.y * r.y + v.z * r.z, 0);
 

@@ -23,8 +23,7 @@ int main()
     // create the ray tracing engine
     RayEngine rayEngine = RayEngine();
 
-    // ======================================== Create Geometry Objects
-    // ===============================================
+    // ======================================== Create Geometry Objects ===============================================
 
     std::vector<std::unique_ptr<IntersectableObjectHandle>> intersectables;
     std::vector<std::unique_ptr<RenderTargetHandle>>        renderTargets;
@@ -113,8 +112,7 @@ int main()
 
     // ================================================================================================================
 
-    // ========================================= Add Shaders to the Engine
-    // ============================================
+    // ========================================= Add Shaders to the Engine ============================================
     std::uint32_t resX = 1000;
     std::uint32_t resY = 1000;
     Vector3D      cameraPosition{0, 3, -10};
@@ -149,14 +147,13 @@ int main()
 
     // ================================================================================================================
 
-    // =========================================== Create Engine pipeline
-    // =============================================
+    // =========================================== Create Engine pipeline =============================================
 
     // instanced objects have their own transformation, create one for each instance
     SceneDescription sceneDesc{};
     for (unsigned long i = 0; i < intersectables.size(); i++)
     {
-        sceneDesc.intersectables.push_back({*intersectables[i].get(), Matrix4x4::getIdentity(), {}});
+        sceneDesc.intersectables.push_back({*intersectables[i].get(), {Matrix4x4::GetIdentity()}, {}});
     }
     auto scene = rayEngine.CreateScene(sceneDesc);
 

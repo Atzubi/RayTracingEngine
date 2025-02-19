@@ -45,11 +45,11 @@ class BasicRayGeneratorShader : public IRayGeneratorShader
         int64_t       x    = (((int64_t)id) % info->viewPortHeight) - (info->viewPortWidth) / 2;
         int64_t       y    = -(((int64_t)id) / info->viewPortWidth) + (info->viewPortHeight) / 2;
 
-        Vector3D camRight = info->cameraUp.cross(info->cameraDirection);
-        camRight.normalize();
+        Vector3D camRight = info->cameraUp.Cross(info->cameraDirection);
+        camRight.Normalize();
         Vector3D rayDirection = info->cameraDirection + (camRight * (x / (info->viewPortWidth + 0.0)) +
                                                          (info->cameraUp * (y / (info->viewPortHeight + 0.0))));
-        rayDirection.normalize();
+        rayDirection.Normalize();
 
         GeneratorRay generatorRay = {info->cameraPosition, rayDirection};
         rayGeneratorOutput.rays.push_back(generatorRay);

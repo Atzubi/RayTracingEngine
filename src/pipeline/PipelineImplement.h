@@ -1,9 +1,8 @@
 #pragma once
 
-#include "RayTraceEngine/BasicStructures.h"
 #include "RayTraceEngine/Shader.h"
-#include "bvh/DBVHv2.h"
-#include <limits>
+#include "RayTraceEngine/Vector3d.h"
+
 #include <vector>
 
 struct GeneratorShaderResourceP
@@ -55,25 +54,4 @@ class PipelineImplement
                     const PierceShaderResourceP&    pierceShaderPackage,
                     const OcclusionShaderResourceP& occlusionShaderPackage,
                     const MissShaderResourceP&      missShaderPackage);
-
-  private:
-    struct RayContainer
-    {
-        int      rayID;
-        Vector3D rayOrigin;
-        Vector3D rayDirection;
-    };
-
-    static void SetPixel(std::vector<unsigned char>& buffer, int id, const ShaderOutput& pixel);
-
-    static Ray InitRay(const std::vector<RayContainer>& rayContainers);
-
-    static IntersectionInfo GetFirstIntersection(std::vector<IntersectionInfo>& infos);
-
-    static void UpdateRayStack(std::vector<RayContainer>& rayContainers, int id, RayGeneratorOutput& newRays);
-
-    static void GeneratePrimaryRays(const GeneratorShaderResourceP& generatorShaderPackage,
-                                    std::vector<RayContainer>&      rayContainers,
-                                    int                             rayID,
-                                    RayGeneratorOutput&             rays);
 };

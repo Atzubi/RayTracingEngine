@@ -1,6 +1,12 @@
 #pragma once
 
+#include "RayTraceEngine/BasicStructures.h"
 #include "RayTraceEngine/Intersectable.h"
+#include "RayTraceEngine/Vector3D.h"
+
+#include <cstdint>
+#include <memory>
+#include <vector>
 
 /**
  * Contains all the information required to construct a 3d model based on a 3d triangle mesh.
@@ -76,7 +82,7 @@ class TriangleMeshObject : public IIntersectable
      * Computes the effective surface area of this object.
      * @return The surface area of this object.
      */
-    [[nodiscard]] double GetSurfaceArea() const override;
+    [[nodiscard]] float GetSurfaceArea() const override;
 
     /**
      * Tests whether the object in question is identical to this object.

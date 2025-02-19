@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cmath>
-#include <iostream>
+#include <stdexcept>
 #include <string>
 
 /**
@@ -9,11 +9,11 @@
  */
 struct Vector3D
 {
-    double x;
-    double y;
-    double z;
+    float x;
+    float y;
+    float z;
 
-    double operator[](int idx) const
+    float operator[](int idx) const
     {
         switch (idx)
         {
@@ -29,7 +29,7 @@ struct Vector3D
         }
     }
 
-    double& operator[](int idx)
+    float& operator[](int idx)
     {
         switch (idx)
         {
@@ -54,9 +54,9 @@ struct Vector3D
         z += other.z;
     }
 
-    Vector3D operator+(double scalar) const { return {x + scalar, y + scalar, z + scalar}; }
+    Vector3D operator+(const float scalar) const { return {x + scalar, y + scalar, z + scalar}; }
 
-    void operator+=(double scalar)
+    void operator+=(const float scalar)
     {
         x += scalar;
         y += scalar;
@@ -72,9 +72,9 @@ struct Vector3D
         z -= other.z;
     }
 
-    Vector3D operator-(double scalar) const { return {x - scalar, y - scalar, z - scalar}; }
+    Vector3D operator-(const float scalar) const { return {x - scalar, y - scalar, z - scalar}; }
 
-    void operator-=(double scalar)
+    void operator-=(const float scalar)
     {
         x -= scalar;
         y -= scalar;
@@ -90,9 +90,9 @@ struct Vector3D
         z *= other.z;
     }
 
-    Vector3D operator*(double scalar) const { return {x * scalar, y * scalar, z * scalar}; }
+    Vector3D operator*(const float scalar) const { return {x * scalar, y * scalar, z * scalar}; }
 
-    void operator*=(double scalar)
+    void operator*=(const float scalar)
     {
         x *= scalar;
         y *= scalar;
@@ -115,14 +115,14 @@ struct Vector3D
         z /= other.z;
     }
 
-    Vector3D operator/(double scalar) const
+    Vector3D operator/(const float scalar) const
     {
         if (scalar == 0)
             throw std::invalid_argument("Division by 0!");
         return {x / scalar, y / scalar, z / scalar};
     }
 
-    void operator/=(double scalar)
+    void operator/=(const float scalar)
     {
         if (scalar == 0)
             throw std::invalid_argument("Division by 0!");
@@ -131,21 +131,21 @@ struct Vector3D
         z /= scalar;
     }
 
-    [[nodiscard]] double getLength() const { return std::sqrt(x * x + y * y + z * z); }
+    [[nodiscard]] float GetLength() const { return std::sqrt(x * x + y * y + z * z); }
 
-    void normalize()
+    void Normalize()
     {
-        double length = getLength();
+        const auto length = GetLength();
         if (length != 0)
             *this /= length;
     }
 
-    [[nodiscard]] Vector3D getInverse() const { return {1.0 / x, 1.0 / y, 1.0 / z}; }
+    [[nodiscard]] Vector3D GetInverse() const { return {1.f / x, 1.f / y, 1.f / z}; }
 
-    [[nodiscard]] Vector3D cross(const Vector3D& other) const
+    [[nodiscard]] Vector3D Cross(const Vector3D& other) const
     {
         return {y * other.z - z * other.y, z * other.x - x * other.z, x * other.y - y * other.x};
     }
 
-    [[nodiscard]] double sum() const { return x + y + z; }
+    [[nodiscard]] float Sum() const { return x + y + z; }
 };

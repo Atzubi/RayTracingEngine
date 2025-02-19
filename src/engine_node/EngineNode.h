@@ -2,8 +2,8 @@
 
 #include "RayTraceEngine/RayEngine.h"
 #include "cache/Cache.h"
+
 #include <memory>
-#include <type_traits>
 #include <unordered_set>
 
 class RayEngine::EngineNode

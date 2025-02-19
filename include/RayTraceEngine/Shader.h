@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Intersectable.h"
+#include "Vector3D.h"
 
 #include <cstdint>
 #include <memory>
@@ -86,7 +87,7 @@ class IRayGeneratorShader
      * @param dataInput     Currently unused.
      * @return
      */
-    virtual void Shade(uint64_t                             id,
+    virtual void Shade(std::uint64_t                        id,
                        const std::vector<IShaderResource*>& shaderResource,
                        RayGeneratorOutput&                  rayGeneratorOutput) const = 0;
 
@@ -114,7 +115,7 @@ class IOcclusionShader
      * of the current ray.
      * @return              Returns colour information that will be added to the rays corresponding pixel.
      */
-    virtual ShaderOutput Shade(uint64_t                             id,
+    virtual ShaderOutput Shade(std::uint64_t                        id,
                                const OcclusionShaderInput&          shaderInput,
                                const std::vector<IShaderResource*>& shaderResource,
                                RayGeneratorOutput&                  newRays) const = 0;
@@ -144,7 +145,7 @@ class IPierceShader
      * of the current ray.
      * @return              Returns colour information that will be added to the rays corresponding pixel.
      */
-    virtual ShaderOutput Shade(uint64_t                             id,
+    virtual ShaderOutput Shade(std::uint64_t                        id,
                                const PierceShaderInput&             shaderInput,
                                const std::vector<IShaderResource*>& shaderResource,
                                RayGeneratorOutput&                  newRays) const = 0;
@@ -174,7 +175,7 @@ class IHitShader
      * of the current ray.
      * @return              Returns colour information that will be added to the rays corresponding pixel.
      */
-    virtual ShaderOutput Shade(uint64_t                             id,
+    virtual ShaderOutput Shade(std::uint64_t                        id,
                                const HitShaderInput&                shaderInput,
                                const std::vector<IShaderResource*>& shaderResource,
                                RayGeneratorOutput&                  newRays) const = 0;
@@ -203,7 +204,7 @@ class IMissShader
      * of the current ray.
      * @return              Returns colour information that will be added to the rays corresponding pixel.
      */
-    virtual ShaderOutput Shade(uint64_t                             id,
+    virtual ShaderOutput Shade(std::uint64_t                        id,
                                const MissShaderInput&               shaderInput,
                                const std::vector<IShaderResource*>& shaderResource,
                                RayGeneratorOutput&                  newRays) const = 0;
@@ -283,6 +284,6 @@ class MissShaderHandle
 };
 
 template <class Shader>
-concept isShader =
+concept IsShader =
     std::same_as<Shader, IRayGeneratorShader> || std::same_as<Shader, IHitShader> ||
     std::same_as<Shader, IOcclusionShader> || std::same_as<Shader, IPierceShader> || std::same_as<Shader, IMissShader>;

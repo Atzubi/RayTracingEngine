@@ -72,7 +72,7 @@ class SceneH : public SceneHandle, public HandleBase<IIntersectable>
 
 std::unique_ptr<SceneHandle> RayEngine::EngineNode::CreateScene(const SceneDescription& desc)
 {
-    std::vector<IIntersectable*>                 instances;
+    std::vector<const IIntersectable*>           instances;
     std::vector<std::unique_ptr<InstanceHandle>> instanceHandles;
     for (const auto& intersectablePack : desc.intersectables)
     {

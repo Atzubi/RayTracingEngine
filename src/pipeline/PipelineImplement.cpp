@@ -1,6 +1,69 @@
 #include "pipeline/PipelineImplement.h"
 #include <cstring>
 
+namespace
+{
+    struct RayContainer
+    {
+        int      rayID;
+        Vector3D rayOrigin;
+        Vector3D rayDirection;
+    };
+
+    inline void SetPixel(std::vector<unsigned char>& buffer, int id, const ShaderOutput& pixel)
+    {
+        buffer[id * 3] += pixel.color[0];
+        buffer[id * 3 + 1] += pixel.color[1];
+        buffer[id * 3 + 2] += pixel.color[2];
+    }
+
+    inline Ray InitRay(const std::vector<RayContainer>& rayContainers)
+    {
+        const auto r = rayContainers.back();
+        return {r.rayOrigin, r.rayDirection, r.rayDirection.GetInverse()};
+    }
+
+    IntersectionInfo GetFirstIntersection(std::vector<IntersectionInfo>& infos)
+    {
+        IntersectionInfo closest{false, std::numeric_limits<double>::max()};
+        for (auto info : infos)
+        {
+            if (info.hit && closest.distance > info.distance)
+            {
+                closest = info;
+            }
+        }
+        return closest;
+    }
+
+    void UpdateRayStack(std::vector<RayContainer>& rayContainers, int id, RayGeneratorOutput& newRays)
+    {
+        rayContainers.pop_back();
+
+        for (auto& r : newRays.rays)
+        {
+            RayContainer rayContainer = {id, r.rayDirection, r.rayOrigin};
+            rayContainers.push_back(rayContainer);
+        }
+        newRays.rays.clear();
+    }
+
+    void GeneratePrimaryRays(const GeneratorShaderResourceP& generatorShaderPackage,
+                             std::vector<RayContainer>&      rayContainers,
+                             int                             rayID,
+                             RayGeneratorOutput&             rays)
+    {
+        generatorShaderPackage.shader->Shade(rayID, generatorShaderPackage.resources, rays);
+        for (auto& ray : rays.rays)
+        {
+            RayContainer rayContainer = {rayID, ray.rayOrigin, ray.rayDirection};
+            rayContainers.push_back(rayContainer);
+        }
+        rays.rays.clear();
+    }
+
+} // namespace
+
 void PipelineImplement::Run(std::vector<unsigned char>&     buffer,
                             const TextureView&              texture,
                             const IIntersectable*           scene,
@@ -91,56 +154,4 @@ void PipelineImplement::Run(std::vector<unsigned char>&     buffer,
             UpdateRayStack(rayContainers, rayID, newRays);
         }
     }
-}
-
-inline void PipelineImplement::SetPixel(std::vector<unsigned char>& buffer, int id, const ShaderOutput& pixel)
-{
-    buffer[id * 3] += pixel.color[0];
-    buffer[id * 3 + 1] += pixel.color[1];
-    buffer[id * 3 + 2] += pixel.color[2];
-}
-
-inline Ray PipelineImplement::InitRay(const std::vector<RayContainer>& rayContainers)
-{
-    const auto r = rayContainers.back();
-    return {r.rayOrigin, r.rayDirection, r.rayOrigin.getInverse()};
-}
-
-IntersectionInfo PipelineImplement::GetFirstIntersection(std::vector<IntersectionInfo>& infos)
-{
-    IntersectionInfo closest{false, std::numeric_limits<double>::max()};
-    for (auto info : infos)
-    {
-        if (info.hit && closest.distance > info.distance)
-        {
-            closest = info;
-        }
-    }
-    return closest;
-}
-
-void PipelineImplement::UpdateRayStack(std::vector<RayContainer>& rayContainers, int id, RayGeneratorOutput& newRays)
-{
-    rayContainers.pop_back();
-
-    for (auto& r : newRays.rays)
-    {
-        RayContainer rayContainer = {id, r.rayDirection, r.rayOrigin};
-        rayContainers.push_back(rayContainer);
-    }
-    newRays.rays.clear();
-}
-
-void PipelineImplement::GeneratePrimaryRays(const GeneratorShaderResourceP& generatorShaderPackage,
-                                            std::vector<RayContainer>&      rayContainers,
-                                            int                             rayID,
-                                            RayGeneratorOutput&             rays)
-{
-    generatorShaderPackage.shader->Shade(rayID, generatorShaderPackage.resources, rays);
-    for (auto& ray : rays.rays)
-    {
-        RayContainer rayContainer = {rayID, ray.rayOrigin, ray.rayDirection};
-        rayContainers.push_back(rayContainer);
-    }
-    rays.rays.clear();
 }

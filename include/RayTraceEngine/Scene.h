@@ -1,7 +1,11 @@
 #pragma once
 
+#include "BasicStructures.h"
 #include "Intersectable.h"
+#include "Matrix4x4.h"
+
 #include <span>
+#include <vector>
 
 struct IntersectableDescription
 {

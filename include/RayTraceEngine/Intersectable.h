@@ -1,10 +1,10 @@
 #pragma once
 
 #include "BasicStructures.h"
-#include "Matrix4x4.h"
 
 #include <cstdint>
 #include <memory>
+#include <vector>
 
 /**
  * Container outputted by the ray tracing engine.
@@ -81,7 +81,7 @@ class IIntersectable
      * Computes the effective surface area of this object.
      * @return The surface area of this object.
      */
-    [[nodiscard]] virtual double GetSurfaceArea() const = 0;
+    [[nodiscard]] virtual float GetSurfaceArea() const = 0;
 
     /**
      * Tests whether the object in question is identical to this object.

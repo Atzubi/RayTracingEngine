@@ -11,7 +11,7 @@ class DataManagementUnitV2;
 class Instance : public IIntersectable
 {
   public:
-    explicit Instance(const IIntersectable* intersectible, std::function<void()> fetchCallBack);
+    Instance(const IIntersectable* intersectible, std::function<void()> fetchCallBack);
 
     void ApplyTransform(const Matrix4x4& newTransform);
 
@@ -27,7 +27,7 @@ class Instance : public IIntersectable
 
     bool IntersectAll(std::vector<IntersectionInfo>& intersectionInfo, const Ray& ray) const override;
 
-    [[nodiscard]] double GetSurfaceArea() const override;
+    [[nodiscard]] float GetSurfaceArea() const override;
 
     bool operator==(const IIntersectable& object) const override;
 
@@ -37,7 +37,7 @@ class Instance : public IIntersectable
     const IIntersectable* intersectible_;
     std::function<void()> fetchCallBack_;
 
-    double      cost_;
+    float       cost_;
     BoundingBox boundingBox_{};
     Matrix4x4   transform_{};
     Matrix4x4   inverseTransform_{};

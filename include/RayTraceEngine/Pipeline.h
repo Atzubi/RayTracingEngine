@@ -3,6 +3,8 @@
 #include "BasicStructures.h"
 #include "Scene.h"
 #include "Shader.h"
+
+#include <cstdint>
 #include <vector>
 
 struct GeneratorShaderResourcePackage

@@ -4,20 +4,9 @@
 
 struct DBVHNode
 {
-    uint8_t maxDepthLeft = 0;
-    union
-    {
-        DBVHNode*       leftChild;
-        IIntersectable* leftLeaf = nullptr;
-    };
-
-    uint8_t maxDepthRight = 0;
-    union
-    {
-        DBVHNode*       rightChild;
-        IIntersectable* rightLeaf = nullptr;
-    };
-
-    BoundingBox boundingBox;
-    double      surfaceArea = 0;
+    std::uint16_t maxDepthLeft;
+    std::uint16_t maxDepthRight;
+    std::uint32_t leftChild;
+    std::uint32_t rightChild;
+    BoundingBox   boundingBox;
 };
