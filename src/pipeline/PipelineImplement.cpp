@@ -10,7 +10,7 @@ namespace
         Vector3D rayDirection;
     };
 
-    inline void SetPixel(std::vector<unsigned char>& buffer, int id, const ShaderOutput& pixel)
+    inline void SetPixel(std::vector<unsigned char>& buffer, const int id, const ShaderOutput& pixel)
     {
         buffer[id * 3] += pixel.color[0];
         buffer[id * 3 + 1] += pixel.color[1];
@@ -23,10 +23,10 @@ namespace
         return {r.rayOrigin, r.rayDirection, r.rayDirection.GetInverse()};
     }
 
-    IntersectionInfo GetFirstIntersection(std::vector<IntersectionInfo>& infos)
+    IntersectionInfo GetFirstIntersection(const std::vector<IntersectionInfo>& infos)
     {
         IntersectionInfo closest{false, std::numeric_limits<double>::max()};
-        for (auto info : infos)
+        for (const auto& info : infos)
         {
             if (info.hit && closest.distance > info.distance)
             {
@@ -36,11 +36,11 @@ namespace
         return closest;
     }
 
-    void UpdateRayStack(std::vector<RayContainer>& rayContainers, int id, RayGeneratorOutput& newRays)
+    void UpdateRayStack(std::vector<RayContainer>& rayContainers, const int id, RayGeneratorOutput& newRays)
     {
         rayContainers.pop_back();
 
-        for (auto& r : newRays.rays)
+        for (const auto& r : newRays.rays)
         {
             RayContainer rayContainer = {id, r.rayDirection, r.rayOrigin};
             rayContainers.push_back(rayContainer);
@@ -50,7 +50,7 @@ namespace
 
     void GeneratePrimaryRays(const GeneratorShaderResourceP& generatorShaderPackage,
                              std::vector<RayContainer>&      rayContainers,
-                             int                             rayID,
+                             const int                       rayID,
                              RayGeneratorOutput&             rays)
     {
         generatorShaderPackage.shader->Shade(rayID, generatorShaderPackage.resources, rays);
@@ -88,7 +88,7 @@ void PipelineImplement::Run(std::vector<unsigned char>&     buffer,
 
         while (!rayContainers.empty())
         {
-            Ray ray = InitRay(rayContainers);
+            const auto ray = InitRay(rayContainers);
 
             PierceShaderInput pierceInput{};
             IntersectionInfo  info{};
@@ -98,7 +98,7 @@ void PipelineImplement::Run(std::vector<unsigned char>&     buffer,
                 std::vector<IntersectionInfo> infos;
                 scene->IntersectAll(infos, ray);
 
-                int id = rayContainers.back().rayID;
+                const auto id = rayContainers.back().rayID;
                 for (auto& info : infos)
                 {
                     info.rayOrigin    = rayContainers.back().rayOrigin;
@@ -130,23 +130,23 @@ void PipelineImplement::Run(std::vector<unsigned char>&     buffer,
                 }
                 if (hitShaderPackage.shader)
                 {
-                    HitShaderInput hitShaderInput = {&info};
-                    const auto     pixel =
+                    const HitShaderInput hitShaderInput = {&info};
+                    const auto           pixel =
                         hitShaderPackage.shader->Shade(rayID, hitShaderInput, hitShaderPackage.resources, newRays);
                     SetPixel(buffer, rayID, pixel);
                 }
                 if (occlusionShaderPackage.shader)
                 {
-                    OcclusionShaderInput occlusionShaderInput = {ray.origin, ray.direction};
-                    const auto           pixel                = occlusionShaderPackage.shader->Shade(
+                    const OcclusionShaderInput occlusionShaderInput = {ray.origin, ray.direction};
+                    const auto                 pixel                = occlusionShaderPackage.shader->Shade(
                         rayID, occlusionShaderInput, occlusionShaderPackage.resources, newRays);
                     SetPixel(buffer, rayID, pixel);
                 }
             }
             else if (missShaderPackage.shader)
             {
-                MissShaderInput missShaderInput = {ray.origin, ray.direction};
-                const auto      pixel =
+                const MissShaderInput missShaderInput = {ray.origin, ray.direction};
+                const auto            pixel =
                     missShaderPackage.shader->Shade(rayID, missShaderInput, missShaderPackage.resources, newRays);
                 SetPixel(buffer, rayID, pixel);
             }
