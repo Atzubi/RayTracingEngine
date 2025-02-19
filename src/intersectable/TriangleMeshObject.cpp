@@ -1,5 +1,5 @@
 #include "Intersectables/TriangleMeshObject.h"
-#include "bvh/DBVHv2.h"
+#include "bvh/DBVH.h"
 #include <cmath>
 #include <cstdint>
 #include <span>
@@ -188,7 +188,7 @@ class TriangleMeshObject::TrianglMeshImpl : public IIntersectable
             triangles_.push_back(std::move(triangle));
         }
 
-        structure_ = DBVHv2(objects);
+        structure_ = DBVH(objects);
     }
 
     BoundingBox GetBoundaries() const override { return structure_.GetBoundaries(); }
@@ -230,7 +230,7 @@ class TriangleMeshObject::TrianglMeshImpl : public IIntersectable
     Material              material_;
 
     std::vector<std::unique_ptr<IIntersectable>> triangles_;
-    DBVHv2                                       structure_;
+    DBVH                                         structure_;
 };
 
 TriangleMeshObject::TriangleMeshObject(std::vector<Vertex>        vertices,

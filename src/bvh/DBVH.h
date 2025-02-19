@@ -6,16 +6,16 @@
 #include <utility>
 #include <vector>
 
-class DBVHv2 : public IIntersectable
+class DBVH : public IIntersectable
 {
   public:
-    DBVHv2();
+    DBVH();
 
-    DBVHv2(DBVHv2&& other) noexcept;
+    DBVH(DBVH&& other) noexcept;
 
-    DBVHv2& operator=(DBVHv2&& other) noexcept;
+    DBVH& operator=(DBVH&& other) noexcept;
 
-    explicit DBVHv2(const std::vector<const IIntersectable*>& objects);
+    explicit DBVH(const std::vector<const IIntersectable*>& objects);
 
     void AddObjects(const std::vector<const IIntersectable*>& objects);
 
@@ -122,7 +122,7 @@ class DBVHv2 : public IIntersectable
 
     static SplitOperation GetBestSplitOperation(std::span<const float> SAHs);
 
-    std::array<Vector3D, DBVHv2::NumberOfSplittingPlanes> CreateSplittingPlanes(const BoundingBox& bBox);
+    std::array<Vector3D, DBVH::NumberOfSplittingPlanes> CreateSplittingPlanes(const BoundingBox& bBox);
 
     int GetBestSplittingPlane(const std::array<float, NumberOfSplittingPlanes>& SAH);
 

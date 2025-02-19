@@ -1,4 +1,4 @@
-#include "DBVHv2.h"
+#include "DBVH.h"
 #include <algorithm>
 #include <array>
 #include <limits>
@@ -219,7 +219,7 @@ namespace
     }
 } // namespace
 
-std::array<Vector3D, DBVHv2::NumberOfSplittingPlanes> DBVHv2::CreateSplittingPlanes(const BoundingBox& bBox)
+std::array<Vector3D, DBVH::NumberOfSplittingPlanes> DBVH::CreateSplittingPlanes(const BoundingBox& bBox)
 {
     std::array<Vector3D, NumberOfSplittingPlanes> splittingPlanes{};
     const int                                     splitsPerDimension = NumberOfSplittingPlanes / 3 + 1;
@@ -237,7 +237,7 @@ std::array<Vector3D, DBVHv2::NumberOfSplittingPlanes> DBVHv2::CreateSplittingPla
     return splittingPlanes;
 }
 
-int DBVHv2::GetBestSplittingPlane(const std::array<float, NumberOfSplittingPlanes>& SAH)
+int DBVH::GetBestSplittingPlane(const std::array<float, NumberOfSplittingPlanes>& SAH)
 {
     auto bestSAH            = std::numeric_limits<float>::max();
     int  bestSplittingPlane = -1;
@@ -254,7 +254,7 @@ int DBVHv2::GetBestSplittingPlane(const std::array<float, NumberOfSplittingPlane
     return bestSplittingPlane;
 }
 
-DBVHv2::SplitOperation DBVHv2::GetBestSplitOperation(const std::span<const float> SAHs)
+DBVH::SplitOperation DBVH::GetBestSplitOperation(const std::span<const float> SAHs)
 {
     float          SAH     = std::numeric_limits<float>::max();
     SplitOperation bestSAH = SplitOperation::Default;
@@ -269,7 +269,7 @@ DBVHv2::SplitOperation DBVHv2::GetBestSplitOperation(const std::span<const float
     return bestSAH;
 }
 
-void DBVHv2::FillRotationBoxes(BoxSA& left, BoxSA& right, const std::uint32_t node) const
+void DBVH::FillRotationBoxes(BoxSA& left, BoxSA& right, const std::uint32_t node) const
 {
     if (IsNodeLeft(flatTree_[node]))
     {
@@ -293,7 +293,7 @@ void DBVHv2::FillRotationBoxes(BoxSA& left, BoxSA& right, const std::uint32_t no
     }
 }
 
-bool DBVHv2::GetPossibleRotations(const std::uint32_t node, const std::span<float> SAHs, Rotations& rotations) const
+bool DBVH::GetPossibleRotations(const std::uint32_t node, const std::span<float> SAHs, Rotations& rotations) const
 {
     const auto& n = flatTree_[node];
     if (IsNodeLeft(n))
@@ -365,9 +365,7 @@ bool DBVHv2::GetPossibleRotations(const std::uint32_t node, const std::span<floa
     return true;
 }
 
-void DBVHv2::SwapLeftLeftToRight(const std::uint32_t          node,
-                                 const Rotations&             rotations,
-                                 const std::span<const float> SAHs)
+void DBVH::SwapLeftLeftToRight(const std::uint32_t node, const Rotations& rotations, const std::span<const float> SAHs)
 {
     auto&      n                       = flatTree_[node];
     const auto isLeafRight             = IsLeafRight(n);
@@ -394,9 +392,7 @@ void DBVHv2::SwapLeftLeftToRight(const std::uint32_t          node,
         nodeMetadata_[buffer].parent = n.leftChild;
 }
 
-void DBVHv2::SwapLeftRightToRight(const std::uint32_t          node,
-                                  const Rotations&             rotations,
-                                  const std::span<const float> SAHs)
+void DBVH::SwapLeftRightToRight(const std::uint32_t node, const Rotations& rotations, const std::span<const float> SAHs)
 {
     auto&      n               = flatTree_[node];
     const auto isLeafRight     = IsLeafRight(n);
@@ -422,9 +418,7 @@ void DBVHv2::SwapLeftRightToRight(const std::uint32_t          node,
         nodeMetadata_[buffer].parent = n.leftChild;
 }
 
-void DBVHv2::SwapRightLeftToLeft(const std::uint32_t          node,
-                                 const Rotations&             rotations,
-                                 const std::span<const float> SAHs)
+void DBVH::SwapRightLeftToLeft(const std::uint32_t node, const Rotations& rotations, const std::span<const float> SAHs)
 {
     auto&      n               = flatTree_[node];
     const auto isLeafLeft      = IsLeafLeft(n);
@@ -450,9 +444,7 @@ void DBVHv2::SwapRightLeftToLeft(const std::uint32_t          node,
         nodeMetadata_[buffer].parent = n.rightChild;
 }
 
-void DBVHv2::SwapRightRightToLeft(const std::uint32_t          node,
-                                  const Rotations&             rotations,
-                                  const std::span<const float> SAHs)
+void DBVH::SwapRightRightToLeft(const std::uint32_t node, const Rotations& rotations, const std::span<const float> SAHs)
 {
     auto&      n                        = flatTree_[node];
     const auto isLeafLeft               = IsLeafLeft(n);
@@ -479,7 +471,7 @@ void DBVHv2::SwapRightRightToLeft(const std::uint32_t          node,
         nodeMetadata_[buffer].parent = n.rightChild;
 }
 
-bool DBVHv2::OptimizeSAH(const std::uint32_t node)
+bool DBVH::OptimizeSAH(const std::uint32_t node)
 {
     Rotations                          rotations{};
     std::array<float, Rotation::Count> SAHs{};
@@ -518,7 +510,7 @@ bool DBVHv2::OptimizeSAH(const std::uint32_t node)
     return true;
 }
 
-void DBVHv2::Refit(const std::uint32_t node)
+void DBVH::Refit(const std::uint32_t node)
 {
     auto& n                         = flatTree_[node];
     n.boundingBox                   = BoundingBox();
@@ -550,7 +542,7 @@ void DBVHv2::Refit(const std::uint32_t node)
     nodeMetadata_[node].surfaceArea += n.boundingBox.GetSA();
 }
 
-void DBVHv2::RemoveNode(const std::uint32_t node)
+void DBVH::RemoveNode(const std::uint32_t node)
 {
     flatTree_[node] = flatTree_.back();
 
@@ -568,7 +560,7 @@ void DBVHv2::RemoveNode(const std::uint32_t node)
     nodeMetadata_.pop_back();
 }
 
-void DBVHv2::RemoveLeaf(const std::uint32_t leaf)
+void DBVH::RemoveLeaf(const std::uint32_t leaf)
 {
     leaves_[leaf] = leaves_.back();
     auto& parent  = flatTree_[leafMetadata_.back().parent];
@@ -585,7 +577,7 @@ void DBVHv2::RemoveLeaf(const std::uint32_t leaf)
     leafMetadata_.pop_back();
 }
 
-bool DBVHv2::RemoveRightLeaf(const std::uint32_t currentNode, const IIntersectable& object)
+bool DBVH::RemoveRightLeaf(const std::uint32_t currentNode, const IIntersectable& object)
 {
     auto& n = flatTree_[currentNode];
     if (IsLeafRight(n))
@@ -614,7 +606,7 @@ bool DBVHv2::RemoveRightLeaf(const std::uint32_t currentNode, const IIntersectab
     return removed;
 }
 
-bool DBVHv2::RemoveLeftLeaf(const std::uint32_t currentNode, const IIntersectable& object)
+bool DBVH::RemoveLeftLeaf(const std::uint32_t currentNode, const IIntersectable& object)
 {
     auto& n = flatTree_[currentNode];
     if (IsLeafLeft(n))
@@ -643,7 +635,7 @@ bool DBVHv2::RemoveLeftLeaf(const std::uint32_t currentNode, const IIntersectabl
     return removed;
 }
 
-void DBVHv2::Remove(const std::uint32_t currentNode, const IIntersectable& object)
+void DBVH::Remove(const std::uint32_t currentNode, const IIntersectable& object)
 {
     // find object in tree by insertion
     // remove object and refit nodes going the tree back up
@@ -658,7 +650,7 @@ void DBVHv2::Remove(const std::uint32_t currentNode, const IIntersectable& objec
     OptimizeSAH(currentNode);
 }
 
-bool DBVHv2::RemoveSpecialCases(const IIntersectable& object)
+bool DBVH::RemoveSpecialCases(const IIntersectable& object)
 {
     if (IsLastElement(flatTree_[0]) && (*leaves_[flatTree_[0].leftChild] == object))
     {
@@ -710,7 +702,7 @@ bool DBVHv2::RemoveSpecialCases(const IIntersectable& object)
     return false;
 }
 
-void DBVHv2::MoveParentToNewParentsLeftChild(const std::uint32_t node)
+void DBVH::MoveParentToNewParentsLeftChild(const std::uint32_t node)
 {
     DBVHNode newNode             = flatTree_[node];
     flatTree_[node].maxDepthLeft = std::max(newNode.maxDepthLeft, newNode.maxDepthRight) + 1;
@@ -721,12 +713,12 @@ void DBVHv2::MoveParentToNewParentsLeftChild(const std::uint32_t node)
     nodeMetadata_.emplace_back(node, 0.f);
 }
 
-void DBVHv2::SortObjectsIntoBoxes(const SplitOperation                      splitOperation,
-                                  const Vector3D&                           splittingPlane,
-                                  const std::uint32_t                       node,
-                                  const std::vector<const IIntersectable*>& objects,
-                                  std::vector<const IIntersectable*>&       leftObjects,
-                                  std::vector<const IIntersectable*>&       rightObjects)
+void DBVH::SortObjectsIntoBoxes(const SplitOperation                      splitOperation,
+                                const Vector3D&                           splittingPlane,
+                                const std::uint32_t                       node,
+                                const std::vector<const IIntersectable*>& objects,
+                                std::vector<const IIntersectable*>&       leftObjects,
+                                std::vector<const IIntersectable*>&       rightObjects)
 {
     switch (splitOperation)
     {
@@ -773,11 +765,11 @@ void DBVHv2::SortObjectsIntoBoxes(const SplitOperation                      spli
     }
 }
 
-void DBVHv2::SetBoxesAndHitProbability(const DBVHNode& node,
-                                       BoundingBox&    leftChildBox,
-                                       BoundingBox&    rightChildBox,
-                                       float&          pLeft,
-                                       float&          pRight) const
+void DBVH::SetBoxesAndHitProbability(const DBVHNode& node,
+                                     BoundingBox&    leftChildBox,
+                                     BoundingBox&    rightChildBox,
+                                     float&          pLeft,
+                                     float&          pRight) const
 {
     pLeft  = 0;
     pRight = 0;
@@ -803,12 +795,12 @@ void DBVHv2::SetBoxesAndHitProbability(const DBVHNode& node,
     }
 }
 
-float DBVHv2::ComputeSAHWithNewParent(const DBVHNode&    node,
-                                      const BoundingBox& aabbLeft,
-                                      const BoundingBox& aabbRight,
-                                      const float        objectCostLeft,
-                                      const float        objectCostRight,
-                                      SplitOperation&    newParent) const
+float DBVH::ComputeSAHWithNewParent(const DBVHNode&    node,
+                                    const BoundingBox& aabbLeft,
+                                    const BoundingBox& aabbRight,
+                                    const float        objectCostLeft,
+                                    const float        objectCostRight,
+                                    SplitOperation&    newParent) const
 {
     BoundingBox leftChildBox{};
     BoundingBox rightChildBox{};
@@ -865,10 +857,10 @@ float DBVHv2::ComputeSAHWithNewParent(const DBVHNode&    node,
     return SAHs[bestSAH];
 }
 
-float DBVHv2::EvaluateBucket(const DBVHNode&                           node,
-                             const std::vector<const IIntersectable*>& objects,
-                             const Vector3D&                           splittingPlane,
-                             SplitOperation&                           newParent) const
+float DBVH::EvaluateBucket(const DBVHNode&                           node,
+                           const std::vector<const IIntersectable*>& objects,
+                           const Vector3D&                           splittingPlane,
+                           SplitOperation&                           newParent) const
 {
     BoundingBox aabbLeft{};
     BoundingBox aabbRight{};
@@ -888,11 +880,11 @@ float DBVHv2::EvaluateBucket(const DBVHNode&                           node,
     }
 }
 
-std::array<float, DBVHv2::NumberOfSplittingPlanes>
-DBVHv2::EvaluateSplittingPlanes(const DBVHNode&                                      node,
-                                const std::vector<const IIntersectable*>&            objects,
-                                const std::array<Vector3D, NumberOfSplittingPlanes>& splittingPlanes,
-                                std::array<SplitOperation, NumberOfSplittingPlanes>& newParent) const
+std::array<float, DBVH::NumberOfSplittingPlanes>
+DBVH::EvaluateSplittingPlanes(const DBVHNode&                                      node,
+                              const std::vector<const IIntersectable*>&            objects,
+                              const std::array<Vector3D, NumberOfSplittingPlanes>& splittingPlanes,
+                              std::array<SplitOperation, NumberOfSplittingPlanes>& newParent) const
 {
     std::array<float, NumberOfSplittingPlanes> SAH{};
 
@@ -905,7 +897,7 @@ DBVHv2::EvaluateSplittingPlanes(const DBVHNode&                                 
 }
 
 std::pair<std::vector<const IIntersectable*>, std::vector<const IIntersectable*>>
-DBVHv2::Split(const std::vector<const IIntersectable*>& objects, const std::uint32_t currentNode)
+DBVH::Split(const std::vector<const IIntersectable*>& objects, const std::uint32_t currentNode)
 {
     BoundingBox bBox = flatTree_[currentNode].boundingBox;
     ::Refit(bBox, objects, 0);
@@ -941,9 +933,7 @@ DBVHv2::Split(const std::vector<const IIntersectable*>& objects, const std::uint
     return {leftObjects, rightObjects};
 }
 
-void DBVHv2::Add(const std::uint32_t                       currentNode,
-                 const std::vector<const IIntersectable*>& objects,
-                 const uint8_t                             depth)
+void DBVH::Add(const std::uint32_t currentNode, const std::vector<const IIntersectable*>& objects, const uint8_t depth)
 {
     // may add extra node if the split needs to be done between existing nodes and new objects
     const auto [leftObjects, rightObjects] = Split(objects, currentNode);
@@ -1060,7 +1050,7 @@ void DBVHv2::Add(const std::uint32_t                       currentNode,
     OptimizeSAH(currentNode);
 }
 
-bool DBVHv2::AddOntoSingleElement(const std::vector<const IIntersectable*>& objects)
+bool DBVH::AddOntoSingleElement(const std::vector<const IIntersectable*>& objects)
 {
     if (!IsLastElement(flatTree_[0]))
         return false;
@@ -1071,7 +1061,7 @@ bool DBVHv2::AddOntoSingleElement(const std::vector<const IIntersectable*>& obje
     return true;
 }
 
-bool DBVHv2::AddFirstAndOnlyElement(DBVHNode& root, const std::vector<const IIntersectable*>& objects)
+bool DBVH::AddFirstAndOnlyElement(DBVHNode& root, const std::vector<const IIntersectable*>& objects)
 {
     if (!IsEmpty(root) || objects.size() != 1)
         return false;
@@ -1083,20 +1073,20 @@ bool DBVHv2::AddFirstAndOnlyElement(DBVHNode& root, const std::vector<const IInt
     return true;
 }
 
-DBVHv2::DBVHv2()
+DBVH::DBVH()
 {
     flatTree_.emplace_back(); // make sure there is always a root node
     nodeMetadata_.emplace_back();
 }
 
-DBVHv2::DBVHv2(DBVHv2&& other) noexcept
+DBVH::DBVH(DBVH&& other) noexcept
     : flatTree_(std::move(other.flatTree_)),
       leaves_(std::move(other.leaves_)),
       nodeMetadata_(std::move(other.nodeMetadata_))
 {
 }
 
-DBVHv2& DBVHv2::operator=(DBVHv2&& other) noexcept
+DBVH& DBVH::operator=(DBVH&& other) noexcept
 {
     flatTree_     = std::move(other.flatTree_);
     leaves_       = std::move(other.leaves_);
@@ -1104,9 +1094,9 @@ DBVHv2& DBVHv2::operator=(DBVHv2&& other) noexcept
     return *this;
 }
 
-DBVHv2::DBVHv2(const std::vector<const IIntersectable*>& objects) : DBVHv2() { AddObjects(objects); }
+DBVH::DBVH(const std::vector<const IIntersectable*>& objects) : DBVH() { AddObjects(objects); }
 
-void DBVHv2::AddObjects(const std::vector<const IIntersectable*>& objects)
+void DBVH::AddObjects(const std::vector<const IIntersectable*>& objects)
 {
     if (objects.empty() || AddFirstAndOnlyElement(flatTree_[0], objects) || AddOntoSingleElement(objects))
         return;
@@ -1114,7 +1104,7 @@ void DBVHv2::AddObjects(const std::vector<const IIntersectable*>& objects)
     Add(0, objects, 1);
 }
 
-void DBVHv2::RemoveObjects(const std::vector<const IIntersectable*>& objects)
+void DBVH::RemoveObjects(const std::vector<const IIntersectable*>& objects)
 {
     for (const auto& object : objects)
     {
@@ -1127,7 +1117,7 @@ void DBVHv2::RemoveObjects(const std::vector<const IIntersectable*>& objects)
     }
 }
 
-bool DBVHv2::IntersectFirst(IntersectionInfo& intersectionInfo, const Ray& ray) const
+bool DBVH::IntersectFirst(IntersectionInfo& intersectionInfo, const Ray& ray) const
 {
     if (IsEmpty(flatTree_[0]))
         return false;
@@ -1192,7 +1182,7 @@ bool DBVHv2::IntersectFirst(IntersectionInfo& intersectionInfo, const Ray& ray) 
     return hit;
 }
 
-bool DBVHv2::IntersectAny(IntersectionInfo& intersectionInfo, const Ray& ray) const
+bool DBVH::IntersectAny(IntersectionInfo& intersectionInfo, const Ray& ray) const
 {
     if (IsEmpty(flatTree_[0]))
         return false;
@@ -1255,7 +1245,7 @@ bool DBVHv2::IntersectAny(IntersectionInfo& intersectionInfo, const Ray& ray) co
     return false;
 }
 
-bool DBVHv2::IntersectAll(std::vector<IntersectionInfo>& intersectionInfos, const Ray& ray) const
+bool DBVH::IntersectAll(std::vector<IntersectionInfo>& intersectionInfos, const Ray& ray) const
 {
     if (IsEmpty(flatTree_[0]))
         return false;
@@ -1308,19 +1298,19 @@ bool DBVHv2::IntersectAll(std::vector<IntersectionInfo>& intersectionInfos, cons
     return hit;
 }
 
-std::unique_ptr<IIntersectable> DBVHv2::Clone() const { return std::make_unique<DBVHv2>(leaves_); }
+std::unique_ptr<IIntersectable> DBVH::Clone() const { return std::make_unique<DBVH>(leaves_); }
 
-BoundingBox DBVHv2::GetBoundaries() const { return flatTree_[0].boundingBox; }
+BoundingBox DBVH::GetBoundaries() const { return flatTree_[0].boundingBox; }
 
-float DBVHv2::GetSurfaceArea() const { return nodeMetadata_[0].surfaceArea; }
+float DBVH::GetSurfaceArea() const { return nodeMetadata_[0].surfaceArea; }
 
-bool DBVHv2::operator==(const IIntersectable& object) const
+bool DBVH::operator==(const IIntersectable& object) const
 {
     // TODO
     return false;
 }
 
-bool DBVHv2::operator!=(const IIntersectable& object) const
+bool DBVH::operator!=(const IIntersectable& object) const
 {
     // TODO
     return true;

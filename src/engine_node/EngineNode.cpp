@@ -1,5 +1,5 @@
 #include "EngineNode.h"
-#include "bvh/DBVHv2.h"
+#include "bvh/DBVH.h"
 #include "intersectable/Instance.h"
 #include "pipeline/PipelineImplement.h"
 
@@ -90,7 +90,7 @@ std::unique_ptr<SceneHandle> RayEngine::EngineNode::CreateScene(const SceneDescr
             [this](const IIntersectable* inters) { DeleteIntersectable(inters); }, it->get()));
     }
 
-    const auto [it, success] = intersectables_.insert(std::make_unique<DBVHv2>(instances));
+    const auto [it, success] = intersectables_.insert(std::make_unique<DBVH>(instances));
     if (!success)
         throw std::runtime_error("Tried to create duplicate intersectable.");
 

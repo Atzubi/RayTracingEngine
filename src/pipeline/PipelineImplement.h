@@ -1,7 +1,7 @@
 #pragma once
 
 #include "RayTraceEngine/Shader.h"
-#include "RayTraceEngine/Vector3d.h"
+#include "RayTraceEngine/Vector3D.h"
 
 #include <vector>
 
