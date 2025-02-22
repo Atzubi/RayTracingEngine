@@ -227,7 +227,7 @@ class ShaderResourceHandle
   public:
     template <typename T> T& Map() { return *reinterpret_cast<T*>(MapImpl()); }
 
-    template <typename T> const T& Map() const { return *reinterpret_cast<T*>(MapImpl()); }
+    template <typename T> const T& Map() const { return *reinterpret_cast<const T*>(MapImpl()); }
 
     virtual ~ShaderResourceHandle() = default;
 
