@@ -4,7 +4,6 @@
 #include "SFML/Graphics.hpp"
 #include "Shaders/Common.h"
 #include <chrono>
-#include <cmath>
 #include <math.h> // for gcc
 
 class Camera
@@ -62,9 +61,9 @@ class Camera
             float       pitch      = -mouseDelta.y * sensitivity_;
             pitch                  = std::min(89.f, std::max(-89.f, pitch)) * 3.14159f / 180.f;
 
-            cam.cameraDirection = {refDir_.x * std::cosf(jaw) - refDir_.z * std::sinf(jaw),
+            cam.cameraDirection = {refDir_.x * cosf(jaw) - refDir_.z * sinf(jaw),
                                    refDir_.y + pitch,
-                                   refDir_.x * std::sinf(jaw) + refDir_.z * std::cosf(jaw)};
+                                   refDir_.x * sinf(jaw) + refDir_.z * cosf(jaw)};
             cam.cameraDirection.Normalize();
             cam.cameraUp = cam.cameraDirection.Cross(right);
             cam.cameraUp.Normalize();
