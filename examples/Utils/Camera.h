@@ -5,6 +5,7 @@
 #include "Shaders/Common.h"
 #include <chrono>
 #include <cmath>
+#include <math.h> // for gcc
 
 class Camera
 {

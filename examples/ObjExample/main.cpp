@@ -12,6 +12,7 @@
 #include <chrono>
 #include <cmath>
 #include <iostream>
+#include <math.h> // for gcc
 
 int main()
 {
