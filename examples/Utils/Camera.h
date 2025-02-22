@@ -74,10 +74,10 @@ class Camera
   private:
     ShaderResourceHandle* camInfo_;
 
-    float                                 speed_;
-    float                                 sensitivity_;
-    std::chrono::steady_clock::time_point lastStamp_;
-    bool                                  drag_;
-    sf::Vector2i                          lastMousePos_;
-    Vector3D                              refDir_;
+    float                                              speed_;
+    float                                              sensitivity_;
+    std::chrono::time_point<std::chrono::steady_clock> lastStamp_;
+    bool                                               drag_;
+    sf::Vector2i                                       lastMousePos_;
+    Vector3D                                           refDir_;
 };

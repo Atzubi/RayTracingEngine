@@ -2,9 +2,6 @@
 
 #include "RayTraceEngine/Vector3D.h"
 
-#include <immintrin.h>
-#include <xmmintrin.h>
-
 /**
  * Contains a 4 by 4 matrix.
  * elements:    The matrix.
