@@ -4,6 +4,7 @@
 #include "SFML/Graphics.hpp"
 #include "Shaders/Common.h"
 #include <chrono>
+#include <cmath>
 
 class Camera
 {
@@ -74,10 +75,10 @@ class Camera
   private:
     ShaderResourceHandle* camInfo_;
 
-    float                                              speed_;
-    float                                              sensitivity_;
-    std::chrono::time_point<std::chrono::steady_clock> lastStamp_;
-    bool                                               drag_;
-    sf::Vector2i                                       lastMousePos_;
-    Vector3D                                           refDir_;
+    float                                          speed_;
+    float                                          sensitivity_;
+    std::chrono::high_resolution_clock::time_point lastStamp_;
+    bool                                           drag_;
+    sf::Vector2i                                   lastMousePos_;
+    Vector3D                                       refDir_;
 };
