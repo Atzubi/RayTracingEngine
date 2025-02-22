@@ -121,7 +121,8 @@ class ShaderResourceH : public ShaderResourceHandle, public HandleBase<IShaderRe
     IShaderResource*       Get() { return handle_; }
 
   private:
-    void* MapImpl() override { return handle_; }
+    void*       MapImpl() override { return handle_; }
+    const void* MapImpl() const override { return handle_; }
 };
 
 std::unique_ptr<ShaderResourceHandle> RayEngine::EngineNode::CreateShaderResource(const ShaderResourceDescription& desc)

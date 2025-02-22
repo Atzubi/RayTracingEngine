@@ -232,7 +232,8 @@ class ShaderResourceHandle
     virtual ~ShaderResourceHandle() = default;
 
   private:
-    virtual void* MapImpl() = 0;
+    virtual void*       MapImpl()       = 0;
+    virtual const void* MapImpl() const = 0;
 };
 
 struct GeneratorShaderDescription
