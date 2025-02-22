@@ -8,7 +8,9 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "Utils/Stb/stb_image.h"
 
+#include <cmath>
 #include <cstdint>
+#include <cstring>
 #include <filesystem>
 #include <vector>
 
