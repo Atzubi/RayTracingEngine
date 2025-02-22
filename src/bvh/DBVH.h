@@ -142,11 +142,15 @@ class DBVH : public IIntersectable
 
     bool RemoveSpecialCases(const IIntersectable& object);
 
-    void Remove(std::uint32_t currentNode, const IIntersectable& object);
+    bool Remove(std::uint32_t currentNode, const IIntersectable& object, std::uint32_t& rLeaf, std::uint32_t& rNode);
 
-    bool RemoveLeftLeaf(std::uint32_t currentNode, const IIntersectable& object);
+    bool
+    RemoveLeftLeaf(std::uint32_t currentNode, const IIntersectable& object, std::uint32_t& rLeaf, std::uint32_t& rNode);
 
-    bool RemoveRightLeaf(std::uint32_t currentNode, const IIntersectable& object);
+    bool RemoveRightLeaf(std::uint32_t         currentNode,
+                         const IIntersectable& object,
+                         std::uint32_t&        rLeaf,
+                         std::uint32_t&        rNode);
 
     void RemoveNode(std::uint32_t node);
 

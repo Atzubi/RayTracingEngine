@@ -2,6 +2,9 @@
 
 #include "RayTraceEngine/Vector3D.h"
 
+#include <immintrin.h>
+#include <xmmintrin.h>
+
 /**
  * Contains a 4 by 4 matrix.
  * elements:    The matrix.
@@ -39,13 +42,26 @@ struct Matrix4x4
 
     Vector3D operator*(const Vector3D& vector) const
     {
-        Vector3D result{};
-        for (int line = 0; line < 3; ++line)
+        return {elements[0][0] * vector.x + elements[0][1] * vector.y + elements[0][2] * vector.z + elements[0][3],
+                elements[1][0] * vector.x + elements[1][1] * vector.y + elements[1][2] * vector.z + elements[1][3],
+                elements[2][0] * vector.x + elements[2][1] * vector.y + elements[2][2] * vector.z + elements[2][3]};
+    }
+
+    Matrix4x4 operator*(const Matrix4x4& matrix) const
+    {
+        Matrix4x4 e;
+        for (int row = 0; row < 4; ++row)
         {
-            result[line] = elements[line][0] * vector.x + elements[line][1] * vector.y + elements[line][2] * vector.z +
-                           elements[line][3];
+            for (int column = 0; column < 4; ++column)
+            {
+                e.elements[row][column] = 0;
+                for (int index = 0; index < 4; ++index)
+                {
+                    e.elements[row][column] += elements[row][index] * matrix.elements[index][column];
+                }
+            }
         }
-        return result;
+        return e;
     }
 
     /**
@@ -116,6 +132,13 @@ struct Matrix4x4
         inverse.elements[3][3] = (1 / det) * inverse.elements[3][3];
 
         return inverse;
+    }
+
+    Vector3D MultiplyTransform(const Vector3D& vector) const
+    {
+        return {elements[0][0] * vector.x + elements[0][1] * vector.y + elements[0][2] * vector.z,
+                elements[1][0] * vector.x + elements[1][1] * vector.y + elements[1][2] * vector.z,
+                elements[2][0] * vector.x + elements[2][1] * vector.y + elements[2][2] * vector.z};
     }
 
     static Matrix4x4 GetIdentity()

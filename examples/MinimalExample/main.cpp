@@ -1,220 +1,133 @@
 // include relevant headers of the ray tracing engine
-#include "../Shaders/HitShader.h"
-#include "../Shaders/RayGeneratorShader.h"
 #include "Intersectables/TriangleMeshObject.h"
 #include "RayTraceEngine/RayEngine.h"
-
-// include an obj loader for parsing obj files
-#include "OBJ_Loader.h"
+#include "Shaders/HitShader.h"
+#include "Shaders/RayGeneratorShader.h"
+#include "Utils/SFMLUtils.h"
 
 // include a graphics library for displaying the render result
 #include "SFML/Graphics.hpp"
 
-#define STB_IMAGE_IMPLEMENTATION
+class SimpleHitShader : public IHitShader
+{
+    std::unique_ptr<IHitShader> Clone() const override { return std::make_unique<SimpleHitShader>(*this); }
 
-// include stb for texture format support
-#include "Stb/stb_image.h"
+    ShaderOutput Shade(const std::uint64_t                  id,
+                       const HitShaderInput&                shaderInput,
+                       const std::vector<IShaderResource*>& shaderResource,
+                       RayGeneratorOutput&                  newRays) const override
+    {
+        return {255, 255, 255};
+    }
+};
 
 int main()
 {
-    // create the obj parser
-    objl::Loader loader;
+    // Create the ray tracing engine
+    RayEngine rayEngine{};
 
-    // create the ray tracing engine
-    RayEngine rayEngine = RayEngine();
+    // ============================================= Define The Geometry ==============================================
 
-    // ======================================== Create Geometry Objects ===============================================
+    // Create a vertex buffer with 3 vertices to define a triangle (we only use the position in this example)
+    TriangleMeshObject::Vertex              v1{.position = {0, 0, 0}};
+    TriangleMeshObject::Vertex              v2{.position = {1, 0, 0}};
+    TriangleMeshObject::Vertex              v3{.position = {0, 1, 0}};
+    std::vector<TriangleMeshObject::Vertex> vertices{std::move(v1), std::move(v2), std::move(v3)};
 
-    std::vector<std::unique_ptr<IntersectableObjectHandle>> intersectables;
-    std::vector<std::unique_ptr<RenderTargetHandle>>        renderTargets;
+    // Create a buffer for the indices, every index points to a vertex in the vertex vector, every 3 indices define 1
+    // triangle
+    std::vector<uint32_t> indices{0, 1, 2};
 
-    // load the obj file
-    if (!loader.LoadFile("./Data/Basketball/Basketball.obj"))
-        return 1;
+    // We can attach a material to our geometry, we will leave this empty for the minimal example
+    Material material{};
 
-    // iterate over all meshes defined in the object loaded
-    for (auto& m : loader.LoadedMeshes)
-    {
-        // create a vector for the meshes vertices
-        std::vector<TriangleMeshObject::Vertex> vertices;
+    // Create a triangle mesh object
+    TriangleMeshObject triangleMeshObject(std::move(vertices), std::move(indices), std::move(material));
 
-        // create a vector for the indices defined by the mesh, every index points to a vertex in vertex vector,
-        // every 3 indices define 1 triangle
-        std::vector<uint64_t> indices;
+    // Add the object to engine
+    const auto object = rayEngine.CreateIntersectableObject({triangleMeshObject});
 
-        // create the material container
-        Material material;
+    // Finally we create a scene by placing an instance of our triangle into it
+    SceneDescription sceneDesc{};
+    sceneDesc.intersectables.emplace_back(*object, Matrix4x4::GetIdentity());
+    const auto scene = rayEngine.CreateScene(sceneDesc);
 
-        int comp;
+    // ============================================= Define The Rendering =============================================
 
-        // fill the material description
-        material.name        = m.MeshMaterial.name;
-        material.Ka          = {m.MeshMaterial.Ka.X, m.MeshMaterial.Ka.Y, m.MeshMaterial.Ka.Z};
-        material.Kd          = {m.MeshMaterial.Kd.X, m.MeshMaterial.Kd.Y, m.MeshMaterial.Kd.Z};
-        material.Ks          = {m.MeshMaterial.Ks.X, m.MeshMaterial.Ks.Y, m.MeshMaterial.Ks.Z};
-        material.Ns          = m.MeshMaterial.Ns;
-        material.Ni          = m.MeshMaterial.Ni;
-        material.d           = m.MeshMaterial.d;
-        material.illum       = m.MeshMaterial.illum;
-        material.map_Ka.name = m.MeshMaterial.map_Ka;
-        material.map_Kd.name = m.MeshMaterial.map_Kd;
-        // load the texture using stbi
-        auto texture = stbi_load(("../Data/Basketball/" + material.map_Kd.name).c_str(),
-                                 reinterpret_cast<int*>(&(material.map_Kd.w)),
-                                 reinterpret_cast<int*>(&(material.map_Kd.h)),
-                                 &comp,
-                                 STBI_rgb);
-        if (texture)
-        {
-            auto tex        = rayEngine.CreateRenderTarget({material.map_Kd.w, material.map_Kd.h});
-            material.map_Kd = tex->GetAsTexture();
-            for (int i = 0; i < comp * material.map_Kd.w * material.map_Kd.h; i++)
-            {
-                (*material.map_Kd.image)[i] = texture[i];
-            }
-            renderTargets.push_back(std::move(tex));
-        }
-        else
-        {
-            auto tex        = rayEngine.CreateRenderTarget({0, 0});
-            material.map_Kd = tex->GetAsTexture();
-            renderTargets.push_back(std::move(tex));
-        }
-        material.map_Ks.name   = m.MeshMaterial.map_Ks;
-        material.map_Ns.name   = m.MeshMaterial.map_Ns;
-        material.map_d.name    = m.MeshMaterial.map_d;
-        material.map_bump.name = m.MeshMaterial.map_bump;
+    // We want to set up rendering such that we see the triangle on screen
 
-        // copy index list
-        for (unsigned int index : m.Indices)
-        {
-            indices.push_back(index);
-        }
+    // Define the rendering resolution and the camera
+    const std::uint32_t resX = 1000;
+    const std::uint32_t resY = 1000;
+    const Vector3D      cameraPosition{0.5, 0.5, -2};
+    const Vector3D      cameraDirection{0, 0, 1};
+    const Vector3D      cameraUp{0, 1, 0};
 
-        // copy vertex list
-        for (auto& item : m.Vertices)
-        {
-            TriangleMeshObject::Vertex vertex = {{item.Position.X, item.Position.Y, item.Position.Z},
-                                                 {item.Normal.X, item.Normal.Y, item.Normal.Z},
-                                                 {item.TextureCoordinate.X, item.TextureCoordinate.Y}};
-            vertices.push_back(vertex);
-        }
+    // We will use a basic ray generator that shoots a ray per pixel from the camera into the scene
+    const BasicRayGeneratorShader basicRayGeneratorShader;
+    const auto                    generatorShader = rayEngine.CreateShader({&basicRayGeneratorShader});
 
-        // create a triangle mesh object
-        TriangleMeshObject triangleMeshObject(std::move(vertices), std::move(indices), std::move(material));
-
-        // add the object to engine
-        auto handle = rayEngine.CreateIntersectableObject({triangleMeshObject});
-
-        // add the id to our referencing ids
-        intersectables.push_back(std::move(handle));
-    }
-
-    // ================================================================================================================
-
-    // ========================================= Add Shaders to the Engine ============================================
-    std::uint32_t resX = 1000;
-    std::uint32_t resY = 1000;
-    Vector3D      cameraPosition{0, 3, -10};
-    Vector3D      cameraDirection{0, 0, 1};
-    Vector3D      cameraUp{0, 1, 0};
-
-    // use basic hit shader prefab
-    BasicHitShader basicHitShader;
+    // The generator shader needs to know the resolution and camera position so we create a shader resource for it
+    ViewportInfo viewportInfo{};
+    viewportInfo.viewPortWidth  = resX;
+    viewportInfo.viewPortHeight = resY;
 
     CameraInfo cameraInfo{};
-    cameraInfo.cameraPosition = cameraPosition;
+    cameraInfo.cameraPosition  = cameraPosition;
+    cameraInfo.cameraDirection = cameraDirection;
+    cameraInfo.cameraUp        = cameraUp;
 
-    auto hitShaderResource = rayEngine.CreateShaderResource({&cameraInfo});
+    const auto viewPortShaderResource = rayEngine.CreateShaderResource({&viewportInfo});
+    const auto cameraShaderResource   = rayEngine.CreateShaderResource({&cameraInfo});
 
-    // add hit shader to the engine, id can be used to reference to the shader within the engine
-    auto hitShader = rayEngine.CreateShader({&basicHitShader});
-
-    // use basic ray generator shader prefab
-    BasicRayGeneratorShader basicRayGeneratorShader;
-
-    ViewportInfo viewportInfo{};
-    viewportInfo.viewPortWidth   = resX;
-    viewportInfo.viewPortHeight  = resY;
-    viewportInfo.cameraPosition  = cameraPosition;
-    viewportInfo.cameraDirection = cameraDirection;
-    viewportInfo.cameraUp        = cameraUp;
-
-    auto generatorShaderResource = rayEngine.CreateShaderResource({&viewportInfo});
-
-    // add ray generator shader to the engine
-    auto generatorShader = rayEngine.CreateShader({&basicRayGeneratorShader});
-
-    // ================================================================================================================
+    // For shading we use a simple shader that colors a pixel white. Since it's a hit shader only pixels where a ray
+    // intersected the triangle turn white
+    const SimpleHitShader simpleHitShader;
+    const auto            hitShader = rayEngine.CreateShader({&simpleHitShader});
 
     // =========================================== Create Engine pipeline =============================================
 
-    // instanced objects have their own transformation, create one for each instance
-    SceneDescription sceneDesc{};
-    for (unsigned long i = 0; i < intersectables.size(); i++)
-    {
-        sceneDesc.intersectables.push_back({*intersectables[i].get(), {Matrix4x4::GetIdentity()}, {}});
-    }
-    auto scene = rayEngine.CreateScene(sceneDesc);
-
-    // create a pipeline description
+    /**
+     * A pipeline consists of a scene and a set of shaders following this execution model:
+     *
+     *                                      OcclusionShader  -|
+     * RayGeneratorShader -> Ray Tracer ->  HitShader        -|  => Rendertarget
+     *                           ^          PierceShader     -|
+     *                           |          MissShader       -|
+     *                           |                            |
+     *                           ------------------------------
+     */
     PipelineDescription pipelineDescription{};
     pipelineDescription.scene           = scene.get();
-    pipelineDescription.generatorShader = {generatorShader.get(), {generatorShaderResource.get()}};
-    pipelineDescription.hitShader       = {hitShader.get(), {hitShaderResource.get()}};
+    pipelineDescription.generatorShader = {generatorShader.get(),
+                                           {viewPortShaderResource.get(), cameraShaderResource.get()}};
+    pipelineDescription.hitShader       = {hitShader.get(), {}};
 
-    // add pipeline to the engine
-    auto pipeline = rayEngine.CreatePipeline(pipelineDescription);
+    const auto pipeline = rayEngine.CreatePipeline(pipelineDescription);
 
-    // ================================================================================================================
+    // ============================================= Create Render Target =============================================
 
-    auto renderTarget = rayEngine.CreateRenderTarget({resX, resY});
+    // Finally we need a target where our shading results should be written to
+    const auto renderTarget = rayEngine.CreateRenderTarget({resX, resY, 3});
 
-    // run the pipeline
-    pipeline->Run(*renderTarget.get());
+    // ============================================= Execute The Pipeline =============================================
 
-    // get the result of the pipeline
-    auto texture = renderTarget->GetAsTexture();
+    // All that is left is to run the engine
+    pipeline->Run(*renderTarget);
 
-    // create image container for sfml
-    int                    channelCount = 4;
-    std::vector<sf::Uint8> pixels(resX * resY * channelCount);
+    // ================================================ Display Result ================================================
 
-    unsigned char fullOpacity = 255;
+    // We can extract the render result as a texture which can easily be displayed
+    const auto texture = renderTarget->GetAsTexture();
 
-    // translate from texture to sfml
-    for (int x = 0; x < resX; x++)
-    {
-        for (int y = 0; y < resY; y++)
-        {
-            pixels[(x + y * resX) * channelCount + 0] = (*texture.image)[(x + y * resX) * 3 + 0];
-            pixels[(x + y * resX) * channelCount + 1] = (*texture.image)[(x + y * resX) * 3 + 1];
-            pixels[(x + y * resX) * channelCount + 2] = (*texture.image)[(x + y * resX) * 3 + 2];
-            pixels[(x + y * resX) * channelCount + 3] = fullOpacity;
-        }
-    }
-
-    // create window
+    // Create window
     sf::RenderWindow window;
     window.create(sf::VideoMode(resX, resY), "Render");
 
-    // create image
-    sf::Image image;
-    image.create(resX, resY, pixels.data());
+    // Display the texture on the window
+    DisplayTexture(window, texture);
 
-    // create texture from image
-    sf::Texture tex;
-    tex.loadFromImage(image);
-
-    // create sprite from texture
-    sf::Sprite sprite;
-    sprite.setTexture(tex);
-
-    // draw sprite on screen
-    window.draw(sprite);
-    window.display();
-
-    // wait for window to close
+    // Wait for the window to close
     while (window.isOpen())
     {
         sf::Event event{};

@@ -8,7 +8,7 @@ class Triangle : public IIntersectable
 {
   public:
     Triangle(std::span<const TriangleMeshObject::Vertex> vertices,
-             std::span<const std::uint64_t, 3>           indices,
+             std::span<const std::uint32_t, 3>           indices,
              const Material*                             material)
         : vertices_(vertices), indices_(indices), material_(material) {};
 
@@ -42,7 +42,7 @@ class Triangle : public IIntersectable
         const auto& pvec = ray.direction.Cross(e2);
         const auto& det  = (pvec * e1).Sum();
 
-        constexpr float epsilon = 0.000001f;
+        constexpr float epsilon = 0.000000000001f;
 
         if (det < epsilon && det > -epsilon)
         {
@@ -162,14 +162,14 @@ class Triangle : public IIntersectable
     }
 
     std::span<const TriangleMeshObject::Vertex> vertices_;
-    std::span<const std::uint64_t, 3>           indices_;
+    std::span<const std::uint32_t, 3>           indices_;
     const Material*                             material_;
 };
 
 class TriangleMeshObject::TrianglMeshImpl : public IIntersectable
 {
   public:
-    TrianglMeshImpl(std::vector<Vertex> vertices, std::vector<std::uint64_t> indices, Material material)
+    TrianglMeshImpl(std::vector<Vertex> vertices, std::vector<std::uint32_t> indices, Material material)
         : vertices_(std::move(vertices)), indices_(std::move(indices)), material_(std::move(material))
     {
         if (indices_.size() % 3 != 0)
@@ -182,7 +182,7 @@ class TriangleMeshObject::TrianglMeshImpl : public IIntersectable
         {
             auto triangle = std::make_unique<Triangle>(
                 vertices_,
-                std::span<const std::uint64_t, 3>(indices_.begin() + i * 3, indices_.begin() + i * 3 + 3),
+                std::span<const std::uint32_t, 3>(indices_.begin() + i * 3, indices_.begin() + i * 3 + 3),
                 &material_);
             objects.push_back(triangle.get());
             triangles_.push_back(std::move(triangle));
@@ -226,7 +226,7 @@ class TriangleMeshObject::TrianglMeshImpl : public IIntersectable
 
   private:
     std::vector<Vertex>   vertices_;
-    std::vector<uint64_t> indices_;
+    std::vector<uint32_t> indices_;
     Material              material_;
 
     std::vector<std::unique_ptr<IIntersectable>> triangles_;
@@ -234,7 +234,7 @@ class TriangleMeshObject::TrianglMeshImpl : public IIntersectable
 };
 
 TriangleMeshObject::TriangleMeshObject(std::vector<Vertex>        vertices,
-                                       std::vector<std::uint64_t> indices,
+                                       std::vector<std::uint32_t> indices,
                                        Material                   material)
 {
     impl_ = std::make_unique<TrianglMeshImpl>(std::move(vertices), std::move(indices), std::move(material));

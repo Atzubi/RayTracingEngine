@@ -1,11 +1,16 @@
 #include "pipeline/PipelineImplement.h"
+#include <algorithm>
+#include <cassert>
 #include <cstring>
+#include <execution>
+#include <ranges>
 
 namespace
 {
     struct RayContainer
     {
         int      rayID;
+        RayType  type;
         Vector3D rayOrigin;
         Vector3D rayDirection;
     };
@@ -19,13 +24,13 @@ namespace
 
     inline Ray InitRay(const std::vector<RayContainer>& rayContainers)
     {
-        const auto r = rayContainers.back();
+        const auto& r = rayContainers.back();
         return {r.rayOrigin, r.rayDirection, r.rayDirection.GetInverse()};
     }
 
     IntersectionInfo GetFirstIntersection(const std::vector<IntersectionInfo>& infos)
     {
-        IntersectionInfo closest{false, std::numeric_limits<double>::max()};
+        IntersectionInfo closest{false, std::numeric_limits<float>::max()};
         for (const auto& info : infos)
         {
             if (info.hit && closest.distance > info.distance)
@@ -42,7 +47,7 @@ namespace
 
         for (const auto& r : newRays.rays)
         {
-            RayContainer rayContainer = {id, r.rayDirection, r.rayOrigin};
+            RayContainer rayContainer = {id, r.type, r.rayDirection, r.rayOrigin};
             rayContainers.push_back(rayContainer);
         }
         newRays.rays.clear();
@@ -56,7 +61,7 @@ namespace
         generatorShaderPackage.shader->Shade(rayID, generatorShaderPackage.resources, rays);
         for (auto& ray : rays.rays)
         {
-            RayContainer rayContainer = {rayID, ray.rayOrigin, ray.rayDirection};
+            RayContainer rayContainer = {rayID, ray.type, ray.rayOrigin, ray.rayDirection};
             rayContainers.push_back(rayContainer);
         }
         rays.rays.clear();
@@ -74,76 +79,84 @@ void PipelineImplement::Run(std::vector<unsigned char>&     buffer,
                             const MissShaderResourceP&      missShaderPackage)
 {
     if (!generatorShaderPackage.shader)
-    {
         return;
-    }
     std::memset(buffer.data(), 0, buffer.size());
 
     std::vector<RayContainer> rayContainers;
-    RayGeneratorOutput        rays;
     RayGeneratorOutput        newRays;
-    for (int rayID = 0; rayID < texture.w * texture.h; rayID++)
+    PierceShaderInput         pierceInput{};
+    for (int rayID = 0; rayID < texture.w * texture.h; ++rayID)
     {
-        GeneratePrimaryRays(generatorShaderPackage, rayContainers, rayID, rays);
+
+        GeneratePrimaryRays(generatorShaderPackage, rayContainers, rayID, newRays);
 
         while (!rayContainers.empty())
         {
-            const auto ray = InitRay(rayContainers);
+            const auto type = rayContainers.back().type;
+            const auto ray  = InitRay(rayContainers);
 
-            PierceShaderInput pierceInput{};
-            IntersectionInfo  info{};
-            info.distance = std::numeric_limits<double>::max();
-            if (pierceShaderPackage.shader)
+            IntersectionInfo info{};
+            info.distance = std::numeric_limits<float>::max();
+
+            switch (type)
             {
-                std::vector<IntersectionInfo> infos;
-                scene->IntersectAll(infos, ray);
+                case RayType::Pierce:
+                    if (pierceShaderPackage.shader)
+                    {
+                        scene->IntersectAll(pierceInput.intersectionInfo, ray);
 
-                const auto id = rayContainers.back().rayID;
-                for (auto& info : infos)
-                {
-                    info.rayOrigin    = rayContainers.back().rayOrigin;
-                    info.rayDirection = rayContainers.back().rayDirection;
-                }
+                        const auto id = rayContainers.back().rayID;
+                        for (auto& info : pierceInput.intersectionInfo)
+                        {
+                            info.rayOrigin    = ray.origin;
+                            info.rayDirection = ray.direction;
+                        }
 
-                pierceInput = {infos};
+                        if (info.hit = !pierceInput.intersectionInfo.empty())
+                        {
+                            const auto pixel = pierceShaderPackage.shader->Shade(
+                                rayID, pierceInput, pierceShaderPackage.resources, newRays);
+                            SetPixel(buffer, rayID, pixel);
+                        }
+                    }
+                    break;
+                case RayType::Closest:
+                    if (hitShaderPackage.shader)
+                    {
+                        scene->IntersectFirst(info, ray);
+                        info.rayOrigin    = ray.origin;
+                        info.rayDirection = ray.direction;
 
-                info = GetFirstIntersection(infos);
-            }
-            else if (hitShaderPackage.shader)
-            {
-                scene->IntersectFirst(info, ray);
-            }
-            else
-            {
-                scene->IntersectAny(info, ray);
-            }
-            info.rayOrigin    = rayContainers.back().rayOrigin;
-            info.rayDirection = rayContainers.back().rayDirection;
+                        if (info.hit)
+                        {
+                            const HitShaderInput hitShaderInput = {&info};
+                            const auto           pixel          = hitShaderPackage.shader->Shade(
+                                rayID, hitShaderInput, hitShaderPackage.resources, newRays);
+                            SetPixel(buffer, rayID, pixel);
+                        }
+                    }
+                    break;
+                case RayType::Any:
+                    if (occlusionShaderPackage.shader)
+                    {
+                        scene->IntersectAny(info, ray);
+                        info.rayOrigin    = ray.origin;
+                        info.rayDirection = ray.direction;
 
-            if (info.hit)
-            {
-                if (pierceShaderPackage.shader)
-                {
-                    const auto pixel =
-                        pierceShaderPackage.shader->Shade(rayID, pierceInput, pierceShaderPackage.resources, newRays);
-                    SetPixel(buffer, rayID, pixel);
-                }
-                if (hitShaderPackage.shader)
-                {
-                    const HitShaderInput hitShaderInput = {&info};
-                    const auto           pixel =
-                        hitShaderPackage.shader->Shade(rayID, hitShaderInput, hitShaderPackage.resources, newRays);
-                    SetPixel(buffer, rayID, pixel);
-                }
-                if (occlusionShaderPackage.shader)
-                {
-                    const OcclusionShaderInput occlusionShaderInput = {ray.origin, ray.direction};
-                    const auto                 pixel                = occlusionShaderPackage.shader->Shade(
-                        rayID, occlusionShaderInput, occlusionShaderPackage.resources, newRays);
-                    SetPixel(buffer, rayID, pixel);
-                }
+                        if (info.hit)
+                        {
+                            const OcclusionShaderInput occlusionShaderInput = {ray.origin, ray.direction};
+                            const auto                 pixel                = occlusionShaderPackage.shader->Shade(
+                                rayID, occlusionShaderInput, occlusionShaderPackage.resources, newRays);
+                            SetPixel(buffer, rayID, pixel);
+                        }
+                    }
+                    break;
+                default:
+                    assert(false);
+                    break;
             }
-            else if (missShaderPackage.shader)
+            if (!info.hit && missShaderPackage.shader)
             {
                 const MissShaderInput missShaderInput = {ray.origin, ray.direction};
                 const auto            pixel =
@@ -154,4 +167,5 @@ void PipelineImplement::Run(std::vector<unsigned char>&     buffer,
             UpdateRayStack(rayContainers, rayID, newRays);
         }
     }
+    //);
 }

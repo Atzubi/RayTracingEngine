@@ -15,8 +15,16 @@ struct Vector2D
     float y;
 };
 
+enum class RayType
+{
+    Closest,
+    Pierce,
+    Any
+};
+
 struct GeneratorRay
 {
+    RayType  type;
     Vector3D rayOrigin;
     Vector3D rayDirection;
 };
@@ -70,6 +78,7 @@ struct TextureView
     std::string                 name;
     std::uint32_t               w;
     std::uint32_t               h;
+    std::uint32_t               bytesPerTexel;
     std::vector<unsigned char>* image;
 };
 

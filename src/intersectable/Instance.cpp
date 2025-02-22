@@ -7,28 +7,19 @@ namespace
 
     void ApplyTransformToBox(BoundingBox& aabb, const Matrix4x4& transform)
     {
-        Vector3D center = GetCenter(aabb);
+        const auto center = GetCenter(aabb);
 
         aabb.minCorner -= center;
         aabb.maxCorner -= center;
 
-        Vector3D frontBottomLeft  = aabb.minCorner;
-        Vector3D frontBottomRight = {aabb.maxCorner.x, aabb.minCorner.y, aabb.minCorner.z};
-        Vector3D frontTopLeft     = {aabb.minCorner.x, aabb.maxCorner.y, aabb.minCorner.z};
-        Vector3D frontTopRight    = {aabb.maxCorner.x, aabb.maxCorner.y, aabb.minCorner.z};
-        Vector3D backBottomLeft   = {aabb.minCorner.x, aabb.minCorner.y, aabb.maxCorner.z};
-        Vector3D backBottomRight  = {aabb.maxCorner.x, aabb.minCorner.y, aabb.maxCorner.z};
-        Vector3D backTopLeft      = {aabb.minCorner.x, aabb.maxCorner.y, aabb.maxCorner.z};
-        Vector3D backTopRight     = aabb.maxCorner;
-
-        frontBottomLeft  = transform * frontBottomLeft;
-        frontBottomRight = transform * frontBottomRight;
-        frontTopLeft     = transform * frontTopLeft;
-        frontTopRight    = transform * frontTopRight;
-        backBottomLeft   = transform * backBottomLeft;
-        backBottomRight  = transform * backBottomRight;
-        backTopLeft      = transform * backTopLeft;
-        backTopRight     = transform * backTopRight;
+        const auto frontBottomLeft  = transform * aabb.minCorner;
+        const auto frontBottomRight = transform * Vector3D{aabb.maxCorner.x, aabb.minCorner.y, aabb.minCorner.z};
+        const auto frontTopLeft     = transform * Vector3D{aabb.minCorner.x, aabb.maxCorner.y, aabb.minCorner.z};
+        const auto frontTopRight    = transform * Vector3D{aabb.maxCorner.x, aabb.maxCorner.y, aabb.minCorner.z};
+        const auto backBottomLeft   = transform * Vector3D{aabb.minCorner.x, aabb.minCorner.y, aabb.maxCorner.z};
+        const auto backBottomRight  = transform * Vector3D{aabb.maxCorner.x, aabb.minCorner.y, aabb.maxCorner.z};
+        const auto backTopLeft      = transform * Vector3D{aabb.minCorner.x, aabb.maxCorner.y, aabb.maxCorner.z};
+        const auto backTopRight     = transform * aabb.maxCorner;
 
         for (int i = 0; i < 3; ++i)
         {
@@ -69,27 +60,20 @@ namespace
 
     inline Ray CreateTransformedRay(const Ray& ray, const Matrix4x4& inverseTransform, const Vector3D& originalMid)
     {
-        Ray newRay = ray;
-        newRay.origin -= originalMid;
-        newRay.direction += newRay.origin;
+        auto transformedDirection = inverseTransform.MultiplyTransform(ray.direction);
+        transformedDirection.Normalize();
 
-        newRay.origin    = inverseTransform * newRay.origin;
-        newRay.direction = inverseTransform * newRay.direction;
-
-        newRay.direction -= newRay.origin;
-        newRay.direction.Normalize();
-
-        newRay.dirfrac = newRay.direction.GetInverse();
-
-        newRay.origin += originalMid;
-        return newRay;
+        return {inverseTransform * (ray.origin - originalMid) + originalMid,
+                transformedDirection,
+                transformedDirection.GetInverse()};
     }
 
-    inline void ReverseTransformHit(IntersectionInfo& info, const Ray& ray, const Matrix4x4& transform)
+    inline void
+    ReverseTransformHit(IntersectionInfo& info, const Ray& ray, const Matrix4x4& transform, const Vector3D& originalMid)
     {
-        const auto pos = info.position;
-        info.position  = transform * pos;
-        info.normal    = transform * (info.normal + pos) - info.position;
+        const auto pos = info.position - originalMid;
+        info.position  = transform * pos + originalMid;
+        info.normal    = transform.MultiplyTransform(info.normal);
         info.normal.Normalize();
         info.distance = (ray.origin - info.position).GetLength();
     }
@@ -107,7 +91,8 @@ Instance::Instance(const IIntersectable* intersectible, std::function<void()> fe
 void Instance::ApplyTransform(const Matrix4x4& newTransform)
 {
     boundingBox_ = intersectible_->GetBoundaries();
-    transform_.MultiplyBy(newTransform);
+    transform_   = newTransform * transform_;
+    // transform_.MultiplyBy(newTransform);
     inverseTransform_ = transform_.GetInverse();
     ApplyTransformToBox(boundingBox_, transform_);
 }
@@ -122,7 +107,7 @@ bool Instance::IntersectFirst(IntersectionInfo& intersectionInfo, const Ray& ray
     if (!intersectible_->IntersectFirst(info, newRay))
         return false;
 
-    ReverseTransformHit(info, ray, transform_);
+    ReverseTransformHit(info, ray, transform_, GetCenter(intersectible_->GetBoundaries()));
     if (info.distance >= intersectionInfo.distance)
         return false;
 
@@ -137,7 +122,7 @@ bool Instance::IntersectAny(IntersectionInfo& intersectionInfo, const Ray& ray) 
     IntersectionInfo info{false, std::numeric_limits<float>::max()};
     if (!intersectible_->IntersectAny(info, newRay))
         return false;
-    ReverseTransformHit(info, ray, transform_);
+    ReverseTransformHit(info, ray, transform_, GetCenter(intersectible_->GetBoundaries()));
     intersectionInfo = info;
     return true;
 }
@@ -151,7 +136,7 @@ bool Instance::IntersectAll(std::vector<IntersectionInfo>& intersectionInfo, con
         return false;
     for (auto& info : infos)
     {
-        ReverseTransformHit(info, ray, transform_);
+        ReverseTransformHit(info, ray, transform_, GetCenter(intersectible_->GetBoundaries()));
         intersectionInfo.push_back(std::move(info));
     }
     return true;

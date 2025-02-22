@@ -367,19 +367,17 @@ bool DBVH::GetPossibleRotations(const std::uint32_t node, const std::span<float>
 
 void DBVH::SwapLeftLeftToRight(const std::uint32_t node, const Rotations& rotations, const std::span<const float> SAHs)
 {
-    auto&      n                       = flatTree_[node];
-    const auto isLeafRight             = IsLeafRight(n);
-    const auto buffer                  = n.rightChild;
-    n.rightChild                       = flatTree_[n.leftChild].leftChild;
-    const auto isLeafLeftLeft          = IsLeafLeft(flatTree_[n.leftChild]);
-    n.maxDepthRight                    = isLeafLeftLeft
-                                             ? 1
-                                             : (std::max(flatTree_[n.rightChild].maxDepthLeft, flatTree_[n.rightChild].maxDepthRight) + 1);
-    flatTree_[n.leftChild].boundingBox = rotations.swapLeftLeftToRight;
-    flatTree_[n.leftChild].maxDepthLeft =
-        isLeafRight ? 1 : (std::max(flatTree_[buffer].maxDepthLeft, flatTree_[buffer].maxDepthRight) + 1);
-    flatTree_[n.leftChild].leftChild = buffer;
-    nodeMetadata_[node].surfaceArea  = SAHs[Rotation::SwapLeftLeftToRight];
+    auto&      n                        = flatTree_[node];
+    const auto isLeafRight              = IsLeafRight(n);
+    const auto childBuffer              = n.rightChild;
+    const auto depthRight               = n.maxDepthRight;
+    const auto isLeafLeftLeft           = IsLeafLeft(flatTree_[n.leftChild]);
+    n.rightChild                        = flatTree_[n.leftChild].leftChild;
+    n.maxDepthRight                     = flatTree_[n.leftChild].maxDepthLeft;
+    flatTree_[n.leftChild].boundingBox  = rotations.swapLeftLeftToRight;
+    flatTree_[n.leftChild].maxDepthLeft = depthRight;
+    flatTree_[n.leftChild].leftChild    = childBuffer;
+    nodeMetadata_[node].surfaceArea     = SAHs[Rotation::SwapLeftLeftToRight];
     nodeMetadata_[flatTree_[node].leftChild].surfaceArea =
         rotations.right.sa + rotations.leftRight.sa + rotations.swapLeftLeftToRight.GetSA();
     if (isLeafLeftLeft)
@@ -387,25 +385,24 @@ void DBVH::SwapLeftLeftToRight(const std::uint32_t node, const Rotations& rotati
     else
         nodeMetadata_[n.rightChild].parent = node;
     if (isLeafRight)
-        leafMetadata_[buffer].parent = n.leftChild;
+        leafMetadata_[childBuffer].parent = n.leftChild;
     else
-        nodeMetadata_[buffer].parent = n.leftChild;
+        nodeMetadata_[childBuffer].parent = n.leftChild;
 }
 
 void DBVH::SwapLeftRightToRight(const std::uint32_t node, const Rotations& rotations, const std::span<const float> SAHs)
 {
-    auto&      n               = flatTree_[node];
-    const auto isLeafRight     = IsLeafRight(n);
-    const auto buffer          = n.rightChild;
-    n.rightChild               = flatTree_[n.leftChild].rightChild;
-    const auto isLeafLeftRight = IsLeafRight(flatTree_[n.leftChild]);
-    n.maxDepthRight =
-        isLeafLeftRight ? 1 : std::max(flatTree_[n.rightChild].maxDepthLeft, flatTree_[n.rightChild].maxDepthRight) + 1;
-    flatTree_[n.leftChild].boundingBox = rotations.swapLeftRightToRight;
-    flatTree_[n.leftChild].maxDepthRight =
-        isLeafRight ? 1 : (std::max(flatTree_[buffer].maxDepthLeft, flatTree_[buffer].maxDepthRight) + 1);
-    flatTree_[n.leftChild].rightChild = buffer;
-    nodeMetadata_[node].surfaceArea   = SAHs[Rotation::SwapLeftRightToRight];
+    auto&      n                         = flatTree_[node];
+    const auto isLeafRight               = IsLeafRight(n);
+    const auto buffer                    = n.rightChild;
+    const auto depthRight                = n.maxDepthRight;
+    const auto isLeafLeftRight           = IsLeafRight(flatTree_[n.leftChild]);
+    n.rightChild                         = flatTree_[n.leftChild].rightChild;
+    n.maxDepthRight                      = flatTree_[n.leftChild].maxDepthRight;
+    flatTree_[n.leftChild].boundingBox   = rotations.swapLeftRightToRight;
+    flatTree_[n.leftChild].maxDepthRight = depthRight;
+    flatTree_[n.leftChild].rightChild    = buffer;
+    nodeMetadata_[node].surfaceArea      = SAHs[Rotation::SwapLeftRightToRight];
     nodeMetadata_[flatTree_[node].leftChild].surfaceArea =
         rotations.right.sa + rotations.leftLeft.sa + rotations.swapLeftRightToRight.GetSA();
     if (isLeafLeftRight)
@@ -420,18 +417,17 @@ void DBVH::SwapLeftRightToRight(const std::uint32_t node, const Rotations& rotat
 
 void DBVH::SwapRightLeftToLeft(const std::uint32_t node, const Rotations& rotations, const std::span<const float> SAHs)
 {
-    auto&      n               = flatTree_[node];
-    const auto isLeafLeft      = IsLeafLeft(n);
-    const auto buffer          = n.leftChild;
-    n.leftChild                = flatTree_[n.rightChild].leftChild;
-    const auto isLeafRightLeft = IsLeafLeft(flatTree_[n.rightChild]);
-    n.maxDepthLeft =
-        isLeafRightLeft ? 1 : (std::max(flatTree_[n.leftChild].maxDepthLeft, flatTree_[n.leftChild].maxDepthRight) + 1);
-    flatTree_[n.rightChild].boundingBox = rotations.swapRightLeftToLeft;
-    flatTree_[n.rightChild].maxDepthLeft =
-        isLeafLeft ? 1 : (std::max(flatTree_[buffer].maxDepthLeft, flatTree_[buffer].maxDepthRight) + 1);
-    flatTree_[n.rightChild].leftChild = buffer;
-    nodeMetadata_[node].surfaceArea   = SAHs[Rotation::SwapRightLeftToLeft];
+    auto&      n                         = flatTree_[node];
+    const auto isLeafLeft                = IsLeafLeft(n);
+    const auto buffer                    = n.leftChild;
+    const auto depthLeft                 = n.maxDepthLeft;
+    const auto isLeafRightLeft           = IsLeafLeft(flatTree_[n.rightChild]);
+    n.leftChild                          = flatTree_[n.rightChild].leftChild;
+    n.maxDepthLeft                       = flatTree_[n.rightChild].maxDepthLeft;
+    flatTree_[n.rightChild].boundingBox  = rotations.swapRightLeftToLeft;
+    flatTree_[n.rightChild].maxDepthLeft = depthLeft;
+    flatTree_[n.rightChild].leftChild    = buffer;
+    nodeMetadata_[node].surfaceArea      = SAHs[Rotation::SwapRightLeftToLeft];
     nodeMetadata_[flatTree_[node].rightChild].surfaceArea =
         rotations.left.sa + rotations.rightRight.sa + rotations.swapRightLeftToLeft.GetSA();
     if (isLeafRightLeft)
@@ -446,19 +442,17 @@ void DBVH::SwapRightLeftToLeft(const std::uint32_t node, const Rotations& rotati
 
 void DBVH::SwapRightRightToLeft(const std::uint32_t node, const Rotations& rotations, const std::span<const float> SAHs)
 {
-    auto&      n                        = flatTree_[node];
-    const auto isLeafLeft               = IsLeafLeft(n);
-    const auto buffer                   = n.leftChild;
-    n.leftChild                         = flatTree_[n.rightChild].rightChild;
-    const auto isLeafRightRight         = IsLeafRight(flatTree_[n.rightChild]);
-    n.maxDepthLeft                      = isLeafRightRight
-                                              ? 1
-                                              : (std::max(flatTree_[n.leftChild].maxDepthLeft, flatTree_[n.leftChild].maxDepthRight) + 1);
-    flatTree_[n.rightChild].boundingBox = rotations.swapRightRightToLeft;
-    flatTree_[n.rightChild].maxDepthRight =
-        isLeafLeft ? 1 : (std::max(flatTree_[buffer].maxDepthLeft, flatTree_[buffer].maxDepthRight) + 1);
-    flatTree_[n.rightChild].rightChild = buffer;
-    nodeMetadata_[node].surfaceArea    = SAHs[Rotation::SwapRightRightToLeft];
+    auto&      n                          = flatTree_[node];
+    const auto isLeafLeft                 = IsLeafLeft(n);
+    const auto buffer                     = n.leftChild;
+    const auto depthLeft                  = n.maxDepthLeft;
+    const auto isLeafRightRight           = IsLeafRight(flatTree_[n.rightChild]);
+    n.leftChild                           = flatTree_[n.rightChild].rightChild;
+    n.maxDepthLeft                        = flatTree_[n.rightChild].maxDepthRight;
+    flatTree_[n.rightChild].boundingBox   = rotations.swapRightRightToLeft;
+    flatTree_[n.rightChild].maxDepthRight = depthLeft;
+    flatTree_[n.rightChild].rightChild    = buffer;
+    nodeMetadata_[node].surfaceArea       = SAHs[Rotation::SwapRightRightToLeft];
     nodeMetadata_[flatTree_[node].rightChild].surfaceArea =
         rotations.left.sa + rotations.rightLeft.sa + rotations.swapRightRightToLeft.GetSA();
     if (isLeafRightRight)
@@ -544,110 +538,145 @@ void DBVH::Refit(const std::uint32_t node)
 
 void DBVH::RemoveNode(const std::uint32_t node)
 {
-    flatTree_[node] = flatTree_.back();
-
-    auto& parentOfMoved = flatTree_[nodeMetadata_.back().parent];
-    if (IsNodeLeft(parentOfMoved) && (parentOfMoved.leftChild == (flatTree_.size() - 1)))
+    if (node != (flatTree_.size() - 1))
     {
-        parentOfMoved.leftChild = node;
-    }
-    else
-    {
-        parentOfMoved.rightChild = node;
+        flatTree_[node]     = flatTree_.back();
+        auto& parentOfMoved = flatTree_[nodeMetadata_.back().parent];
+        if (IsNodeLeft(parentOfMoved) && (parentOfMoved.leftChild == (flatTree_.size() - 1)))
+        {
+            parentOfMoved.leftChild = node;
+        }
+        else
+        {
+            parentOfMoved.rightChild = node;
+        }
+        nodeMetadata_[node] = nodeMetadata_.back();
     }
     flatTree_.pop_back();
-    nodeMetadata_[node] = nodeMetadata_.back();
     nodeMetadata_.pop_back();
 }
 
 void DBVH::RemoveLeaf(const std::uint32_t leaf)
 {
-    leaves_[leaf] = leaves_.back();
-    auto& parent  = flatTree_[leafMetadata_.back().parent];
-    if (IsLeafLeft(parent) && (parent.leftChild == (leaves_.size() - 1)))
+    if (leaf != (leaves_.size() - 1))
     {
-        parent.leftChild = leaf;
-    }
-    else
-    {
-        parent.rightChild = leaf;
+        leaves_[leaf] = leaves_.back();
+        auto& parent  = flatTree_[leafMetadata_.back().parent];
+        if (IsLeafLeft(parent) && (parent.leftChild == (leaves_.size() - 1)))
+        {
+            parent.leftChild = leaf;
+        }
+        else
+        {
+            parent.rightChild = leaf;
+        }
+        leafMetadata_[leaf] = leafMetadata_.back();
     }
     leaves_.pop_back();
-    leafMetadata_[leaf] = leafMetadata_.back();
     leafMetadata_.pop_back();
 }
 
-bool DBVH::RemoveRightLeaf(const std::uint32_t currentNode, const IIntersectable& object)
+bool DBVH::RemoveRightLeaf(const std::uint32_t   currentNode,
+                           const IIntersectable& object,
+                           std::uint32_t&        rLeaf,
+                           std::uint32_t&        rNode)
 {
     auto& n = flatTree_[currentNode];
     if (IsLeafRight(n))
-        return true;
+        return false;
     const auto& child = flatTree_[n.rightChild];
     if (!Contains(child.boundingBox, object.GetBoundaries()))
         return false;
 
     bool removed = false;
-    if (IsLeafLeft(child) && (*leaves_[child.leftChild] == object))
+    if (removed = (IsLeafLeft(child) && (*leaves_[child.leftChild] == object)))
     {
-        RemoveLeaf(child.leftChild);
+        rLeaf        = child.leftChild;
+        rNode        = n.rightChild;
         n.rightChild = child.rightChild;
-        Refit(currentNode);
     }
-    if (!removed && IsLeafRight(child) && (*leaves_[child.rightChild] == object))
+    else if (removed = (IsLeafRight(child) && (*leaves_[child.rightChild] == object)))
     {
-        RemoveLeaf(child.rightChild);
+        rLeaf        = child.rightChild;
+        rNode        = n.rightChild;
         n.rightChild = child.leftChild;
-        Refit(currentNode);
     }
     if (removed)
     {
-        RemoveNode(n.rightChild);
+        --n.maxDepthRight;
+        if (IsLeafRight(n))
+        {
+            leafMetadata_[n.rightChild].parent = currentNode;
+        }
+        else
+        {
+            nodeMetadata_[n.rightChild].parent = currentNode;
+        }
+        Refit(currentNode);
     }
     return removed;
 }
 
-bool DBVH::RemoveLeftLeaf(const std::uint32_t currentNode, const IIntersectable& object)
+bool DBVH::RemoveLeftLeaf(const std::uint32_t   currentNode,
+                          const IIntersectable& object,
+                          std::uint32_t&        rLeaf,
+                          std::uint32_t&        rNode)
 {
     auto& n = flatTree_[currentNode];
     if (IsLeafLeft(n))
-        return true;
+        return false;
     const auto& child = flatTree_[n.leftChild];
     if (!Contains(child.boundingBox, object.GetBoundaries()))
         return false;
 
-    bool removed = true;
-    if (IsLeafLeft(child) && (*leaves_[child.leftChild] == object))
+    bool removed = false;
+    if (removed = (IsLeafLeft(child) && (*leaves_[child.leftChild] == object)))
     {
-        RemoveLeaf(child.leftChild);
+        rLeaf       = child.leftChild;
+        rNode       = n.leftChild;
         n.leftChild = child.rightChild;
-        Refit(currentNode);
     }
-    if (!removed && IsLeafRight(child) && (*leaves_[child.rightChild] == object))
+    else if (removed = (IsLeafRight(child) && (*leaves_[child.rightChild] == object)))
     {
-        RemoveLeaf(child.rightChild);
+        rLeaf       = child.rightChild;
+        rNode       = n.leftChild;
         n.leftChild = child.leftChild;
-        Refit(currentNode);
     }
     if (removed)
     {
-        RemoveNode(n.leftChild);
+        --n.maxDepthLeft;
+        if (IsLeafLeft(n))
+        {
+            leafMetadata_[n.leftChild].parent = currentNode;
+        }
+        else
+        {
+            nodeMetadata_[n.leftChild].parent = currentNode;
+        }
+        Refit(currentNode);
     }
     return removed;
 }
 
-void DBVH::Remove(const std::uint32_t currentNode, const IIntersectable& object)
+bool DBVH::Remove(const std::uint32_t   currentNode,
+                  const IIntersectable& object,
+                  std::uint32_t&        rLeaf,
+                  std::uint32_t&        rNode)
 {
     // find object in tree by insertion
     // remove object and refit nodes going the tree back up
     if (!Contains(flatTree_[currentNode].boundingBox, object.GetBoundaries()))
-        return;
-    if (RemoveLeftLeaf(currentNode, object) || RemoveRightLeaf(currentNode, object))
-        return;
-    Remove(flatTree_[currentNode].leftChild, object);
-    Remove(flatTree_[currentNode].rightChild, object);
-
-    Refit(currentNode);
-    OptimizeSAH(currentNode);
+        return false;
+    if (RemoveLeftLeaf(currentNode, object, rLeaf, rNode) || RemoveRightLeaf(currentNode, object, rLeaf, rNode))
+        return true;
+    if ((IsNodeLeft(flatTree_[currentNode]) && Remove(flatTree_[currentNode].leftChild, object, rLeaf, rNode)) ||
+        (IsNodeRight(flatTree_[currentNode]) && Remove(flatTree_[currentNode].rightChild, object, rLeaf, rNode)))
+    {
+        Refit(currentNode);
+        OptimizeSAH(currentNode);
+        return true;
+    }
+    return false;
 }
 
 bool DBVH::RemoveSpecialCases(const IIntersectable& object)
@@ -676,6 +705,14 @@ bool DBVH::RemoveSpecialCases(const IIntersectable& object)
             const auto toBeRemoved       = flatTree_[0].rightChild;
             flatTree_[0]                 = flatTree_[toBeRemoved];
             nodeMetadata_[0].surfaceArea = nodeMetadata_[toBeRemoved].surfaceArea;
+            if (IsLeafLeft(flatTree_[0]))
+                leafMetadata_[flatTree_[0].leftChild].parent = 0;
+            else
+                nodeMetadata_[flatTree_[0].leftChild].parent = 0;
+            if (IsLeafRight(flatTree_[0]))
+                leafMetadata_[flatTree_[0].rightChild].parent = 0;
+            else
+                nodeMetadata_[flatTree_[0].rightChild].parent = 0;
             RemoveNode(toBeRemoved);
         }
         return true;
@@ -695,6 +732,14 @@ bool DBVH::RemoveSpecialCases(const IIntersectable& object)
             const auto toBeRemoved       = flatTree_[0].leftChild;
             flatTree_[0]                 = flatTree_[toBeRemoved];
             nodeMetadata_[0].surfaceArea = nodeMetadata_[toBeRemoved].surfaceArea;
+            if (IsLeafLeft(flatTree_[0]))
+                leafMetadata_[flatTree_[0].leftChild].parent = 0;
+            else
+                nodeMetadata_[flatTree_[0].leftChild].parent = 0;
+            if (IsLeafRight(flatTree_[0]))
+                leafMetadata_[flatTree_[0].rightChild].parent = 0;
+            else
+                nodeMetadata_[flatTree_[0].rightChild].parent = 0;
             RemoveNode(toBeRemoved);
         }
         return true;
@@ -960,9 +1005,9 @@ void DBVH::Add(const std::uint32_t currentNode, const std::vector<const IInterse
             parent.maxDepthRight             = 1;
             flatTree_[currentNode].leftChild = flatTree_.size();
             flatTree_.push_back(std::move(parent));
+            nodeMetadata_.emplace_back(currentNode, 0.f);
             Refit(flatTree_[currentNode].leftChild);
             flatTree_[currentNode].maxDepthLeft = 2;
-            nodeMetadata_.emplace_back(currentNode, 0.f);
         }
     }
     else if (!leftObjects.empty())
@@ -1012,9 +1057,9 @@ void DBVH::Add(const std::uint32_t currentNode, const std::vector<const IInterse
             parent.maxDepthRight              = 1;
             flatTree_[currentNode].rightChild = flatTree_.size();
             flatTree_.push_back(std::move(parent));
+            nodeMetadata_.emplace_back(currentNode, 0.f);
             Refit(flatTree_[currentNode].rightChild);
             flatTree_[currentNode].maxDepthRight = 2;
-            nodeMetadata_.emplace_back(currentNode, 0.f);
         }
     }
     else if (!rightObjects.empty())
@@ -1110,9 +1155,13 @@ void DBVH::RemoveObjects(const std::vector<const IIntersectable*>& objects)
     {
         if (IsEmpty(flatTree_[0]))
             return;
-        if (!RemoveSpecialCases(*object))
+        if (RemoveSpecialCases(*object))
+            return;
+        std::uint32_t rLeaf, rNode;
+        if (Remove(0, *object, rLeaf, rNode))
         {
-            Remove(0, *object);
+            RemoveLeaf(rLeaf);
+            RemoveNode(rNode);
         }
     }
 }
@@ -1125,11 +1174,12 @@ bool DBVH::IntersectFirst(IntersectionInfo& intersectionInfo, const Ray& ray) co
         return leaves_[flatTree_[0].leftChild]->IntersectFirst(intersectionInfo, ray);
 
     thread_local std::vector<std::uint32_t> stack;
+    const auto                              stackStart = stack.size();
     stack.push_back(0);
 
     bool hit = false;
 
-    while (!stack.empty())
+    while (stack.size() != stackStart)
     {
         const auto& currentNode = flatTree_[stack.back()];
         stack.pop_back();
@@ -1152,6 +1202,9 @@ bool DBVH::IntersectFirst(IntersectionInfo& intersectionInfo, const Ray& ray) co
                                    distance) &&
                 distance < intersectionInfo.distance)
             {
+                if (currentNode.rightChild == 1)
+                    volatile int i = 0;
+
                 stack.push_back(currentNode.rightChild);
             }
         }
@@ -1174,9 +1227,13 @@ bool DBVH::IntersectFirst(IntersectionInfo& intersectionInfo, const Ray& ray) co
                                    distance) &&
                 distance < intersectionInfo.distance)
             {
+                if (currentNode.rightChild == 1)
+                    volatile int i = 0;
+
                 stack.push_back(currentNode.leftChild);
             }
         }
+        const auto test = stack.size();
     }
 
     return hit;

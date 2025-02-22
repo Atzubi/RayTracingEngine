@@ -4,22 +4,9 @@ find_package(SFML 2 COMPONENTS graphics REQUIRED)
 
 target_link_libraries(MinimalExample RayTraceEngine sfml-graphics)
 include_directories(${SFML_INCLUDE_DIR})
-
-add_custom_command(TARGET MinimalExample POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        "${CMAKE_CURRENT_SOURCE_DIR}/Data/"
-        "$<TARGET_FILE_DIR:MinimalExample>/Data"
-        COMMENT "Copying data..."
-        )
+target_include_directories(MinimalExample PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/..")
 
 if (WIN32)
-    add_custom_command(TARGET MinimalExample POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        "${CMAKE_CURRENT_SOURCE_DIR}/Data/"
-        "${CMAKE_CURRENT_BINARY_DIR}/Data"
-        COMMENT "Copying data..."
-        )
-
     add_custom_command(TARGET MinimalExample POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             $<TARGET_FILE:RayTraceEngine>

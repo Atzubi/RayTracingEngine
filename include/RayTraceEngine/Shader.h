@@ -225,12 +225,19 @@ struct ShaderResourceDescription
 class ShaderResourceHandle
 {
   public:
+    template <typename T> T& Map() { return *reinterpret_cast<T*>(MapImpl()); }
+
+    template <typename T> const T& Map() const { return *reinterpret_cast<T*>(MapImpl()); }
+
     virtual ~ShaderResourceHandle() = default;
+
+  private:
+    virtual void* MapImpl() = 0;
 };
 
 struct GeneratorShaderDescription
 {
-    IRayGeneratorShader* generatorShader;
+    const IRayGeneratorShader* generatorShader;
 };
 
 class GeneratorShaderHandle
@@ -241,7 +248,7 @@ class GeneratorShaderHandle
 
 struct HitShaderDescription
 {
-    IHitShader* hitShader;
+    const IHitShader* hitShader;
 };
 
 class HitShaderHandle
@@ -252,7 +259,7 @@ class HitShaderHandle
 
 struct PierceShaderDescription
 {
-    IPierceShader* pierceShader;
+    const IPierceShader* pierceShader;
 };
 
 class PierceShaderHandle
@@ -263,7 +270,7 @@ class PierceShaderHandle
 
 struct OcclusionShaderDescription
 {
-    IOcclusionShader* occlusionShader;
+    const IOcclusionShader* occlusionShader;
 };
 
 class OcclusionShaderHandle
@@ -274,7 +281,7 @@ class OcclusionShaderHandle
 
 struct MissShaderDescription
 {
-    IMissShader* missShader;
+    const IMissShader* missShader;
 };
 
 class MissShaderHandle

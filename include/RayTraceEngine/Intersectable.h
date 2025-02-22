@@ -20,7 +20,7 @@
 struct IntersectionInfo
 {
     bool            hit;
-    double          distance;
+    float           distance;
     Vector3D        rayOrigin;
     Vector3D        rayDirection;
     Vector3D        normal;

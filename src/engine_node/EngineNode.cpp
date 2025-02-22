@@ -42,14 +42,22 @@ RayEngine::EngineNode::CreateIntersectableObject(const IntersectableObjectDescri
 class InstanceH : public InstanceHandle, public HandleBase<IIntersectable>
 {
   public:
-    InstanceH(std::function<void(const IIntersectable*)> deleterCallback, IIntersectable* handle)
-        : HandleBase(std::move(deleterCallback), handle)
+    InstanceH(std::function<void(const IIntersectable*)> deleterCallback, IIntersectable* handle, DBVH* reference)
+        : HandleBase(std::move(deleterCallback), handle), reference_(reference)
     {
     }
 
-    void Transform(const Matrix4x4& transform) override { dynamic_cast<Instance*>(handle_)->ApplyTransform(transform); }
+    void Transform(const Matrix4x4& transform) override
+    {
+        reference_->RemoveObjects({handle_});
+        dynamic_cast<Instance*>(handle_)->ApplyTransform(transform);
+        reference_->AddObjects({handle_});
+    }
 
     Matrix4x4 GetTransform() const override { return dynamic_cast<Instance*>(handle_)->GetTransform(); }
+
+  private:
+    DBVH* reference_;
 };
 
 class SceneH : public SceneHandle, public HandleBase<IIntersectable>
@@ -72,6 +80,7 @@ class SceneH : public SceneHandle, public HandleBase<IIntersectable>
 
 std::unique_ptr<SceneHandle> RayEngine::EngineNode::CreateScene(const SceneDescription& desc)
 {
+    auto                                         sceneBvh = std::make_unique<DBVH>();
     std::vector<const IIntersectable*>           instances;
     std::vector<std::unique_ptr<InstanceHandle>> instanceHandles;
     for (const auto& intersectablePack : desc.intersectables)
@@ -87,10 +96,11 @@ std::unique_ptr<SceneHandle> RayEngine::EngineNode::CreateScene(const SceneDescr
         instances.push_back(it->get());
 
         instanceHandles.push_back(std::make_unique<InstanceH>(
-            [this](const IIntersectable* inters) { DeleteIntersectable(inters); }, it->get()));
+            [this](const IIntersectable* inters) { DeleteIntersectable(inters); }, it->get(), sceneBvh.get()));
     }
 
-    const auto [it, success] = intersectables_.insert(std::make_unique<DBVH>(instances));
+    sceneBvh->AddObjects(instances);
+    const auto [it, success] = intersectables_.insert(std::move(sceneBvh));
     if (!success)
         throw std::runtime_error("Tried to create duplicate intersectable.");
 
@@ -109,6 +119,9 @@ class ShaderResourceH : public ShaderResourceHandle, public HandleBase<IShaderRe
 
     const IShaderResource* Get() const { return handle_; }
     IShaderResource*       Get() { return handle_; }
+
+  private:
+    void* MapImpl() override { return handle_; }
 };
 
 std::unique_ptr<ShaderResourceHandle> RayEngine::EngineNode::CreateShaderResource(const ShaderResourceDescription& desc)
@@ -223,8 +236,10 @@ class RenderTargetH : public RenderTargetHandle, public HandleBase<std::vector<u
     RenderTargetH(std::function<void(const std::vector<unsigned char>*)> deleterCallback,
                   std::vector<unsigned char>*                            handle,
                   const std::uint32_t                                    width,
-                  const std::uint32_t                                    height)
-        : HandleBase(std::move(deleterCallback), handle), texture_({"Render Target", width, height, handle})
+                  const std::uint32_t                                    height,
+                  const std::uint32_t                                    bytesPerTexel)
+        : HandleBase(std::move(deleterCallback), handle),
+          texture_({"Render Target", width, height, bytesPerTexel, handle})
     {
     }
 
@@ -239,14 +254,15 @@ class RenderTargetH : public RenderTargetHandle, public HandleBase<std::vector<u
 std::unique_ptr<RenderTargetHandle> RayEngine::EngineNode::CreateRenderTarget(const RenderTargetDescription& desc)
 {
     const auto [it, success] = renderTargets_.insert(
-        std::make_unique<std::vector<unsigned char>>(desc.width * desc.height * 3)); // * 3 for RGB
+        std::make_unique<std::vector<unsigned char>>(desc.width * desc.height * desc.bytesPerTexel));
     if (!success)
         throw std::runtime_error("Tried to create duplicate intersectable.");
     return std::make_unique<RenderTargetH>([this](const std::vector<unsigned char>* renderTarget)
                                            { DeleteRenderTarget(renderTarget); },
                                            it->get(),
                                            desc.width,
-                                           desc.height);
+                                           desc.height,
+                                           desc.bytesPerTexel);
 }
 
 class PipelineH : public PipelineHandle
