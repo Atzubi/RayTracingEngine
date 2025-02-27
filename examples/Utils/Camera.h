@@ -65,6 +65,8 @@ class Camera
                                    refDir_.y + pitch,
                                    refDir_.x * sinf(jaw) + refDir_.z * cosf(jaw)};
             cam.cameraDirection.Normalize();
+            right = worldUp.Cross(cam.cameraDirection);
+            right.Normalize();
             cam.cameraUp = cam.cameraDirection.Cross(right);
             cam.cameraUp.Normalize();
         }

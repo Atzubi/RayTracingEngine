@@ -46,8 +46,9 @@ struct MissShaderResourceP
 class PipelineImplement
 {
   public:
-    static void Run(std::vector<unsigned char>&     buffer,
-                    const TextureView&              texture,
+    static void Run(std::vector<Vector3D>&          buffer,
+                    const std::uint32_t             width,
+                    const std::uint32_t             height,
                     const IIntersectable*           scene,
                     const GeneratorShaderResourceP& generatorShaderPackage,
                     const HitShaderResourceP&       hitShaderPackage,

@@ -24,9 +24,10 @@ enum class RayType
 
 struct GeneratorRay
 {
-    RayType  type;
-    Vector3D rayOrigin;
-    Vector3D rayDirection;
+    RayType       type;
+    std::uint64_t id;
+    Vector3D      rayOrigin;
+    Vector3D      rayDirection;
 };
 
 /**
@@ -68,18 +69,25 @@ struct BoundingBox
 
 /**
  * Container for storing an image/texture.
- * name:    The name of the texture.
- * w:       The horizontal resolution of the texture.
- * h:       The vertical resolution of the texture.
- * image:   Byte sized rgb values. Every 3 chars define the color of pixel.
+ * name:            The name of the texture.
+ * w:               The horizontal resolution of the texture.
+ * h:               The vertical resolution of the texture.
+ * bytesPerTexel:   Amount of bytes per texel.
+ * image:           Raw color values.
  */
-struct TextureView
+struct Texture
 {
-    std::string                 name;
-    std::uint32_t               w;
-    std::uint32_t               h;
-    std::uint32_t               bytesPerTexel;
-    std::vector<unsigned char>* image;
+    std::string               name;
+    std::uint32_t             w;
+    std::uint32_t             h;
+    std::uint32_t             bytesPerTexel;
+    std::vector<std::uint8_t> image;
+};
+
+enum class TextureFormat
+{
+    RGB,
+    RGBA
 };
 
 /**
@@ -104,17 +112,17 @@ struct Material
     // Illumination
     int illum;
     // Ambient Texture Map
-    TextureView map_Ka;
+    Texture* map_Ka;
     // Diffuse Texture Map
-    TextureView map_Kd;
+    Texture* map_Kd;
     // Specular Texture Map
-    TextureView map_Ks;
+    Texture* map_Ks;
     // Specular Hightlight Map
-    TextureView map_Ns;
+    Texture* map_Ns;
     // Alpha Texture Map
-    TextureView map_d;
+    Texture* map_d;
     // Bump Map
-    TextureView map_bump;
+    Texture* map_bump;
 };
 
 /**

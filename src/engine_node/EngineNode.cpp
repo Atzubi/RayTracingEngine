@@ -231,39 +231,69 @@ std::unique_ptr<MissShaderHandle> RayEngine::EngineNode::CreateShader(const Miss
     return std::make_unique<MissShaderH>([this](const IMissShader* shader) { DeleteShader(shader); }, it->get());
 }
 
-class RenderTargetH : public RenderTargetHandle, public HandleBase<std::vector<unsigned char>>
+class RenderTargetH : public RenderTargetHandle, public HandleBase<std::vector<Vector3D>>
 {
   public:
-    RenderTargetH(std::function<void(const std::vector<unsigned char>*)> deleterCallback,
-                  std::vector<unsigned char>*                            handle,
-                  const std::uint32_t                                    width,
-                  const std::uint32_t                                    height,
-                  const std::uint32_t                                    bytesPerTexel)
-        : HandleBase(std::move(deleterCallback), handle),
-          texture_({"Render Target", width, height, bytesPerTexel, handle})
+    RenderTargetH(std::function<void(const std::vector<Vector3D>*)> deleterCallback,
+                  std::vector<Vector3D>*                            handle,
+                  const std::uint32_t                               width,
+                  const std::uint32_t                               height)
+        : HandleBase(std::move(deleterCallback), handle), width_(width), height_(height)
     {
     }
 
-    TextureView GetAsTexture() const override { return texture_; }
+    Texture GetAsTexture(const TextureFormat format) const override
+    {
+        Texture texture{"Render Target", width_, height_, format == TextureFormat::RGB ? 3u : 4u};
+        for (const auto& color : *handle_)
+        {
+            texture.image.push_back(std::min(std::max(color.x, 0.f), 1.f) * 255);
+            texture.image.push_back(std::min(std::max(color.y, 0.f), 1.f) * 255);
+            texture.image.push_back(std::min(std::max(color.z, 0.f), 1.f) * 255);
+            if (format == TextureFormat::RGBA)
+                texture.image.push_back(255);
+        }
+        return texture;
+    }
 
-    std::vector<unsigned char>* Get() { return handle_; }
+    void GetAsTexture(const TextureFormat format, Texture& texture) const override
+    {
+        texture.name          = "Render Target";
+        texture.w             = width_;
+        texture.h             = height_;
+        texture.bytesPerTexel = format == TextureFormat::RGB ? 3u : 4u;
+        texture.image.resize(texture.w * texture.h * texture.bytesPerTexel);
+
+        for (std::size_t i = 0; i < handle_->size(); ++i)
+        {
+            texture.image[i * texture.bytesPerTexel]     = std::min(std::max(handle_->at(i).x, 0.f), 1.f) * 255;
+            texture.image[i * texture.bytesPerTexel + 1] = std::min(std::max(handle_->at(i).y, 0.f), 1.f) * 255;
+            texture.image[i * texture.bytesPerTexel + 2] = std::min(std::max(handle_->at(i).z, 0.f), 1.f) * 255;
+            if (format == TextureFormat::RGBA)
+                texture.image[i * texture.bytesPerTexel + 3] = 255;
+        }
+    }
+
+    std::uint32_t GetWidth() { return width_; }
+    std::uint32_t GetHeight() { return height_; }
+
+    std::vector<Vector3D>* Get() { return handle_; }
 
   private:
-    TextureView texture_;
+    std::uint32_t width_;
+    std::uint32_t height_;
 };
 
 std::unique_ptr<RenderTargetHandle> RayEngine::EngineNode::CreateRenderTarget(const RenderTargetDescription& desc)
 {
-    const auto [it, success] = renderTargets_.insert(
-        std::make_unique<std::vector<unsigned char>>(desc.width * desc.height * desc.bytesPerTexel));
+    const auto [it, success] = renderTargets_.insert(std::make_unique<std::vector<Vector3D>>(desc.width * desc.height));
     if (!success)
         throw std::runtime_error("Tried to create duplicate intersectable.");
-    return std::make_unique<RenderTargetH>([this](const std::vector<unsigned char>* renderTarget)
+    return std::make_unique<RenderTargetH>([this](const std::vector<Vector3D>* renderTarget)
                                            { DeleteRenderTarget(renderTarget); },
                                            it->get(),
                                            desc.width,
-                                           desc.height,
-                                           desc.bytesPerTexel);
+                                           desc.height);
 }
 
 class PipelineH : public PipelineHandle
@@ -287,7 +317,8 @@ class PipelineH : public PipelineHandle
     void Run(RenderTargetHandle& target) const override
     {
         PipelineImplement::Run(*dynamic_cast<RenderTargetH*>(&target)->Get(),
-                               target.GetAsTexture(),
+                               dynamic_cast<RenderTargetH*>(&target)->GetWidth(),
+                               dynamic_cast<RenderTargetH*>(&target)->GetHeight(),
                                scene_,
                                generatorShaderPackage_,
                                hitShaderPackage_,
@@ -421,9 +452,9 @@ void RayEngine::EngineNode::DeleteShader(const IMissShader* shader)
         missShaders_, [shader](const std::unique_ptr<IMissShader>& ptr) { return ptr.get() == shader; }));
 }
 
-void RayEngine::EngineNode::DeleteRenderTarget(const std::vector<unsigned char>* renderTarget)
+void RayEngine::EngineNode::DeleteRenderTarget(const std::vector<Vector3D>* renderTarget)
 {
     renderTargets_.erase(std::ranges::find_if(renderTargets_,
-                                              [renderTarget](const std::unique_ptr<std::vector<unsigned char>>& ptr)
+                                              [renderTarget](const std::unique_ptr<std::vector<Vector3D>>& ptr)
                                               { return ptr.get() == renderTarget; }));
 }

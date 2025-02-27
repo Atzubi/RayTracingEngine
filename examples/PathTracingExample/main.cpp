@@ -1,7 +1,8 @@
 #include "Intersectables/TriangleMeshObject.h"
 #include "RayTraceEngine/RayEngine.h"
+#include "Shaders/CheckerBoxShader.h"
+#include "Shaders/PathTraceShader.h"
 #include "Shaders/PerspectiveGeneratorShader.h"
-#include "Shaders/PhongShader.h"
 #include "Utils/Camera.h"
 #include "Utils/SFMLUtils.h"
 #include "Utils/TriangleMeshLoader.h"
@@ -11,7 +12,6 @@
 
 #include <chrono>
 #include <iostream>
-#include <math.h> // for gcc
 
 int main()
 {
@@ -19,39 +19,56 @@ int main()
 
     // ============================================= Define The Geometry ==============================================
 
-    const auto meshHandles = LoadTriangleMeshFromObj(std::filesystem::path("./Data/Duck/duck.obj"), rayEngine);
+    const auto floorMeshHandles = LoadTriangleMeshFromObj(std::filesystem::path("./Data/Floor/floor.obj"), rayEngine);
+    const auto duckMeshHandles  = LoadTriangleMeshFromObj(std::filesystem::path("./Data/Duck/duck.obj"), rayEngine);
+    const auto metalMmeshHandles =
+        LoadTriangleMeshFromObj(std::filesystem::path("./Data/Duck_Gold_Metal/duck.obj"), rayEngine);
+    const auto glassMeshHandles =
+        LoadTriangleMeshFromObj(std::filesystem::path("./Data/Duck_Gold_Glass/duck.obj"), rayEngine);
 
     SceneDescription sceneDesc{};
-    for (const auto& handle : meshHandles.intersectables)
+    for (const auto& handle : floorMeshHandles.intersectables)
     {
-        sceneDesc.intersectables.push_back({*handle.get(), {2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1}, {}});
-        sceneDesc.intersectables.push_back({*handle.get(), {2, 0, 0, 2, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1}, {}});
-        sceneDesc.intersectables.push_back({*handle.get(), {2, 0, 0, 4, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1}, {}});
-        sceneDesc.intersectables.push_back({*handle.get(), {2, 0, 0, 6, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1}, {}});
+        sceneDesc.intersectables.push_back({*handle.get(), {10, 0, 0, 0, 0, 10, 0, -1, 0, 0, 10, 0, 0, 0, 0, 1}, {}});
     }
-    const auto scene     = rayEngine.CreateScene(sceneDesc);
-    auto       instances = scene->GetInstanceHandles();
+    for (const auto& handle : duckMeshHandles.intersectables)
+    {
+        sceneDesc.intersectables.push_back({*handle.get(), {2, 0, 0, 2, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1}, {}});
+    }
+    for (const auto& handle : metalMmeshHandles.intersectables)
+    {
+        sceneDesc.intersectables.push_back({*handle.get(), {2, 0, 0, -2, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1}, {}});
+    }
+    for (const auto& handle : glassMeshHandles.intersectables)
+    {
+        sceneDesc.intersectables.push_back({*handle.get(), {2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 2, 0, 0, 0, 1}, {}});
+    }
+    const auto scene = rayEngine.CreateScene(sceneDesc);
 
     // ============================================= Define The Rendering =============================================
-    const std::uint32_t resX{1000};
-    const std::uint32_t resY{1000};
-    const Vector3D      cameraPosition{3, 0.5, 8};
-    const Vector3D      cameraDirection{0, 0, -1};
+    const std::uint32_t resX{1024};
+    const std::uint32_t resY{1024};
+    const Vector3D      cameraPosition{0.00001, 0.1, 6};
+    Vector3D            cameraDirection{0, 0, -1};
     const Vector3D      cameraUp{0, 1, 0};
-    const std::uint8_t  samplesPerPixel{1};
+    const std::uint32_t samplesPerPixel{16};
     const float         speed{2.f};
     const float         sensitivity{0.2f};
 
     // Let's use a phong hit shader
-    const BasicPhongHitShader phongHitShader;
-    const auto                hitShader = rayEngine.CreateShader({&phongHitShader});
+    const PathTracer pathTracer;
+    const auto       hitShader = rayEngine.CreateShader({&pathTracer});
 
     // We will use a basic ray generator that shoots a ray per pixel from the camera into the scene
     const PerspectiveGeneratorShader perspectiveGeneratorShader;
     const auto                       generatorShader = rayEngine.CreateShader({&perspectiveGeneratorShader});
 
-    // We will need the camera and viewport and the sample count information in the shader so let's create resources for
-    // them
+    // Let's use a skybox in form of a checkerboard box for an interesting background.
+    const CheckerBoxShader checkerBoxShader;
+    const auto             missShader = rayEngine.CreateShader({&checkerBoxShader});
+
+    // We will need the camera and viewport and the sample count information in the shaders so let's create resources
+    // for them
     ViewportInfo viewportInfo{};
     viewportInfo.viewPortWidth  = resX;
     viewportInfo.viewPortHeight = resY;
@@ -64,9 +81,15 @@ int main()
     SampleCountInfo sampleCountInfo{};
     sampleCountInfo.samplesPerPixel = samplesPerPixel;
 
-    const auto viewPortShaderResource = rayEngine.CreateShaderResource({&viewportInfo});
-    const auto cameraShaderResource   = rayEngine.CreateShaderResource({&cameraInfo});
-    const auto sampleShaderResource   = rayEngine.CreateShaderResource({&sampleCountInfo});
+    // For path tracing we will track absorption and depth along the path
+    PathData pathData{};
+    pathData.absorption.resize(resX * resY * samplesPerPixel);
+    pathData.depth.resize(resX * resY * samplesPerPixel);
+
+    const auto viewPortShaderResource    = rayEngine.CreateShaderResource({&viewportInfo});
+    const auto cameraShaderResource      = rayEngine.CreateShaderResource({&cameraInfo});
+    const auto sampleShaderResource      = rayEngine.CreateShaderResource({&sampleCountInfo});
+    const auto pathTracingShaderResource = rayEngine.CreateShaderResource({&pathData});
 
     // For convenience let's use a camera so we can move within the scene (WASD + shift/space for movement, hold right
     // click for rotating the camera)
@@ -88,7 +111,8 @@ int main()
     pipelineDescription.scene           = scene.get();
     pipelineDescription.generatorShader = {
         generatorShader.get(), {viewPortShaderResource.get(), cameraShaderResource.get(), sampleShaderResource.get()}};
-    pipelineDescription.hitShader = {hitShader.get(), {cameraShaderResource.get()}};
+    pipelineDescription.hitShader  = {hitShader.get(), {sampleShaderResource.get(), pathTracingShaderResource.get()}};
+    pipelineDescription.missShader = {missShader.get(), {sampleShaderResource.get(), pathTracingShaderResource.get()}};
 
     const auto pipeline = rayEngine.CreatePipeline(pipelineDescription);
 
@@ -112,16 +136,9 @@ int main()
         DisplayTexture(window, texture);
         const auto t3 = std::chrono::high_resolution_clock::now();
 
-        // Move objects in sine curve
-        for (std::size_t i = 0; i < instances.size(); ++i)
-        {
-            volatile auto test           = instances[i]->GetTransform();
-            const auto    currentOffsetY = instances[i]->GetTransform().elements[1][3];
-            const auto    offsetY =
-                sinf(i + std::chrono::high_resolution_clock::now().time_since_epoch().count() * 0.000000001f) -
-                currentOffsetY;
-            instances[i]->Transform(Matrix4x4{1, 0, 0, 0, 0, 1, 0, offsetY, 0, 0, 1, 0, 0, 0, 0, 1});
-        }
+        auto& resource = pathTracingShaderResource->Map<PathData>();
+        memset(resource.absorption.data(), 0, resource.absorption.size() * sizeof(Vector3D));
+        memset(resource.depth.data(), 0, resource.depth.size());
 
         cam.Update(window);
 
@@ -145,9 +162,9 @@ int main()
 
         const auto t4        = std::chrono::high_resolution_clock::now();
         const auto frameTime = (t4 - t1).count() / 1'000'000'000.f;
-        std::cout << "Render Time: " << (t2 - t1).count() / 1'000'000'000.f << std::endl;
-        std::cout << "Display Time: " << (t3 - t2).count() / 1'000'000'000.f << std::endl;
-        std::cout << "Frame Time: " << frameTime << std::endl;
+        std::cout << "Render Time: " << (t2 - t1).count() / 1'000'000'000.f << "s\n";
+        std::cout << "Display Time: " << (t3 - t2).count() / 1'000'000'000.f << "s\n";
+        std::cout << "Frame Time: " << frameTime << "s\n";
         std::cout << "FPS: " << 1.f / frameTime << std::endl;
         std::cout << "=================================\n";
     }

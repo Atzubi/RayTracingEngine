@@ -36,18 +36,18 @@ class RayEngine::EngineNode
     void DeleteShader(const IPierceShader* shader);
     void DeleteShader(const IOcclusionShader* shader);
     void DeleteShader(const IMissShader* shader);
-    void DeleteRenderTarget(const std::vector<unsigned char>* renderTarget);
+    void DeleteRenderTarget(const std::vector<Vector3D>* renderTarget);
 
     // TODO replace intersectables and shader resources with caches
     // Cache<Key, T> cache_;
 
     // Resources
-    std::unordered_set<std::unique_ptr<IIntersectable>>             intersectables_;
-    std::unordered_set<std::unique_ptr<IShaderResource>>            shaderResources_;
-    std::unordered_set<std::unique_ptr<IRayGeneratorShader>>        generatorShaders_;
-    std::unordered_set<std::unique_ptr<IHitShader>>                 hitShaders_;
-    std::unordered_set<std::unique_ptr<IPierceShader>>              pierceShaders_;
-    std::unordered_set<std::unique_ptr<IOcclusionShader>>           occlusionShaders_;
-    std::unordered_set<std::unique_ptr<IMissShader>>                missShaders_;
-    std::unordered_set<std::unique_ptr<std::vector<unsigned char>>> renderTargets_;
+    std::unordered_set<std::unique_ptr<IIntersectable>>        intersectables_;
+    std::unordered_set<std::unique_ptr<IShaderResource>>       shaderResources_;
+    std::unordered_set<std::unique_ptr<IRayGeneratorShader>>   generatorShaders_;
+    std::unordered_set<std::unique_ptr<IHitShader>>            hitShaders_;
+    std::unordered_set<std::unique_ptr<IPierceShader>>         pierceShaders_;
+    std::unordered_set<std::unique_ptr<IOcclusionShader>>      occlusionShaders_;
+    std::unordered_set<std::unique_ptr<IMissShader>>           missShaders_;
+    std::unordered_set<std::unique_ptr<std::vector<Vector3D>>> renderTargets_;
 };

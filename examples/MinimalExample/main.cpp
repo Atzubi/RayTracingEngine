@@ -1,11 +1,10 @@
-// include relevant headers of the ray tracing engine
 #include "Intersectables/TriangleMeshObject.h"
 #include "RayTraceEngine/RayEngine.h"
-#include "Shaders/HitShader.h"
-#include "Shaders/RayGeneratorShader.h"
+#include "Shaders/PerspectiveGeneratorShader.h"
+#include "Shaders/PhongShader.h"
 #include "Utils/SFMLUtils.h"
 
-// include a graphics library for displaying the render result
+// Include a graphics library for displaying the render result
 #include "SFML/Graphics.hpp"
 
 class SimpleHitShader : public IHitShader
@@ -17,7 +16,7 @@ class SimpleHitShader : public IHitShader
                        const std::vector<IShaderResource*>& shaderResource,
                        RayGeneratorOutput&                  newRays) const override
     {
-        return {255, 255, 255};
+        return {1, 1, 1};
     }
 };
 
@@ -57,17 +56,19 @@ int main()
     // We want to set up rendering such that we see the triangle on screen
 
     // Define the rendering resolution and the camera
-    const std::uint32_t resX = 1000;
-    const std::uint32_t resY = 1000;
+    const std::uint32_t resX{1000};
+    const std::uint32_t resY{1000};
     const Vector3D      cameraPosition{0.5, 0.5, -2};
     const Vector3D      cameraDirection{0, 0, 1};
     const Vector3D      cameraUp{0, 1, 0};
+    const std::uint8_t  samplesPerPixel{1};
 
     // We will use a basic ray generator that shoots a ray per pixel from the camera into the scene
-    const BasicRayGeneratorShader basicRayGeneratorShader;
-    const auto                    generatorShader = rayEngine.CreateShader({&basicRayGeneratorShader});
+    const PerspectiveGeneratorShader perspectiveGeneratorShader;
+    const auto                       generatorShader = rayEngine.CreateShader({&perspectiveGeneratorShader});
 
-    // The generator shader needs to know the resolution and camera position so we create a shader resource for it
+    // The generator shader needs to know the resolution, samples per pixel and camera position so we create shader
+    // resources for it
     ViewportInfo viewportInfo{};
     viewportInfo.viewPortWidth  = resX;
     viewportInfo.viewPortHeight = resY;
@@ -77,8 +78,12 @@ int main()
     cameraInfo.cameraDirection = cameraDirection;
     cameraInfo.cameraUp        = cameraUp;
 
+    SampleCountInfo sampleCountInfo{};
+    sampleCountInfo.samplesPerPixel = samplesPerPixel;
+
     const auto viewPortShaderResource = rayEngine.CreateShaderResource({&viewportInfo});
     const auto cameraShaderResource   = rayEngine.CreateShaderResource({&cameraInfo});
+    const auto sampleShaderResource   = rayEngine.CreateShaderResource({&sampleCountInfo});
 
     // For shading we use a simple shader that colors a pixel white. Since it's a hit shader only pixels where a ray
     // intersected the triangle turn white
@@ -99,16 +104,16 @@ int main()
      */
     PipelineDescription pipelineDescription{};
     pipelineDescription.scene           = scene.get();
-    pipelineDescription.generatorShader = {generatorShader.get(),
-                                           {viewPortShaderResource.get(), cameraShaderResource.get()}};
-    pipelineDescription.hitShader       = {hitShader.get(), {}};
+    pipelineDescription.generatorShader = {
+        generatorShader.get(), {viewPortShaderResource.get(), cameraShaderResource.get(), sampleShaderResource.get()}};
+    pipelineDescription.hitShader = {hitShader.get(), {}};
 
     const auto pipeline = rayEngine.CreatePipeline(pipelineDescription);
 
     // ============================================= Create Render Target =============================================
 
     // Finally we need a target where our shading results should be written to
-    const auto renderTarget = rayEngine.CreateRenderTarget({resX, resY, 3});
+    const auto renderTarget = rayEngine.CreateRenderTarget({resX, resY});
 
     // ============================================= Execute The Pipeline =============================================
 
@@ -118,7 +123,7 @@ int main()
     // ================================================ Display Result ================================================
 
     // We can extract the render result as a texture which can easily be displayed
-    const auto texture = renderTarget->GetAsTexture();
+    const auto texture = renderTarget->GetAsTexture(TextureFormat::RGBA);
 
     // Create window
     sf::RenderWindow window;

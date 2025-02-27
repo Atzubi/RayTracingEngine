@@ -41,13 +41,13 @@ struct RenderTargetDescription
 {
     std::uint32_t width;
     std::uint32_t height;
-    std::uint32_t bytesPerTexel;
 };
 
 class RenderTargetHandle
 {
   public:
-    virtual TextureView GetAsTexture() const = 0;
+    virtual Texture GetAsTexture(TextureFormat format) const                         = 0;
+    virtual void    GetAsTexture(const TextureFormat format, Texture& texture) const = 0;
 
     virtual ~RenderTargetHandle() = default;
 };

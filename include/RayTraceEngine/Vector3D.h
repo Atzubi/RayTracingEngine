@@ -149,4 +149,6 @@ struct Vector3D
     }
 
     [[nodiscard]] float Sum() const { return x + y + z; }
+
+    float Dot(const Vector3D& other) const { return x * other.x + y * other.y + z * other.z; }
 };

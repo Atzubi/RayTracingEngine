@@ -18,7 +18,7 @@ class IShaderResource
 /**
  * Container outputted by the ray generator shader.
  * id:              Original id of the ray, this will be passed to potential child rays. This is equivalent to the pixel
- * id. rayOrigin:       Vector of origins of rays. rayDirection:    Vector of directions of rays.
+ * id. rayOrigin:   Vector of origins of rays. rayDirection:    Vector of directions of rays.
  */
 struct RayGeneratorOutput
 {
@@ -32,8 +32,9 @@ struct RayGeneratorOutput
  */
 struct OcclusionShaderInput
 {
-    Vector3D rayOrigin;
-    Vector3D rayDirection;
+    std::uint64_t id;
+    Vector3D      rayOrigin;
+    Vector3D      rayDirection;
 };
 
 /**
@@ -42,6 +43,7 @@ struct OcclusionShaderInput
  */
 struct HitShaderInput
 {
+    std::uint64_t     id;
     IntersectionInfo* intersectionInfo;
 };
 
@@ -52,8 +54,9 @@ struct HitShaderInput
  */
 struct MissShaderInput
 {
-    Vector3D rayOrigin;
-    Vector3D rayDirection;
+    std::uint64_t id;
+    Vector3D      rayOrigin;
+    Vector3D      rayDirection;
 };
 
 /**
@@ -62,6 +65,7 @@ struct MissShaderInput
  */
 struct PierceShaderInput
 {
+    std::uint64_t                 id;
     std::vector<IntersectionInfo> intersectionInfo;
 };
 
@@ -70,7 +74,7 @@ struct PierceShaderInput
  */
 struct ShaderOutput
 {
-    std::uint8_t color[3];
+    Vector3D color;
 };
 
 /**
@@ -219,7 +223,7 @@ class IMissShader
 
 struct ShaderResourceDescription
 {
-    IShaderResource* shaderResouce;
+    const IShaderResource* shaderResouce;
 };
 
 class ShaderResourceHandle

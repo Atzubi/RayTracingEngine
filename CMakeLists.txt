@@ -44,6 +44,7 @@ option(ATZUBI_RTENGINE_BUILD_EXAMPLES "Build example programs" 0)
 if (ATZUBI_RTENGINE_BUILD_EXAMPLES)
     add_subdirectory(examples/MinimalExample)
     add_subdirectory(examples/ObjExample)
+    add_subdirectory(examples/PathTracingExample)
 endif ()
 
 option(ATZUBI_RTENGINE_INSTALL "Generate the install target" ${ATZUBI_RTENGINE_IS_MAIN_PROJECT})
