@@ -43,12 +43,10 @@ int main()
     const float         sensitivity{0.2f};
 
     // Let's use a phong hit shader
-    const BasicPhongHitShader phongHitShader;
-    const auto                hitShader = rayEngine.CreateShader({&phongHitShader});
+    const auto hitShader = rayEngine.CreateShader({BasicPhongHitShader});
 
     // We will use a basic ray generator that shoots a ray per pixel from the camera into the scene
-    const PerspectiveGeneratorShader perspectiveGeneratorShader;
-    const auto                       generatorShader = rayEngine.CreateShader({&perspectiveGeneratorShader});
+    const auto generatorShader = rayEngine.CreateShader({PerspectiveGeneratorShader});
 
     // We will need the camera and viewport and the sample count information in the shader so let's create resources for
     // them

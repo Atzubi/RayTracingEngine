@@ -6,7 +6,7 @@
 template <typename T> class HandleBase
 {
   public:
-    HandleBase(std::function<void(const T*)> deleterCallback, T* handle)
+    HandleBase(std::function<void(const T)> deleterCallback, T handle)
         : deleterCallback_(std::move(deleterCallback)), handle_(handle)
     {
     }
@@ -14,11 +14,11 @@ template <typename T> class HandleBase
     ~HandleBase() { deleterCallback_(handle_); }
 
   protected:
-    std::function<void(const T*)> deleterCallback_;
-    T*                            handle_;
+    std::function<void(const T)> deleterCallback_;
+    T                            handle_;
 };
 
-class IntersectableObjectH : public IntersectableObjectHandle, public HandleBase<IIntersectable>
+class IntersectableObjectH : public IntersectableObjectHandle, public HandleBase<IIntersectable*>
 {
   public:
     IntersectableObjectH(std::function<void(const IIntersectable*)> deleterCallback, IIntersectable* handle)
@@ -39,7 +39,7 @@ RayEngine::EngineNode::CreateIntersectableObject(const IntersectableObjectDescri
         [this](const IIntersectable* intersectable) { DeleteIntersectable(intersectable); }, it->get());
 }
 
-class InstanceH : public InstanceHandle, public HandleBase<IIntersectable>
+class InstanceH : public InstanceHandle, public HandleBase<IIntersectable*>
 {
   public:
     InstanceH(std::function<void(const IIntersectable*)> deleterCallback, IIntersectable* handle, DBVH* reference)
@@ -60,7 +60,7 @@ class InstanceH : public InstanceHandle, public HandleBase<IIntersectable>
     DBVH* reference_;
 };
 
-class SceneH : public SceneHandle, public HandleBase<IIntersectable>
+class SceneH : public SceneHandle, public HandleBase<IIntersectable*>
 {
   public:
     SceneH(std::function<void(const IIntersectable*)>   deleterCallback,
@@ -109,7 +109,7 @@ std::unique_ptr<SceneHandle> RayEngine::EngineNode::CreateScene(const SceneDescr
                                     std::move(instanceHandles));
 }
 
-class ShaderResourceH : public ShaderResourceHandle, public HandleBase<IShaderResource>
+class ShaderResourceH : public ShaderResourceHandle, public HandleBase<IShaderResource*>
 {
   public:
     ShaderResourceH(std::function<void(const IShaderResource*)> deleterCallback, IShaderResource* handle)
@@ -137,101 +137,99 @@ std::unique_ptr<ShaderResourceHandle> RayEngine::EngineNode::CreateShaderResourc
 class GeneratorShaderH : public GeneratorShaderHandle, public HandleBase<IRayGeneratorShader>
 {
   public:
-    GeneratorShaderH(std::function<void(const IRayGeneratorShader*)> deleterCallback, IRayGeneratorShader* handle)
+    GeneratorShaderH(std::function<void(const IRayGeneratorShader)> deleterCallback, IRayGeneratorShader handle)
         : HandleBase(std::move(deleterCallback), handle)
     {
     }
 
-    const IRayGeneratorShader* Get() const { return handle_; }
+    const IRayGeneratorShader Get() const { return handle_; }
 };
 
 std::unique_ptr<GeneratorShaderHandle> RayEngine::EngineNode::CreateShader(const GeneratorShaderDescription& desc)
 {
-    const auto [it, success] = generatorShaders_.insert(desc.generatorShader->Clone());
+    const auto [it, success] = generatorShaders_.insert(desc.generatorShader);
     if (!success)
         throw std::runtime_error("Tried to create duplicate intersectable.");
-    return std::make_unique<GeneratorShaderH>([this](const IRayGeneratorShader* shader) { DeleteShader(shader); },
-                                              it->get());
+    return std::make_unique<GeneratorShaderH>([this](const IRayGeneratorShader shader) { DeleteShader(shader); }, *it);
 }
 
 class HitShaderH : public HitShaderHandle, public HandleBase<IHitShader>
 {
   public:
-    HitShaderH(std::function<void(const IHitShader*)> deleterCallback, IHitShader* handle)
+    HitShaderH(std::function<void(const IHitShader)> deleterCallback, IHitShader handle)
         : HandleBase(std::move(deleterCallback), handle)
     {
     }
 
-    const IHitShader* Get() const { return handle_; }
+    const IHitShader Get() const { return handle_; }
 };
 
 std::unique_ptr<HitShaderHandle> RayEngine::EngineNode::CreateShader(const HitShaderDescription& desc)
 {
-    const auto [it, success] = hitShaders_.insert(desc.hitShader->Clone());
+    const auto [it, success] = hitShaders_.insert(desc.hitShader);
     if (!success)
-        throw std::runtime_error("Tried to create duplicate intersectable.");
-    return std::make_unique<HitShaderH>([this](const IHitShader* shader) { DeleteShader(shader); }, it->get());
+        throw std::runtime_error("Tried to create duplicate shader.");
+    return std::make_unique<HitShaderH>([this](const IHitShader shader) { DeleteShader(shader); }, *it);
 }
 
 class PierceShaderH : public PierceShaderHandle, public HandleBase<IPierceShader>
 {
   public:
-    PierceShaderH(std::function<void(const IPierceShader*)> deleterCallback, IPierceShader* handle)
+    PierceShaderH(std::function<void(const IPierceShader)> deleterCallback, IPierceShader handle)
         : HandleBase(std::move(deleterCallback), handle)
     {
     }
 
-    const IPierceShader* Get() const { return handle_; }
+    const IPierceShader Get() const { return handle_; }
 };
 
 std::unique_ptr<PierceShaderHandle> RayEngine::EngineNode::CreateShader(const PierceShaderDescription& desc)
 {
-    const auto [it, success] = pierceShaders_.insert(desc.pierceShader->Clone());
+    const auto [it, success] = pierceShaders_.insert(desc.pierceShader);
     if (!success)
-        throw std::runtime_error("Tried to create duplicate intersectable.");
-    return std::make_unique<PierceShaderH>([this](const IPierceShader* shader) { DeleteShader(shader); }, it->get());
+        throw std::runtime_error("Tried to create duplicate shader.");
+    return std::make_unique<PierceShaderH>([this](const IPierceShader shader) { DeleteShader(shader); }, *it);
 }
 
 class OcclusionShaderH : public OcclusionShaderHandle, public HandleBase<IOcclusionShader>
 {
   public:
-    OcclusionShaderH(std::function<void(const IOcclusionShader*)> deleterCallback, IOcclusionShader* handle)
+    OcclusionShaderH(std::function<void(const IOcclusionShader)> deleterCallback, IOcclusionShader handle)
         : HandleBase(std::move(deleterCallback), handle)
     {
     }
 
-    const IOcclusionShader* Get() const { return handle_; }
+    const IOcclusionShader Get() const { return handle_; }
 };
 
 std::unique_ptr<OcclusionShaderHandle> RayEngine::EngineNode::CreateShader(const OcclusionShaderDescription& desc)
 {
-    const auto [it, success] = occlusionShaders_.insert(desc.occlusionShader->Clone());
+    const auto [it, success] = occlusionShaders_.insert(desc.occlusionShader);
     if (!success)
-        throw std::runtime_error("Tried to create duplicate intersectable.");
-    return std::make_unique<OcclusionShaderH>([this](const IOcclusionShader* shader) { DeleteShader(shader); },
-                                              it->get());
+        throw std::runtime_error("Tried to create duplicate shader.");
+    return std::make_unique<OcclusionShaderH>([this](const IOcclusionShader shader) { DeleteShader(shader); }, *it);
 }
 
 class MissShaderH : public MissShaderHandle, public HandleBase<IMissShader>
 {
   public:
-    MissShaderH(std::function<void(const IMissShader*)> deleterCallback, IMissShader* handle)
+    MissShaderH(std::function<void(const IMissShader)> deleterCallback, IMissShader handle)
         : HandleBase(std::move(deleterCallback), handle)
     {
     }
 
-    const IMissShader* Get() const { return handle_; }
+    const IMissShader Get() const { return handle_; }
 };
 
 std::unique_ptr<MissShaderHandle> RayEngine::EngineNode::CreateShader(const MissShaderDescription& desc)
 {
-    const auto [it, success] = missShaders_.insert(desc.missShader->Clone());
+    const auto [it, success] = missShaders_.insert(desc.missShader);
     if (!success)
-        throw std::runtime_error("Tried to create duplicate intersectable.");
-    return std::make_unique<MissShaderH>([this](const IMissShader* shader) { DeleteShader(shader); }, it->get());
+        throw std::runtime_error("Tried to create duplicate shader.");
+    return std::make_unique<MissShaderH>([this](const IMissShader shader) { DeleteShader(shader); }, *it);
 }
 
-class RenderTargetH : public RenderTargetHandle, public HandleBase<std::vector<Vector3D>>
+class RenderTargetH : public RenderTargetHandle, public HandleBase<std::vector<Vector3D>*>
 {
   public:
     RenderTargetH(std::function<void(const std::vector<Vector3D>*)> deleterCallback,
@@ -288,7 +286,7 @@ std::unique_ptr<RenderTargetHandle> RayEngine::EngineNode::CreateRenderTarget(co
 {
     const auto [it, success] = renderTargets_.insert(std::make_unique<std::vector<Vector3D>>(desc.width * desc.height));
     if (!success)
-        throw std::runtime_error("Tried to create duplicate intersectable.");
+        throw std::runtime_error("Tried to create duplicate render target.");
     return std::make_unique<RenderTargetH>([this](const std::vector<Vector3D>* renderTarget)
                                            { DeleteRenderTarget(renderTarget); },
                                            it->get(),
@@ -422,35 +420,15 @@ void RayEngine::EngineNode::DeleteShaderResource(const IShaderResource* shaderRe
                                                 { return ptr.get() == shaderResource; }));
 }
 
-void RayEngine::EngineNode::DeleteShader(const IRayGeneratorShader* shader)
-{
-    generatorShaders_.erase(std::ranges::find_if(
-        generatorShaders_, [shader](const std::unique_ptr<IRayGeneratorShader>& ptr) { return ptr.get() == shader; }));
-}
+void RayEngine::EngineNode::DeleteShader(const IRayGeneratorShader shader) { generatorShaders_.erase(shader); }
 
-void RayEngine::EngineNode::DeleteShader(const IHitShader* shader)
-{
-    hitShaders_.erase(std::ranges::find_if(
-        hitShaders_, [shader](const std::unique_ptr<IHitShader>& ptr) { return ptr.get() == shader; }));
-}
+void RayEngine::EngineNode::DeleteShader(const IHitShader shader) { hitShaders_.erase(shader); }
 
-void RayEngine::EngineNode::DeleteShader(const IPierceShader* shader)
-{
-    pierceShaders_.erase(std::ranges::find_if(
-        pierceShaders_, [shader](const std::unique_ptr<IPierceShader>& ptr) { return ptr.get() == shader; }));
-}
+void RayEngine::EngineNode::DeleteShader(const IPierceShader shader) { pierceShaders_.erase(shader); }
 
-void RayEngine::EngineNode::DeleteShader(const IOcclusionShader* shader)
-{
-    occlusionShaders_.erase(std::ranges::find_if(
-        occlusionShaders_, [shader](const std::unique_ptr<IOcclusionShader>& ptr) { return ptr.get() == shader; }));
-}
+void RayEngine::EngineNode::DeleteShader(const IOcclusionShader shader) { occlusionShaders_.erase(shader); }
 
-void RayEngine::EngineNode::DeleteShader(const IMissShader* shader)
-{
-    missShaders_.erase(std::ranges::find_if(
-        missShaders_, [shader](const std::unique_ptr<IMissShader>& ptr) { return ptr.get() == shader; }));
-}
+void RayEngine::EngineNode::DeleteShader(const IMissShader shader) { missShaders_.erase(shader); }
 
 void RayEngine::EngineNode::DeleteRenderTarget(const std::vector<Vector3D>* renderTarget)
 {

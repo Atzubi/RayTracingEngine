@@ -54,7 +54,7 @@ void PipelineImplement::Run(std::vector<Vector3D>&          buffer,
     PierceShaderInput  pierceInput{};
     for (std::uint64_t rayID = 0; rayID < width * height; ++rayID)
     {
-        generatorShaderPackage.shader->Shade(rayID, generatorShaderPackage.resources, currentRays);
+        generatorShaderPackage.shader(rayID, generatorShaderPackage.resources, currentRays);
 
         while (!currentRays.rays.empty())
         {
@@ -80,8 +80,8 @@ void PipelineImplement::Run(std::vector<Vector3D>&          buffer,
 
                         if (info.hit = !pierceInput.intersectionInfo.empty())
                         {
-                            const auto pixel = pierceShaderPackage.shader->Shade(
-                                rayID, pierceInput, pierceShaderPackage.resources, newRays);
+                            const auto pixel =
+                                pierceShaderPackage.shader(rayID, pierceInput, pierceShaderPackage.resources, newRays);
                             buffer[rayID] += pixel.color;
                         }
                     }
@@ -96,8 +96,8 @@ void PipelineImplement::Run(std::vector<Vector3D>&          buffer,
                         if (info.hit)
                         {
                             const HitShaderInput hitShaderInput = {currentRays.rays.back().id, &info};
-                            const auto           pixel          = hitShaderPackage.shader->Shade(
-                                rayID, hitShaderInput, hitShaderPackage.resources, newRays);
+                            const auto           pixel =
+                                hitShaderPackage.shader(rayID, hitShaderInput, hitShaderPackage.resources, newRays);
                             buffer[rayID] += pixel.color;
                         }
                     }
@@ -113,7 +113,7 @@ void PipelineImplement::Run(std::vector<Vector3D>&          buffer,
                         {
                             const OcclusionShaderInput occlusionShaderInput = {
                                 currentRays.rays.back().id, ray.origin, ray.direction};
-                            const auto pixel = occlusionShaderPackage.shader->Shade(
+                            const auto pixel = occlusionShaderPackage.shader(
                                 rayID, occlusionShaderInput, occlusionShaderPackage.resources, newRays);
                             buffer[rayID] += pixel.color;
                         }
@@ -127,7 +127,7 @@ void PipelineImplement::Run(std::vector<Vector3D>&          buffer,
             {
                 const MissShaderInput missShaderInput = {currentRays.rays.back().id, ray.origin, ray.direction};
                 const auto            pixel =
-                    missShaderPackage.shader->Shade(rayID, missShaderInput, missShaderPackage.resources, newRays);
+                    missShaderPackage.shader(rayID, missShaderInput, missShaderPackage.resources, newRays);
                 buffer[rayID] += pixel.color;
             }
 

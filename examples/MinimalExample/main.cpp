@@ -7,18 +7,16 @@
 // Include a graphics library for displaying the render result
 #include "SFML/Graphics.hpp"
 
-class SimpleHitShader : public IHitShader
+namespace
 {
-    std::unique_ptr<IHitShader> Clone() const override { return std::make_unique<SimpleHitShader>(*this); }
-
-    ShaderOutput Shade(const std::uint64_t                  id,
-                       const HitShaderInput&                shaderInput,
-                       const std::vector<IShaderResource*>& shaderResource,
-                       RayGeneratorOutput&                  newRays) const override
+    ShaderOutput WhiteShader(const std::uint64_t                  id,
+                             const HitShaderInput&                shaderInput,
+                             const std::vector<IShaderResource*>& shaderResource,
+                             RayGeneratorOutput&                  newRays)
     {
         return {1, 1, 1};
     }
-};
+} // namespace
 
 int main()
 {
@@ -64,8 +62,7 @@ int main()
     const std::uint8_t  samplesPerPixel{1};
 
     // We will use a basic ray generator that shoots a ray per pixel from the camera into the scene
-    const PerspectiveGeneratorShader perspectiveGeneratorShader;
-    const auto                       generatorShader = rayEngine.CreateShader({&perspectiveGeneratorShader});
+    const auto generatorShader = rayEngine.CreateShader({PerspectiveGeneratorShader});
 
     // The generator shader needs to know the resolution, samples per pixel and camera position so we create shader
     // resources for it
@@ -87,8 +84,7 @@ int main()
 
     // For shading we use a simple shader that colors a pixel white. Since it's a hit shader only pixels where a ray
     // intersected the triangle turn white
-    const SimpleHitShader simpleHitShader;
-    const auto            hitShader = rayEngine.CreateShader({&simpleHitShader});
+    const auto hitShader = rayEngine.CreateShader({WhiteShader});
 
     // =========================================== Create Engine pipeline =============================================
 

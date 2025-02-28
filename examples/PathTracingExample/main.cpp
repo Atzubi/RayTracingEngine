@@ -56,16 +56,13 @@ int main()
     const float         sensitivity{0.2f};
 
     // Let's use a phong hit shader
-    const PathTracer pathTracer;
-    const auto       hitShader = rayEngine.CreateShader({&pathTracer});
+    const auto hitShader = rayEngine.CreateShader({PathTraceShader});
 
     // We will use a basic ray generator that shoots a ray per pixel from the camera into the scene
-    const PerspectiveGeneratorShader perspectiveGeneratorShader;
-    const auto                       generatorShader = rayEngine.CreateShader({&perspectiveGeneratorShader});
+    const auto generatorShader = rayEngine.CreateShader({PerspectiveGeneratorShader});
 
     // Let's use a skybox in form of a checkerboard box for an interesting background.
-    const CheckerBoxShader checkerBoxShader;
-    const auto             missShader = rayEngine.CreateShader({&checkerBoxShader});
+    const auto missShader = rayEngine.CreateShader({CheckerBoxShader});
 
     // We will need the camera and viewport and the sample count information in the shaders so let's create resources
     // for them

@@ -7,31 +7,31 @@
 
 struct GeneratorShaderResourceP
 {
-    const IRayGeneratorShader*    shader;
+    IRayGeneratorShader           shader;
     std::vector<IShaderResource*> resources;
 };
 
 struct HitShaderResourceP
 {
-    const IHitShader*             shader;
+    IHitShader                    shader;
     std::vector<IShaderResource*> resources;
 };
 
 struct PierceShaderResourceP
 {
-    const IPierceShader*          shader;
+    IPierceShader                 shader;
     std::vector<IShaderResource*> resources;
 };
 
 struct OcclusionShaderResourceP
 {
-    const IOcclusionShader*       shader;
+    IOcclusionShader              shader;
     std::vector<IShaderResource*> resources;
 };
 
 struct MissShaderResourceP
 {
-    const IMissShader*            shader;
+    IMissShader                   shader;
     std::vector<IShaderResource*> resources;
 };
 
