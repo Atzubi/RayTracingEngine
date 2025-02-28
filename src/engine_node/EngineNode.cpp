@@ -127,7 +127,8 @@ class ShaderResourceH : public ShaderResourceHandle, public HandleBase<IShaderRe
 
 std::unique_ptr<ShaderResourceHandle> RayEngine::EngineNode::CreateShaderResource(const ShaderResourceDescription& desc)
 {
-    const auto [it, success] = shaderResources_.insert(desc.shaderResouce->Clone());
+    const auto [it, success] =
+        shaderResources_.insert(desc.shaderResouce->Deserialize(desc.shaderResouce->Serialize()));
     if (!success)
         throw std::runtime_error("Tried to create duplicate intersectable.");
     return std::make_unique<ShaderResourceH>(

@@ -13,7 +13,17 @@ struct CameraInfo : public IShaderResource
     Vector3D cameraUp;
     Vector3D cameraDirection;
 
-    std::unique_ptr<IShaderResource> Clone() const override { return std::make_unique<CameraInfo>(*this); }
+    std::span<const std::uint8_t> Serialize() const override
+    {
+        return std::span(reinterpret_cast<const std::uint8_t*>(this), sizeof(CameraInfo));
+    }
+
+    std::unique_ptr<IShaderResource> Deserialize(const std::span<const std::uint8_t> resource) const override
+    {
+        if (resource.size() != sizeof(CameraInfo))
+            return {};
+        return std::make_unique<CameraInfo>(*reinterpret_cast<const CameraInfo*>(resource.data()));
+    }
 };
 
 struct ViewportInfo : public IShaderResource
@@ -21,14 +31,34 @@ struct ViewportInfo : public IShaderResource
     std::uint32_t viewPortWidth;
     std::uint32_t viewPortHeight;
 
-    std::unique_ptr<IShaderResource> Clone() const override { return std::make_unique<ViewportInfo>(*this); }
+    std::span<const std::uint8_t> Serialize() const override
+    {
+        return std::span(reinterpret_cast<const std::uint8_t*>(this), sizeof(ViewportInfo));
+    }
+
+    std::unique_ptr<IShaderResource> Deserialize(const std::span<const std::uint8_t> resource) const override
+    {
+        if (resource.size() != sizeof(ViewportInfo))
+            return {};
+        return std::make_unique<ViewportInfo>(*reinterpret_cast<const ViewportInfo*>(resource.data()));
+    }
 };
 
 struct SampleCountInfo : public IShaderResource
 {
     std::uint32_t samplesPerPixel;
 
-    std::unique_ptr<IShaderResource> Clone() const override { return std::make_unique<SampleCountInfo>(*this); }
+    std::span<const std::uint8_t> Serialize() const override
+    {
+        return std::span(reinterpret_cast<const std::uint8_t*>(this), sizeof(SampleCountInfo));
+    }
+
+    std::unique_ptr<IShaderResource> Deserialize(const std::span<const std::uint8_t> resource) const override
+    {
+        if (resource.size() != sizeof(SampleCountInfo))
+            return {};
+        return std::make_unique<SampleCountInfo>(*reinterpret_cast<const SampleCountInfo*>(resource.data()));
+    }
 };
 
 struct PathData : public IShaderResource
@@ -36,7 +66,17 @@ struct PathData : public IShaderResource
     std::vector<Vector3D>     absorption;
     std::vector<std::uint8_t> depth;
 
-    std::unique_ptr<IShaderResource> Clone() const override { return std::make_unique<PathData>(*this); }
+    std::span<const std::uint8_t> Serialize() const override
+    {
+        return std::span(reinterpret_cast<const std::uint8_t*>(this), sizeof(PathData));
+    }
+
+    std::unique_ptr<IShaderResource> Deserialize(const std::span<const std::uint8_t> resource) const override
+    {
+        if (resource.size() != sizeof(PathData))
+            return {};
+        return std::make_unique<PathData>(*reinterpret_cast<const PathData*>(resource.data()));
+    }
 };
 
 Vector3D LambertReflection(const Vector3D& normal)

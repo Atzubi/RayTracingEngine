@@ -5,14 +5,16 @@
 
 #include <cstdint>
 #include <memory>
+#include <span>
 #include <vector>
 
 class IShaderResource
 {
   public:
-    [[nodiscard]] virtual std::unique_ptr<IShaderResource> Clone() const = 0;
-
     virtual ~IShaderResource() = default;
+
+    virtual std::span<const std::uint8_t>    Serialize() const                                         = 0;
+    virtual std::unique_ptr<IShaderResource> Deserialize(std::span<const std::uint8_t> resource) const = 0;
 };
 
 /**

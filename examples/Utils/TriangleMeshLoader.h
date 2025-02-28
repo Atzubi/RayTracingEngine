@@ -25,7 +25,17 @@ struct TextureWrapper : public IShaderResource
   public:
     Texture texture;
 
-    std::unique_ptr<IShaderResource> Clone() const override { return std::make_unique<TextureWrapper>(*this); };
+    std::span<const std::uint8_t> Serialize() const override
+    {
+        return std::span(reinterpret_cast<const std::uint8_t*>(this), sizeof(TextureWrapper));
+    }
+
+    std::unique_ptr<IShaderResource> Deserialize(const std::span<const std::uint8_t> resource) const override
+    {
+        if (resource.size() != sizeof(TextureWrapper))
+            return {};
+        return std::make_unique<TextureWrapper>(*reinterpret_cast<const TextureWrapper*>(resource.data()));
+    }
 };
 
 std::unique_ptr<ShaderResourceHandle>
