@@ -143,9 +143,9 @@ int main()
 
         const auto t4        = std::chrono::high_resolution_clock::now();
         const auto frameTime = (t4 - t1).count() / 1'000'000'000.f;
-        std::cout << "Render Time: " << (t2 - t1).count() / 1'000'000'000.f << std::endl;
-        std::cout << "Display Time: " << (t3 - t2).count() / 1'000'000'000.f << std::endl;
-        std::cout << "Frame Time: " << frameTime << std::endl;
+        std::cout << "Render Time: " << (t2 - t1).count() / 1'000'000'000.f << "s\n";
+        std::cout << "Display Time: " << (t3 - t2).count() / 1'000'000'000.f << "s\n";
+        std::cout << "Frame Time: " << frameTime << "s\n";
         std::cout << "FPS: " << 1.f / frameTime << std::endl;
         std::cout << "=================================\n";
     }
