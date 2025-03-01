@@ -10,6 +10,7 @@
 #include "SFML/Graphics.hpp"
 
 #include <chrono>
+#include <cstring>
 #include <iostream>
 
 int main()
@@ -150,8 +151,8 @@ int main()
         const auto t3 = std::chrono::high_resolution_clock::now();
 
         auto& resource = pathTracingShaderResource->Map<PathData>();
-        memset(resource.absorption.data(), 0, resource.absorption.size() * sizeof(Vector3D));
-        memset(resource.depth.data(), 0, resource.depth.size());
+        std::memset(resource.absorption.data(), 0, resource.absorption.size() * sizeof(Vector3D));
+        std::memset(resource.depth.data(), 0, resource.depth.size());
 
         cam.Update(window);
 
