@@ -1,7 +1,6 @@
 #pragma once
 
 #include "RayTraceEngine/RayEngine.h"
-#include "cache/Cache.h"
 
 #include <memory>
 #include <unordered_map>

@@ -1,5 +1,11 @@
 add_executable(MinimalExample main.cpp)
 
+file(GLOB OTHER_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/../Utils/*.cpp"
+                        "${CMAKE_CURRENT_SOURCE_DIR}/../Utils/*.h"
+                        "${CMAKE_CURRENT_SOURCE_DIR}/../Shaders/*.cpp"
+                        "${CMAKE_CURRENT_SOURCE_DIR}/../Shaders/*.h")
+target_sources(MinimalExample PRIVATE ${OTHER_SOURCES})
+
 find_package(SFML 2 COMPONENTS graphics REQUIRED)
 
 target_link_libraries(MinimalExample RayTraceEngine sfml-graphics)

@@ -59,7 +59,7 @@ struct BoundingBox
      * Computes the surface area of the axis aligned bounding box.
      * @return  The surface area divided by two.
      */
-    [[nodiscard]] float GetSA() const
+    float GetSA() const
     {
         return (maxCorner.x - minCorner.x) * (maxCorner.y - minCorner.y) +
                (maxCorner.x - minCorner.x) * (maxCorner.z - minCorner.z) +

@@ -2,6 +2,7 @@
 
 #include "DBVHNode.h"
 #include "RayTraceEngine/Intersectable.h"
+
 #include <span>
 #include <utility>
 #include <vector>
