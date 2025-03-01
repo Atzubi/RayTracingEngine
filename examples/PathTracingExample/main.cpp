@@ -21,29 +21,34 @@ int main()
 
     const auto floorMeshHandles = LoadTriangleMeshFromObj(std::filesystem::path("./Data/Floor/floor.obj"), rayEngine);
     const auto duckMeshHandles  = LoadTriangleMeshFromObj(std::filesystem::path("./Data/Duck/duck.obj"), rayEngine);
-    const auto metalMmeshHandles =
+    const auto metalMeshHandles =
         LoadTriangleMeshFromObj(std::filesystem::path("./Data/Duck_Gold_Metal/duck.obj"), rayEngine);
     const auto glassMeshHandles =
         LoadTriangleMeshFromObj(std::filesystem::path("./Data/Duck_Gold_Glass/duck.obj"), rayEngine);
 
     SceneDescription sceneDesc{};
-    for (const auto& handle : floorMeshHandles.intersectables)
+    for (const auto& handles : floorMeshHandles)
     {
-        sceneDesc.intersectables.push_back({*handle.get(), {10, 0, 0, 0, 0, 10, 0, -1, 0, 0, 10, 0, 0, 0, 0, 1}, {}});
+        sceneDesc.intersectables.push_back(
+            {*handles.intersectable, {10, 0, 0, 0, 0, 10, 0, -1, 0, 0, 10, 0, 0, 0, 0, 1}, {}});
     }
-    for (const auto& handle : duckMeshHandles.intersectables)
+    for (const auto& handles : duckMeshHandles)
     {
-        sceneDesc.intersectables.push_back({*handle.get(), {2, 0, 0, 2, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1}, {}});
+        sceneDesc.intersectables.push_back(
+            {*handles.intersectable, {2, 0, 0, 2, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1}, {}});
     }
-    for (const auto& handle : metalMmeshHandles.intersectables)
+    for (const auto& handles : metalMeshHandles)
     {
-        sceneDesc.intersectables.push_back({*handle.get(), {2, 0, 0, -2, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1}, {}});
+        sceneDesc.intersectables.push_back(
+            {*handles.intersectable, {2, 0, 0, -2, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1}, {}});
     }
-    for (const auto& handle : glassMeshHandles.intersectables)
+    for (const auto& handles : glassMeshHandles)
     {
-        sceneDesc.intersectables.push_back({*handle.get(), {2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 2, 0, 0, 0, 1}, {}});
+        sceneDesc.intersectables.push_back(
+            {*handles.intersectable, {2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 2, 0, 0, 0, 1}, {}});
     }
-    const auto scene = rayEngine.CreateScene(sceneDesc);
+    const auto scene     = rayEngine.CreateScene(sceneDesc);
+    const auto instances = scene->GetInstanceHandles();
 
     // ============================================= Define The Rendering =============================================
     const std::uint32_t resX{1024};
@@ -83,10 +88,15 @@ int main()
     pathData.absorption.resize(resX * resY * samplesPerPixel);
     pathData.depth.resize(resX * resY * samplesPerPixel);
 
+    MaterialMap map;
+    for (std::size_t i = 0; i < instances.size(); ++i)
+        map.instanceToMaterial[instances[i]->GetId()] = i;
+
     const auto viewPortShaderResource    = rayEngine.CreateShaderResource({&viewportInfo});
     const auto cameraShaderResource      = rayEngine.CreateShaderResource({&cameraInfo});
     const auto sampleShaderResource      = rayEngine.CreateShaderResource({&sampleCountInfo});
     const auto pathTracingShaderResource = rayEngine.CreateShaderResource({&pathData});
+    const auto materialMapShaderResource = rayEngine.CreateShaderResource({&map});
 
     // For convenience let's use a camera so we can move within the scene (WASD + shift/space for movement, hold right
     // click for rotating the camera)
@@ -108,7 +118,14 @@ int main()
     pipelineDescription.scene           = scene.get();
     pipelineDescription.generatorShader = {
         generatorShader.get(), {viewPortShaderResource.get(), cameraShaderResource.get(), sampleShaderResource.get()}};
-    pipelineDescription.hitShader  = {hitShader.get(), {sampleShaderResource.get(), pathTracingShaderResource.get()}};
+    pipelineDescription.hitShader  = {hitShader.get(),
+                                      {sampleShaderResource.get(),
+                                       pathTracingShaderResource.get(),
+                                       materialMapShaderResource.get(),
+                                       floorMeshHandles[0].material.get(),
+                                       duckMeshHandles[0].material.get(),
+                                       metalMeshHandles[0].material.get(),
+                                       glassMeshHandles[0].material.get()}};
     pipelineDescription.missShader = {missShader.get(), {sampleShaderResource.get(), pathTracingShaderResource.get()}};
 
     const auto pipeline = rayEngine.CreatePipeline(pipelineDescription);

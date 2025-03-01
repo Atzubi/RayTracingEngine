@@ -67,62 +67,10 @@ struct BoundingBox
     }
 };
 
-/**
- * Container for storing an image/texture.
- * name:            The name of the texture.
- * w:               The horizontal resolution of the texture.
- * h:               The vertical resolution of the texture.
- * bytesPerTexel:   Amount of bytes per texel.
- * image:           Raw color values.
- */
-struct Texture
-{
-    std::string               name;
-    std::uint32_t             w;
-    std::uint32_t             h;
-    std::uint32_t             bytesPerTexel;
-    std::vector<std::uint8_t> image;
-};
-
 enum class TextureFormat
 {
     RGB,
     RGBA
-};
-
-/**
- * Material of an object.
- */
-struct Material
-{
-    // Material Name
-    std::string name;
-    // Ambient Color
-    Vector3D Ka;
-    // Diffuse Color
-    Vector3D Kd;
-    // Specular Color
-    Vector3D Ks;
-    // Specular Exponent
-    float Ns;
-    // Optical Density
-    float Ni;
-    // Dissolve
-    float d;
-    // Illumination
-    int illum;
-    // Ambient Texture Map
-    Texture* map_Ka;
-    // Diffuse Texture Map
-    Texture* map_Kd;
-    // Specular Texture Map
-    Texture* map_Ks;
-    // Specular Hightlight Map
-    Texture* map_Ns;
-    // Alpha Texture Map
-    Texture* map_d;
-    // Bump Map
-    Texture* map_bump;
 };
 
 /**

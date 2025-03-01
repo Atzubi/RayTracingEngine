@@ -3,15 +3,18 @@
 #include "Common.h"
 #include "RayTraceEngine/Shader.h"
 
-ShaderOutput PathTraceShader(const std::uint64_t                  id,
-                             const HitShaderInput&                shaderInput,
-                             const std::vector<IShaderResource*>& shaderResource,
-                             RayGeneratorOutput&                  newRays)
+ShaderOutput PathTraceShader(const std::uint64_t                     id,
+                             const HitShaderInput&                   shaderInput,
+                             const std::span<IShaderResource* const> shaderResource,
+                             RayGeneratorOutput&                     newRays)
 {
-    const auto  absorption       = Vector3D{1.f, 1.f, 1.f} - LoadKdTexel(*shaderInput.intersectionInfo);
-    const auto& opticalDensity   = shaderInput.intersectionInfo->material->Ni;
-    const auto& dissolve         = shaderInput.intersectionInfo->material->d;
-    const auto& volumeAbsorption = shaderInput.intersectionInfo->material->Ns;
+    const auto* materialMap = dynamic_cast<MaterialMap*>(shaderResource[2]);
+    const auto* material    = dynamic_cast<Material*>(
+        shaderResource[3 + materialMap->instanceToMaterial.at(shaderInput.intersectionInfo->instanceId)]);
+    const auto  absorption       = Vector3D{1.f, 1.f, 1.f} - LoadKdTexel(*shaderInput.intersectionInfo, *material);
+    const auto& opticalDensity   = material->Ni;
+    const auto& dissolve         = material->d;
+    const auto& volumeAbsorption = material->Ns;
     const auto& sampleCount      = dynamic_cast<SampleCountInfo*>(shaderResource[0])->samplesPerPixel;
     auto&       accumulatedAbsorption =
         dynamic_cast<PathData*>(shaderResource[1])->absorption[id * sampleCount + shaderInput.id];

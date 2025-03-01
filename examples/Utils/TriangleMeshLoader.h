@@ -16,30 +16,11 @@
 
 struct MeshHandles
 {
-    std::vector<std::unique_ptr<IntersectableObjectHandle>> intersectables;
-    std::vector<std::unique_ptr<ShaderResourceHandle>>      renderTargets;
+    std::unique_ptr<IntersectableObjectHandle> intersectable;
+    std::unique_ptr<ShaderResourceHandle>      material;
 };
 
-struct TextureWrapper : public IShaderResource
-{
-  public:
-    Texture texture;
-
-    std::span<const std::uint8_t> Serialize() const override
-    {
-        return std::span(reinterpret_cast<const std::uint8_t*>(this), sizeof(TextureWrapper));
-    }
-
-    std::unique_ptr<IShaderResource> Deserialize(const std::span<const std::uint8_t> resource) const override
-    {
-        if (resource.size() != sizeof(TextureWrapper))
-            return {};
-        return std::make_unique<TextureWrapper>(*reinterpret_cast<const TextureWrapper*>(resource.data()));
-    }
-};
-
-std::unique_ptr<ShaderResourceHandle>
-LoadTexture(const std::filesystem::path& path, RayEngine& rayEngine, Material& material)
+Texture LoadTexture(const std::filesystem::path& path)
 {
     constexpr std::uint32_t channelCount = STBI_rgb; // 3
     int                     comp;
@@ -47,60 +28,55 @@ LoadTexture(const std::filesystem::path& path, RayEngine& rayEngine, Material& m
     int                     height;
     if (const auto texture = stbi_load(path.string().c_str(), &width, &height, &comp, STBI_rgb))
     {
-        TextureWrapper textureWrapper;
-        textureWrapper.texture.name          = path.filename().string();
-        textureWrapper.texture.bytesPerTexel = channelCount;
-        textureWrapper.texture.w             = width;
-        textureWrapper.texture.h             = height;
-        textureWrapper.texture.image.resize(channelCount * width * height);
-        auto tex        = rayEngine.CreateShaderResource({&textureWrapper});
-        material.map_Kd = &tex->Map<TextureWrapper>().texture;
-        std::memcpy(material.map_Kd->image.data(), texture, channelCount * material.map_Kd->w * material.map_Kd->h);
+        Texture tex{};
+        tex.bytesPerTexel = channelCount;
+        tex.w             = width;
+        tex.h             = height;
+        tex.image.resize(channelCount * width * height);
+        std::memcpy(tex.image.data(), texture, tex.image.size());
         return tex;
     }
     return {};
 }
 
-MeshHandles LoadTriangleMeshFromObj(const std::filesystem::path& path, RayEngine& rayEngine)
+std::vector<MeshHandles> LoadTriangleMeshFromObj(const std::filesystem::path& path, RayEngine& rayEngine)
 {
     objl::Loader loader;
     if (!loader.LoadFile(path.string()))
         return {};
 
-    MeshHandles handles;
+    std::vector<MeshHandles> handles;
 
     for (auto& m : loader.LoadedMeshes)
     {
         Material material{};
 
         // Fill the material description
-        material.name  = m.MeshMaterial.name;
-        material.Ka    = {m.MeshMaterial.Ka.X, m.MeshMaterial.Ka.Y, m.MeshMaterial.Ka.Z};
-        material.Kd    = {m.MeshMaterial.Kd.X, m.MeshMaterial.Kd.Y, m.MeshMaterial.Kd.Z};
-        material.Ks    = {m.MeshMaterial.Ks.X, m.MeshMaterial.Ks.Y, m.MeshMaterial.Ks.Z};
-        material.Ns    = m.MeshMaterial.Ns;
-        material.Ni    = m.MeshMaterial.Ni;
-        material.d     = m.MeshMaterial.d;
-        material.illum = m.MeshMaterial.illum;
-        handles.renderTargets.push_back(
-            LoadTexture(path.parent_path().append(m.MeshMaterial.map_Ka), rayEngine, material));
-        handles.renderTargets.push_back(
-            LoadTexture(path.parent_path().append(m.MeshMaterial.map_Kd), rayEngine, material));
-        handles.renderTargets.push_back(
-            LoadTexture(path.parent_path().append(m.MeshMaterial.map_Ks), rayEngine, material));
-        handles.renderTargets.push_back(
-            LoadTexture(path.parent_path().append(m.MeshMaterial.map_Ns), rayEngine, material));
-        handles.renderTargets.push_back(
-            LoadTexture(path.parent_path().append(m.MeshMaterial.map_d), rayEngine, material));
-        handles.renderTargets.push_back(
-            LoadTexture(path.parent_path().append(m.MeshMaterial.map_bump), rayEngine, material));
+        material.Ka       = {m.MeshMaterial.Ka.X, m.MeshMaterial.Ka.Y, m.MeshMaterial.Ka.Z};
+        material.Kd       = {m.MeshMaterial.Kd.X, m.MeshMaterial.Kd.Y, m.MeshMaterial.Kd.Z};
+        material.Ks       = {m.MeshMaterial.Ks.X, m.MeshMaterial.Ks.Y, m.MeshMaterial.Ks.Z};
+        material.Ns       = m.MeshMaterial.Ns;
+        material.Ni       = m.MeshMaterial.Ni;
+        material.d        = m.MeshMaterial.d;
+        material.illum    = m.MeshMaterial.illum;
+        material.map_Ka   = LoadTexture(path.parent_path().append(m.MeshMaterial.map_Ka));
+        material.map_Kd   = LoadTexture(path.parent_path().append(m.MeshMaterial.map_Kd));
+        material.map_Ks   = LoadTexture(path.parent_path().append(m.MeshMaterial.map_Ks));
+        material.map_Ns   = LoadTexture(path.parent_path().append(m.MeshMaterial.map_Ns));
+        material.map_d    = LoadTexture(path.parent_path().append(m.MeshMaterial.map_d));
+        material.map_bump = LoadTexture(path.parent_path().append(m.MeshMaterial.map_bump));
+
+        MeshHandles meshHandles{};
+        meshHandles.material = rayEngine.CreateShaderResource({&material});
 
         std::vector<TriangleMeshObject::Vertex> vertices(m.Vertices.size());
         std::memcpy(vertices.data(), m.Vertices.data(), sizeof(TriangleMeshObject::Vertex) * vertices.size());
 
         // Create a triangle mesh object
-        TriangleMeshObject triangleMeshObject(std::move(vertices), std::move(m.Indices), std::move(material));
-        handles.intersectables.push_back(rayEngine.CreateIntersectableObject({triangleMeshObject}));
+        TriangleMeshObject triangleMeshObject(std::move(vertices), std::move(m.Indices));
+        meshHandles.intersectable = rayEngine.CreateIntersectableObject({triangleMeshObject});
+
+        handles.push_back(std::move(meshHandles));
     }
     return handles;
 }

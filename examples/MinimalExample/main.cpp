@@ -1,7 +1,6 @@
 #include "Intersectables/TriangleMeshObject.h"
 #include "RayTraceEngine/RayEngine.h"
 #include "Shaders/PerspectiveGeneratorShader.h"
-#include "Shaders/PhongShader.h"
 #include "Utils/SFMLUtils.h"
 
 // Include a graphics library for displaying the render result
@@ -9,10 +8,10 @@
 
 namespace
 {
-    ShaderOutput WhiteShader(const std::uint64_t                  id,
-                             const HitShaderInput&                shaderInput,
-                             const std::vector<IShaderResource*>& shaderResource,
-                             RayGeneratorOutput&                  newRays)
+    ShaderOutput WhiteShader(const std::uint64_t                     id,
+                             const HitShaderInput&                   shaderInput,
+                             const std::span<IShaderResource* const> shaderResource,
+                             RayGeneratorOutput&                     newRays)
     {
         return {1, 1, 1};
     }
@@ -35,11 +34,8 @@ int main()
     // triangle
     std::vector<uint32_t> indices{0, 1, 2};
 
-    // We can attach a material to our geometry, we will leave this empty for the minimal example
-    Material material{};
-
     // Create a triangle mesh object
-    TriangleMeshObject triangleMeshObject(std::move(vertices), std::move(indices), std::move(material));
+    TriangleMeshObject triangleMeshObject(std::move(vertices), std::move(indices));
 
     // Add the object to engine
     const auto object = rayEngine.CreateIntersectableObject({triangleMeshObject});

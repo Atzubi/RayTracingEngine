@@ -4,21 +4,18 @@
 /**
  * Shades light based on the Phong shading model.
  */
-ShaderOutput BasicPhongHitShader(const std::uint64_t                  id,
-                                 const HitShaderInput&                shaderInput,
-                                 const std::vector<IShaderResource*>& shaderResource,
-                                 RayGeneratorOutput&                  newRays)
+ShaderOutput BasicPhongHitShader(const std::uint64_t                     id,
+                                 const HitShaderInput&                   shaderInput,
+                                 const std::span<IShaderResource* const> shaderResource,
+                                 RayGeneratorOutput&                     newRays)
 {
-    const auto*  shaderInputInfo = shaderInput.intersectionInfo;
-    ShaderOutput shaderOutput{};
+    const auto* shaderInputInfo = shaderInput.intersectionInfo;
+    const auto* material        = dynamic_cast<Material*>(shaderResource[1]);
 
-    if (shaderInputInfo->distance == std::numeric_limits<double_t>::max())
-        return shaderOutput;
-
-    const auto exponent = shaderInputInfo->material->Ns;
-    const auto Kd       = LoadKdTexel(*shaderInputInfo);
-    const auto Ka       = shaderInputInfo->material->Ka * Kd;
-    const auto Ks       = shaderInputInfo->material->Ks;
+    const auto exponent = material->Ns;
+    const auto Kd       = LoadKdTexel(*shaderInputInfo, *material);
+    const auto Ka       = material->Ka * Kd;
+    const auto Ks       = material->Ks;
 
     Vector3D n{}, v{}, r{}, l{};
     float    nl;
@@ -45,6 +42,7 @@ ShaderOutput BasicPhongHitShader(const std::uint64_t                  id,
 
     const auto color = (Ka + Kd * nl + Ks * pow(dot, exponent));
 
+    ShaderOutput shaderOutput{};
     shaderOutput.color[0] = std::min(color[0], 1.f);
     shaderOutput.color[1] = std::min(color[1], 1.f);
     shaderOutput.color[2] = std::min(color[2], 1.f);

@@ -6,10 +6,10 @@
 /**
  * Checker pattern sky box shader.
  */
-ShaderOutput CheckerBoxShader(const std::uint64_t                  id,
-                              const MissShaderInput&               shaderInput,
-                              const std::vector<IShaderResource*>& shaderResource,
-                              RayGeneratorOutput&                  newRays)
+ShaderOutput CheckerBoxShader(const std::uint64_t                     id,
+                              const MissShaderInput&                  shaderInput,
+                              const std::span<IShaderResource* const> shaderResource,
+                              RayGeneratorOutput&                     newRays)
 {
     const auto& v = shaderInput.rayDirection;
 

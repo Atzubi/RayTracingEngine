@@ -7,9 +7,9 @@
  * Perspective ray generator shader. It generates a view frustum given a camera position and resolution. Multiple
  * samples per pixel are supported.
  */
-void PerspectiveGeneratorShader(const std::uint64_t                  id,
-                                const std::vector<IShaderResource*>& shaderResource,
-                                RayGeneratorOutput&                  rayGeneratorOutput)
+void PerspectiveGeneratorShader(const std::uint64_t                     id,
+                                const std::span<IShaderResource* const> shaderResource,
+                                RayGeneratorOutput&                     rayGeneratorOutput)
 {
     const auto* info    = dynamic_cast<ViewportInfo*>(shaderResource[0]);
     const auto* cam     = dynamic_cast<CameraInfo*>(shaderResource[1]);

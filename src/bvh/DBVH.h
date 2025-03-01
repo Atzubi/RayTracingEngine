@@ -27,7 +27,9 @@ class DBVH : public IIntersectable
 
     bool IntersectAll(std::vector<IntersectionInfo>& intersectionInfo, const Ray& ray) const override;
 
-    std::unique_ptr<IIntersectable> Clone() const override;
+    std::vector<std::uint8_t> Serialize() const override;
+
+    std::unique_ptr<IIntersectable> Deserialize(std::span<const std::uint8_t> buffer) const override;
 
     [[nodiscard]] BoundingBox GetBoundaries() const override;
 

@@ -13,8 +13,8 @@ class IShaderResource
   public:
     virtual ~IShaderResource() = default;
 
-    virtual std::span<const std::uint8_t>    Serialize() const                                         = 0;
-    virtual std::unique_ptr<IShaderResource> Deserialize(std::span<const std::uint8_t> resource) const = 0;
+    virtual std::vector<std::uint8_t>        Serialize() const                                       = 0;
+    virtual std::unique_ptr<IShaderResource> Deserialize(std::span<const std::uint8_t> buffer) const = 0;
 };
 
 /**
@@ -79,26 +79,26 @@ struct ShaderOutput
     Vector3D color;
 };
 
-using IRayGeneratorShader = void (*)(std::uint64_t, const std::vector<IShaderResource*>&, RayGeneratorOutput&);
+using IRayGeneratorShader = void (*)(std::uint64_t, std::span<IShaderResource* const>, RayGeneratorOutput&);
 
 using IOcclusionShader = ShaderOutput (*)(std::uint64_t,
                                           const OcclusionShaderInput&,
-                                          const std::vector<IShaderResource*>&,
+                                          std::span<IShaderResource* const>,
                                           RayGeneratorOutput&);
 
 using IPierceShader = ShaderOutput (*)(std::uint64_t,
                                        const PierceShaderInput&,
-                                       const std::vector<IShaderResource*>&,
+                                       std::span<IShaderResource* const>,
                                        RayGeneratorOutput&);
 
 using IHitShader = ShaderOutput (*)(std::uint64_t,
                                     const HitShaderInput&,
-                                    const std::vector<IShaderResource*>&,
+                                    std::span<IShaderResource* const>,
                                     RayGeneratorOutput&);
 
 using IMissShader = ShaderOutput (*)(std::uint64_t,
                                      const MissShaderInput&,
-                                     const std::vector<IShaderResource*>&,
+                                     std::span<IShaderResource* const>,
                                      RayGeneratorOutput&);
 
 struct ShaderResourceDescription

@@ -6,20 +6,20 @@
 
 #include <functional>
 
-class DataManagementUnitV2;
-
 class Instance : public IIntersectable
 {
   public:
-    Instance(const IIntersectable* intersectible, std::function<void()> fetchCallBack);
+    Instance(const IIntersectable* intersectible, std::function<void()> fetchCallBack, std::uint64_t id);
 
     void ApplyTransform(const Matrix4x4& newTransform);
 
     Matrix4x4 GetTransform() const;
 
-    [[nodiscard]] std::unique_ptr<IIntersectable> Clone() const override;
+    std::vector<std::uint8_t> Serialize() const override;
 
-    [[nodiscard]] BoundingBox GetBoundaries() const override;
+    std::unique_ptr<IIntersectable> Deserialize(std::span<const std::uint8_t> buffer) const override;
+
+    BoundingBox GetBoundaries() const override;
 
     bool IntersectFirst(IntersectionInfo& intersectionInfo, const Ray& ray) const override;
 
@@ -27,7 +27,7 @@ class Instance : public IIntersectable
 
     bool IntersectAll(std::vector<IntersectionInfo>& intersectionInfo, const Ray& ray) const override;
 
-    [[nodiscard]] float GetSurfaceArea() const override;
+    float GetSurfaceArea() const override;
 
     bool operator==(const IIntersectable& object) const override;
 
@@ -36,6 +36,7 @@ class Instance : public IIntersectable
   private:
     const IIntersectable* intersectible_;
     std::function<void()> fetchCallBack_;
+    std::uint64_t         id_;
 
     float       cost_;
     BoundingBox boundingBox_{};

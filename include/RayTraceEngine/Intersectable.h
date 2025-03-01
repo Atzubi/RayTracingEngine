@@ -4,6 +4,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <span>
 #include <vector>
 
 /**
@@ -12,21 +13,21 @@
  * distance:        Distance to the intersected geometry.
  * rayOrigin:       Origin of the ray.
  * rayDirection:    Direction of the ray.
- * normal:          (Interpolated) normal vector of the intersected geometry.
+ * normal:          (Interpolated) Normal vector of the intersected geometry.
  * position:        Coordinates of the point of intersection.
- * texture:         (Interpolated) texture coordinates.
- * material:        The intersected geometries material.
+ * texture:         (Interpolated) Texture coordinates.
+ * objectId:        Id of the instance that was intersected.
  */
 struct IntersectionInfo
 {
-    bool            hit;
-    float           distance;
-    Vector3D        rayOrigin;
-    Vector3D        rayDirection;
-    Vector3D        normal;
-    Vector3D        position;
-    Vector2D        texture;
-    const Material* material;
+    bool          hit;
+    float         distance;
+    Vector3D      rayOrigin;
+    Vector3D      rayDirection;
+    Vector3D      normal;
+    Vector3D      position;
+    Vector2D      texture;
+    std::uint64_t instanceId;
 };
 
 /**
@@ -41,10 +42,17 @@ class IIntersectable
     virtual ~IIntersectable() = default;
 
     /**
-     * Creates a clone of this object.
-     * @return  Pointer to a new clone.
+     * Serializes the intersectable into one continuous buffer.
+     * @return   Raw byte representation of the intersectable.
      */
-    [[nodiscard]] virtual std::unique_ptr<IIntersectable> Clone() const = 0;
+    virtual std::vector<std::uint8_t> Serialize() const = 0;
+
+    /**
+     * Creates an intersectable from a buffer.
+     * @param buffer     Raw byte data.
+     * @return           A new IIntersectable constructed from the buffer.
+     */
+    virtual std::unique_ptr<IIntersectable> Deserialize(std::span<const std::uint8_t> buffer) const = 0;
 
     /**
      * Computes the axis aligned bounding box of this object.

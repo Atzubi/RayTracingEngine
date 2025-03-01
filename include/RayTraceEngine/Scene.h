@@ -22,6 +22,8 @@ struct SceneDescription
 class InstanceHandle
 {
   public:
+    virtual std::uint64_t GetId() const = 0;
+
     virtual void Transform(const Matrix4x4& transform) = 0;
 
     virtual Matrix4x4 GetTransform() const = 0;

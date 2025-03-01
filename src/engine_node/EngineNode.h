@@ -4,6 +4,7 @@
 #include "cache/Cache.h"
 
 #include <memory>
+#include <unordered_map>
 #include <unordered_set>
 
 class RayEngine::EngineNode
@@ -29,25 +30,23 @@ class RayEngine::EngineNode
     void FetchIntersectable();
     void FetchShaderResource();
 
-    void DeleteIntersectable(const IIntersectable* intersectable);
-    void DeleteShaderResource(const IShaderResource* shaderResource);
-    void DeleteShader(const IRayGeneratorShader shader);
-    void DeleteShader(const IHitShader shader);
-    void DeleteShader(const IPierceShader shader);
-    void DeleteShader(const IOcclusionShader shader);
-    void DeleteShader(const IMissShader shader);
-    void DeleteRenderTarget(const std::vector<Vector3D>* renderTarget);
+    void DeleteResource(std::uint64_t id);
+
+    std::uint64_t GetNextId();
+
+    std::uint64_t                     usedIds_;
+    std::unordered_set<std::uint64_t> freeIds_;
 
     // TODO replace intersectables and shader resources with caches
     // Cache<Key, T> cache_;
 
     // Resources
-    std::unordered_set<std::unique_ptr<IIntersectable>>        intersectables_;
-    std::unordered_set<std::unique_ptr<IShaderResource>>       shaderResources_;
-    std::unordered_set<IRayGeneratorShader>                    generatorShaders_;
-    std::unordered_set<IHitShader>                             hitShaders_;
-    std::unordered_set<IPierceShader>                          pierceShaders_;
-    std::unordered_set<IOcclusionShader>                       occlusionShaders_;
-    std::unordered_set<IMissShader>                            missShaders_;
-    std::unordered_set<std::unique_ptr<std::vector<Vector3D>>> renderTargets_;
+    std::unordered_map<std::uint64_t, std::unique_ptr<IIntersectable>>        intersectables_;
+    std::unordered_map<std::uint64_t, std::unique_ptr<IShaderResource>>       shaderResources_;
+    std::unordered_map<std::uint64_t, IRayGeneratorShader>                    generatorShaders_;
+    std::unordered_map<std::uint64_t, IHitShader>                             hitShaders_;
+    std::unordered_map<std::uint64_t, IPierceShader>                          pierceShaders_;
+    std::unordered_map<std::uint64_t, IOcclusionShader>                       occlusionShaders_;
+    std::unordered_map<std::uint64_t, IMissShader>                            missShaders_;
+    std::unordered_map<std::uint64_t, std::unique_ptr<std::vector<Vector3D>>> renderTargets_;
 };

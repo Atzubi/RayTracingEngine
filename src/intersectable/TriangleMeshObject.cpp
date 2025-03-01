@@ -1,5 +1,7 @@
 #include "Intersectables/TriangleMeshObject.h"
+#include "RayTraceEngine/BasicStructures.h"
 #include "bvh/DBVH.h"
+
 #include <cmath>
 #include <cstdint>
 #include <span>
@@ -7,12 +9,18 @@
 class Triangle : public IIntersectable
 {
   public:
-    Triangle(std::span<const TriangleMeshObject::Vertex> vertices,
-             std::span<const std::uint32_t, 3>           indices,
-             const Material*                             material)
-        : vertices_(vertices), indices_(indices), material_(material) {};
+    Triangle(std::span<const TriangleMeshObject::Vertex> vertices, std::span<const std::uint32_t, 3> indices)
+        : vertices_(vertices), indices_(indices) {};
 
-    [[nodiscard]] std::unique_ptr<IIntersectable> Clone() const override { return nullptr; }
+    std::vector<std::uint8_t> Serialize() const override
+    {
+        return {}; // Not serializable
+    }
+
+    std::unique_ptr<IIntersectable> Deserialize(const std::span<const std::uint8_t> buffer) const override
+    {
+        return {}; // Not deserializable
+    }
 
     [[nodiscard]] BoundingBox GetBoundaries() const override
     {
@@ -157,20 +165,18 @@ class Triangle : public IIntersectable
         intersectionInfo.distance = (ray.origin - intersectionInfo.position).GetLength();
         SetNormal(intersectionInfo, u, v, w);
         SetTexture(intersectionInfo, u, v, w);
-        intersectionInfo.material = material_;
-        intersectionInfo.hit      = true;
+        intersectionInfo.hit = true;
     }
 
     std::span<const TriangleMeshObject::Vertex> vertices_;
     std::span<const std::uint32_t, 3>           indices_;
-    const Material*                             material_;
 };
 
 class TriangleMeshObject::TrianglMeshImpl : public IIntersectable
 {
   public:
-    TrianglMeshImpl(std::vector<Vertex> vertices, std::vector<std::uint32_t> indices, Material material)
-        : vertices_(std::move(vertices)), indices_(std::move(indices)), material_(std::move(material))
+    TrianglMeshImpl(std::vector<Vertex> vertices, std::vector<std::uint32_t> indices)
+        : vertices_(std::move(vertices)), indices_(std::move(indices))
     {
         if (indices_.size() % 3 != 0)
         {
@@ -181,9 +187,7 @@ class TriangleMeshObject::TrianglMeshImpl : public IIntersectable
         for (unsigned long i = 0; i < indices_.size() / 3; i++)
         {
             auto triangle = std::make_unique<Triangle>(
-                vertices_,
-                std::span<const std::uint32_t, 3>(indices_.begin() + i * 3, indices_.begin() + i * 3 + 3),
-                &material_);
+                vertices_, std::span<const std::uint32_t, 3>(indices_.begin() + i * 3, indices_.begin() + i * 3 + 3));
             objects.push_back(triangle.get());
             triangles_.push_back(std::move(triangle));
         }
@@ -208,10 +212,39 @@ class TriangleMeshObject::TrianglMeshImpl : public IIntersectable
         return structure_.IntersectAll(intersectionInfo, ray);
     }
 
-    std::unique_ptr<IIntersectable> Clone() const override
+    std::vector<std::uint8_t> Serialize() const override
     {
-        // TODO
-        return std::make_unique<TriangleMeshObject>(vertices_, indices_, material_);
+        const auto size =
+            sizeof(std::size_t) * 2 + sizeof(Vertex) * vertices_.size() + sizeof(std::uint32_t) * indices_.size();
+        std::vector<std::uint8_t> buffer(size);
+        const auto                verticesSize = vertices_.size() * sizeof(Vertex);
+        std::memcpy(buffer.data(), &verticesSize, sizeof(verticesSize));
+        auto offset = sizeof(verticesSize);
+        std::memcpy(buffer.data() + offset, vertices_.data(), verticesSize);
+        offset += verticesSize;
+        const auto indicesSize = indices_.size() * sizeof(std::uint32_t);
+        std::memcpy(buffer.data() + offset, &indicesSize, sizeof(indicesSize));
+        offset += sizeof(indicesSize);
+        std::memcpy(buffer.data() + offset, indices_.data(), indicesSize);
+        return buffer;
+    }
+
+    std::unique_ptr<IIntersectable> Deserialize(const std::span<const std::uint8_t> buffer) const override
+    {
+        std::vector<Vertex>        vertices;
+        std::vector<std::uint32_t> indices;
+        std::size_t                verticesSize;
+        std::memcpy(&verticesSize, buffer.data(), sizeof(verticesSize));
+        auto offset = sizeof(verticesSize);
+        vertices.resize(verticesSize / sizeof(Vertex));
+        std::memcpy(vertices.data(), buffer.data() + offset, verticesSize);
+        offset += verticesSize;
+        std::size_t indicesSize;
+        std::memcpy(&indicesSize, buffer.data() + offset, sizeof(indicesSize));
+        offset += sizeof(indicesSize);
+        indices.resize(indicesSize / sizeof(std::uint32_t));
+        std::memcpy(indices.data(), buffer.data() + offset, indicesSize);
+        return std::make_unique<TriangleMeshObject>(std::move(vertices), std::move(indices));
     }
 
     float GetSurfaceArea() const override { return structure_.GetSurfaceArea(); }
@@ -227,17 +260,14 @@ class TriangleMeshObject::TrianglMeshImpl : public IIntersectable
   private:
     std::vector<Vertex>   vertices_;
     std::vector<uint32_t> indices_;
-    Material              material_;
 
     std::vector<std::unique_ptr<IIntersectable>> triangles_;
     DBVH                                         structure_;
 };
 
-TriangleMeshObject::TriangleMeshObject(std::vector<Vertex>        vertices,
-                                       std::vector<std::uint32_t> indices,
-                                       Material                   material)
+TriangleMeshObject::TriangleMeshObject(std::vector<Vertex> vertices, std::vector<std::uint32_t> indices)
 {
-    impl_ = std::make_unique<TrianglMeshImpl>(std::move(vertices), std::move(indices), std::move(material));
+    impl_ = std::make_unique<TrianglMeshImpl>(std::move(vertices), std::move(indices));
 }
 
 TriangleMeshObject::~TriangleMeshObject() = default;
@@ -259,8 +289,12 @@ bool TriangleMeshObject::IntersectAll(std::vector<IntersectionInfo>& intersectio
     return impl_->IntersectAll(intersectionInfo, ray);
 }
 
-std::unique_ptr<IIntersectable> TriangleMeshObject::Clone() const { return impl_->Clone(); }
+std::vector<std::uint8_t> TriangleMeshObject::Serialize() const { return impl_->Serialize(); }
 
+std::unique_ptr<IIntersectable> TriangleMeshObject::Deserialize(const std::span<const std::uint8_t> buffer) const
+{
+    return impl_->Deserialize(buffer);
+}
 float TriangleMeshObject::GetSurfaceArea() const { return impl_->GetSurfaceArea(); }
 
 bool TriangleMeshObject::operator==(const IIntersectable& object) const { return impl_->operator==(object); }

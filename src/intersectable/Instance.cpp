@@ -79,8 +79,8 @@ namespace
     }
 } // namespace
 
-Instance::Instance(const IIntersectable* intersectible, std::function<void()> fetchCallBack)
-    : intersectible_(intersectible), fetchCallBack_(fetchCallBack)
+Instance::Instance(const IIntersectable* intersectible, std::function<void()> fetchCallBack, const std::uint64_t id)
+    : intersectible_(intersectible), fetchCallBack_(std::move(fetchCallBack)), id_(id)
 {
     cost_             = intersectible_->GetSurfaceArea();
     boundingBox_      = intersectible_->GetBoundaries();
@@ -90,14 +90,23 @@ Instance::Instance(const IIntersectable* intersectible, std::function<void()> fe
 
 void Instance::ApplyTransform(const Matrix4x4& newTransform)
 {
-    boundingBox_ = intersectible_->GetBoundaries();
-    transform_   = newTransform * transform_;
-    // transform_.MultiplyBy(newTransform);
+    boundingBox_      = intersectible_->GetBoundaries();
+    transform_        = newTransform * transform_;
     inverseTransform_ = transform_.GetInverse();
     ApplyTransformToBox(boundingBox_, transform_);
 }
 
 Matrix4x4 Instance::GetTransform() const { return transform_; }
+
+std::vector<std::uint8_t> Instance::Serialize() const
+{
+    return {}; // TODO
+}
+
+std::unique_ptr<IIntersectable> Instance::Deserialize(const std::span<const std::uint8_t> buffer) const
+{
+    return {}; // TODO
+}
 
 bool Instance::IntersectFirst(IntersectionInfo& intersectionInfo, const Ray& ray) const
 {
@@ -111,7 +120,8 @@ bool Instance::IntersectFirst(IntersectionInfo& intersectionInfo, const Ray& ray
     if (info.distance >= intersectionInfo.distance)
         return false;
 
-    intersectionInfo = info;
+    intersectionInfo            = info;
+    intersectionInfo.instanceId = id_;
     return true;
 }
 
@@ -123,7 +133,8 @@ bool Instance::IntersectAny(IntersectionInfo& intersectionInfo, const Ray& ray) 
     if (!intersectible_->IntersectAny(info, newRay))
         return false;
     ReverseTransformHit(info, ray, transform_, GetCenter(intersectible_->GetBoundaries()));
-    intersectionInfo = info;
+    intersectionInfo            = info;
+    intersectionInfo.instanceId = id_;
     return true;
 }
 
@@ -137,14 +148,13 @@ bool Instance::IntersectAll(std::vector<IntersectionInfo>& intersectionInfo, con
     for (auto& info : infos)
     {
         ReverseTransformHit(info, ray, transform_, GetCenter(intersectible_->GetBoundaries()));
+        info.instanceId = id_;
         intersectionInfo.push_back(std::move(info));
     }
     return true;
 }
 
 BoundingBox Instance::GetBoundaries() const { return boundingBox_; }
-
-std::unique_ptr<IIntersectable> Instance::Clone() const { return nullptr; }
 
 float Instance::GetSurfaceArea() const
 {

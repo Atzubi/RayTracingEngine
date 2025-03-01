@@ -19,15 +19,19 @@ int main()
 
     // ============================================= Define The Geometry ==============================================
 
-    const auto meshHandles = LoadTriangleMeshFromObj(std::filesystem::path("./Data/Duck/duck.obj"), rayEngine);
+    const auto handles = LoadTriangleMeshFromObj(std::filesystem::path("./Data/Duck/duck.obj"), rayEngine);
 
     SceneDescription sceneDesc{};
-    for (const auto& handle : meshHandles.intersectables)
+    for (const auto& meshHandles : handles)
     {
-        sceneDesc.intersectables.push_back({*handle.get(), {2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1}, {}});
-        sceneDesc.intersectables.push_back({*handle.get(), {2, 0, 0, 2, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1}, {}});
-        sceneDesc.intersectables.push_back({*handle.get(), {2, 0, 0, 4, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1}, {}});
-        sceneDesc.intersectables.push_back({*handle.get(), {2, 0, 0, 6, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1}, {}});
+        sceneDesc.intersectables.push_back(
+            {*meshHandles.intersectable.get(), {2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1}, {}});
+        sceneDesc.intersectables.push_back(
+            {*meshHandles.intersectable.get(), {2, 0, 0, 2, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1}, {}});
+        sceneDesc.intersectables.push_back(
+            {*meshHandles.intersectable.get(), {2, 0, 0, 4, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1}, {}});
+        sceneDesc.intersectables.push_back(
+            {*meshHandles.intersectable.get(), {2, 0, 0, 6, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1}, {}});
     }
     const auto scene     = rayEngine.CreateScene(sceneDesc);
     auto       instances = scene->GetInstanceHandles();
@@ -86,7 +90,7 @@ int main()
     pipelineDescription.scene           = scene.get();
     pipelineDescription.generatorShader = {
         generatorShader.get(), {viewPortShaderResource.get(), cameraShaderResource.get(), sampleShaderResource.get()}};
-    pipelineDescription.hitShader = {hitShader.get(), {cameraShaderResource.get()}};
+    pipelineDescription.hitShader = {hitShader.get(), {cameraShaderResource.get(), handles[0].material.get()}};
 
     const auto pipeline = rayEngine.CreatePipeline(pipelineDescription);
 

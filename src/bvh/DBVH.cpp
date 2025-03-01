@@ -1355,7 +1355,15 @@ bool DBVH::IntersectAll(std::vector<IntersectionInfo>& intersectionInfos, const 
     return hit;
 }
 
-std::unique_ptr<IIntersectable> DBVH::Clone() const { return std::make_unique<DBVH>(leaves_); }
+std::vector<std::uint8_t> DBVH::Serialize() const
+{
+    return {}; // TODO
+}
+
+std::unique_ptr<IIntersectable> DBVH::Deserialize(const std::span<const std::uint8_t> buffer) const
+{
+    return {}; // TODO
+}
 
 BoundingBox DBVH::GetBoundaries() const { return flatTree_[0].boundingBox; }
 

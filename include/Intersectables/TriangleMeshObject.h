@@ -32,9 +32,8 @@ class TriangleMeshObject : public IIntersectable
      * tests.
      * @param vertices  Vector of vertices, each containing a position, a normal and a texture coordinate.
      * @param indices   Vector of indices for the vertices. Every 3 indices define one triangle.
-     * @param material  The objects material.
      */
-    TriangleMeshObject(std::vector<Vertex> vertices, std::vector<std::uint32_t> indices, Material material);
+    TriangleMeshObject(std::vector<Vertex> vertices, std::vector<std::uint32_t> indices);
 
     /**
      * Destructor, cleans up this object on deletion.
@@ -73,16 +72,23 @@ class TriangleMeshObject : public IIntersectable
     bool IntersectAll(std::vector<IntersectionInfo>& intersectionInfo, const Ray& ray) const override;
 
     /**
-     * Makes a perfect clone of this object.
-     * @return  Pointer to the new clone.
+     * Serializes the intersectable into one continuous buffer.
+     * @return   Raw byte representation of the intersectable.
      */
-    [[nodiscard]] std::unique_ptr<IIntersectable> Clone() const override;
+    std::vector<std::uint8_t> Serialize() const override;
+
+    /**
+     * Creates an intersectable from a buffer.
+     * @param buffer     Raw byte data.
+     * @return           A new IIntersectable constructed from the buffer.
+     */
+    std::unique_ptr<IIntersectable> Deserialize(std::span<const std::uint8_t> buffer) const override;
 
     /**
      * Computes the effective surface area of this object.
      * @return The surface area of this object.
      */
-    [[nodiscard]] float GetSurfaceArea() const override;
+    float GetSurfaceArea() const override;
 
     /**
      * Tests whether the object in question is identical to this object.
