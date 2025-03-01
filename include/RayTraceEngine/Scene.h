@@ -4,6 +4,8 @@
 #include "Intersectable.h"
 #include "Matrix4x4.h"
 
+#include <cstdint>
+#include <memory>
 #include <span>
 #include <vector>
 

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "RayTraceEngine/BasicStructures.h"
 #include "RayTraceEngine/Intersectable.h"
 #include "RayTraceEngine/Vector3D.h"
 
@@ -44,7 +43,7 @@ class TriangleMeshObject : public IIntersectable
      * Computes the axis aligned bounding box of this object.
      * @return An axis aligned bounding box of this object.
      */
-    [[nodiscard]] BoundingBox GetBoundaries() const override;
+    BoundingBox GetBoundaries() const override;
 
     /**
      * Computes the first intersection of a ray with this object.

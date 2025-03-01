@@ -1,13 +1,11 @@
 
 #pragma once
 
-#include "RayTraceEngine/BasicStructures.h"
 #include "RayTraceEngine/Pipeline.h"
 #include "RayTraceEngine/Shader.h"
 #include "RayTraceEngine/Vector3D.h"
 
 #include <cstdint>
-#include <cstring>
 #include <unordered_map>
 #include <vector>
 

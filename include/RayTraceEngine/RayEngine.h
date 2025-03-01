@@ -1,12 +1,10 @@
 #pragma once
 
-#include "BasicStructures.h"
 #include "Intersectable.h"
 #include "Pipeline.h"
 #include "Scene.h"
 #include "Shader.h"
 
-#include <cstdint>
 #include <memory>
 
 class RayEngine

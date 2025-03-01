@@ -1,8 +1,6 @@
 #include "DBVH.h"
-#include <algorithm>
-#include <array>
+
 #include <limits>
-#include <span>
 
 namespace
 {

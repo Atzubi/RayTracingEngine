@@ -1,5 +1,4 @@
-#include "intersectable/Instance.h"
-#include "engine_node/EngineNode.h"
+#include "Instance.h"
 
 namespace
 {

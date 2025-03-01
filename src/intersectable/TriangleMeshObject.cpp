@@ -1,11 +1,9 @@
 #include "Intersectables/TriangleMeshObject.h"
-#include "RayTraceEngine/BasicStructures.h"
 #include "bvh/DBVH.h"
 
-#include <cmath>
-#include <cstdint>
 #include <cstring>
 #include <span>
+#include <stdexcept>
 
 class Triangle : public IIntersectable
 {
@@ -215,6 +213,7 @@ class TriangleMeshObject::TrianglMeshImpl : public IIntersectable
 
     std::vector<std::uint8_t> Serialize() const override
     {
+        // TODO: Send built bvh
         const auto size =
             sizeof(std::size_t) * 2 + sizeof(Vertex) * vertices_.size() + sizeof(std::uint32_t) * indices_.size();
         std::vector<std::uint8_t> buffer(size);
@@ -232,6 +231,7 @@ class TriangleMeshObject::TrianglMeshImpl : public IIntersectable
 
     std::unique_ptr<IIntersectable> Deserialize(const std::span<const std::uint8_t> buffer) const override
     {
+        // TODO: Don't rebuild from scratch
         std::vector<Vertex>        vertices;
         std::vector<std::uint32_t> indices;
         std::size_t                verticesSize;

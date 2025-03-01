@@ -1,11 +1,11 @@
 #include "pipeline/PipelineImplement.h"
+#include "RayTraceEngine/BasicStructures.h"
+#include "RayTraceEngine/Intersectable.h"
 #include "RayTraceEngine/Pipeline.h"
 
-#include <algorithm>
 #include <cassert>
 #include <cstring>
-#include <execution>
-#include <ranges>
+#include <limits>
 
 namespace
 {

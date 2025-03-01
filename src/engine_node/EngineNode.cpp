@@ -3,6 +3,8 @@
 #include "intersectable/Instance.h"
 #include "pipeline/PipelineImplement.h"
 
+#include <functional>
+
 class HandleBase
 {
   public:

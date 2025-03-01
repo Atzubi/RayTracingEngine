@@ -1,6 +1,6 @@
 #pragma once
 
-#include "RayTraceEngine/Vector3D.h"
+#include "Vector3D.h"
 
 /**
  * Contains a 4 by 4 matrix.

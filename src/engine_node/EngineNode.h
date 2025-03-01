@@ -2,7 +2,7 @@
 
 #include "RayTraceEngine/RayEngine.h"
 
-#include <memory>
+#include <cstdint>
 #include <unordered_map>
 #include <unordered_set>
 

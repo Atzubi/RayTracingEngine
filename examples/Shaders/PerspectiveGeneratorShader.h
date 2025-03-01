@@ -1,7 +1,6 @@
 #include "Common.h"
 #include "RayTraceEngine/Shader.h"
-#include <cmath>
-#include <cstdint>
+#include "RayTraceEngine/Vector3D.h"
 
 /**
  * Perspective ray generator shader. It generates a view frustum given a camera position and resolution. Multiple

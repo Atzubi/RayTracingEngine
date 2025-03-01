@@ -3,6 +3,7 @@
 #include "RayTraceEngine/Shader.h"
 #include "RayTraceEngine/Vector3D.h"
 
+#include <cstdint>
 #include <vector>
 
 struct GeneratorShaderResourceP

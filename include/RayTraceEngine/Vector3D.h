@@ -1,6 +1,5 @@
 #pragma once
 
-#include <bit>
 #include <cmath>
 #include <stdexcept>
 #include <string>
@@ -25,7 +24,7 @@ struct Vector3D
             case 2:
                 return z;
             default:
-                std::string message = "Index " + std::to_string(idx) + " is out of range for Vector3D";
+                const auto message = "Index " + std::to_string(idx) + " is out of range for Vector3D";
                 throw std::out_of_range(message);
         }
     }
@@ -41,7 +40,7 @@ struct Vector3D
             case 2:
                 return z;
             default:
-                std::string message = "Index " + std::to_string(idx) + " is out of range for Vector3D";
+                const auto message = "Index " + std::to_string(idx) + " is out of range for Vector3D";
                 throw std::out_of_range(message);
         }
     }

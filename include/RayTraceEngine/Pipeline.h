@@ -1,11 +1,9 @@
 #pragma once
 
-#include "BasicStructures.h"
 #include "Scene.h"
 #include "Shader.h"
 
 #include <cstdint>
-#include <cstring>
 #include <vector>
 
 struct GeneratorShaderResourcePackage

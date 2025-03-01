@@ -3,6 +3,7 @@
 #include "DBVHNode.h"
 #include "RayTraceEngine/Intersectable.h"
 
+#include <array>
 #include <span>
 #include <utility>
 #include <vector>
@@ -32,9 +33,9 @@ class DBVH : public IIntersectable
 
     std::unique_ptr<IIntersectable> Deserialize(std::span<const std::uint8_t> buffer) const override;
 
-    [[nodiscard]] BoundingBox GetBoundaries() const override;
+    BoundingBox GetBoundaries() const override;
 
-    [[nodiscard]] float GetSurfaceArea() const override;
+    float GetSurfaceArea() const override;
 
     bool operator==(const IIntersectable& object) const override;
 

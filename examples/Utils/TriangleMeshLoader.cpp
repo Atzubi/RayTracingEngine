@@ -1,13 +1,11 @@
 #include "TriangleMeshLoader.h"
 #include "Intersectables/TriangleMeshObject.h"
 #include "OBJ_Loader.h"
-#include "RayTraceEngine/BasicStructures.h"
 #include "Shaders/Common.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "Utils/Stb/stb_image.h"
 
-#include <cmath>
 #include <cstdint>
 #include <cstring>
 

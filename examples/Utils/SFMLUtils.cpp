@@ -1,5 +1,8 @@
 #include "SFMLUtils.h"
 
+#include <cstdint>
+#include <vector>
+
 void DisplayTexture(sf::RenderWindow& window, const Texture& texture)
 {
     // For displaying the texture with SFML, we may need to extend from our textures RGB to RGBA

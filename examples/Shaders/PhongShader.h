@@ -1,5 +1,6 @@
 #include "Common.h"
 #include "RayTraceEngine/Shader.h"
+#include "RayTraceEngine/Vector3D.h"
 
 /**
  * Shades light based on the Phong shading model.

@@ -174,8 +174,3 @@ class MissShaderHandle
   public:
     virtual ~MissShaderHandle() = default;
 };
-
-template <class Shader>
-concept IsShader =
-    std::same_as<Shader, IRayGeneratorShader> || std::same_as<Shader, IHitShader> ||
-    std::same_as<Shader, IOcclusionShader> || std::same_as<Shader, IPierceShader> || std::same_as<Shader, IMissShader>;

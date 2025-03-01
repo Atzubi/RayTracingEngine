@@ -1,10 +1,9 @@
 #pragma once
 
-#include "RayTraceEngine/Vector3D.h"
+#include "Vector3D.h"
 
 #include <cstdint>
 #include <limits>
-#include <vector>
 
 /**
  * Contains x and y coordinates representing a vector in 2 dimensions.

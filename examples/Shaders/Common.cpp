@@ -1,5 +1,7 @@
 #include "Common.h"
 
+#include <cstring>
+
 std::vector<std::uint8_t> Material::Serialize() const
 {
     const auto mapKa   = map_Ka.Serialize();

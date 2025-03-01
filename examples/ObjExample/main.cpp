@@ -1,4 +1,3 @@
-#include "Intersectables/TriangleMeshObject.h"
 #include "RayTraceEngine/RayEngine.h"
 #include "Shaders/PerspectiveGeneratorShader.h"
 #include "Shaders/PhongShader.h"

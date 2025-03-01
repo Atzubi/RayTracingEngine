@@ -1,4 +1,3 @@
-#include "Intersectables/TriangleMeshObject.h"
 #include "RayTraceEngine/RayEngine.h"
 #include "Shaders/CheckerBoxShader.h"
 #include "Shaders/PathTraceShader.h"
