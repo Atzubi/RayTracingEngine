@@ -6,7 +6,7 @@
 #include "RayTraceEngine/Vector3D.h"
 
 #include <cstdint>
-#include <string>
+#include <cstring>
 #include <unordered_map>
 #include <vector>
 

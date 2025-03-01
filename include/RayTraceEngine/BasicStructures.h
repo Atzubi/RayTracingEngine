@@ -67,12 +67,6 @@ struct BoundingBox
     }
 };
 
-enum class TextureFormat
-{
-    RGB,
-    RGBA
-};
-
 /**
  * Container of a ray.
  * origin:      Origin of the ray.

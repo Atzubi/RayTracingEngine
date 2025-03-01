@@ -5,6 +5,7 @@
 #include "Shader.h"
 
 #include <cstdint>
+#include <cstring>
 #include <vector>
 
 struct GeneratorShaderResourcePackage
@@ -35,6 +36,12 @@ struct MissShaderResourcePackage
 {
     MissShaderHandle*                  shader;
     std::vector<ShaderResourceHandle*> resources;
+};
+
+enum class TextureFormat
+{
+    RGB,
+    RGBA
 };
 
 /**

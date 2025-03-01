@@ -4,6 +4,7 @@
 
 #include <cmath>
 #include <cstdint>
+#include <cstring>
 #include <span>
 
 class Triangle : public IIntersectable
