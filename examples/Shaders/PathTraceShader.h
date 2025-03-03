@@ -3,6 +3,8 @@
 #include "Common.h"
 #include "RayTraceEngine/Shader.h"
 
+#include <cstdlib>
+
 ShaderOutput PathTraceShader(const std::uint64_t                     id,
                              const HitShaderInput&                   shaderInput,
                              const std::span<IShaderResource* const> shaderResource,
@@ -20,8 +22,8 @@ ShaderOutput PathTraceShader(const std::uint64_t                     id,
         dynamic_cast<PathData*>(shaderResource[1])->absorption[id * sampleCount + shaderInput.id];
     auto& depth = dynamic_cast<PathData*>(shaderResource[1])->depth[id * sampleCount + shaderInput.id];
 
-    if (depth > 1024)
-        return {1, 0, 0};
+    if (depth > 64)
+        return {0, 0, 0};
 
     ++depth;
 
@@ -45,8 +47,8 @@ ShaderOutput PathTraceShader(const std::uint64_t                     id,
                              std::min(1.f, accumulatedAbsorption.y),
                              std::min(1.f, accumulatedAbsorption.z)};
 
-    if (accumulatedAbsorption.Sum() == 3.f)
-        return {};
+    if ((accumulatedAbsorption.x > 0.997f) && (accumulatedAbsorption.y > 0.997f) && (accumulatedAbsorption.z > 0.997f))
+        return {0, 0, 0};
 
     const auto cosTheta           = fmax(-incident.Dot(normal), 0.0f);
     const auto n1                 = backface ? opticalDensity : 1.f;
@@ -56,17 +58,25 @@ ShaderOutput PathTraceShader(const std::uint64_t                     id,
     Vector3D newDirection;
     if (static_cast<float>(std::rand()) / RAND_MAX < fresnelReflectance)
     {
-        newDirection = Reflect(incident, normal);
+        auto reflectedDirection = Reflect(incident, normal);
+        reflectedDirection.Normalize();
+        const auto perturbedDirection = SampleMicrofacet(dissolve, reflectedDirection);
+        if (perturbedDirection.Dot(normal) < 0)
+            newDirection = Reflect(perturbedDirection * -1.f, reflectedDirection);
+        else
+            newDirection = perturbedDirection;
     }
     else
     {
-        newDirection = Refract(incident, normal, n1, n2);
+        auto refracteddDirection = Refract(incident, normal, n1, n2);
+        refracteddDirection.Normalize();
+        const auto perturbedDirection = SampleMicrofacet(dissolve, refracteddDirection);
+        if (perturbedDirection.Dot(normal) > 0)
+            newDirection = Reflect(perturbedDirection * -1.f, refracteddDirection);
+        else
+            newDirection = perturbedDirection;
     }
-    newDirection.Normalize();
-    // Blend between reflection and Lambertian scatter
-    const auto lambertianVector = LambertReflection(normal);
-    newDirection                = newDirection * (1.f - dissolve) + (lambertianVector * dissolve);
-    newDirection.Normalize();
+
     newRays.rays.push_back({RayType::Closest,
                             shaderInput.id,
                             shaderInput.intersectionInfo->position + newDirection * 0.0001f,

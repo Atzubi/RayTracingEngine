@@ -89,7 +89,7 @@ struct MaterialMap : public IShaderResource
     std::unique_ptr<IShaderResource> Deserialize(const std::span<const std::uint8_t> buffer) const;
 };
 
-Vector3D LambertReflection(const Vector3D& normal);
+Vector3D SampleMicrofacet(float roughness, const Vector3D& normal);
 
 float FresnelSchlick(float cosTheta, float n1, float n2);
 

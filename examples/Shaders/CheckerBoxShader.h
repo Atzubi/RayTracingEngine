@@ -46,7 +46,7 @@ ShaderOutput CheckerBoxShader(const std::uint64_t                     id,
     const auto& accumulatedAbsorption =
         dynamic_cast<PathData*>(shaderResource[1])->absorption[id * sampleCount + shaderInput.id];
 
-    return {std::max((color - accumulatedAbsorption.x), 0.f) / sampleCount,
-            std::max((color - accumulatedAbsorption.y), 0.f) / sampleCount,
-            std::max((color - accumulatedAbsorption.z), 0.f) / sampleCount};
+    return {2 * std::max((color - accumulatedAbsorption.x), 0.f) / sampleCount,
+            2 * std::max((color - accumulatedAbsorption.y), 0.f) / sampleCount,
+            2 * std::max((color - accumulatedAbsorption.z), 0.f) / sampleCount};
 }

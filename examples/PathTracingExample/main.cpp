@@ -152,7 +152,7 @@ int main()
 
         auto& resource = pathTracingShaderResource->Map<PathData>();
         std::memset(resource.absorption.data(), 0, resource.absorption.size() * sizeof(Vector3D));
-        std::memset(resource.depth.data(), 0, resource.depth.size());
+        std::memset(resource.depth.data(), 0, resource.depth.size() * sizeof(std::uint32_t));
 
         cam.Update(window);
 

@@ -198,16 +198,28 @@ std::unique_ptr<IShaderResource> MaterialMap::Deserialize(const std::span<const 
     return materialMap;
 }
 
-Vector3D LambertReflection(const Vector3D& normal)
+Vector3D SampleMicrofacet(const float roughness, const Vector3D& normal)
 {
-    constexpr auto scale = RAND_MAX / 2.f;
-    Vector3D       lambertianVector{std::rand() / scale - 1.f, std::rand() / scale - 1.f, std::rand() / scale - 1.f};
-    while (lambertianVector.Dot(lambertianVector) > 1)
-        lambertianVector = {std::rand() / scale - 1.f, std::rand() / scale - 1.f, std::rand() / scale - 1.f};
-    if (lambertianVector.Dot(normal) < 0)
-        lambertianVector *= -1;
-    lambertianVector.Normalize();
-    return lambertianVector;
+    const auto u        = (static_cast<float>(rand()) / RAND_MAX);
+    const auto alpha    = roughness * roughness;
+    const auto phi      = 2.0f * 3.1415926535f * (static_cast<float>(rand()) / RAND_MAX); // Random azimuthal angle
+    const auto cosTheta = roughness == 1.f ? u : sqrt((1.0f - u) / (1.0f + (alpha * alpha - 1.0f) * u));
+    const auto sinTheta = sqrt(1.0f - cosTheta * cosTheta);
+
+    // Convert spherical coordinates to Cartesian
+    Vector3D halfVector{sinTheta * cos(phi), sinTheta * sin(phi), cosTheta};
+    halfVector.Normalize();
+
+    // Convert from tangent to world space
+    auto tangent =
+        fabs(normal.x) > fabs(normal.z) ? Vector3D{-normal.y, normal.x, 0.0f} : Vector3D{0.0f, -normal.z, normal.y};
+    tangent.Normalize();
+    const Vector3D bitangent = normal.Cross(tangent);
+
+    Vector3D worldHalfVector = tangent * halfVector.x + bitangent * halfVector.y + normal * halfVector.z;
+    worldHalfVector.Normalize();
+
+    return worldHalfVector;
 }
 
 float FresnelSchlick(const float cosTheta, const float n1, const float n2)
