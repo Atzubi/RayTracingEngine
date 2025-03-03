@@ -40,6 +40,9 @@ jobs:
     - name: Test
       run: |
         $BUILD_DIR/tests/Tests
+    - name: Debug - List Build Directory
+      run: |
+        ls -R $BUILD_DIR
   
 
   windows:
@@ -80,6 +83,9 @@ jobs:
       - name: Test
         run: |
           $BUILD_DIR/tests/Tests.exe
+      - name: Debug - List Build Directory
+        run: |
+          ls -R $BUILD_DIR
   
 
   macos:
@@ -115,3 +121,6 @@ jobs:
       - name: Test
         run: |
           $BUILD_DIR/tests/Tests
+      - name: Debug - List Build Directory
+        run: |
+          ls -R $BUILD_DIR
