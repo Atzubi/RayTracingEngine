@@ -39,7 +39,7 @@ jobs:
         cmake --build $BUILD_DIR --config $BUILD_TYPE
     - name: Test
       run: |
-        $BUILD_DIR/Tests
+        $BUILD_DIR/tests/Tests
   
 
   windows:
@@ -79,7 +79,7 @@ jobs:
           cmake --build $BUILD_DIR --config $BUILD_TYPE
       - name: Test
         run: |
-          $BUILD_DIR/Tests.exe
+          $BUILD_DIR/tests/Tests.exe
   
 
   macos:
@@ -114,4 +114,4 @@ jobs:
           cmake --build $BUILD_DIR --config $BUILD_TYPE
       - name: Test
         run: |
-          $BUILD_DIR/Tests
+          $BUILD_DIR/tests/Tests
