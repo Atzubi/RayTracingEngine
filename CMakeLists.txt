@@ -34,7 +34,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src)
 
 # tests
 option(ATZUBI_RTENGINE_BUILD_TESTS "Build tests" 0)
-if (ATZUBI_RTENGINE_BUILD_EXAMPLES)
+if (ATZUBI_RTENGINE_BUILD_TESTS)
     add_subdirectory(tests)
 endif ()
 
