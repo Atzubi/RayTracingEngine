@@ -11,6 +11,11 @@ RayEngine::CreateIntersectableObject(const IntersectableObjectDescription& desc)
     return engineNode_->CreateIntersectableObject(desc);
 }
 
+std::unique_ptr<InstanceHandle> RayEngine::CreateInstance(const InstanceDescription& desc)
+{
+    return engineNode_->CreateInstance(desc);
+}
+
 std::unique_ptr<SceneHandle> RayEngine::CreateScene(const SceneDescription& desc)
 {
     return engineNode_->CreateScene(desc);

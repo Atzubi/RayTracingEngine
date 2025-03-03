@@ -4,39 +4,17 @@
 
 /**
  * Contains a 4 by 4 matrix.
- * elements:    The matrix.
+ * elements:    The matrix, row major.
  */
 struct Matrix4x4
 {
     float elements[4][4];
 
     /**
-     * Multiplies another matrix with this matrix. Stores the result in the current matrix.
-     * @param matrix    Another matrix.
+     * Multiplies this matrix with a vector, the 3D vector is extended to 4D with a 1.
+     * @param vector    Vector for multiplication.
+     * @return          The result of the matrix vector multiplication.
      */
-    void MultiplyBy(const Matrix4x4& matrix)
-    {
-        float e[4][4];
-        for (int row = 0; row < 4; ++row)
-        {
-            for (int column = 0; column < 4; ++column)
-            {
-                e[row][column] = 0;
-                for (int index = 0; index < 4; ++index)
-                {
-                    e[row][column] += elements[row][index] * matrix.elements[index][column];
-                }
-            }
-        }
-        for (int row = 0; row < 4; ++row)
-        {
-            for (int column = 0; column < 4; ++column)
-            {
-                elements[row][column] = e[row][column];
-            }
-        }
-    }
-
     Vector3D operator*(const Vector3D& vector) const
     {
         return {elements[0][0] * vector.x + elements[0][1] * vector.y + elements[0][2] * vector.z + elements[0][3],
@@ -44,6 +22,11 @@ struct Matrix4x4
                 elements[2][0] * vector.x + elements[2][1] * vector.y + elements[2][2] * vector.z + elements[2][3]};
     }
 
+    /**
+     * Multiplies another matrix with this matrix.
+     * @param matrix    Another matrix.
+     * @return          The result of the matrix multiplication.
+     */
     Matrix4x4 operator*(const Matrix4x4& matrix) const
     {
         Matrix4x4 e;
@@ -60,6 +43,12 @@ struct Matrix4x4
         }
         return e;
     }
+
+    /**
+     * Multiplies another matrix with this matrix. Stores the result in the current matrix.
+     * @param matrix    Another matrix.
+     */
+    void MultiplyBy(const Matrix4x4& matrix) { *this = *this * matrix; }
 
     /**
      * Computes the inverse of this matrix.
@@ -131,6 +120,11 @@ struct Matrix4x4
         return inverse;
     }
 
+    /**
+     * Multiplies the upper 3x3 matrix with the vector.
+     * @vector vector    Input vector.
+     * @return           Result of the matrix vector multiplication.
+     */
     Vector3D MultiplyTransform(const Vector3D& vector) const
     {
         return {elements[0][0] * vector.x + elements[0][1] * vector.y + elements[0][2] * vector.z,
@@ -138,6 +132,10 @@ struct Matrix4x4
                 elements[2][0] * vector.x + elements[2][1] * vector.y + elements[2][2] * vector.z};
     }
 
+    /**
+     * Identiy matrix.
+     * @return   Identitiy matrix.
+     */
     static Matrix4x4 GetIdentity()
     {
         Matrix4x4 identity{};
@@ -162,5 +160,3 @@ struct Matrix4x4
         return identity;
     }
 };
-
-#pragma once

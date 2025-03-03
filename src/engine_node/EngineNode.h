@@ -11,6 +11,8 @@ class RayEngine::EngineNode
   public:
     std::unique_ptr<IntersectableObjectHandle> CreateIntersectableObject(const IntersectableObjectDescription& desc);
 
+    std::unique_ptr<InstanceHandle> CreateInstance(const InstanceDescription& desc);
+
     std::unique_ptr<SceneHandle> CreateScene(const SceneDescription& desc);
 
     std::unique_ptr<ShaderResourceHandle> CreateShaderResource(const ShaderResourceDescription& desc);

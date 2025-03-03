@@ -38,11 +38,14 @@ int main()
     TriangleMeshObject triangleMeshObject(std::move(vertices), std::move(indices));
 
     // Add the object to engine
-    const auto object = rayEngine.CreateIntersectableObject({triangleMeshObject});
+    const auto object = rayEngine.CreateIntersectableObject({&triangleMeshObject});
+
+    // Create an instance of the object
+    const auto instance = rayEngine.CreateInstance({object.get(), Matrix4x4::GetIdentity()});
 
     // Finally we create a scene by placing an instance of our triangle into it
     SceneDescription sceneDesc{};
-    sceneDesc.intersectables.emplace_back(*object, Matrix4x4::GetIdentity());
+    sceneDesc.instances.push_back(instance.get());
     const auto scene = rayEngine.CreateScene(sceneDesc);
 
     // ============================================= Define The Rendering =============================================

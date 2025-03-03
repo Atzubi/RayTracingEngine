@@ -26,29 +26,33 @@ int main()
     const auto glassMeshHandles =
         LoadTriangleMeshFromObj(std::filesystem::path("./Data/Duck_Gold_Glass/duck.obj"), rayEngine);
 
-    SceneDescription sceneDesc{};
+    SceneDescription                             sceneDesc{};
+    std::vector<std::unique_ptr<InstanceHandle>> instances{};
     for (const auto& handles : floorMeshHandles)
     {
-        sceneDesc.intersectables.push_back(
-            {*handles.intersectable, {10, 0, 0, 0, 0, 10, 0, -1, 0, 0, 10, 0, 0, 0, 0, 1}, {}});
+        instances.push_back(rayEngine.CreateInstance(
+            {handles.intersectable.get(), {10, 0, 0, 0, 0, 10, 0, -1, 0, 0, 10, 0, 0, 0, 0, 1}, {}}));
+        sceneDesc.instances.push_back(instances.back().get());
     }
     for (const auto& handles : duckMeshHandles)
     {
-        sceneDesc.intersectables.push_back(
-            {*handles.intersectable, {2, 0, 0, 2, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1}, {}});
+        instances.push_back(rayEngine.CreateInstance(
+            {handles.intersectable.get(), {2, 0, 0, 2, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1}, {}}));
+        sceneDesc.instances.push_back(instances.back().get());
     }
     for (const auto& handles : metalMeshHandles)
     {
-        sceneDesc.intersectables.push_back(
-            {*handles.intersectable, {2, 0, 0, -2, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1}, {}});
+        instances.push_back(rayEngine.CreateInstance(
+            {handles.intersectable.get(), {2, 0, 0, -2, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1}, {}}));
+        sceneDesc.instances.push_back(instances.back().get());
     }
     for (const auto& handles : glassMeshHandles)
     {
-        sceneDesc.intersectables.push_back(
-            {*handles.intersectable, {2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 2, 0, 0, 0, 1}, {}});
+        instances.push_back(rayEngine.CreateInstance(
+            {handles.intersectable.get(), {2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 2, 0, 0, 0, 1}, {}}));
+        sceneDesc.instances.push_back(instances.back().get());
     }
-    const auto scene     = rayEngine.CreateScene(sceneDesc);
-    const auto instances = scene->GetInstanceHandles();
+    const auto scene = rayEngine.CreateScene(sceneDesc);
 
     // ============================================= Define The Rendering =============================================
     const std::uint32_t resX{1024};
@@ -88,7 +92,7 @@ int main()
     pathData.absorption.resize(resX * resY * samplesPerPixel);
     pathData.depth.resize(resX * resY * samplesPerPixel);
 
-    MaterialMap map;
+    MaterialMap map{};
     for (std::size_t i = 0; i < instances.size(); ++i)
         map.instanceToMaterial[instances[i]->GetId()] = i;
 

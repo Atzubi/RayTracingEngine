@@ -271,8 +271,6 @@ TriangleMeshObject::TriangleMeshObject(std::vector<Vertex> vertices, std::vector
     impl_ = std::make_unique<TrianglMeshImpl>(std::move(vertices), std::move(indices));
 }
 
-TriangleMeshObject::~TriangleMeshObject() = default;
-
 BoundingBox TriangleMeshObject::GetBoundaries() const { return impl_->GetBoundaries(); }
 
 bool TriangleMeshObject::IntersectFirst(IntersectionInfo& intersectionInfo, const Ray& ray) const
@@ -301,3 +299,5 @@ float TriangleMeshObject::GetSurfaceArea() const { return impl_->GetSurfaceArea(
 bool TriangleMeshObject::operator==(const IIntersectable& object) const { return impl_->operator==(object); }
 
 bool TriangleMeshObject::operator!=(const IIntersectable& object) const { return impl_->operator!=(object); }
+
+TriangleMeshObject::~TriangleMeshObject() = default;

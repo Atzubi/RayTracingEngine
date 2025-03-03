@@ -40,7 +40,7 @@ std::unique_ptr<IntersectableObjectHandle>
 RayEngine::EngineNode::CreateIntersectableObject(const IntersectableObjectDescription& desc)
 {
     const auto [it, success] =
-        intersectables_.emplace(GetNextId(), desc.intersectable.Deserialize(desc.intersectable.Serialize()));
+        intersectables_.emplace(GetNextId(), desc.intersectable->Deserialize(desc.intersectable->Serialize()));
     if (!success)
         throw std::runtime_error("Tried to create duplicate intersectable.");
     return std::make_unique<IntersectableObjectH>(
@@ -50,11 +50,8 @@ RayEngine::EngineNode::CreateIntersectableObject(const IntersectableObjectDescri
 class InstanceH : public InstanceHandle, public HandleBase
 {
   public:
-    InstanceH(std::function<void(std::uint64_t)> deleterCallback,
-              const std::uint64_t                id,
-              IIntersectable*                    handle,
-              DBVH*                              reference)
-        : HandleBase(std::move(deleterCallback), id), handle_(handle), reference_(reference)
+    InstanceH(std::function<void(std::uint64_t)> deleterCallback, const std::uint64_t id, IIntersectable* handle)
+        : HandleBase(std::move(deleterCallback), id), handle_(handle)
     {
     }
 
@@ -62,65 +59,111 @@ class InstanceH : public InstanceHandle, public HandleBase
 
     void Transform(const Matrix4x4& transform) override
     {
-        reference_->RemoveObjects({handle_});
+        for (auto* reference : references_)
+            reference->RemoveObjects({handle_});
         dynamic_cast<Instance*>(handle_)->ApplyTransform(transform);
-        reference_->AddObjects({handle_});
+        for (auto* reference : references_)
+            reference->AddObjects({handle_});
     }
 
     Matrix4x4 GetTransform() const override { return dynamic_cast<Instance*>(handle_)->GetTransform(); }
 
+    void AddReference(DBVH* bvh) { references_.insert(bvh); }
+
+    void RemoveReference(DBVH* bvh) { references_.erase(bvh); }
+
+    const IIntersectable* Get() const { return handle_; }
+
+    ~InstanceH()
+    {
+        for (auto* reference : references_)
+            reference->RemoveObjects({handle_});
+    }
+
   private:
-    IIntersectable* handle_;
-    DBVH*           reference_;
+    IIntersectable*           handle_;
+    std::unordered_set<DBVH*> references_;
 };
+
+std::unique_ptr<InstanceHandle> RayEngine::EngineNode::CreateInstance(const InstanceDescription& desc)
+{
+    const auto  instanceId    = GetNextId();
+    const auto* intersectable = dynamic_cast<const IntersectableObjectH*>(desc.intersectable)->Get();
+    auto        instance = std::make_unique<Instance>(intersectable, [this]() { FetchIntersectable(); }, instanceId);
+    instance->ApplyTransform(desc.transform);
+
+    const auto [it, success] = intersectables_.emplace(instanceId, std::move(instance));
+    if (!success)
+        throw std::runtime_error("Tried to create duplicate intersectable.");
+
+    return std::make_unique<InstanceH>(
+        [this](const std::uint64_t id) { DeleteResource(id); }, it->first, it->second.get());
+}
 
 class SceneH : public SceneHandle, public HandleBase
 {
   public:
-    SceneH(std::function<void(std::uint64_t)>           deleterCallback,
-           const std::uint64_t                          id,
-           std::vector<std::unique_ptr<InstanceHandle>> instances)
-        : HandleBase(std::move(deleterCallback), id), instances_(std::move(instances))
+    SceneH(std::function<void(std::uint64_t)> deleterCallback,
+           const std::uint64_t                id,
+           DBVH*                              bvh,
+           std::unordered_set<InstanceH*>     instances)
+        : HandleBase(std::move(deleterCallback), id), bvh_(bvh), instances_(std::move(instances))
     {
     }
 
-    std::span<const std::unique_ptr<InstanceHandle>> GetInstanceHandles() const override { return instances_; }
+    void AddInstance(InstanceHandle& instance) override
+    {
+        auto& instanceHandle = dynamic_cast<InstanceH&>(instance);
+        instances_.insert(&instanceHandle);
+        instanceHandle.AddReference(bvh_);
+        bvh_->AddObjects({instanceHandle.Get()});
+    }
+
+    void RemoveInstance(InstanceHandle& instance) override
+    {
+        auto& instanceHandle = dynamic_cast<InstanceH&>(instance);
+        instances_.erase(&instanceHandle);
+        instanceHandle.RemoveReference(bvh_);
+        bvh_->RemoveObjects({instanceHandle.Get()});
+    }
 
     const std::uint64_t GetId() const { return id_; }
 
+    ~SceneH()
+    {
+        for (auto* instance : instances_)
+        {
+            instance->RemoveReference(bvh_);
+        }
+    }
+
   private:
-    std::vector<std::unique_ptr<InstanceHandle>> instances_;
+    DBVH*                          bvh_;
+    std::unordered_set<InstanceH*> instances_;
 };
 
 std::unique_ptr<SceneHandle> RayEngine::EngineNode::CreateScene(const SceneDescription& desc)
 {
-    auto                                         sceneBvh = std::make_unique<DBVH>();
-    std::vector<const IIntersectable*>           instances;
-    std::vector<std::unique_ptr<InstanceHandle>> instanceHandles;
-    for (const auto& intersectablePack : desc.intersectables)
+    auto                               sceneBvh = std::make_unique<DBVH>();
+    std::vector<const IIntersectable*> instances;
+    std::unordered_set<InstanceH*>     instanceHs;
+    for (auto& i : desc.instances)
     {
-        const auto instanceId    = GetNextId();
-        const auto intersectable = dynamic_cast<const IntersectableObjectH&>(intersectablePack.intersectable).Get();
-        auto       instance = std::make_unique<Instance>(intersectable, [this]() { FetchIntersectable(); }, instanceId);
-        instance->ApplyTransform(intersectablePack.transform);
-
-        const auto [it, success] = intersectables_.emplace(instanceId, std::move(instance));
-        if (!success)
-            throw std::runtime_error("Tried to create duplicate intersectable.");
-
-        instances.push_back(it->second.get());
-
-        instanceHandles.push_back(std::make_unique<InstanceH>(
-            [this](const std::uint64_t id) { DeleteResource(id); }, it->first, it->second.get(), sceneBvh.get()));
+        auto* instanceHandle = dynamic_cast<InstanceH* const>(i);
+        instanceHandle->AddReference(sceneBvh.get());
+        instances.push_back(instanceHandle->Get());
+        instanceHs.insert(instanceHandle);
     }
-
     sceneBvh->AddObjects(instances);
+
     const auto [it, success] = intersectables_.emplace(GetNextId(), std::move(sceneBvh));
     if (!success)
         throw std::runtime_error("Tried to create duplicate intersectable.");
 
-    return std::make_unique<SceneH>(
-        [this](const std::uint64_t id) { DeleteResource(id); }, it->first, std::move(instanceHandles));
+    return std::make_unique<SceneH>([this](const std::uint64_t id) { DeleteResource(id); },
+                                    it->first,
+                                    dynamic_cast<DBVH*>(it->second.get()),
+                                    std::move(instanceHs));
 }
 
 class ShaderResourceH : public ShaderResourceHandle, public HandleBase

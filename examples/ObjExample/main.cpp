@@ -20,24 +20,28 @@ int main()
 
     const auto handles = LoadTriangleMeshFromObj(std::filesystem::path("./Data/Duck/duck.obj"), rayEngine);
 
-    SceneDescription sceneDesc{};
+    SceneDescription                             sceneDesc{};
+    std::vector<std::unique_ptr<InstanceHandle>> instances{};
     for (const auto& meshHandles : handles)
     {
-        sceneDesc.intersectables.push_back(
-            {*meshHandles.intersectable.get(), {2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1}, {}});
-        sceneDesc.intersectables.push_back(
-            {*meshHandles.intersectable.get(), {2, 0, 0, 2, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1}, {}});
-        sceneDesc.intersectables.push_back(
-            {*meshHandles.intersectable.get(), {2, 0, 0, 4, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1}, {}});
-        sceneDesc.intersectables.push_back(
-            {*meshHandles.intersectable.get(), {2, 0, 0, 6, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1}, {}});
+        instances.push_back(rayEngine.CreateInstance(
+            {meshHandles.intersectable.get(), {2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1}, {}}));
+        sceneDesc.instances.push_back(instances.back().get());
+        instances.push_back(rayEngine.CreateInstance(
+            {meshHandles.intersectable.get(), {2, 0, 0, 2, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1}, {}}));
+        sceneDesc.instances.push_back(instances.back().get());
+        instances.push_back(rayEngine.CreateInstance(
+            {meshHandles.intersectable.get(), {2, 0, 0, 4, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1}, {}}));
+        sceneDesc.instances.push_back(instances.back().get());
+        instances.push_back(rayEngine.CreateInstance(
+            {meshHandles.intersectable.get(), {2, 0, 0, 6, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1}, {}}));
+        sceneDesc.instances.push_back(instances.back().get());
     }
-    const auto scene     = rayEngine.CreateScene(sceneDesc);
-    auto       instances = scene->GetInstanceHandles();
+    const auto scene = rayEngine.CreateScene(sceneDesc);
 
     // ============================================= Define The Rendering =============================================
-    const std::uint32_t resX{1000};
-    const std::uint32_t resY{1000};
+    const std::uint32_t resX{1024};
+    const std::uint32_t resY{1024};
     const Vector3D      cameraPosition{3, 0.5, 8};
     const Vector3D      cameraDirection{0, 0, -1};
     const Vector3D      cameraUp{0, 1, 0};

@@ -1,11 +1,50 @@
 #pragma once
 
 #include "BasicStructures.h"
+#include "Vector3D.h"
 
 #include <cstdint>
+#include <limits>
 #include <memory>
 #include <span>
 #include <vector>
+
+/**
+ * Container for an axis aligned bounding box.
+ * minCorner:   The corner with minimum values.
+ * maxCorner:   The corner with maximum values.
+ */
+struct BoundingBox
+{
+    Vector3D minCorner = {std::numeric_limits<float>::max(),
+                          std::numeric_limits<float>::max(),
+                          std::numeric_limits<float>::max()};
+    Vector3D maxCorner = {-std::numeric_limits<float>::max(),
+                          -std::numeric_limits<float>::max(),
+                          -std::numeric_limits<float>::max()};
+
+    /**
+     * Computes the surface area of the axis aligned bounding box.
+     * @return  The surface area divided by two.
+     */
+    float GetSA() const
+    {
+        return (maxCorner.x - minCorner.x) * (maxCorner.y - minCorner.y) +
+               (maxCorner.x - minCorner.x) * (maxCorner.z - minCorner.z) +
+               (maxCorner.y - minCorner.y) * (maxCorner.z - minCorner.z);
+    }
+};
+
+/**
+ * Container of a ray.
+ * origin:      Origin of the ray.
+ * direction:   Direction of the ray.
+ * dirfrac:     1/direction of the ray. (Performance optimization)
+ */
+struct Ray
+{
+    Vector3D origin, direction, dirfrac;
+};
 
 /**
  * Container outputted by the ray tracing engine.
@@ -13,10 +52,10 @@
  * distance:        Distance to the intersected geometry.
  * rayOrigin:       Origin of the ray.
  * rayDirection:    Direction of the ray.
- * normal:          (Interpolated) Normal vector of the intersected geometry.
  * position:        Coordinates of the point of intersection.
+ * normal:          (Interpolated) Normal vector of the intersected geometry.
  * texture:         (Interpolated) Texture coordinates.
- * objectId:        Id of the instance that was intersected.
+ * instanceId:      Id of the instance that was intersected.
  */
 struct IntersectionInfo
 {
@@ -24,8 +63,8 @@ struct IntersectionInfo
     float         distance;
     Vector3D      rayOrigin;
     Vector3D      rayDirection;
-    Vector3D      normal;
     Vector3D      position;
+    Vector3D      normal;
     Vector2D      texture;
     std::uint64_t instanceId;
 };
@@ -58,7 +97,7 @@ class IIntersectable
      * Computes the axis aligned bounding box of this object.
      * @return An axis aligned bounding box of this object.
      */
-    [[nodiscard]] virtual BoundingBox GetBoundaries() const = 0;
+    virtual BoundingBox GetBoundaries() const = 0;
 
     /**
      * Computes the first intersection of a ray with this object.
@@ -89,7 +128,7 @@ class IIntersectable
      * Computes the effective surface area of this object.
      * @return The surface area of this object.
      */
-    [[nodiscard]] virtual float GetSurfaceArea() const = 0;
+    virtual float GetSurfaceArea() const = 0;
 
     /**
      * Tests whether the object in question is identical to this object.
@@ -101,11 +140,18 @@ class IIntersectable
     virtual bool operator!=(const IIntersectable& object) const = 0;
 };
 
+/**
+ * Contains all necessary information required to create an intersectable object in the engine.
+ * intersectable:    Pointer to an intersectable object.
+ */
 struct IntersectableObjectDescription
 {
-    IIntersectable& intersectable;
+    IIntersectable* intersectable;
 };
 
+/**
+ * Resource handle. When this handle goes out of scope the resource is freed in the engine.
+ */
 class IntersectableObjectHandle
 {
   public:

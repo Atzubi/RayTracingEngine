@@ -1,5 +1,6 @@
 #pragma once
 
+#include "RayTraceEngine/BasicStructures.h"
 #include "RayTraceEngine/Intersectable.h"
 #include "RayTraceEngine/Vector3D.h"
 
@@ -8,13 +9,7 @@
 #include <vector>
 
 /**
- * Contains all the information required to construct a 3d model based on a 3d triangle mesh.
- * Provides necessary methods for using it as object in the ray tracing engine.
- * vertices:        a list of coordinates for position, normal and texture data
- * indices:         a list of indices for the vertices where every 3 define one triangle
- * material:        contains information about an objects surface properties, like texture, reflectiveness, etc.
- * triangles:       object form of every triangle defined by vertices and indices
- * structure:       an intersection acceleration data structure
+ * Triangle mesh intersectable.
  */
 class TriangleMeshObject : public IIntersectable
 {
@@ -27,46 +22,41 @@ class TriangleMeshObject : public IIntersectable
     };
 
     /**
-     * Initializes the object given the base information. Creates an acceleration data structure for faster intersection
+     * Constructs the object from vertices and indices. Creates an acceleration data structure for faster intersection
      * tests.
-     * @param vertices  Vector of vertices, each containing a position, a normal and a texture coordinate.
-     * @param indices   Vector of indices for the vertices. Every 3 indices define one triangle.
+     * @param vertices: Vector of vertices, each containing a position, a normal and a texture coordinate.
+     * @param indices:  Vector of indices for the vertices. Every 3 indices define one triangle.
      */
     TriangleMeshObject(std::vector<Vertex> vertices, std::vector<std::uint32_t> indices);
 
     /**
-     * Destructor, cleans up this object on deletion.
-     */
-    ~TriangleMeshObject() override;
-
-    /**
      * Computes the axis aligned bounding box of this object.
-     * @return An axis aligned bounding box of this object.
+     * @return: An axis aligned bounding box of this object.
      */
     BoundingBox GetBoundaries() const override;
 
     /**
      * Computes the first intersection of a ray with this object.
-     * @param intersectionInfo  Information container that will be filled with the intersection details on intersection.
-     * @param ray               The ray that is used for the intersection calculation.
-     * @return                  Returns true if there is an intersection, false otherwise.
+     * @param intersectionInfo: Information container that will be filled with the intersection details on intersection.
+     * @param ray:              The ray that is used for the intersection calculation.
+     * @return:                 Returns true if there is an intersection, false otherwise.
      */
     bool IntersectFirst(IntersectionInfo& intersectionInfo, const Ray& ray) const override;
 
     /**
      * Computes the first intersection of a ray with this object.
-     * @param intersectionInfo  Information container that will be filled with the intersection details on intersection.
-     * @param ray               The ray that is used for the intersection calculation.
-     * @return                  Returns true if there is an intersection, false otherwise.
+     * @param intersectionInfo: Information container that will be filled with the intersection details on intersection.
+     * @param ray:              The ray that is used for the intersection calculation.
+     * @return:                 Returns true if there is an intersection, false otherwise.
      */
     bool IntersectAny(IntersectionInfo& intersectionInfo, const Ray& ray) const override;
 
     /**
      * Computes all intersections of a ray with this object.
-     * @param intersectionInfo  Vector of intersection information containers that will be filled with the intersection
+     * @param intersectionInfo: Vector of intersection information containers that will be filled with the intersection
      *                          details for all intersections.
-     * @param ray               The ray that is used for the intersection calculation.
-     * @return                  Returns true if there is at least one intersection, false otherwise.
+     * @param ray:              The ray that is used for the intersection calculation.
+     * @return:                 Returns true if there is at least one intersection, false otherwise.
      */
     bool IntersectAll(std::vector<IntersectionInfo>& intersectionInfo, const Ray& ray) const override;
 
@@ -97,6 +87,11 @@ class TriangleMeshObject : public IIntersectable
     bool operator==(const IIntersectable& object) const override;
 
     bool operator!=(const IIntersectable& object) const override;
+
+    /**
+     * Default destructor.
+     */
+    ~TriangleMeshObject();
 
   private:
     class TrianglMeshImpl;

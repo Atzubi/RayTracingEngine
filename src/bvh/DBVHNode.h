@@ -1,6 +1,6 @@
 #pragma once
 
-#include "RayTraceEngine/BasicStructures.h"
+#include "RayTraceEngine/Intersectable.h"
 
 struct DBVHNode
 {

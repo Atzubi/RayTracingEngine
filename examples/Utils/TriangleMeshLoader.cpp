@@ -63,7 +63,7 @@ std::vector<MeshHandles> LoadTriangleMeshFromObj(const std::filesystem::path& pa
 
         // Create a triangle mesh object
         TriangleMeshObject triangleMeshObject(std::move(vertices), std::move(m.Indices));
-        meshHandles.intersectable = rayEngine.CreateIntersectableObject({triangleMeshObject});
+        meshHandles.intersectable = rayEngine.CreateIntersectableObject({&triangleMeshObject});
 
         handles.push_back(std::move(meshHandles));
     }

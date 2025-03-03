@@ -13,13 +13,14 @@ void PerspectiveGeneratorShader(const std::uint64_t                     id,
     const auto* info    = dynamic_cast<ViewportInfo*>(shaderResource[0]);
     const auto* cam     = dynamic_cast<CameraInfo*>(shaderResource[1]);
     const auto* samples = dynamic_cast<SampleCountInfo*>(shaderResource[2]);
-    const auto  x       = (((std::int64_t)id) % info->viewPortHeight) - (info->viewPortWidth) / 2;
-    const auto  y       = -(((std::int64_t)id) / info->viewPortWidth) + (info->viewPortHeight) / 2;
+    const auto  x = static_cast<float>(static_cast<std::int64_t>(id) % info->viewPortWidth - info->viewPortWidth / 2);
+    const auto  y = static_cast<float>(-static_cast<std::int64_t>(id) / info->viewPortWidth + info->viewPortHeight / 2);
 
     Vector3D camRight = cam->cameraUp.Cross(cam->cameraDirection);
     camRight.Normalize();
-    Vector3D rayDirection = cam->cameraDirection + (camRight * (x / (info->viewPortWidth + 0.0)) +
-                                                    (cam->cameraUp * (y / (info->viewPortHeight + 0.0))));
+    Vector3D rayDirection =
+        cam->cameraDirection + camRight * x / info->viewPortWidth +
+        cam->cameraUp * y / info->viewPortHeight * static_cast<float>(info->viewPortHeight) / info->viewPortWidth;
     rayDirection.Normalize();
 
     for (int i = 0; i < samples->samplesPerPixel; ++i)
