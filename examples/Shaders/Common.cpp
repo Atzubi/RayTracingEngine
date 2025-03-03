@@ -1,6 +1,7 @@
 #include "Common.h"
 
 #include <cstring>
+#include <math.h>
 
 std::vector<std::uint8_t> Material::Serialize() const
 {
@@ -200,14 +201,14 @@ std::unique_ptr<IShaderResource> MaterialMap::Deserialize(const std::span<const 
 
 Vector3D SampleMicrofacet(const float roughness, const Vector3D& normal)
 {
-    const auto u        = (static_cast<float>(rand()) / RAND_MAX);
+    const auto u        = (static_cast<float>(std::rand()) / RAND_MAX);
     const auto alpha    = roughness * roughness;
-    const auto phi      = 2.0f * 3.1415926535f * (static_cast<float>(rand()) / RAND_MAX); // Random azimuthal angle
-    const auto cosTheta = roughness == 1.f ? u : sqrt((1.0f - u) / (1.0f + (alpha * alpha - 1.0f) * u));
-    const auto sinTheta = sqrt(1.0f - cosTheta * cosTheta);
+    const auto phi      = 2.0f * 3.1415926535f * (static_cast<float>(std::rand()) / RAND_MAX); // Random azimuthal angle
+    const auto cosTheta = roughness == 1.f ? u : sqrtf((1.0f - u) / (1.0f + (alpha * alpha - 1.0f) * u));
+    const auto sinTheta = sqrtf(1.0f - cosTheta * cosTheta);
 
     // Convert spherical coordinates to Cartesian
-    Vector3D halfVector{sinTheta * cos(phi), sinTheta * sin(phi), cosTheta};
+    Vector3D halfVector{sinTheta * cosf(phi), sinTheta * sinf(phi), cosTheta};
     halfVector.Normalize();
 
     // Convert from tangent to world space
