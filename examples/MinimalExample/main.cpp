@@ -53,8 +53,8 @@ int main()
     // We want to set up rendering such that we see the triangle on screen
 
     // Define the rendering resolution and the camera
-    const std::uint32_t resX{1000};
-    const std::uint32_t resY{1000};
+    const std::uint32_t resX{1024};
+    const std::uint32_t resY{1024};
     const Vector3D      cameraPosition{0.5, 0.5, -2};
     const Vector3D      cameraDirection{0, 0, 1};
     const Vector3D      cameraUp{0, 1, 0};

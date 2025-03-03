@@ -64,7 +64,7 @@ int main()
     const float         speed{2.f};
     const float         sensitivity{0.2f};
 
-    // Let's use a phong hit shader
+    // Let's use a Monte Carlo path tracer with BSDF importance sampling
     const auto hitShader = rayEngine.CreateShader({PathTraceShader});
 
     // We will use a basic ray generator that shoots a ray per pixel from the camera into the scene
@@ -92,6 +92,7 @@ int main()
     pathData.absorption.resize(resX * resY * samplesPerPixel);
     pathData.depth.resize(resX * resY * samplesPerPixel);
 
+    // In the shader we only know the instance id of what we hit, we need to map it to a resource
     MaterialMap map{};
     for (std::size_t i = 0; i < instances.size(); ++i)
         map.instanceToMaterial[instances[i]->GetId()] = i;
@@ -154,6 +155,7 @@ int main()
         DisplayTexture(window, texture);
         const auto t3 = std::chrono::high_resolution_clock::now();
 
+        // Reset absorption and depth counters
         auto& resource = pathTracingShaderResource->Map<PathData>();
         std::memset(resource.absorption.data(), 0, resource.absorption.size() * sizeof(Vector3D));
         std::memset(resource.depth.data(), 0, resource.depth.size() * sizeof(std::uint32_t));
