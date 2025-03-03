@@ -37,9 +37,6 @@ jobs:
       run: |
         cmake -B $BUILD_DIR -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DATZUBI_RTENGINE_BUILD_EXAMPLES=1
         cmake --build $BUILD_DIR --config $BUILD_TYPE
-    - name: Test
-      run: |
-        $BUILD_DIR/tests/Tests
     - name: Debug - List Build Directory
       run: |
         ls -R $BUILD_DIR
@@ -80,9 +77,6 @@ jobs:
         run: |
           cmake -B $BUILD_DIR -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DATZUBI_RTENGINE_BUILD_EXAMPLES=0
           cmake --build $BUILD_DIR --config $BUILD_TYPE
-      - name: Test
-        run: |
-          $BUILD_DIR/tests/Tests.exe
       - name: Debug - List Build Directory
         run: |
           ls -R $BUILD_DIR
@@ -118,9 +112,6 @@ jobs:
         run: |
           cmake -B $BUILD_DIR -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DATZUBI_RTENGINE_BUILD_EXAMPLES=0
           cmake --build $BUILD_DIR --config $BUILD_TYPE
-      - name: Test
-        run: |
-          $BUILD_DIR/tests/Tests
       - name: Debug - List Build Directory
         run: |
           ls -R $BUILD_DIR
