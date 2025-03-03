@@ -23,13 +23,25 @@ endif ()
 # installation directories
 include(GNUInstallDirs)
 
-include_directories(${CMAKE_SOURCE_DIR}/external/header_only)
+
+# external
+add_subdirectory(external/Catch2)
+
+# library
 include_directories(${CMAKE_SOURCE_DIR}/include)
 # this may also include the source tree for the examples which is undesirable
 include_directories(${CMAKE_SOURCE_DIR}/src)
 
-#set(ATZUBI_RTENGINE_INSTALL_DOC_DIR "${CMAKE_INSTALL_DOCDIR}/atzubi/rtengine" CACHE STRING "The installation doc directory")
-set(ATZUBI_RTENGINE_INSTALL_CMAKE_DIR "${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/cmake" CACHE STRING "The installation cmake directory")
+# tests
+add_subdirectory(tests)
+
+# examples
+option(ATZUBI_RTENGINE_BUILD_EXAMPLES "Build example programs" 0)
+if (ATZUBI_RTENGINE_BUILD_EXAMPLES)
+    add_subdirectory(examples/MinimalExample)
+    add_subdirectory(examples/ObjExample)
+    add_subdirectory(examples/PathTracingExample)
+endif ()
 
 
 add_subdirectory(src lib)
@@ -39,13 +51,8 @@ target_include_directories(RayTraceEngine INTERFACE
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
         )
 
-# examples
-option(ATZUBI_RTENGINE_BUILD_EXAMPLES "Build example programs" 0)
-if (ATZUBI_RTENGINE_BUILD_EXAMPLES)
-    add_subdirectory(examples/MinimalExample)
-    add_subdirectory(examples/ObjExample)
-    add_subdirectory(examples/PathTracingExample)
-endif ()
+#set(ATZUBI_RTENGINE_INSTALL_DOC_DIR "${CMAKE_INSTALL_DOCDIR}/atzubi/rtengine" CACHE STRING "The installation doc directory")
+set(ATZUBI_RTENGINE_INSTALL_CMAKE_DIR "${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/cmake" CACHE STRING "The installation cmake directory")
 
 option(ATZUBI_RTENGINE_INSTALL "Generate the install target" ${ATZUBI_RTENGINE_IS_MAIN_PROJECT})
 if (ATZUBI_RTENGINE_INSTALL)
