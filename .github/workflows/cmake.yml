@@ -37,9 +37,9 @@ jobs:
       run: |
         cmake -B $BUILD_DIR -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DATZUBI_RTENGINE_BUILD_EXAMPLES=1
         cmake --build $BUILD_DIR --config $BUILD_TYPE
-    - name: Debug - List Build Directory
+    - name: Test
       run: |
-        ls -R $BUILD_DIR
+        $BUILD_DIR/build/tests/Tests
   
 
   windows:
@@ -77,9 +77,9 @@ jobs:
         run: |
           cmake -B $BUILD_DIR -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DATZUBI_RTENGINE_BUILD_EXAMPLES=0
           cmake --build $BUILD_DIR --config $BUILD_TYPE
-      - name: Debug - List Build Directory
+      - name: Test
         run: |
-          ls -R $BUILD_DIR
+          $BUILD_DIR/build/tests/Tests.exe
   
 
   macos:
@@ -112,6 +112,6 @@ jobs:
         run: |
           cmake -B $BUILD_DIR -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DATZUBI_RTENGINE_BUILD_EXAMPLES=0
           cmake --build $BUILD_DIR --config $BUILD_TYPE
-      - name: Debug - List Build Directory
+      - name: Test
         run: |
-          ls -R $BUILD_DIR
+          $BUILD_DIR/build/tests/Tests
