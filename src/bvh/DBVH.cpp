@@ -375,7 +375,8 @@ void DBVH::SwapLeftLeftToRight(const std::uint32_t node, const Rotations& rotati
     flatTree_[n.leftChild].boundingBox  = rotations.swapLeftLeftToRight;
     flatTree_[n.leftChild].maxDepthLeft = depthRight;
     flatTree_[n.leftChild].leftChild    = childBuffer;
-    nodeMetadata_[node].surfaceArea     = SAHs[Rotation::SwapLeftLeftToRight];
+    n.maxDepthLeft = std::max(flatTree_[n.leftChild].maxDepthLeft, flatTree_[n.leftChild].maxDepthLeft) + 1;
+    nodeMetadata_[node].surfaceArea = SAHs[Rotation::SwapLeftLeftToRight];
     nodeMetadata_[flatTree_[node].leftChild].surfaceArea =
         rotations.right.sa + rotations.leftRight.sa + rotations.swapLeftLeftToRight.GetSA();
     if (isLeafLeftLeft)
@@ -400,7 +401,8 @@ void DBVH::SwapLeftRightToRight(const std::uint32_t node, const Rotations& rotat
     flatTree_[n.leftChild].boundingBox   = rotations.swapLeftRightToRight;
     flatTree_[n.leftChild].maxDepthRight = depthRight;
     flatTree_[n.leftChild].rightChild    = buffer;
-    nodeMetadata_[node].surfaceArea      = SAHs[Rotation::SwapLeftRightToRight];
+    n.maxDepthLeft = std::max(flatTree_[n.leftChild].maxDepthLeft, flatTree_[n.leftChild].maxDepthLeft) + 1;
+    nodeMetadata_[node].surfaceArea = SAHs[Rotation::SwapLeftRightToRight];
     nodeMetadata_[flatTree_[node].leftChild].surfaceArea =
         rotations.right.sa + rotations.leftLeft.sa + rotations.swapLeftRightToRight.GetSA();
     if (isLeafLeftRight)
@@ -425,7 +427,8 @@ void DBVH::SwapRightLeftToLeft(const std::uint32_t node, const Rotations& rotati
     flatTree_[n.rightChild].boundingBox  = rotations.swapRightLeftToLeft;
     flatTree_[n.rightChild].maxDepthLeft = depthLeft;
     flatTree_[n.rightChild].leftChild    = buffer;
-    nodeMetadata_[node].surfaceArea      = SAHs[Rotation::SwapRightLeftToLeft];
+    n.maxDepthRight = std::max(flatTree_[n.rightChild].maxDepthLeft, flatTree_[n.rightChild].maxDepthLeft) + 1;
+    nodeMetadata_[node].surfaceArea = SAHs[Rotation::SwapRightLeftToLeft];
     nodeMetadata_[flatTree_[node].rightChild].surfaceArea =
         rotations.left.sa + rotations.rightRight.sa + rotations.swapRightLeftToLeft.GetSA();
     if (isLeafRightLeft)
@@ -450,7 +453,8 @@ void DBVH::SwapRightRightToLeft(const std::uint32_t node, const Rotations& rotat
     flatTree_[n.rightChild].boundingBox   = rotations.swapRightRightToLeft;
     flatTree_[n.rightChild].maxDepthRight = depthLeft;
     flatTree_[n.rightChild].rightChild    = buffer;
-    nodeMetadata_[node].surfaceArea       = SAHs[Rotation::SwapRightRightToLeft];
+    n.maxDepthRight = std::max(flatTree_[n.rightChild].maxDepthLeft, flatTree_[n.rightChild].maxDepthLeft) + 1;
+    nodeMetadata_[node].surfaceArea = SAHs[Rotation::SwapRightRightToLeft];
     nodeMetadata_[flatTree_[node].rightChild].surfaceArea =
         rotations.left.sa + rotations.rightLeft.sa + rotations.swapRightRightToLeft.GetSA();
     if (isLeafRightRight)
@@ -549,6 +553,15 @@ void DBVH::RemoveNode(const std::uint32_t node)
             parentOfMoved.rightChild = node;
         }
         nodeMetadata_[node] = nodeMetadata_.back();
+        const auto& n       = flatTree_[node];
+        if (IsLeafLeft(n))
+            leafMetadata_[n.leftChild].parent = node;
+        else
+            nodeMetadata_[n.leftChild].parent = node;
+        if (IsLeafRight(n))
+            leafMetadata_[n.rightChild].parent = node;
+        else
+            nodeMetadata_[n.rightChild].parent = node;
     }
     flatTree_.pop_back();
     nodeMetadata_.pop_back();
@@ -685,6 +698,7 @@ bool DBVH::RemoveSpecialCases(const IIntersectable& object)
         flatTree_[0].leftChild       = 0;
         nodeMetadata_[0].surfaceArea = 0;
         RemoveLeaf(flatTree_[0].leftChild);
+        flatTree_[0] = {};
         return true;
     }
     else if (IsLeafLeft(flatTree_[0]) && (*leaves_[flatTree_[0].leftChild] == object))
@@ -747,7 +761,15 @@ bool DBVH::RemoveSpecialCases(const IIntersectable& object)
 
 void DBVH::MoveParentToNewParentsLeftChild(const std::uint32_t node)
 {
-    DBVHNode newNode             = flatTree_[node];
+    DBVHNode newNode = flatTree_[node];
+    if (IsLeafLeft(newNode))
+        leafMetadata_[newNode.leftChild].parent = flatTree_.size();
+    else
+        nodeMetadata_[newNode.leftChild].parent = flatTree_.size();
+    if (IsLeafRight(newNode))
+        leafMetadata_[newNode.rightChild].parent = flatTree_.size();
+    else
+        nodeMetadata_[newNode.rightChild].parent = flatTree_.size();
     flatTree_[node].maxDepthLeft = std::max(newNode.maxDepthLeft, newNode.maxDepthRight) + 1;
     flatTree_[node].boundingBox  = newNode.boundingBox;
     flatTree_[node].leftChild    = flatTree_.size();
@@ -988,7 +1010,7 @@ void DBVH::Add(const std::uint32_t currentNode, const std::vector<const IInterse
         {
             flatTree_[currentNode].leftChild = leaves_.size();
             leaves_.push_back(leftObjects.at(0));
-            leafMetadata_.emplace_back(currentNode, 0.f);
+            leafMetadata_.emplace_back(currentNode, leftObjects.at(0)->GetSurfaceArea());
             flatTree_[currentNode].maxDepthLeft = 1;
         }
         else
@@ -1002,6 +1024,7 @@ void DBVH::Add(const std::uint32_t currentNode, const std::vector<const IInterse
             parent.maxDepthLeft              = 1;
             parent.maxDepthRight             = 1;
             flatTree_[currentNode].leftChild = flatTree_.size();
+            leafMetadata_[buffer].parent     = flatTree_.size();
             flatTree_.push_back(std::move(parent));
             nodeMetadata_.emplace_back(currentNode, 0.f);
             Refit(flatTree_[currentNode].leftChild);
@@ -1027,6 +1050,7 @@ void DBVH::Add(const std::uint32_t currentNode, const std::vector<const IInterse
             parentMetadata.surfaceArea       = parent.boundingBox.GetSA() * 2;
             parent.maxDepthLeft              = 1;
             flatTree_[currentNode].leftChild = flatTree_.size();
+            leafMetadata_[buffer].parent     = flatTree_.size();
             flatTree_.push_back(std::move(parent));
             flatTree_[currentNode].maxDepthLeft = 2;
             nodeMetadata_.push_back(std::move(parentMetadata));
@@ -1040,7 +1064,7 @@ void DBVH::Add(const std::uint32_t currentNode, const std::vector<const IInterse
         {
             flatTree_[currentNode].rightChild = leaves_.size();
             leaves_.push_back(rightObjects.at(0));
-            leafMetadata_.emplace_back(currentNode, 0.f);
+            leafMetadata_.emplace_back(currentNode, rightObjects.at(0)->GetSurfaceArea());
             flatTree_[currentNode].maxDepthRight = 1;
         }
         else
@@ -1054,6 +1078,7 @@ void DBVH::Add(const std::uint32_t currentNode, const std::vector<const IInterse
             parent.maxDepthLeft               = 1;
             parent.maxDepthRight              = 1;
             flatTree_[currentNode].rightChild = flatTree_.size();
+            leafMetadata_[buffer].parent      = flatTree_.size();
             flatTree_.push_back(std::move(parent));
             nodeMetadata_.emplace_back(currentNode, 0.f);
             Refit(flatTree_[currentNode].rightChild);
@@ -1079,6 +1104,7 @@ void DBVH::Add(const std::uint32_t currentNode, const std::vector<const IInterse
             parentMetadata.surfaceArea        = parent.boundingBox.GetSA() * 2;
             parent.maxDepthRight              = 1;
             flatTree_[currentNode].rightChild = flatTree_.size();
+            leafMetadata_[buffer].parent      = flatTree_.size();
             flatTree_.push_back(std::move(parent));
             flatTree_[currentNode].maxDepthRight = 2;
             nodeMetadata_.push_back(std::move(parentMetadata));
@@ -1112,7 +1138,8 @@ bool DBVH::AddFirstAndOnlyElement(DBVHNode& root, const std::vector<const IInter
     root.leftChild = leaves_.size();
     leaves_.push_back(objects.back());
     leafMetadata_.emplace_back(0u, 0.f);
-    root.maxDepthLeft = 1;
+    nodeMetadata_[0].surfaceArea = objects.back()->GetSurfaceArea();
+    root.maxDepthLeft            = 1;
     return true;
 }
 
@@ -1154,7 +1181,7 @@ void DBVH::RemoveObjects(const std::vector<const IIntersectable*>& objects)
         if (IsEmpty(flatTree_[0]))
             return;
         if (RemoveSpecialCases(*object))
-            return;
+            continue;
         std::uint32_t rLeaf, rNode;
         if (Remove(0, *object, rLeaf, rNode))
         {

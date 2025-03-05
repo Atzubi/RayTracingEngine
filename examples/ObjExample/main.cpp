@@ -120,9 +120,8 @@ int main()
         // Move objects in sine curve
         for (std::size_t i = 0; i < instances.size(); ++i)
         {
-            volatile auto test           = instances[i]->GetTransform();
-            const auto    currentOffsetY = instances[i]->GetTransform().elements[1][3];
-            const auto    offsetY =
+            const auto currentOffsetY = instances[i]->GetTransform().elements[1][3];
+            const auto offsetY =
                 sinf(i + std::chrono::high_resolution_clock::now().time_since_epoch().count() * 0.000000001f) -
                 currentOffsetY;
             instances[i]->Transform(Matrix4x4{1, 0, 0, 0, 0, 1, 0, offsetY, 0, 0, 1, 0, 0, 0, 0, 1});
