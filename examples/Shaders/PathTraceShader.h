@@ -50,31 +50,32 @@ ShaderOutput PathTraceShader(const std::uint64_t                     id,
     if ((accumulatedAbsorption.x > 0.997f) && (accumulatedAbsorption.y > 0.997f) && (accumulatedAbsorption.z > 0.997f))
         return {0, 0, 0};
 
-    const auto cosTheta           = fmax(-incident.Dot(normal), 0.0f);
-    const auto n1                 = backface ? opticalDensity : 1.f;
-    const auto n2                 = backface ? 1.f : opticalDensity;
-    const auto fresnelReflectance = FresnelSchlick(cosTheta, n1, n2);
-
     Vector3D newDirection;
-    if (static_cast<float>(std::rand()) / RAND_MAX < fresnelReflectance)
+    while (true)
     {
-        auto reflectedDirection = Reflect(incident, normal);
-        reflectedDirection.Normalize();
-        const auto perturbedDirection = SampleMicrofacet(dissolve, reflectedDirection);
-        if (perturbedDirection.Dot(normal) < 0)
-            newDirection = Reflect(perturbedDirection * -1.f, reflectedDirection);
+        auto microfacetNormal = SampleMicrofacet(dissolve, normal);
+        if (microfacetNormal.Dot(incident) > 0) // flipped face
+            microfacetNormal = Reflect(microfacetNormal * -1.f, normal);
+
+        const auto cosTheta           = fmax(-incident.Dot(microfacetNormal), 0.0f);
+        const auto n1                 = backface ? opticalDensity : 1.f;
+        const auto n2                 = backface ? 1.f : opticalDensity;
+        const auto fresnelReflectance = FresnelSchlick(cosTheta, n1, n2);
+
+        if (static_cast<float>(std::rand()) / RAND_MAX < fresnelReflectance)
+        {
+            newDirection = Reflect(incident, microfacetNormal);
+            if (newDirection.Dot(normal) < 0)
+                continue; // reflected into material -> resample
+        }
         else
-            newDirection = perturbedDirection;
-    }
-    else
-    {
-        auto refracteddDirection = Refract(incident, normal, n1, n2);
-        refracteddDirection.Normalize();
-        const auto perturbedDirection = SampleMicrofacet(dissolve, refracteddDirection);
-        if (perturbedDirection.Dot(normal) > 0)
-            newDirection = Reflect(perturbedDirection * -1.f, refracteddDirection);
-        else
-            newDirection = perturbedDirection;
+        {
+            newDirection = Refract(incident, microfacetNormal, n1, n2);
+            if (newDirection.Dot(normal) > 0)
+                continue; // refracted out of material -> resample
+        }
+        newDirection.Normalize();
+        break;
     }
 
     newRays.rays.push_back({RayType::Closest,
