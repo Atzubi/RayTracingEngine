@@ -1,8 +1,8 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.20)
 
 project(RayTraceEngine VERSION 1.0.0 LANGUAGES CXX DESCRIPTION "This library provides a toolset for raytracing on cpu and gpu")
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -14,16 +14,37 @@ endif ()
 if (MSVC)
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
     set(BUILD_SHARED_LIBS TRUE)
+    string(REGEX REPLACE "/W[1-3]" "/W4" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+else ()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic")
 endif ()
 
 
 # installation directories
 include(GNUInstallDirs)
 
-include_directories(${CMAKE_SOURCE_DIR}/include)
 
-#set(ATZUBI_RTENGINE_INSTALL_DOC_DIR "${CMAKE_INSTALL_DOCDIR}/atzubi/rtengine" CACHE STRING "The installation doc directory")
-set(ATZUBI_RTENGINE_INSTALL_CMAKE_DIR "${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/cmake" CACHE STRING "The installation cmake directory")
+# external
+add_subdirectory(external/Catch2)
+
+# library
+include_directories(${CMAKE_SOURCE_DIR}/include)
+# this may also include the source tree for the examples which is undesirable
+include_directories(${CMAKE_SOURCE_DIR}/src)
+
+# tests
+option(ATZUBI_RTENGINE_BUILD_TESTS "Build tests" 0)
+if (ATZUBI_RTENGINE_BUILD_TESTS)
+    add_subdirectory(tests)
+endif ()
+
+# examples
+option(ATZUBI_RTENGINE_BUILD_EXAMPLES "Build example programs" 0)
+if (ATZUBI_RTENGINE_BUILD_EXAMPLES)
+    add_subdirectory(examples/MinimalExample)
+    add_subdirectory(examples/ObjExample)
+    add_subdirectory(examples/PathTracingExample)
+endif ()
 
 
 add_subdirectory(src lib)
@@ -33,11 +54,8 @@ target_include_directories(RayTraceEngine INTERFACE
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
         )
 
-# examples
-option(ATZUBI_RTENGINE_BUILD_EXAMPLES "Build example programs" 0)
-if (ATZUBI_RTENGINE_BUILD_EXAMPLES)
-    add_subdirectory(Examples/MinimalExample example/MinimalExample)
-endif ()
+#set(ATZUBI_RTENGINE_INSTALL_DOC_DIR "${CMAKE_INSTALL_DOCDIR}/atzubi/rtengine" CACHE STRING "The installation doc directory")
+set(ATZUBI_RTENGINE_INSTALL_CMAKE_DIR "${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/cmake" CACHE STRING "The installation cmake directory")
 
 option(ATZUBI_RTENGINE_INSTALL "Generate the install target" ${ATZUBI_RTENGINE_IS_MAIN_PROJECT})
 if (ATZUBI_RTENGINE_INSTALL)

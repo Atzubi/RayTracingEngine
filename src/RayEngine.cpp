@@ -1,178 +1,62 @@
-//
-// Created by sebastian on 02.07.19.
-//
-
-#include <iostream>
-
 #include "RayTraceEngine/RayEngine.h"
-#include "Data Management/DataManagementUnitV2.h"
+#include "engine_node/EngineNode.h"
 
+RayEngine::RayEngine() { engineNode_ = std::make_unique<EngineNode>(); }
 
-RayEngine::RayEngine() {
-    dataManagementUnit = new DataManagementUnitV2();
+RayEngine::~RayEngine() = default;
+
+std::unique_ptr<IntersectableObjectHandle>
+RayEngine::CreateIntersectableObject(const IntersectableObjectDescription& desc)
+{
+    return engineNode_->CreateIntersectableObject(desc);
 }
 
-RayEngine::~RayEngine() {
-    delete dataManagementUnit;
+std::unique_ptr<InstanceHandle> RayEngine::CreateInstance(const InstanceDescription& desc)
+{
+    return engineNode_->CreateInstance(desc);
 }
 
-int RayEngine::runPipeline(PipelineId id) {
-    return dataManagementUnit->runPipeline(id);
+std::unique_ptr<SceneHandle> RayEngine::CreateScene(const SceneDescription& desc)
+{
+    return engineNode_->CreateScene(desc);
 }
 
-int RayEngine::runAll() {
-    return dataManagementUnit->runAllPipelines();
+std::unique_ptr<ShaderResourceHandle> RayEngine::CreateShaderResource(const ShaderResourceDescription& desc)
+{
+    return engineNode_->CreateShaderResource(desc);
 }
 
-PipelineId RayEngine::createPipeline(PipelineDescription *pipelineDescription) {
-    return dataManagementUnit->createPipeline(pipelineDescription);
+std::unique_ptr<GeneratorShaderHandle> RayEngine::CreateShader(const GeneratorShaderDescription& desc)
+{
+    return engineNode_->CreateShader(desc);
 }
 
-bool RayEngine::deletePipeline(PipelineId id) {
-    return dataManagementUnit->removePipeline(id);
+std::unique_ptr<HitShaderHandle> RayEngine::CreateShader(const HitShaderDescription& desc)
+{
+    return engineNode_->CreateShader(desc);
 }
 
-bool RayEngine::bindGeometryToPipeline(PipelineId pipelineId, std::vector<ObjectId> *objectIds, std::vector<Matrix4x4> *transforms,
-                                       std::vector<ObjectParameter> *objectParameters, std::vector<InstanceId>*instanceIDs) {
-    return dataManagementUnit->bindGeometryToPipeline(pipelineId, objectIds, transforms, objectParameters, instanceIDs);
+std::unique_ptr<PierceShaderHandle> RayEngine::CreateShader(const PierceShaderDescription& desc)
+{
+    return engineNode_->CreateShader(desc);
 }
 
-ObjectId RayEngine::addObject(Object *object) {
-    return dataManagementUnit->addObject(object);
+std::unique_ptr<OcclusionShaderHandle> RayEngine::CreateShader(const OcclusionShaderDescription& desc)
+{
+    return engineNode_->CreateShader(desc);
 }
 
-bool RayEngine::removeObject(ObjectId id) {
-    return dataManagementUnit->removeObject(id);
+std::unique_ptr<MissShaderHandle> RayEngine::CreateShader(const MissShaderDescription& desc)
+{
+    return engineNode_->CreateShader(desc);
 }
 
-bool RayEngine::updateObject(ObjectId id, Object *object) {
-    return dataManagementUnit->updateObject(id, object);
+std::unique_ptr<RenderTargetHandle> RayEngine::CreateRenderTarget(const RenderTargetDescription& desc)
+{
+    return engineNode_->CreateRenderTarget(desc);
 }
 
-bool RayEngine::bindShaderToPipeline(PipelineId pipelineId, RayGeneratorShaderId shaderId, std::vector<ShaderResourceId> *shaderResourceIds) {
-    return dataManagementUnit->bindShaderToPipeline(pipelineId, shaderId, shaderResourceIds);
-}
-
-bool RayEngine::bindShaderToPipeline(PipelineId pipelineId, HitShaderId shaderId, std::vector<ShaderResourceId> *shaderResourceIds) {
-    return dataManagementUnit->bindShaderToPipeline(pipelineId, shaderId, shaderResourceIds);
-}
-
-bool RayEngine::bindShaderToPipeline(PipelineId pipelineId, OcclusionShaderId shaderId, std::vector<ShaderResourceId> *shaderResourceIds) {
-    return dataManagementUnit->bindShaderToPipeline(pipelineId, shaderId, shaderResourceIds);
-}
-
-bool RayEngine::bindShaderToPipeline(PipelineId pipelineId, PierceShaderId shaderId, std::vector<ShaderResourceId> *shaderResourceIds) {
-    return dataManagementUnit->bindShaderToPipeline(pipelineId, shaderId, shaderResourceIds);
-}
-
-bool RayEngine::bindShaderToPipeline(PipelineId pipelineId, MissShaderId shaderId, std::vector<ShaderResourceId> *shaderResourceIds) {
-    return dataManagementUnit->bindShaderToPipeline(pipelineId, shaderId, shaderResourceIds);
-}
-
-HitShaderId RayEngine::addShader(HitShader *shader) {
-    return dataManagementUnit->addShader(shader);
-}
-
-MissShaderId RayEngine::addShader(MissShader *shader) {
-    return dataManagementUnit->addShader(shader);
-}
-
-OcclusionShaderId RayEngine::addShader(OcclusionShader *shader) {
-    return dataManagementUnit->addShader(shader);
-}
-
-PierceShaderId RayEngine::addShader(PierceShader *shader) {
-    return dataManagementUnit->addShader(shader);
-}
-
-RayGeneratorShaderId RayEngine::addShader(RayGeneratorShader *shader) {
-    return dataManagementUnit->addShader(shader);
-}
-
-bool RayEngine::removeShader(RayGeneratorShaderId id) {
-    return dataManagementUnit->removeShader(id);
-}
-
-bool RayEngine::removeShader(HitShaderId id) {
-    return dataManagementUnit->removeShader(id);
-}
-
-bool RayEngine::removeShader(OcclusionShaderId id) {
-    return dataManagementUnit->removeShader(id);
-}
-
-bool RayEngine::removeShader(PierceShaderId id) {
-    return dataManagementUnit->removeShader(id);
-}
-
-bool RayEngine::removeShader(MissShaderId id) {
-    return dataManagementUnit->removeShader(id);
-}
-
-ShaderResourceId RayEngine::addShaderResource(ShaderResource *resource) {
-    return dataManagementUnit->addShaderResource(resource);
-}
-
-bool RayEngine::removeShaderResource(ShaderResourceId id) {
-    return dataManagementUnit->removeShaderResource(id);
-}
-
-bool RayEngine::updatePipelineObjects(PipelineId pipelineId, std::vector<InstanceId> *objectInstanceIDs,
-                                      std::vector<Matrix4x4 *> *transforms,
-                                      std::vector<ObjectParameter *> *objectParameters) {
-    return dataManagementUnit->updatePipelineObjects(pipelineId, objectInstanceIDs, transforms, objectParameters);
-}
-
-bool RayEngine::updatePipelineShader(PipelineId pipelineId, RayGeneratorShaderId shaderId, std::vector<ShaderResourceId> *shaderResourceIds) {
-    return dataManagementUnit->updatePipelineShader(pipelineId, shaderId, shaderResourceIds);
-}
-
-bool RayEngine::updatePipelineShader(PipelineId pipelineId, HitShaderId shaderId, std::vector<ShaderResourceId> *shaderResourceIds) {
-    return dataManagementUnit->updatePipelineShader(pipelineId, shaderId, shaderResourceIds);
-}
-
-bool RayEngine::updatePipelineShader(PipelineId pipelineId, OcclusionShaderId shaderId, std::vector<ShaderResourceId> *shaderResourceIds) {
-    return dataManagementUnit->updatePipelineShader(pipelineId, shaderId, shaderResourceIds);
-}
-
-bool RayEngine::updatePipelineShader(PipelineId pipelineId, PierceShaderId shaderId, std::vector<ShaderResourceId> *shaderResourceIds) {
-    return dataManagementUnit->updatePipelineShader(pipelineId, shaderId, shaderResourceIds);
-}
-
-bool RayEngine::updatePipelineShader(PipelineId pipelineId, MissShaderId shaderId, std::vector<ShaderResourceId> *shaderResourceIds) {
-    return dataManagementUnit->updatePipelineShader(pipelineId, shaderId, shaderResourceIds);
-}
-
-bool RayEngine::removePipelineObject(PipelineId pipelineId, InstanceId objectInstanceId) {
-    return dataManagementUnit->removePipelineObject(pipelineId, objectInstanceId);
-}
-
-bool RayEngine::removePipelineShader(PipelineId pipelineId, RayGeneratorShaderId shaderId) {
-    return dataManagementUnit->removePipelineShader(pipelineId, shaderId);
-}
-
-bool RayEngine::removePipelineShader(PipelineId pipelineId, HitShaderId shaderId) {
-    return dataManagementUnit->removePipelineShader(pipelineId, shaderId);
-}
-
-bool RayEngine::removePipelineShader(PipelineId pipelineId, OcclusionShaderId shaderId) {
-    return dataManagementUnit->removePipelineShader(pipelineId, shaderId);
-}
-
-bool RayEngine::removePipelineShader(PipelineId pipelineId, PierceShaderId shaderId) {
-    return dataManagementUnit->removePipelineShader(pipelineId, shaderId);
-}
-
-bool RayEngine::removePipelineShader(PipelineId pipelineId, MissShaderId shaderId) {
-    return dataManagementUnit->removePipelineShader(pipelineId, shaderId);
-}
-
-void
-RayEngine::updatePipelineCamera(PipelineId id, int resolutionX, int resolutionY, Vector3D cameraPosition, Vector3D cameraDirection,
-                                Vector3D cameraUp) {
-    dataManagementUnit->updatePipelineCamera(id, resolutionX, resolutionY, cameraPosition, cameraDirection, cameraUp);
-}
-
-Texture *RayEngine::getPipelineResult(PipelineId id) {
-    return dataManagementUnit->getPipelineResult(id);
+std::unique_ptr<PipelineHandle> RayEngine::CreatePipeline(const PipelineDescription& desc)
+{
+    return engineNode_->CreatePipeline(desc);
 }

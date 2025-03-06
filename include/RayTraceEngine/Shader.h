@@ -1,368 +1,277 @@
-//
-// Created by sebastian on 13.11.19.
-//
+#pragma once
 
-#ifndef RAYTRACECORE_SHADER_H
-#define RAYTRACECORE_SHADER_H
+#include "Intersectable.h"
+#include "Vector3D.h"
 
 #include <cstdint>
+#include <memory>
+#include <span>
 #include <vector>
-#include "Object.h"
 
-struct RayGeneratorShaderId{
-    int rayGeneratorShaderId;
+/**
+ * Interface for user provided shader resources.
+ */
+class IShaderResource
+{
+  public:
+    virtual ~IShaderResource() = default;
 
-    bool operator==(const RayGeneratorShaderId &other) const {
-        return rayGeneratorShaderId == other.rayGeneratorShaderId;
-    }
+    /**
+     * Serializes the content of the resource into raw bytes.
+     * @return   Vector of bytes.
+     */
+    virtual std::vector<std::uint8_t> Serialize() const = 0;
 
-    bool operator<(const RayGeneratorShaderId &other) const {
-        return rayGeneratorShaderId < other.rayGeneratorShaderId;
-    }
-};
-
-template<>
-struct std::hash<RayGeneratorShaderId>{
-    std::size_t operator()(const RayGeneratorShaderId& k) const{
-        return std::hash<int>()(k.rayGeneratorShaderId);
-    }
-};
-
-struct HitShaderId{
-    int hitShaderId;
-
-    bool operator==(const HitShaderId &other) const {
-        return hitShaderId == other.hitShaderId;
-    }
-
-    bool operator<(const HitShaderId &other) const {
-        return hitShaderId < other.hitShaderId;
-    }
-};
-
-template<>
-struct std::hash<HitShaderId>{
-    std::size_t operator()(const HitShaderId& k) const{
-        return std::hash<int>()(k.hitShaderId);
-    }
-};
-
-struct OcclusionShaderId{
-    int occlusionShaderId;
-
-    bool operator==(const OcclusionShaderId &other) const {
-        return occlusionShaderId == other.occlusionShaderId;
-    }
-
-    bool operator<(const OcclusionShaderId &other) const {
-        return occlusionShaderId < other.occlusionShaderId;
-    }
-};
-
-template<>
-struct std::hash<OcclusionShaderId>{
-    std::size_t operator()(const OcclusionShaderId& k) const{
-        return std::hash<int>()(k.occlusionShaderId);
-    }
-};
-
-struct PierceShaderId{
-    int pierceShaderId;
-
-    bool operator==(const PierceShaderId &other) const {
-        return pierceShaderId == other.pierceShaderId;
-    }
-
-    bool operator<(const PierceShaderId &other) const {
-        return pierceShaderId < other.pierceShaderId;
-    }
-};
-
-template<>
-struct std::hash<PierceShaderId>{
-    std::size_t operator()(const PierceShaderId& k) const{
-        return std::hash<int>()(k.pierceShaderId);
-    }
-};
-
-struct MissShaderId{
-    int missShaderId;
-
-    bool operator==(const MissShaderId &other) const {
-        return missShaderId == other.missShaderId;
-    }
-
-    bool operator<(const MissShaderId &other) const {
-        return missShaderId < other.missShaderId;
-    }
-};
-
-template<>
-struct std::hash<MissShaderId>{
-    std::size_t operator()(const MissShaderId& k) const{
-        return std::hash<int>()(k.missShaderId);
-    }
-};
-
-struct ShaderResourceId{
-    int shaderResourceId;
-
-    bool operator==(const ShaderResourceId &other) const {
-        return shaderResourceId == other.shaderResourceId;
-    }
-
-    bool operator<(const ShaderResourceId &other) const {
-        return shaderResourceId < other.shaderResourceId;
-    }
-};
-
-template<>
-struct std::hash<ShaderResourceId>{
-    std::size_t operator()(const ShaderResourceId& k) const{
-        return std::hash<int>()(k.shaderResourceId);
-    }
-};
-
-struct RayGeneratorShaderResourcePackage{
-    RayGeneratorShaderId shaderId;
-    std::vector<ShaderResourceId> shaderResourceIds;
-};
-
-struct HitShaderResourcePackage{
-    HitShaderId shaderId;
-    std::vector<ShaderResourceId> shaderResourceIds;
-};
-
-struct OcclusionShaderResourcePackage{
-    OcclusionShaderId shaderId;
-    std::vector<ShaderResourceId> shaderResourceIds;
-};
-
-struct PierceShaderResourcePackage{
-    PierceShaderId shaderId;
-    std::vector<ShaderResourceId> shaderResourceIds;
-};
-
-struct MissShaderResourcePackage{
-    MissShaderId shaderId;
-    std::vector<ShaderResourceId> shaderResourceIds;
-};
-
-class ShaderResource {
-public:
-    virtual ShaderResource *clone() = 0;
-};
-
-class RayResource {
-public:
-    virtual RayResource *clone() = 0;
+    /**
+     * Deserializes raw bytes back into a shader resource.
+     * @param buffer:    Raw byte input.
+     * @return           Deserialized shader resource.
+     */
+    virtual std::unique_ptr<IShaderResource> Deserialize(std::span<const std::uint8_t> buffer) const = 0;
 };
 
 /**
- * Container passed to shaders, containing the basic information about the Pipeline.
- * width:           Horizontal resolution.
- * height:          Vertical resolution.
- * cameraPosition:  Position of the virtual camera.
- * cameraDirection: Direction of the virtual camera facing forwards.
- * cameraUp:        Direction of the virtual camera facing upwards.
+ * Specifies the intersection type of the ray.
  */
-struct PipelineInfo {
-    int width{}, height{};
-    Vector3D cameraPosition{};
-    Vector3D cameraDirection{};
-    Vector3D cameraUp{};
+enum class RayType
+{
+    Closest, // -> Hit shader
+    Pierce,  // -> Pierce Shader
+    Any      // -> Occlusion Shader
 };
 
 /**
- * Container outputted by the ray generator shader.
- * id:              Original id of the ray, this will be passed to potential child rays. This is equivalent to the pixel id.
- * rayOrigin:       Vector of origins of rays.
- * rayDirection:    Vector of directions of rays.
+ * Info of a freshly generated ray.
+ * type:         Intersection type of the ray.
+ * id:           Custom identifier.
+ * rayOrigin     Origin of the ray.
+ * rayDirection: Direction of the ray.
  */
-struct RayGeneratorOutput {
+struct GeneratorRay
+{
+    RayType       type;
+    std::uint64_t id;
+    Vector3D      rayOrigin;
+    Vector3D      rayDirection;
+};
+
+/**
+ * Container of new rays, returned by the generator shader and optionally other shaders.
+ * rays:    Vector of new rays.
+ */
+struct RayGeneratorOutput
+{
     std::vector<GeneratorRay> rays;
 };
 
 /**
  * Container used as input by the occlusion shader.
+ * id:              Custom id set in the GeneratorRay.
  * rayOrigin:       The origin of the ray.
  * rayDirection:    The direction of the ray.
  */
-struct OcclusionShaderInput {
-    Vector3D rayOrigin;
-    Vector3D rayDirection;
+struct OcclusionShaderInput
+{
+    std::uint64_t id;
+    Vector3D      rayOrigin;
+    Vector3D      rayDirection;
 };
 
 /**
  * Container used as input by the hit shader.
+ * id:                  Custom id set in the GeneratorRay.
  * intersectionInfo:    Contains details about the intersection.
  */
-struct HitShaderInput {
-    IntersectionInfo *intersectionInfo;
+struct HitShaderInput
+{
+    std::uint64_t     id;
+    IntersectionInfo* intersectionInfo;
 };
 
 /**
  * Container used as input by the miss shader.
+ * id:              Custom id set in the GeneratorRay.
  * rayOrigin:       The origin of the ray.
  * rayDirection:    The direction of the ray.
  */
-struct MissShaderInput {
-    Vector3D rayOrigin;
-    Vector3D rayDirection;
+struct MissShaderInput
+{
+    std::uint64_t id;
+    Vector3D      rayOrigin;
+    Vector3D      rayDirection;
 };
 
 /**
  * Container used as input by the pierce shader.
+ * id:                  Custom id set in the GeneratorRay.
  * intersectionInfo:    Vector of intersection information containers, one for each intersection.
  */
-struct PierceShaderInput {
-    std::vector<IntersectionInfo *> intersectionInfo;
+struct PierceShaderInput
+{
+    std::uint64_t                 id;
+    std::vector<IntersectionInfo> intersectionInfo;
 };
 
 /**
- * Container outputted by shaders. The color is represented as 24 bit rgb.
+ * Color output of shaders.
+ * color:   Float RGB.
  */
-struct ShaderOutput {
-    uint8_t color[3];
+struct ShaderOutput
+{
+    Vector3D color;
 };
 
 /**
- * Base class for all shaders. Shaders can be added to a pipeline.
+ * Function signature of the generator shader. Will be called for each pixel.
+ * @param id:               Id of the pixel this shader will generate rays for.
+ * @param shaderResources:  Custom shader resources.
+ * @param generatedRays:    Generated rays.
  */
-class Shader {
-public:
-    /**
-     * Clones a shader.
-     * @return  New pointer to the cloned Shader object.
-     */
-    virtual Shader *clone() = 0;
+using IRayGeneratorShader = void (*)(std::uint64_t                     id,
+                                     std::span<IShaderResource* const> shaderResources,
+                                     RayGeneratorOutput&               generatedRays);
+
+/**
+ * Function signature of the hit shader. Will be called for each hit with ray type closest.
+ * @param id:               Id of the pixel this shader output to.
+ * @param shaderInput:      Intersection info.
+ * @param shaderResources:  Custom shader resources.
+ * @param generatedRays:    Optionally generated rays.
+ * @return:                 Color output.
+ */
+using IHitShader = ShaderOutput (*)(std::uint64_t                     id,
+                                    const HitShaderInput&             shaderInput,
+                                    std::span<IShaderResource* const> shaderResources,
+                                    RayGeneratorOutput&               generatedRays);
+
+/**
+ * Function signature of the pierce shader. Will be called for all hits with ray type pierce.
+ * @param id:               Id of the pixel this shader will output to.
+ * @param shaderInput:      Intersection infos.
+ * @param shaderResources:  Custom shader resources.
+ * @param generatedRays:    Optionally generated rays.
+ * @return:                 Color output.
+ */
+using IPierceShader = ShaderOutput (*)(std::uint64_t                     id,
+                                       const PierceShaderInput&          shaderInput,
+                                       std::span<IShaderResource* const> shaderResources,
+                                       RayGeneratorOutput&               generatedRays);
+
+/**
+ * Function signature of the occlusion shader. Will be called if there was any intersection with ray type any.
+ * @param id:               Id of the pixel this shader will output to.
+ * @param shaderInput:      Intersection info.
+ * @param shaderResources:  Custom shader resources.
+ * @param generatedRays:    Optionally generated rays.
+ * @return:                 Color output.
+ */
+using IOcclusionShader = ShaderOutput (*)(std::uint64_t                     id,
+                                          const OcclusionShaderInput&       shaderInput,
+                                          std::span<IShaderResource* const> shaderResources,
+                                          RayGeneratorOutput&               generatedRays);
+
+/**
+ * Function signature of the miss shader. Will be called for any ray that does not hit regardless of type.
+ * @param id:               Id of the pixel this shader will output to.
+ * @param shaderInput:      Intersection info.
+ * @param shaderResources:  Custom shader resources.
+ * @param generatedRays:    Optionally generated rays.
+ * @return:                 Color output.
+ */
+using IMissShader = ShaderOutput (*)(std::uint64_t                     id,
+                                     const MissShaderInput&            shaderInput,
+                                     std::span<IShaderResource* const> shaderResources,
+                                     RayGeneratorOutput&               generatedRays);
+
+/**
+ * Contains all information required to create a shader resource in the engine.
+ * shaderResource:   Reference to a user provided resource.
+ */
+struct ShaderResourceDescription
+{
+    const IShaderResource* shaderResouce;
 };
 
 /**
- * Template for the Ray Generator Shader to be implemented. On pipeline execution it is called to generate the rays used
- * for ray tracing.
+ * Resource handle. When this handle goes out of scope the resource is freed in the engine.
  */
-class RayGeneratorShader : public Shader {
-public:
+class ShaderResourceHandle
+{
+  public:
     /**
-     * Shading method. This will be called on pipeline execution. Its result is then passed to the ray tracing engine.
-     * @param id            Id of the ray (family) being generated.
-     * @param pipelineInfo  Contains details about the pipeline this shader is executed in.
-     * @param dataInput     Currently unused.
-     * @return
+     * Maps the resource to any type.
+     * @return:  Reference to the resource with given type.
      */
-    virtual void
-    shade(uint64_t id, PipelineInfo *pipelineInfo, std::vector<ShaderResource *> *shaderResource,
-          RayGeneratorOutput *rayGeneratorOutput) = 0;
+    template <typename T> T& Map() { return *reinterpret_cast<T*>(MapImpl()); }
 
     /**
-     * Destructor.
+     * Maps the resource to any type.
+     * @return:  Reference to the resource with given type.
      */
-    virtual ~RayGeneratorShader() = default;
+    template <typename T> const T& Map() const { return *reinterpret_cast<const T*>(MapImpl()); }
+
+    virtual ~ShaderResourceHandle() = default;
+
+  private:
+    virtual void*       MapImpl()       = 0;
+    virtual const void* MapImpl() const = 0;
 };
 
 /**
- * Template for the Occlusion Shader to be implemented. It is called on pipeline execution whenever a ray hits anything.
+ * Descriptions and handles for shaders:
  */
-class OcclusionShader : public Shader {
-public:
-    /**
-     * Shading method. This will be called for every ray that intersects with any geometry.
-     * @param id            Id of the current ray.
-     * @param pipelineInfo  Contains details about the pipeline this shader is executed in.
-     * @param shaderInput   Contains information about the intersection.
-     * @param dataInput     Currently unused.
-     * @param newRays       Optional shader output similar to the ray generator shader. Can be used to create child rays
-     * of the current ray.
-     * @return              Returns colour information that will be added to the rays corresponding pixel.
-     */
-    virtual ShaderOutput
-    shade(uint64_t id, PipelineInfo *pipelineInfo, OcclusionShaderInput *shaderInput,
-          std::vector<ShaderResource *> *shaderResource,
-          RayResource **rayResource, RayGeneratorOutput *newRays) = 0;
 
-    /**
-     * Destructor.
-     */
-    virtual ~OcclusionShader() = default;
+struct GeneratorShaderDescription
+{
+    IRayGeneratorShader generatorShader;
 };
 
-/**
- * Template for the Pierce Shader to be implemented. It is called on pipeline execution for every object that is hit by a ray.
- */
-class PierceShader : public Shader {
-public:
-    /**
-     * Shading method. This will be called for every ray and every intersection with the geometry.
-     * @param id            Id of the current ray.
-     * @param pipelineInfo  Contains details about the pipeline this shader is executed in.
-     * @param shaderInput   Contains information about the intersections.
-     * @param dataInput     Currently unused.
-     * @param newRays       Optional shader output similar to the ray generator shader. Can be used to create child rays
-     * of the current ray.
-     * @return              Returns colour information that will be added to the rays corresponding pixel.
-     */
-    virtual ShaderOutput
-    shade(uint64_t id, PipelineInfo *pipelineInfo, PierceShaderInput *shaderInput,
-          std::vector<ShaderResource *> *shaderResource,
-          RayResource **rayResource, RayGeneratorOutput *newRays) = 0;
-
-    /**
-     * Destructor.
-     */
-    virtual ~PierceShader() = default;
+class GeneratorShaderHandle
+{
+  public:
+    virtual ~GeneratorShaderHandle() = default;
 };
 
-/**
- * Template for the Hit Shader to be implemented. It is called on pipeline execution for the closest object hit by a ray.
- */
-class HitShader : public Shader {
-public:
-    /**
-     * Shading Method. This will be called for the closest intersection for all rays that intersect anything.
-     * @param id            Id of the current ray.
-     * @param pipelineInfo  Contains details about the pipeline this shader is executed in.
-     * @param shaderInput   Contains information about the intersections.
-     * @param dataInput     Currently unused.
-     * @param newRays       Optional shader output similar to the ray generator shader. Can be used to create child rays
-     * of the current ray.
-     * @return              Returns colour information that will be added to the rays corresponding pixel.
-     */
-    virtual ShaderOutput
-    shade(uint64_t id, PipelineInfo *pipelineInfo, HitShaderInput *shaderInput,
-          std::vector<ShaderResource *> *shaderResource,
-          RayResource **rayResource, RayGeneratorOutput *newRays) = 0;
-
-    /**
-     * Destructor.
-     */
-    virtual ~HitShader() = default;
+struct HitShaderDescription
+{
+    IHitShader hitShader;
 };
 
-/**
- * Template for the Miss Shader to be implemented. It is called on pipeline execution whenever a ray hits no geometry.
- */
-class MissShader : public Shader {
-public:
-    /**
-     * Shading method. It is called for every ray that does not intersect with any geometry.
-     * @param id            Id of the current ray.
-     * @param pipelineInfo  Contains details about the pipeline this shader is executed in.
-     * @param shaderInput   Contains information about the intersections.
-     * @param dataInput     Currently unused.
-     * @param newRays       Optional shader output similar to the ray generator shader. Can be used to create child rays
-     * of the current ray.
-     * @return              Returns colour information that will be added to the rays corresponding pixel.
-     */
-    virtual ShaderOutput
-    shade(uint64_t id, PipelineInfo *pipelineInfo, MissShaderInput *shaderInput,
-          std::vector<ShaderResource *> *shaderResource,
-          RayResource **rayResource, RayGeneratorOutput *newRays) = 0;
-
-    /**
-     * Destructor.
-     */
-    virtual ~MissShader() = default;
+class HitShaderHandle
+{
+  public:
+    virtual ~HitShaderHandle() = default;
 };
 
-#endif //RAYTRACECORE_SHADER_H
+struct PierceShaderDescription
+{
+    IPierceShader pierceShader;
+};
+
+class PierceShaderHandle
+{
+  public:
+    virtual ~PierceShaderHandle() = default;
+};
+
+struct OcclusionShaderDescription
+{
+    IOcclusionShader occlusionShader;
+};
+
+class OcclusionShaderHandle
+{
+  public:
+    virtual ~OcclusionShaderHandle() = default;
+};
+
+struct MissShaderDescription
+{
+    IMissShader missShader;
+};
+
+class MissShaderHandle
+{
+  public:
+    virtual ~MissShaderHandle() = default;
+};

@@ -1,66 +1,138 @@
-//
-// Created by sebastian on 21.07.21.
-//
+#pragma once
 
-#ifndef RAYTRACECORE_PIPELINE_H
-#define RAYTRACECORE_PIPELINE_H
+#include "Scene.h"
+#include "Shader.h"
 
-#include "RayTraceEngine/BasicStructures.h"
-#include "RayTraceEngine/Shader.h"
+#include <cstdint>
 #include <vector>
 
-struct PipelineId {
-    int pipelineId;
-
-    bool operator==(const PipelineId &other) const {
-        return pipelineId == other.pipelineId;
-    }
-
-    bool operator<(const PipelineId &other) const {
-        return pipelineId < other.pipelineId;
-    }
+/**
+ * Groups shader with the resources that will be bound to it in the pipeline.
+ */
+struct GeneratorShaderResourcePackage
+{
+    GeneratorShaderHandle*             shader;
+    std::vector<ShaderResourceHandle*> resources;
 };
 
-template<>
-struct std::hash<PipelineId> {
-    std::size_t operator()(const PipelineId &k) const {
-        return std::hash<int>()(k.pipelineId);
-    }
+struct HitShaderResourcePackage
+{
+    HitShaderHandle*                   shader;
+    std::vector<ShaderResourceHandle*> resources;
+};
+
+struct PierceShaderResourcePackage
+{
+    PierceShaderHandle*                shader;
+    std::vector<ShaderResourceHandle*> resources;
+};
+
+struct OcclusionShaderResourcePackage
+{
+    OcclusionShaderHandle*             shader;
+    std::vector<ShaderResourceHandle*> resources;
+};
+
+struct MissShaderResourcePackage
+{
+    MissShaderHandle*                  shader;
+    std::vector<ShaderResourceHandle*> resources;
 };
 
 /**
- * Description of a pipeline for initialization.
- * resolutionX:             Horizontal resolution.
- * resolutionY:             Vertical resolution.
- * cameraPosition:          Position of the virtual camera.
- * cameraDirection:         Direction of the virtual camera facing forwards.
- * cameraUp:                Direction of the virtual camera facing upwards.
- * objectIDs:               Ids of the objects in the engines object pool.
- * objectTransformations:   Transformation information for the objects.
- * objectParameters:        Additional parameters for the objects.
- * rayGeneratorShaderIDs:   Ids of the ray generator shaders used in this pipeline.
- * occlusionShaderIDs:      Ids of the occlusion shaders used in this pipeline.
- * hitShaderIDs:            Ids of the hit shaders used in the pipeline.
- * pierceShaderIDs:         Ids of the pierce shaders used in this pipeline.
- * missShaderIDs:           Ids of the miss shaders used in this pipeline.
- * objectInstanceIDs:       Will be filled with the ids of the resulting object instances.
+ * Texture format specifies the byte stride per texel.
+ * RGB -> 3 bytes per texel
+ * RGBA -> 4 bytes per texel
  */
-struct PipelineDescription {
-    int resolutionX;
-    int resolutionY;
-    Vector3D cameraPosition;
-    Vector3D cameraDirection;
-    Vector3D cameraUp;
-    std::vector<ObjectId> objectIDs;
-    std::vector<Matrix4x4 *> objectTransformations;
-    std::vector<ObjectParameter *> objectParameters;
-    std::vector<RayGeneratorShaderResourcePackage> rayGeneratorShaders;
-    std::vector<HitShaderResourcePackage> hitShaders;
-    std::vector<OcclusionShaderResourcePackage> occlusionShaders;
-    std::vector<PierceShaderResourcePackage> pierceShaders;
-    std::vector<MissShaderResourcePackage> missShaders;
-
-    std::vector<InstanceId> *objectInstanceIDs;
+enum class TextureFormat
+{
+    RGB,
+    RGBA
 };
 
-#endif //RAYTRACECORE_PIPELINE_H
+/**
+ * Container for storing an image/texture.
+ * w:               The horizontal resolution of the texture.
+ * h:               The vertical resolution of the texture.
+ * bytesPerTexel:   Amount of bytes per texel.
+ * image:           Raw color values.
+ */
+struct Texture : public IShaderResource
+{
+    std::uint32_t             w;
+    std::uint32_t             h;
+    std::uint32_t             bytesPerTexel;
+    std::vector<std::uint8_t> image;
+
+    std::vector<std::uint8_t>        Serialize() const override;
+    std::unique_ptr<IShaderResource> Deserialize(const std::span<const std::uint8_t> buffer) const override;
+};
+
+/**
+ * Contains all necesarry information required to create a render target in the engine.
+ * width:    Resolution in horizontal direction.
+ * height:   Resolution in vertical direction.
+ */
+struct RenderTargetDescription
+{
+    std::uint32_t width;
+    std::uint32_t height;
+};
+
+/**
+ * Resource handle. When this handle goes out of scope the resource is freed in the engine.
+ */
+class RenderTargetHandle
+{
+  public:
+    /**
+     * Utility method for extracting a texture from the internal representation of the render target.
+     * @param format Texture format of the extracted texture, e.g RGB.
+     * @return       Extracted texture.
+     */
+    virtual Texture GetAsTexture(TextureFormat format) const = 0;
+
+    /**
+     * Utility method for extracting a texture from the internal representation of the render target.
+     * @param format    Texture format of the extracted texture, e.g RGB.
+     * @param texture   Extracted texture, resized only if necessary, otherwise overwritten.
+     */
+    virtual void GetAsTexture(const TextureFormat format, Texture& texture) const = 0;
+
+    virtual ~RenderTargetHandle() = default;
+};
+
+/**
+ * Contains all necessary information for creating a pipeline in the engine.
+ * scene:            Geometry of the scene for intersections.
+ * generatorShader:  Shader with resources for generating rays that are intersected with the scene.
+ * hitShader:        Shader with resources, called on closest intersection.
+ * pierceShader:     Shader with resources, called with all intersection of a single ray.
+ * occlusionShader:  Shader with resources, called when any intersection occurs.
+ * missShader:       Shader with resources, called if there is no intersection.
+ */
+struct PipelineDescription
+{
+    SceneHandle*                   scene;
+    GeneratorShaderResourcePackage generatorShader;
+    HitShaderResourcePackage       hitShader;
+    PierceShaderResourcePackage    pierceShader;
+    OcclusionShaderResourcePackage occlusionShader;
+    MissShaderResourcePackage      missShader;
+};
+
+/**
+ * Resource handle. When this handle goes out of scope the resource is freed in the engine.
+ */
+class PipelineHandle
+{
+  public:
+    /**
+     * Executes the pipeline and writes the shading results into the render target. Note: All shader results per pixel
+     * are accumulated.
+     * @param: target    The render target.
+     */
+    virtual void Run(RenderTargetHandle& target) const = 0;
+
+    virtual ~PipelineHandle() = default;
+};
